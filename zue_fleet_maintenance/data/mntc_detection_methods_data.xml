@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+     <data noupdate = "1">
+        <record model="mntc.detection.methods" id="zue_fleet_maintenance.mntc_detection_methods_reco" >
+            <field name="code">RECO</field>
+            <field name="description">Reporte Conductor</field>
+        </record>
+        <record model="mntc.detection.methods" id="zue_fleet_maintenance.mntc_detection_methods_rein">
+            <field name="code">REIN</field>
+            <field name="description">Reporte Interventoria</field>
+        </record>
+        <record model="mntc.detection.methods" id="zue_fleet_maintenance.mntc_detection_methods_mape">
+            <field name="code">MAPE</field>
+            <field name="description">Mantenimiento Preventivo</field>
+        </record>
+        <record model="mntc.detection.methods" id="zue_fleet_maintenance.mntc_detection_methods_insp">
+            <field name="code">INSP</field>
+            <field name="description">Inspección</field>
+        </record>
+        <record model="mntc.detection.methods" id="zue_fleet_maintenance.mntc_detection_methods_usua">
+            <field name="code">USUA</field>
+            <field name="description">Reporte Usuario</field>
+        </record>
+    </data>
+</odoo>

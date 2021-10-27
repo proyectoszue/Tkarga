@@ -1,0 +1,52 @@
+<odoo>
+    <data>
+        <template id="generate_vouchers" name="Comprobantes de nómina">
+            <t t-call="website.layout">
+                <div class="oe_structure">
+                    <div class="container">
+                        <br/>
+                        <center>
+                            <h1>
+                                <b>Comprobantes de Nómina</b>
+                            </h1>
+                        </center>
+                        <hr/>
+                        <div>
+                            <form action='/zue_payroll_self_management_portal/payslip' method="POST">
+                        <p class="text-justify">A continuación, podrá generar su comprobante de nómina como funcionario de la empresa <span t-esc="company"/>
+ Por favor seleccione el año y el mes correspondiente, luego haga clic en "Generar Comprobante". Tenga en cuenta que el reporte se descargará en formato PDF.</p>
+                                <br/>
+                                <h5 class="control-label col-md-2">Año</h5>
+                                <select name="year" class="form-control form-inline" style="width:30%;">
+                                    <t t-foreach="years" t-as="p">
+                                        <option t-att-value="p['id']">
+                                            <t t-esc="p['text']"/>
+                                        </option>
+                                    </t>
+                                </select>
+                                <br/>
+                                <h5 class="control-label col-md-2">Mes</h5>
+                                <select name="month" class="form-control form-inline" style="width:30%;">
+                                    <option value="1">Enero</option>
+                                    <option value="2">Febrero</option>
+                                    <option value="3">Merzo</option>
+                                    <option value="4">Abril</option>
+                                    <option value="5">Mayo</option>
+                                    <option value="6">Junio</option>
+                                    <option value="7">Julio</option>
+                                    <option value="8">Agosto</option>
+                                    <option value="9">Septiembre</option>
+                                    <option value="10">Octubre</option>
+                                    <option value="11">Noviembre</option>
+                                    <option value="12">Diciembre</option>
+                                </select>
+                                <br/>
+                                <input type="submit" class="btn btn-warning" value="Generar comprobante"/>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </template>
+    </data>
+</odoo>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.hr.payroll.zue</field>
+        <field name="model">res.config.settings</field>
+        <field name="priority" eval="46"/>
+        <field name="inherit_id" ref="hr_payroll.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@id='hr_payroll_accountant']" position="after">
+                <div class="row mt16 o_settings_container" id="hr_payroll_accountant_zue">
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane"/>
+                        <div class="o_setting_right_pane">                       
+                            <label for="module_hr_payroll_batch_account"/>
+                            <div class="text-muted">
+                                Elige la modalidad para contabilizar en lote 
+                            </div>
+                            <div class="content-group">
+                                <div class="mt16">
+                                    <field name="module_hr_payroll_batch_account" class="o_light_label" widget="radio"/>                                    
+                                </div>
+                            </div>                            
+                        </div>                    
+                    </div>
+                </div>
+            </xpath>
+        </field>
+    </record>
+
+</odoo>        

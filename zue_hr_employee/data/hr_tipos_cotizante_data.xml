@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    
+    <data noupdate="1">
+        <!-- códigos de tipos de cotizante -->
+        <record model="hr.tipo.cotizante" id="zue_hr_employee.hr_tipo_cotizante_0111">
+            <field name="name">1: Dependiente</field>
+            <field name="code">1</field>
+        </record>
+        <record model="hr.tipo.cotizante" id="zue_hr_employee.hr_tipo_cotizante_0113">
+            <field name="name">12: Aprendiz del SENA en etapa lectiva</field>
+            <field name="code">12</field>
+        </record>
+        <record model="hr.tipo.cotizante" id="zue_hr_employee.hr_tipo_cotizante_0114">
+            <field name="name">19: Aprendiz del SENA en etapa productiva</field>
+            <field name="code">19</field>
+        </record>
+
+
+        <!-- códigos de subtipos de cotizante -->
+        <record model="hr.subtipo.cotizante" id="zue_hr_employee.hr_subtipo_cotizante_0110">
+            <field name="name">1: Dependiente pensionado por vejez activo</field>
+            <field name="code">1</field>
+        </record>
+        <record model="hr.subtipo.cotizante" id="zue_hr_employee.hr_subtipo_cotizante_0111">
+            <field name="name">2: Independiente pensionado por vejez activo</field>
+            <field name="code">2</field>
+        </record>
+        <record model="hr.subtipo.cotizante" id="zue_hr_employee.hr_subtipo_cotizante_0112">
+            <field name="name">3: Cotizante no obligado a cotización a pensiones por edad</field>
+            <field name="code">3</field>
+        </record>
+        <record model="hr.subtipo.cotizante" id="zue_hr_employee.hr_subtipo_cotizante_0113">
+            <field name="name">4: Cotizante con requisitos cumplidos para pensión</field>
+            <field name="code">4</field>
+        </record>
+        <record model="hr.subtipo.cotizante" id="zue_hr_employee.hr_subtipo_cotizante_0114">
+            <field name="name">5: Cotizante a quien se la ha reconocido indemnización sustitutiva</field>
+            <field name="code">5</field>
+        </record>
+        <record model="hr.subtipo.cotizante" id="zue_hr_employee.hr_subtipo_cotizante_0115">
+            <field name="name">6: Cotizante perteneciente a un régimen exceptuado de pensiones</field>
+            <field name="code">6</field>
+        </record>
+        
+    </data>
+</odoo>
+        

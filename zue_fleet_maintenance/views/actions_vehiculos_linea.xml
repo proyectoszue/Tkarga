@@ -1,0 +1,40 @@
+<odoo>
+    <data>
+        <record model='ir.actions.act_window' id='vehiculos_lineas_action'>
+            <field name="name">Linea del vehiculo</field>
+            <field name="res_model">vehiculos.lineas</field>
+            <field name="view_mode">tree,form</field>
+            <field name="help" type="html">
+            <p class="oe_view_nocontent_create">
+                Click para crear una nueva linea de vehiculo
+            </p>
+            </field>
+        </record>
+        <record model='ir.ui.view' id='zue_fleet_maintenance.list_vehiculos_lineas_action'>
+            <field name="name">zue list vehiculos lineas</field>
+            <field name="model">vehiculos.lineas</field>
+            <field name="arch" type="xml">
+                <tree string="LineasVehiculos">
+                    <field name="name" />
+                    <field name="marca" />
+                    <field name="code_reference"/>
+                </tree>
+            </field>
+        </record>
+        <record model='ir.ui.view' id='form_vehiculos_lineas_action'>
+        	    <field name="name">zue form vehiculos lineas</field>
+        	    <field name="model">vehiculos.lineas</field>
+        	    <field name="arch" type="xml">
+        	        <form string="LineasVehiculos">
+                    <sheet>
+                      <group>
+                        <field name="name" />
+                        <field name="marca" />
+                        <field name="code_reference"/>
+                      </group>
+                    </sheet>
+                	</form>
+            	</field>
+        	</record>
+    </data>
+</odoo>

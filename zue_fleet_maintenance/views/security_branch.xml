@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Crear record rule para filtrar las sucursales - Vehiculos -->
+        <record id="rule_fleet_vehicle_zue_res_branch" model="ir.rule">
+            <field name="name">Permisos sucursales Vehiculos</field>
+            <field name="model_id" ref="model_fleet_vehicle"/>
+            <field name="domain_force">['|',('branch_id','in',user.branch_ids.ids),('branch_id','=',False)]</field>                
+        </record>
+
+        <!-- Crear record rule para filtrar las sucursales - Entrada/Salida -->
+        <record id="rule_mntc_io_zue_res_branch" model="ir.rule">
+            <field name="name">Permisos sucursales Entrada/Salida</field>
+            <field name="model_id" ref="model_mntc_io"/>
+            <field name="domain_force">['|',('branch_id','in',user.branch_ids.ids),('branch_id','=',False)]</field>                
+        </record>
+
+        <!-- Crear record rule para filtrar las sucursales - Solicitud -->
+        <record id="rule_mntc_request_zue_res_branch" model="ir.rule">
+            <field name="name">Permisos sucursales Solicitud</field>
+            <field name="model_id" ref="model_mntc_request"/>
+            <field name="domain_force">['|',('branch_id','in',user.branch_ids.ids),('branch_id','=',False)]</field>                
+        </record>
+
+        <!-- Crear record rule para filtrar las sucursales - Orden de trabajo -->
+        <record id="rule_mntc_workorder_zue_res_branch" model="ir.rule">
+            <field name="name">Permisos sucursales Orden de trabajo</field>
+            <field name="model_id" ref="model_mntc_workorder"/>
+            <field name="domain_force">['|',('branch_id','in',user.branch_ids.ids),('branch_id','=',False)]</field>                
+        </record>
+
+        <!-- Crear record rule para filtrar las sucursales - Tareas -->
+        <record id="rule_mntc_tasks_zue_res_branch" model="ir.rule">
+            <field name="name">Permisos sucursales Tareas</field>
+            <field name="model_id" ref="model_mntc_tasks"/>
+            <field name="domain_force">['|',('branch_id','in',user.branch_ids.ids),('branch_id','=',False)]</field>                
+        </record>
+
+        <!-- Crear record rule para filtrar las sucursales - Inventario / Transferencia -->
+        <record id="rule_stock_picking_zue_res_branch" model="ir.rule">
+            <field name="name">Permisos sucursales Inventario / Transferencia</field>
+            <field name="model_id" ref="model_stock_picking"/>
+            <field name="domain_force">['|',('branch_id','in',user.branch_ids.ids),('branch_id','=',False)]</field>                
+        </record>
+
+        <!-- Crear record rule para filtrar las sucursales - Inventario / Resumen -->
+        <record id="rule_stock_picking_type_zue_res_branch" model="ir.rule">
+            <field name="name">Permisos sucursales Inventario / Resumen</field>
+            <field name="model_id" ref="model_stock_picking_type"/>
+            <field name="domain_force">['|',('branch_id','in',user.branch_ids.ids),('branch_id','=',False)]</field>                
+        </record>
+
+        <!-- Crear record rule para filtrar las sucursales - Compras / Órden compra -->
+        <record id="rule_purchase_order_zue_res_branch" model="ir.rule">
+            <field name="name">Permisos sucursales Compras / Órden compra</field>
+            <field name="model_id" ref="model_purchase_order"/>
+            <field name="domain_force">['|',('branch_id','in',user.branch_ids.ids),('branch_id','=',False)]</field>                
+        </record>
+    </data>
+</odoo>
+

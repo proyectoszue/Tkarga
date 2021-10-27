@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hr_distribution_model,hr.distribution.model,model_hr_distribution_model,,1,1,1,1
+access_hr_distribution_rules,hr.distribution.rules,model_hr_distribution_rules,,1,1,1,1
+access_hr_distribution_rules_details,hr.distribution.rules.details,model_hr_distribution_rules_details,,1,1,1,1
+access_distribution_rules_execution_history,distribution.rules.execution.history,model_distribution_rules_execution_history,,1,1,1,1
+access_distribution_rules_execution,distribution.rules.execution,model_distribution_rules_execution,,1,1,1,1

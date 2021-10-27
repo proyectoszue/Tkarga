@@ -1,0 +1,6 @@
+<odoo>
+    <data>
+        <!-- Menu Archivo de pago proveedores -->
+        <menuitem name="Archivo de pago" id="zue_account.zue_payment_file_menu" parent="account.menu_finance_payables" sequence="30" action="zue_account.action_payment_file"/>
+    </data>
+</odoo>

@@ -1,0 +1,15 @@
+<odoo>
+    <data>
+        <!-- Menu en compras -->
+        <menuitem id="zue_purchase.menu_sre_purchase" name="Solicitudes" parent="purchase.menu_purchase_root" sequence="101"/>
+        <menuitem id="zue_purchase.sre_menu_view" name="Recursos económicos" action="sre_act_view" parent="zue_purchase.menu_sre_purchase" sequence="1"/>
+        <menuitem id="zue_purchase.account_move_menu_view" name="Legalización Recursos económicos" action="zue_purchase.account_move_action" parent="zue_purchase.menu_sre_purchase" sequence="2"/>
+        <menuitem id="zue_purchase.account_move_refund_menu_view" name="Reembolso de Caja" action="zue_purchase.account_move_refund_action" parent="zue_purchase.menu_sre_purchase" sequence="3"/>
+
+        <!-- Configuraciones 
+        <menuitem  id="menu_sre_configurations_purchase" name="Solicitudes" parent="purchase.menu_purchase_config_purchase"/>
+
+        <menuitem action="sre_configuration_categorias_act" id="menu_sre_configurations_categorias" parent="menu_sre_configurations_purchase" sequence="3"/>
+        <menuitem action="sre_configuration_condiciones_act" id="menu_sre_configurations_condiciones" parent="menu_sre_configurations_purchase" sequence="4"/>  -->
+    </data>
+</odoo>

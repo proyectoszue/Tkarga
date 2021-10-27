@@ -1,0 +1,88 @@
+<odoo>
+    <data>
+        <!-- Nómina Electrónica -->
+        <record model="ir.actions.act_window" id="action_hr_electronic_payroll">
+            <field name="name">Nómina Electrónica</field>
+            <field name="res_model">hr.electronic.payroll</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Crear record rule para filtrar las compañias-->
+        <record id="rule_hr_electronic_payroll_company" model="ir.rule">
+            <field name="name">Permisos compañia Nómina Electrónica</field>
+            <field name="model_id" ref="model_hr_electronic_payroll"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>                
+        </record>
+
+        <record model="ir.ui.view" id="hr_electronic_payroll_list">
+            <field name="name">hr electronic payroll list</field>
+            <field name="model">hr.electronic.payroll</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="year"/>
+                    <field name="month"/>
+                    <field name="company_id"/>
+                    <field name="observations"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="hr_electronic_payroll_form">
+            <field name="name">hr electronic payroll form</field>
+            <field name="model">hr.electronic.payroll</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="executing_electronic_payroll" type="object" string="Ejecutar" class="oe_highlight" states="draft"/>
+                        <button name="cancel_process" type="object" string="Cancelar" states="done"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group string="Periodo">
+                                <field name="year"/>
+                                <field name="month"/>
+                                <field name="prefix"/>
+                            </group>
+                            <group string="Observaciones">
+                                <field name="observations" nolabel="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>                            
+                        </group>
+                        <hr style="border-style:solid;border-width:2px;width:100%;"/>
+                        <h2 style="text-align:center">Proceso</h2>
+                        <notebook>
+                            <page string="Ejecución" name="ejecucion">
+                                <field name="executing_electronic_payroll_ids">
+                                    <tree>
+                                        <field name="employee_id" optional="show" readonly="1"/>
+                                        <field name="contract_id" optional="hide" readonly="1"/>
+                                        <field name="sequence" optional="show" readonly="1"/>
+                                        <field name="payslip_ids" optional="show" widget="many2many_tags" readonly="1"/>
+                                        <field name="xml_file_name" invisible="1"/>
+                                        <field name="xml_file" optional="hide" filename="xml_file_name"/>
+                                        <field name="cune_dian" optional="hide" readonly="1"/>
+                                    </tree>
+                                    <form>
+                                        <sheet>
+                                            <group>
+                                                <field name="employee_id" readonly="1"/>
+                                                <field name="contract_id" readonly="1"/>
+                                                <field name="sequence" readonly="1"/>
+                                                <field name="payslip_ids" widget="many2many_tags" readonly="1"/>
+                                                <field name="cune_dian" readonly="1"/>
+                                            </group>
+                                            <button name="download_xml" type="object" string="Descargar XML"/>
+                                        </sheet>
+                                    </form>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

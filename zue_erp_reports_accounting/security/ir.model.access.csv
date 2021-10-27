@@ -1,0 +1,6 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_account_balance_partner_report,account.balance.partner.report,model_account_balance_partner_report,,1,0,0,0
+access_account_auxiliar_report,account.auxiliar.report,model_account_auxiliar_report,,1,0,0,0
+access_zue_reports_account,zue.reports.account,model_zue_reports_account,,1,1,1,1
+access_account_auxiliar_schemefavorite,account.auxiliar.schemefavorite,model_account_auxiliar_schemefavorite,,1,1,1,1
+access_balance_analytic_partner_report,balance.analytic.partner.report,model_balance_analytic_partner_report,,1,0,0,0
