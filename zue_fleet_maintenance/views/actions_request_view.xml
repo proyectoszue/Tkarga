@@ -1,0 +1,205 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Hay vistas tipo calendar,gantt,graph y search -->
+        <record model="ir.actions.act_window" id="mntc_request_action">
+            <field name="name">Request</field>
+            <field name="res_model">mntc.request</field>
+            <field name="view_mode">tree,form,calendar,dashboard</field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_fleet_maintenance.list_mntc_request_action">
+            <field name="name">zue list mntc request</field>
+            <field name="model">mntc.request</field>
+            <field name="arch" type="xml">
+                <tree string="Request">
+                    <field name="number"/>
+                    <field name="name"/>                  
+                    <field name="vehicle_id"/>
+                    <field name="movil_nro"/>
+                    <field name="type_mntc"/>
+                    <field name="priority_id"/>
+                    <field name="branch_id"/>
+                    <field name="request_date"/>
+                    <field name="delivery_date"/>
+                    <field name="state"/>
+                    <field name="service_type_id" invisible='1'/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="mntc_request_form">
+            <field name="name">mntc.request.form</field>
+            <field name="model">mntc.request</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="mntc_aproved" type="object" string="Approved" context="{'regenerar':True}" attrs="{'invisible':[('state','not in', ['draft'])]}"/>
+                        <button name="mntc_canceled" type="object" string="Canceled" context="{'regenerar':True}" attrs="{'invisible':[('state','not in',['draft','approved','inprogress'])]}" cancel="Text"/>
+                        
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <h1>
+                            <field name="number" />
+                        </h1>
+                        <div class="oe_right oe_button_box" name="buttons">
+                            <button name="return_action_to_open"
+                                    class="oe_inline oe_stat_button" style="width: 200px !important;" 
+                                    context="{'xml_id':'zue_fleet_maintenance.list_mntc_workorder_action'}"
+                                    icon="fa-truck"
+                                    attrs="{'invisible': [('counter_request', '=', 0)]}"
+                                    type="object">
+                                    <field name="counter_request" widget="statinfo"/>
+                            </button>
+                        </div>
+                        <separator/>
+                        <group string="Request Description">
+                            <group>
+                                <field name="name" attrs="{'readonly': [('state','not in', ['draft'])]}"/>
+                                <field name="mntc_io_id"/>
+                                <field name="vehicle_id" attrs="{'readonly': [('state','not in', ['draft'])]}"/>
+                                <field name="movil_nro" attrs="{'readonly': [('state','not in', ['draft'])]}"/>
+                            </group>
+                            <group>
+                                <field name="requester_id" attrs="{'readonly': [('state','not in', ['draft'])]}"/>
+                                <field name="type_mntc" attrs="{'readonly': [('state','not in', ['draft'])]}"/>
+                                <field name="garage_id" attrs="{'readonly': [('state','not in', ['draft'])]}"/>
+                                <field name="request_date"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="classification1"  attrs="{'readonly': [('state','not in', ['draft'])]}"/>
+                            </group>
+                            <group>
+                                <field name="priority_id"  required='1'/>
+                            </group>
+                        </group>
+                        <separator string="Prediagnóstico"/>
+                        <group> 
+                            <group>
+                                <field name="detection_method" options="{'no_create_edit': True}" attrs="{'readonly': [('state','not in', ['draft'])]}"/>
+                                <field name="system_id" attrs="{'readonly': [('state','not in', ['draft'])]}"/>
+                            <!-- </group>
+                            <group> -->
+                                <field name="symptom_ids" options="{'no_create_edit': True}" attrs="{'readonly': [('state','not in', ['draft'])]}"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="description" attrs="{'readonly': [('state','not in', ['draft'])]}"/>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="minor_work" attrs="{'invisible': [('priority_id','==','priority_3')],'readonly': [('state','not in', ['draft'])]}"/> 
+                            </group>
+                            <group>
+                                <field name="field_work" attrs="{'invisible': [('priority_id','!=','priority_1')],'readonly': [('state','not in', ['draft'])]}"/> 
+                            </group>
+                        </group>
+                        <group>
+                            <field name="approved_date"/>
+                            <field name="approved_tech_id"/>
+                        </group>
+                        <group>
+                            <field name="cancel_osbservation"/>
+                        </group>
+                        
+                        <!-- <separator string="Delivery"/>
+                        <group>
+                            <field name="scheduled_delivery_date"/>
+                            <field name="delivery_date"/>
+                        </group> -->
+                        
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="mntc_request_graph" model="ir.ui.view">
+            <field name="name">mntc.request.graph</field>
+            <field name="model">mntc.request</field>
+            <field name="arch" type="xml">
+                <graph string="Graph">
+                    <!-- <field name="estimated_time" type="measure" widget="float_time"/>
+                    <field name="spent_time" type="measure" widget="float_time"/> -->
+                </graph>
+            </field>
+		</record>
+
+        <record id="mntc_request_pivot" model="ir.ui.view">
+            <field name="name">mntc.request.pivot</field>
+            <field name="model">mntc.request</field>
+            <field name="arch" type="xml">
+                <pivot string="Pivot">
+                    <!-- <field name="estimated_time" type="measure" widget="float_time"/>
+                    <field name="spent_time" type="measure" widget="float_time"/> -->
+                </pivot>
+            </field>
+		</record>
+
+        <record id="mntc_request_dashboard" model="ir.ui.view">
+            <field name="name">mntc.request.dashboard</field>
+            <field name="model">mntc.request</field>
+            <field name="arch" type="xml">
+                <dashboard>
+                    <view type="pivot" ref="zue_fleet_maintenance.mntc_request_pivot"/>
+                    <view type="graph" ref="zue_fleet_maintenance.mntc_request_graph"/>
+                </dashboard>
+            </field>
+		</record>
+
+        <record  model="ir.ui.view" id="mntc_request_calendar">
+            <field name="name">mntc.request.calendar</field>
+            <field name="model">mntc.request</field>
+            <field name="arch" type="xml">
+                <calendar date_start="request_date">
+                    <!-- <field name="workorder_id" />
+                    <field name="activity_id"  /> -->
+                </calendar>
+            </field>
+        </record>
+
+        <!-- <record  model="ir.ui.view" id="mntc_request_calendar">
+            <field name="name">mntc.request.calendar</field>
+            <field name="model">mntc.request</field>
+            <field name="arch" type="xml">
+                <calendar date_start="request_date" color="requester_id" display="[number], Vehicle [vehicle_id]">
+                    <field name="number" />
+                    <field name="vehicle_id"  />
+                </calendar>
+            </field>
+        </record>
+        <record id="mntc_request_gantt" model="ir.ui.view">
+            <field name="name">mntc.request.gantt</field>
+            <field name="model">mntc.request</field>
+             <field name="arch" type="xml">
+                <gantt date_start="request_date" date_stop="delivery_date" default_group_by="vehicle_id" />
+             </field>
+        </record> -->
+
+        <record id="mntc_request_search" model="ir.ui.view">
+            <field name="name">mntc.request.search</field>
+            <field name="model">mntc.request</field>
+            <field name="arch" type="xml">
+                <search string="asset">
+                    <field name="movil_nro" filter_domain="[('movil_nro','ilike',self)]" string="Movil"/>
+                    <field name="vehicle_id" filter_domain="[('vehicle_id','ilike',self)]" string="Vehicle"/>
+                    <field name="number" filter_domain="[('number','ilike',self)]" string="Number"/>
+                    <field name="name" filter_domain="[('name','ilike',self)]" string="Name"/>
+                    <group expand="1" string="groups">
+                        <!-- <filter string="system_id" name="system_id" context="{'group_by':'system_id'}"/> -->
+                        <filter string="Vehicle" name="vehicle_id" context="{'group_by':'vehicle_id'}"/>
+                        <filter string="Request Date" name="request_date" context="{'group_by':'request_date'}"/>
+                        <filter string="Priority" name="priority_id" context="{'group_by':'priority_id'}"/>
+                        <filter string="State" name="state" context="{'group_by':'state'}"/>
+                        <filter string="type of maintenance" name="type_mntc" context="{'group_by':'type_mntc'}"/>
+                        <filter string="Garage" name="garage_id" context="{'group_by':'garage_id'}"/>
+                        <filter string="Movil" name="movil_nro" context="{'group_by':'movil_nro'}"/>
+                        <filter string="service type" name="service_type_id" context="{'group_by':'service_type_id'}"/>
+                    </group>
+                </search>
+            </field>
+        </record>
+    </data>
+</odoo>

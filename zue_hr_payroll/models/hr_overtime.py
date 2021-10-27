@@ -1,0 +1,61 @@
+from odoo import models, fields, api, _
+from datetime import datetime, timedelta, date
+from odoo.exceptions import UserError, ValidationError
+import time
+
+class hr_type_overtime(models.Model):
+    _name = 'hr.type.overtime'
+    _description = 'Tipos de horas extras'
+
+    name = fields.Char(string="Descripción", required=True)
+    salary_rule = fields.Many2one('hr.salary.rule', string="Regla salarial", required=True)
+    type_overtime = fields.Selection([('overtime_rn','RN | Recargo nocturno'),
+                                      ('overtime_ext_d','EXT-D | Extra diurna'),
+                                      ('overtime_ext_n','EXT-N | Extra nocturna'),
+                                      ('overtime_eddf','E-D-D/F | Extra diurna dominical/festivo'),
+                                      ('overtime_endf','E-N-D/F | Extra nocturna dominical/festivo'),
+                                      ('overtime_dof','D o F | Dominicales o festivos'),
+                                      ('overtime_rndf','RN-D/F | Recargo nocturno dominical/festivo')],'Tipo',  required=True)
+    percentage = fields.Float(string='Porcentaje')
+    equivalence_number_ne = fields.Integer(string='Num. Equivalencia NE')
+
+    _sql_constraints = [('change_type_uniq', 'unique(type_overtime)', 'Ya existe este tipo de hora extra, por favor verficar.')]
+
+class hr_overtime(models.Model):
+    _name = 'hr.overtime'
+    _description = 'Novedades | Horas extras'
+    
+    branch_id = fields.Many2one('zue.res.branch', 'Sucursal',required=True)
+    date = fields.Date('Fecha Novedad', required=True)
+    date_end = fields.Date('Fecha Final Novedad', required=True)
+    employee_id = fields.Many2one('hr.employee', string="Empleado", index=True)
+    employee_identification = fields.Char('Identificación empleado')
+    department_id = fields.Many2one('hr.department', related="employee_id.department_id", readonly=True,string="Departamento")
+    job_id = fields.Many2one('hr.job', related="employee_id.job_id", readonly=True,string="Servicio")
+    overtime_rn = fields.Float('RN', help='Recargo nocturno') # EXTRA_RECARGO
+    overtime_ext_d = fields.Float('EXT-D', help='Extra diurna') # EXTRA_DIURNA
+    overtime_ext_n = fields.Float('EXT-N', help='Extra nocturna') # EXTRA_NOCTURNA
+    overtime_eddf = fields.Float('E-D-D/F', help='Extra diurna dominical/festivo') # EXTRA_DIURNA_DOMINICAL
+    overtime_endf = fields.Float('E-N-D/F', help='Extra nocturna dominical/festivo') # EXTRA_NOCTURNA_DOMINICAL
+    overtime_dof = fields.Float('D o F', help='Dominical o festivo') # DOMINICALES O FESTIVOS
+    overtime_rndf = fields.Float('RN-D/F', help='Recargo nocturno dominical/festivo') # EXTRA_RECARGO_DOMINICAL
+    days_actually_worked = fields.Integer('Días efectivamente laborados')
+    days_snack = fields.Integer('Días refrigerio')
+    justification = fields.Char('Justificación')
+    state = fields.Selection([('revertido','Revertido'),('procesado','Procesado'),('nuevo','Nuevo')],'Estado')
+    payslip_run_id = fields.Many2one('hr.payslip','Ref. Liquidación')
+
+    @api.model
+    def create(self, vals):
+        total = vals.get('days_snack') + vals.get('days_actually_worked') + vals.get('overtime_rn') + vals.get('overtime_ext_d') + vals.get('overtime_ext_n') + vals.get('overtime_eddf') + vals.get('overtime_endf') + vals.get('overtime_dof') + vals.get('overtime_rndf')
+        if total > 0:            
+            if vals.get('employee_identification'):
+                obj_employee = self.env['hr.employee'].search([('identification_id', '=', vals.get('employee_identification'))])            
+                vals['employee_id'] = obj_employee.id
+            if vals.get('employee_id'):
+                obj_employee = self.env['hr.employee'].search([('id', '=', vals.get('employee_id'))])            
+                vals['employee_identification'] = obj_employee.identification_id                            
+            registrar_novedad = super(hr_overtime, self).create(vals)
+            return registrar_novedad
+        else:
+            raise UserError(_('Valores en 0 detectados | No se ha detectado la cantidad de horas / dias de la novedad ingresada!'))       

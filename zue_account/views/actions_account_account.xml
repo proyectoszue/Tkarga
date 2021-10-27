@@ -1,0 +1,17 @@
+<odoo>
+    <data>
+		<record id="view_zue_account_form_account_account" model="ir.ui.view">
+			<field name="name">zue_account.account_account_inherit</field>
+			<field name="model">account.account</field>
+			<field name="priority">20</field>
+			<field name="inherit_id" ref="account.view_account_form"/>
+			<field name="arch" type="xml">                
+				<xpath expr="//field[@name='currency_id']" position="after">					
+					<field name="accounting_class"/>	
+                    <field name="required_analytic_account"/>					
+                    <field name="required_partner"/>	
+                </xpath>
+			</field>
+		</record>
+    </data>
+</odoo>

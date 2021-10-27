@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+  <data>
+    <!-- Unidades de facturación -->
+    <record model="ir.actions.act_window" id="cntr_contract_billing_uom_action">
+        <field name="name">Unidades de facturación</field>
+        <field name="res_model">cntr.contract.billing.uom</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record model="ir.ui.view" id="zue_contract.list_cntr_contract_billing_uom_action">
+        <field name="name">zue lista unidades de facturación</field>
+        <field name="model">cntr.contract.billing.uom</field>
+        <field name="arch" type="xml">
+            <tree string="Unidades de facturación">
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="cntr_contract_billing_uom_form_view"> 
+        <field name="name">cntr.contract.billing.uom.form.view</field>
+        <field name="model">cntr.contract.billing.uom</field>
+        <field name="arch" type="xml">
+          <form string="Formulario de unidades de facturación">
+            <sheet string="Workorder">
+              <group>
+                <field name="name"/>
+                <field name="range_id">
+                    <tree editable="bottom">
+                        <field name="min_value"/>
+                        <field name="max_value"/>
+                        <field name="billing_uom_id" invisible="1"/>
+                    </tree>
+                </field>
+              </group>
+            </sheet>
+          </form>
+        </field>
+    </record>
+
+    <!-- Periodicidad -->
+    <record model="ir.actions.act_window" id="cntr_contract_periodicity_action">
+        <field name="name">Periodicidad</field>
+        <field name="res_model">cntr.contract.periodicity</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+
+    <record model="ir.ui.view" id="zue_contract.list_cntr_contract_periodicity_action">
+        <field name="name">zue lista Periodicidad</field>
+        <field name="model">cntr.contract.periodicity</field>
+        <field name="arch" type="xml">
+            <tree string="Periodicidad">
+                <field name="name"/>
+            </tree>
+        </field>
+    </record>
+  </data>
+</odoo>

@@ -1,0 +1,11 @@
+<odoo>
+    <data>
+        <!-- Top menu item -->    
+        <menuitem name="Distribución de Costos" id="zue_cost_distribution.menu_root_distribution"/>        
+            <!-- menu configuración -->    
+            <menuitem name="Configuración" id="zue_cost_distribution.menu_config_distribution" parent="zue_cost_distribution.menu_root_distribution"/>        
+                <menuitem name="Modelo de Distribución" id="zue_cost_distribution.model_distribution" sequence="1" parent="zue_cost_distribution.menu_config_distribution" action="action_hr_distribution_model"/>
+                <menuitem name="Reglas de distribución" id="zue_cost_distribution.rules_distribution" sequence="2" parent="zue_cost_distribution.menu_config_distribution" action="action_hr_distribution_rules"/>
+            <menuitem name="Ejecución" id="zue_cost_distribution.menu_execution_distribution" parent="zue_cost_distribution.menu_root_distribution" action="action_distribution_rules_execution"/>
+    </data>
+</odoo>

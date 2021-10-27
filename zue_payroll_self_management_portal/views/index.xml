@@ -1,0 +1,227 @@
+<odoo>
+  <data>
+
+    <template id="index_page" name="Index">
+      <t t-call="website.layout">
+        <div class="oe_structure">
+          <div>
+            <br/>
+            <center>
+              <h1>
+                <b>
+                  <span t-esc="title"/>
+                </b>
+              </h1>
+            </center>
+            <br/>
+            <div class="col-sm-12">
+              <div class="row">
+                <div class="col-sm-4">
+                  <!-- Foto y Nombre empleado -->
+                  <div class="text-center">
+                    <ul style="list-style: none;">
+                      <li>
+                        <img t-if="photo" t-att-src="image_data_uri(photo)"/>
+                      </li>
+                      <br/>
+                      <br/>
+                      <li>
+                        <h4>
+                          <b>
+                            <span t-esc="name"/>
+                          </b>
+                        </h4>
+                      </li>
+                    </ul>
+                  </div>
+                  <br/>
+                  <!-- Funcionalidades -->
+                  <div class="text-center">
+                    <ul style="list-style: none;">
+                      <li>
+                        <a class="btn btn-warning" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/certification">
+                      Certificado Laboral
+                        </a>
+                      </li>
+                      <br/>
+                      <li>
+                        <a class="btn btn-warning" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/generate_vouchers">
+                      Comprobantes de nómina
+                        </a>
+                      </li>
+                      <br/>
+                      <li>
+                        <a class="btn btn-warning" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/book_vacation">
+                      Libro de vacaciones 
+                        </a>
+                      </li>
+                      <br/>
+                      <li>
+                        <a class="btn btn-warning" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/book_cesantias">
+                      Libro de cesantías
+                        </a>
+                      </li>
+                    </ul>
+                  </div>
+                </div>
+                <!-- Información Básica -->
+                <div class="col-sm-4">
+                  <div class="well">
+                    <br/>
+                    <br/>
+                    <table class="table table-striped table-reposive">
+                      <thead>
+                        <tr>
+                          <th colspan="2" class="text-center">
+                            <h3>Información Básica</h3>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>
+                            <h5 class="badge">Tipo de Empleado</h5>
+                          </td>
+                          <td>
+                            <h6>
+                              <span t-esc="type_employee"/>
+                            </h6>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <h5 class="badge">Identificación</h5>
+                          </td>
+                          <td>
+                            <h6>
+                              <span t-esc="identification"/>
+                            </h6>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <h5 class="badge">Dirección</h5>
+                          </td>
+                          <td>
+                            <h6>
+                              <span t-esc="street"/>
+                            </h6>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <h5 class="badge">Email</h5>
+                          </td>
+                          <td>
+                            <h6>
+                              <span t-esc="email"/>
+                            </h6>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <h5 class="badge">Teléfono</h5>
+                          </td>
+                          <td>
+                            <h6>
+                              <span t-esc="phone"/>
+                            </h6>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <h5 class="badge">Fecha Nacimiento</h5>
+                          </td>
+                          <td>
+                            <h6>
+                              <span t-esc="date_birthday"/>
+                            </h6>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                <!-- Información Laboral -->
+                <div class="col-sm-4">
+                  <div class="well">
+                    <br/>
+                    <br/>
+                    <table class="table table-striped table-reposive">
+                      <thead>
+                        <tr>
+                          <th colspan="2" class="text-center">
+                            <h3>Información Laboral</h3>
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>
+                            <h5 class="badge">Compañía</h5>
+                          </td>
+                          <td>
+                            <h6>
+                              <span t-esc="company"/>
+                            </h6>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <h5 class="badge">Tipo de Contrato</h5>
+                          </td>
+                          <td>
+                            <h6>
+                              <span t-esc="type_contract"/>
+                            </h6>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <h5 class="badge">Departamento</h5>
+                          </td>
+                          <td>
+                            <h6>
+                              <span t-esc="department"/>
+                            </h6>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <h5 class="badge">Cargo Actual</h5>
+                          </td>
+                          <td>
+                            <h6>
+                              <span t-esc="job"/>
+                            </h6>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td>
+                            <h5 class="badge">Fecha de Ingreso</h5>
+                          </td>
+                          <td>
+                            <h6>
+                              <span t-esc="date_start"/>
+                            </h6>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <br/>
+            <p class="text-center">
+              <b>NOTA:</b> La información aquí mostrada no es modificable desde el portal. Para actualizar sus datos debe acercarse a la persona encargada de recurso humano.
+            </p>
+
+            <br/>
+          </div>
+        </div>
+      </t>
+    </template>
+
+  </data>
+</odoo>

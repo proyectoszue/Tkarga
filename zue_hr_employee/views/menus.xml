@@ -1,0 +1,16 @@
+<odoo>
+    <data>
+        <!-- Menu tipos de empleados -->
+        <menuitem name="Tipos de empleado" id="zue_hr_employee.menu_types_employee" parent="hr.menu_human_resources_configuration_employee" action="zue_menu_action_types_employee"/>                
+        <!-- Menu parametrización riesgos profesionales -->
+        <menuitem name="Riesgos profesionales" id="zue_hr_employee.menu_contract_risk" parent="hr.menu_human_resources_configuration_employee" action="zue_menu_action_contract_risk"/>                
+        <!-- Menu Tipos de entidades-->
+        <menuitem name="Tipo de entidades" id="zue_hr_employee.menu_types_entities" parent="hr_payroll.menu_hr_payroll_configuration" action="zue_menu_action_types_entities"/>                
+        <!-- Menu Entidades -->
+        <menuitem name="Entidades" id="zue_hr_employee.menu_employee_entities" parent="hr_payroll.menu_hr_payroll_configuration" action="zue_menu_action_employee_entities"/>                
+        <!-- Menu Parámetros anuales -->
+        <menuitem name="Parámetros anuales" id="zue_hr_employee.menu_annual_parameters" parent="hr_payroll.menu_hr_payroll_configuration" action="zue_menu_action_annual_parameters"/>                        
+        <!-- Menu Listado de cumpleaños -->
+        <menuitem name="Listado de cumpleaños" id="zue_hr_employee.menu_report_birthday" parent="hr_payroll.menu_hr_payroll_report" action="action_hr_employee_report_birthday" sequence="50"/>                                
+    </data>
+</odoo>

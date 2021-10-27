@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+     <data noupdate = "1">
+        <record id="mntc_vehicle_system_1" model="mntc.vehicle.system">
+            <field name="name">Motor</field>
+            <field name="initials">MOTO</field>
+            <field name="code_reference">01</field>
+            <field name="workforce_type_id" eval="mntc_workforce_type_1"/>
+        </record>
+
+        <record id="mntc_vehicle_system_2" model="mntc.vehicle.system">
+            <field name="name">Aire Acondicionado</field>
+            <field name="initials">AIAC</field>
+            <field name="code_reference">02</field>
+            <field name="workforce_type_id" eval="mntc_workforce_type_1"/>
+        </record>
+        <record id="mntc_vehicle_system_3" model="mntc.vehicle.system">
+            <field name="name">Carroceria</field>
+            <field name="initials">CARR</field>
+            <field name="code_reference">03</field>
+            <field name="workforce_type_id" eval="mntc_workforce_type_1"/>
+        </record>
+        <record id="mntc_vehicle_system_4" model="mntc.vehicle.system">
+            <field name="name">Dirección</field>
+            <field name="initials">DIRE</field>
+            <field name="code_reference">04</field>
+            <field name="workforce_type_id" eval="mntc_workforce_type_1"/>
+        </record>
+        <record id="mntc_vehicle_system_5" model="mntc.vehicle.system">
+            <field name="name">Eléctrico</field>
+            <field name="initials">ELEC</field>
+            <field name="code_reference">05</field>
+            <field name="workforce_type_id" eval="mntc_workforce_type_2"/>
+
+        </record>
+        <record id="mntc_vehicle_system_6" model="mntc.vehicle.system">
+            <field name="name">Frenos</field>
+            <field name="initials">FREN</field>
+            <field name="code_reference">06</field>
+            <field name="workforce_type_id" eval="mntc_workforce_type_1"/>
+        </record>
+
+        <record id="mntc_vehicle_system_7" model="mntc.vehicle.system">
+            <field name="name">Neumático</field>
+            <field name="initials">NEUM</field>
+            <field name="code_reference">07</field>
+            <field name="workforce_type_id" eval="mntc_workforce_type_7"/>
+        </record>
+
+        <record id="mntc_vehicle_system_8" model="mntc.vehicle.system">
+            <field name="name">Ruedas</field>
+            <field name="initials">RUED</field>
+            <field name="code_reference">08</field>
+            <field name="workforce_type_id" eval="mntc_workforce_type_7"/>
+        </record>
+        <record id="mntc_vehicle_system_10" model="mntc.vehicle.system">
+            <field name="name">Seguridad Pasiva</field>
+            <field name="initials">SEID</field>
+            <field name="code_reference">10</field>
+            <field name="workforce_type_id" eval="mntc_workforce_type_9"/>
+        </record>
+        <record id="mntc_vehicle_system_11" model="mntc.vehicle.system">
+            <field name="name">Suspensión</field>
+            <field name="initials">SUSP</field>
+            <field name="code_reference">11</field>
+            <field name="workforce_type_id" eval="mntc_workforce_type_7"/>
+        </record>
+         <record id="mntc_vehicle_system_12" model="mntc.vehicle.system">
+            <field name="name">Transmisión</field>
+            <field name="initials">TRAN</field>
+            <field name="code_reference">12</field>
+            <field name="workforce_type_id" eval="mntc_workforce_type_7"/>
+        </record>
+    </data>
+</odoo>

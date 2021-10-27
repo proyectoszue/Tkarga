@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="availability_indicator_report_document_template">
+        <t t-call="web.html_container">
+            <t t-foreach="inside_foreach_docs or docs" t-as="o">
+                <t t-set="months_tuple" t-value="o.get_month_name()"/>
+                <t t-foreach="months_tuple" t-as="month">
+                    <t t-set="service_data" t-value="o.get_services_data()"/>
+                    <t t-set="days_month" t-value="o.get_days_month()"/>
+                    <t t-foreach="service_data" t-as="service_id">
+                        <t t-set="max_per_day" t-value="o.get_max_per_day(service_id)"/>
+                        <t t-if="len(service_data[service_id][2]) &gt; 2">
+                            <t t-call="zue_fleet_maintenance.custom_report_layout"/>
+                            <div class="page">
+                                <div style="vertical-align: middle;" align="center">
+                                    <table>
+                                        <tr>
+                                            <td style="padding-top: 5px;font-size:20;border:1px solid" t-att-colspan="days_month[month[1]][-1]+1">
+                                                <center>
+                                                    <b>
+                                                        <t t-raw="service_data[service_id][0]"/>
+                                                    </b>
+                                                </center>
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding-top: 5px;font-size:12;border:1px solid;width: 30px" t-att-colspan="1">
+                                                <center>
+                                                    <b>Cant</b>
+                                                </center>
+                                            </td>
+                                            <td style="padding-top: 5px;font-size:15;border:1px solid" t-att-colspan="days_month[month[1]][-1]">
+                                                <center>
+                                                    <b>
+                                                        <t t-raw="month[0]"/>
+                                                    </b>
+                                                </center>
+                                            </td>
+                                        </tr>
+                                        <t t-foreach="service_data[service_id][2]" t-as="vehicle_counter">
+                                            <t t-if="'+' not in vehicle_counter and int(vehicle_counter) == 0">
+                                                <tr>
+                                                    <td style="padding-top: 5px;font-size:12;border:1px solid;width: 30px">
+                                                        <center>
+                                                            <b>Días</b>
+                                                        </center>
+                                                    </td>
+                                                    <t t-foreach="days_month[month[1]]" t-as="day">
+                                                        <td style="padding-top: 5px;font-size:15;border:1px solid;width: 70px">
+                                                            <center>
+                                                                <b>
+                                                                    <t t-raw="day"/>
+                                                                </b>
+                                                            </center>
+                                                        </td>
+                                                    </t>
+                                                </tr>
+                                            </t>
+                                            <t t-if="'+' in vehicle_counter or int(vehicle_counter) > 0">
+                                                <tr>
+                                                    <td style="padding-top: 5px;font-size:15;border:1px solid;width: 30px">
+                                                        <center>
+                                                            <t t-raw="vehicle_counter"/>
+                                                        </center>
+                                                    </td>
+                                                    <t t-foreach="days_month[month[1]]" t-as="day">
+                                                        <t t-if="'+' in vehicle_counter or int(vehicle_counter) &gt; service_data[service_id][1]">
+                                                            <td style="padding-top: 5px;font-size:15;border:1px solid;width: 70px;background-color:#EA4335">
+                                                                <center>
+                                                                    <t t-set="qty_day" t-value="o.get_quantity_per_day(day, month[1], month[2], service_id)"/>
+                                                                    <t t-if="'+' in vehicle_counter">
+                                                                        <t t-if="qty_day &gt; int(service_data[service_id][2][1])">
+                                                                            <b>X</b>
+                                                                        </t>
+                                                                        <t t-if="qty_day &lt; int(service_data[service_id][2][1])">
+                                                                            <b></b>
+                                                                        </t>
+                                                                    </t>
+                                                                    <t t-if="'+' not in vehicle_counter">
+                                                                        <t t-if="qty_day == int(vehicle_counter)">
+                                                                            <b>X</b>
+                                                                        </t>
+                                                                        <t t-if="qty_day != int(vehicle_counter)">
+                                                                            <b></b>
+                                                                        </t>
+                                                                    </t>
+                                                                </center>
+                                                            </td>
+                                                        </t>
+                                                        <t t-if="'+' not in vehicle_counter and int(vehicle_counter) == service_data[service_id][1]">
+                                                            <td style="padding-top: 5px;font-size:15;border:1px solid;width: 70px;background-color:#FBBC05">
+                                                                <center>
+                                                                    <t t-set="qty_day" t-value="o.get_quantity_per_day(day, month[1], month[2], service_id)"/>
+                                                                    <t t-if="qty_day == int(vehicle_counter)">
+                                                                        <b>X</b>
+                                                                    </t>
+                                                                    <t t-if="qty_day != int(vehicle_counter)">
+                                                                        <b></b>
+                                                                    </t>
+                                                                </center>
+                                                            </td>
+                                                        </t>
+                                                        <t t-if="'+' not in vehicle_counter and int(vehicle_counter) &lt; service_data[service_id][1]">
+                                                            <td style="padding-top: 5px;font-size:15;border:1px solid;width: 70px;background-color:#34A853">
+                                                                <center>
+                                                                    <t t-set="qty_day" t-value="o.get_quantity_per_day(day, month[1], month[2], service_id)"/>
+                                                                    <t t-if="qty_day == int(vehicle_counter)">
+                                                                        <b>X</b>
+                                                                    </t>
+                                                                    <t t-if="qty_day != int(vehicle_counter)">
+                                                                        <b></b>
+                                                                    </t>
+                                                                </center>
+                                                            </td>
+                                                        </t>
+                                                    </t>
+                                                </tr>
+                                            </t>
+                                        </t>
+                                        <t t-foreach="max_per_day" t-as="value_per_day">
+                                            <tr>
+                                                <td style="padding-top: 5px;font-size:15;border:1px solid;width: 50px">
+                                                    <center>
+                                                        <t t-raw="value_per_day"/>
+                                                    </center>
+                                                </td>
+                                                <t t-foreach="days_month[month[1]]" t-as="day">
+                                                    <td style="padding-top: 5px;font-size:10;border:1px solid;width: 70px">
+                                                        <t t-set="day_moviles_array" t-value="o.get_movile_day(day, month[1], month[2], service_id)"/>
+                                                        <t t-if="len(day_moviles_array) &gt; value_per_day or len(day_moviles_array) == value_per_day">
+                                                            <center>
+                                                                <b>
+                                                                    <t t-raw="day_moviles_array[value_per_day-1]"/>
+                                                                </b>
+                                                            </center>
+                                                        </t>
+                                                        <t t-if="len(day_moviles_array) &lt; value_per_day and len(day_moviles_array) != value_per_day">
+                                                            <b></b>
+                                                        </t>
+                                                    </td>
+                                                </t>
+                                            </tr>
+                                        </t>
+                                    </table>
+                                </div>
+                            </div>
+                        </t>
+                    </t>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <template id="availability_indicator_report_document">
+        <t t-foreach="docs" t-as="o">
+            <t t-set="inside_foreach_docs" t-value="o"/>
+            <t t-call="zue_fleet_maintenance.availability_indicator_report_document_template"/>
+        </t>
+    </template>
+
+</odoo>

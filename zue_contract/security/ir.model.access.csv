@@ -1,0 +1,9 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_cntr_contract_encab,cntr.contract.encab,model_cntr_contract_encab,,1,1,1,1
+access_cntr_contract_participation,cntr.contract.participation,model_cntr_contract_participation,,1,1,1,1
+access_cntr_contract_service,cntr.contract.service,model_cntr_contract_service,,1,1,1,1
+access_cntr_contract_periodicity,cntr.contract.periodicity,model_cntr_contract_periodicity,,1,1,1,1
+access_cntr_contract_billing_uom,cntr.contract.billing.uom,model_cntr_contract_billing_uom,,1,1,1,1
+access_cntr_contract_ranges_uom,cntr.contract.ranges.uom,model_cntr_contract_ranges_uom,,1,1,1,1
+access_cntr_contract_service_detail,cntr.contract.service.detail,model_cntr_contract_service_detail,,1,1,1,1
+access_cntr_contract_logirastreo,cntr.contract.logirastreo,model_cntr_contract_logirastreo,,1,1,1,1

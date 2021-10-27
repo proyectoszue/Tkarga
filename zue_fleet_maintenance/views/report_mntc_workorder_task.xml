@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.act_window"  id="mntc_workorder_report_task_action">
+            <field name="name">Informe de tareas para la orden de trabajo </field>
+            <field name="res_model">mntc.workorder.report.task</field>
+            <field name="view_mode">pivot</field>
+		</record>
+
+        <record id="mntc_workorder_report_task_pivot" model="ir.ui.view">
+            <field name="name">mntc.workorder.report.task.pivot</field>
+            <field name="model">mntc.workorder.report.task</field>
+            <field name="arch" type="xml">
+                <pivot string="Pivot">
+                    <field name="tiempo_estimado_ot" type="measure" widget="float_time"/>
+                    <field name="tiempo_empleado_ot" type="measure" widget="float_time"/>
+                    <field name="duracion_real_ot" type="measure" widget="float_time"/>
+                    <field name="total_horas_hombre_ot" type="measure" widget="float_time"/>
+                    <field name="tiempo_estimado_ts" type="measure" widget="float_time"/>
+                    <field name="total_horas_hombre_ts" type="measure" widget="float_time"/>    
+                    <field name="costo_repuesto" type="measure" />
+                    <field name="costo_mano_obra" type="measure" />
+                    <field name="costo_servicio" type="measure" />              
+                </pivot>
+            </field>
+		</record>
+        
+  </data>
+</odoo>
