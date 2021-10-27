@@ -1,0 +1,215 @@
+<odoo>
+    <data>
+        <record model="ir.actions.act_window"  id="mntc_catalog_action">
+				<field name="name">Catalog</field>
+				<field name="res_model">mntc.catalog</field>
+				<field name="view_mode">tree,form</field>
+		</record>
+        <record model="ir.ui.view" id="zue_fleet_maintenance.list_mntc_catalog_action">
+			    <field name="name">zue list mntc catalog</field>
+			    <field name="model">mntc.catalog</field>
+			    <field name="arch" type="xml">
+				<tree>
+					<field name="name"/>                
+					<field name="service_type_id"/>           
+					<field name="brand_id"/>           
+					<field name="vehiculo_linea_id"/>           
+					<field name="routines_ids"/>           
+				</tree>
+			</field>
+		</record>
+        <record model="ir.ui.view" id="zue_fleet_maintenance.form_mntc_catalog_action">
+			<field name="name">zue form mntc catalog</field>
+			<field name="model">mntc.catalog</field>
+			<field name="arch" type="xml">
+				<form>
+                    <sheet string="Catalogo">
+                        <group>
+							<group>
+								<field name="name"/>
+								<field name="brand_id"/>  
+							</group> 
+							<group>
+								<field name="service_type_id"/>
+								<field name="vehiculo_linea_id"/> 
+							</group>
+							<field name="routines_ids"/>  
+                        </group>
+                    </sheet>
+                </form>
+			</field>
+		</record>
+
+		<record model="ir.actions.act_window"  id="mntc_spare_part_type_action">
+			<field name="name">Parte que falla</field>
+			<field name="res_model">mntc.spare.part.type</field>
+			<field name="view_mode">tree,form</field>
+		</record>
+		<record model="ir.ui.view" id="zue_fleet_maintenance.list_mntc_spare_part_type">
+			<field name="name">zue list mntc spare part types</field>
+			<field name="model">mntc.spare.part.type</field>
+			<field name="arch" type="xml">
+				<tree editable="bottom">
+					<field name="name"/> 
+					<field name="component_ids" widget="many2many_tags"/>                
+				</tree>
+			</field>
+		</record>
+
+	  	<!-- <record id="view_zue_fleet_maintenance_form_product_category" model="ir.ui.view">
+			<field name="name">fleet.maintenance.zue.product.category.form.inherit</field>
+			<field name="model">product.category</field>
+			<field name="priority">20</field>
+			<field name="inherit_id" ref="product.product_category_form_view"/>
+			<field name="arch" type="xml">
+				<xpath expr="//field[@name='parent_id']" position="after">
+                	<field name="code_reference"/>
+            	</xpath>
+			</field>
+		</record> -->
+
+
+		<record id="view_zue_fleet_maintenance_form_brand_template" model="ir.ui.view">
+            <field name="name">fleet.maintenance.zue.brand.template.form.inherit</field>
+            <field name="model">fleet.vehicle.model.brand</field>
+            <field name="inherit_id" ref="fleet.fleet_vehicle_model_brand_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='name']" position="replace">
+                    <group>
+						<group>
+							<field name="name"/>
+						</group>
+						<group>
+							<field name="code_reference"/>
+						</group>
+					</group>
+                </xpath>
+            </field>
+        </record>
+
+		<record model="ir.actions.act_window"  id="mntc_repuestos_action">
+			<field name="name">Repuestos</field>
+			<field name="res_model">mntc.repuestos</field>
+			<field name="view_mode">tree,form</field>
+		</record>
+		<record model="ir.ui.view" id="zue_fleet_maintenance.list_mntc_repuestos_action">
+			<field name="name">zue list mntc repuestos</field>
+			<field name="model">mntc.repuestos</field>
+			<field name="arch" type="xml">
+				<tree editable="bottom">
+					<field name="producto" context="{'default_esRepuesto': True}"/>
+					<field name="uom_id"/> 
+					<field name="cantidad"/>
+					<field name="standard_price"/>
+					<field name="estimated_price"/>
+					<field name="qty_available"/> 
+					<field name="qty_done"/>
+				</tree>
+			</field>
+		</record>
+
+		<record model="ir.actions.act_window"  id="mntc_servicios_action">
+			<field name="name">Servicios</field>
+			<field name="res_model">mntc.servicios</field>
+			<field name="view_mode">tree,form</field>
+		</record>
+		<record model="ir.ui.view" id="zue_fleet_maintenance.list_mntc_servicios_action">
+			<field name="name">zue list mntc servicios</field>
+			<field name="model">mntc.servicios</field>
+			<field name="arch" type="xml"> 
+				<tree editable="bottom">
+					<field name="producto" context="{'default_type': 'service'}"/>
+					<field name="description"/>
+					<field name="uom_id"/> 
+					<field name="res_partner_id"/>
+					<field name="order_line_id" invisible="1"/>
+					<!-- <field name="quantity_order"/>
+					<field name="price_unit_order"/>
+					<field name="taxes_id_order" widget="many2many_tags"/> -->
+					<field name="cantidad"/>
+					<field name="price_unit"/>
+					<field name="taxes_id" widget="many2many_tags"/>
+				</tree>
+			</field>
+		</record>
+
+		<record model="ir.actions.act_window" id="product_uom_action">
+            <field name="name">Unidades de medida</field>
+            <field name="res_model">product.uom</field>
+			<field name="view_mode">tree,form</field>
+        </record>
+		<record model="ir.ui.view" id="zue_fleet_maintenance.list_product_uom_action" >
+            <field name="name">zue list product uom</field>
+            <field name="model">product.uom</field>
+            <field name="arch" type="xml">
+                <tree string="Unidades de medida">
+                    <field name="name"/>
+                    <field name="category_id"/>
+                </tree>
+            </field>
+        </record>
+        <record model="ir.ui.view" id="zue_fleet_maintenance.form_product_uom_action">
+            <field name="name">zue form product uom</field>
+            <field name="model">product.uom</field>
+            <field name="arch" type="xml">
+                <form string="Units of Measure">
+					<sheet>
+						<group>
+							<group>
+								<field name="name"/>
+								<field name="category_id"/>
+								<field name="uom_type" on_change="onchange_type(uom_type)"/>
+								<label for="factor"/>
+								<div>
+									<field name="factor" attrs="{'invisible':[('uom_type','!=','smaller')]}"/>
+									<field name="factor_inv" attrs="{'invisible':[('uom_type','!=','bigger')]}"/>
+									<p attrs="{'invisible':[('uom_type','!=','smaller')]}" class="oe_grey">
+										e.g: 1 * (reference unit) = ratio * (this unit)
+									</p>
+									<p attrs="{'invisible':[('uom_type','!=','bigger')]}" class="oe_grey">
+										e.g: 1 * (this unit) = ratio * (reference unit)
+									</p>
+								</div>
+							</group>
+							<group>
+								<field name="active"/>
+								<field name="rounding"/>
+							</group>
+						</group>
+					</sheet>
+                </form>
+            </field>
+        </record>
+
+
+		<record model="ir.actions.act_window"  id="mntc_product_family_action">
+				<field name="name">product family</field>
+				<field name="res_model">mntc.product.family</field>
+				<field name="view_mode">tree,form</field>
+		</record>
+        <record model="ir.ui.view" id="zue_fleet_maintenance.list_mntc_product_family_action">
+			    <field name="name">zue list mntc product family</field>
+			    <field name="model">mntc.product.family</field>
+			    <field name="arch" type="xml">
+				<tree>
+					<field name="code"/>
+					<field name="name"/>
+				</tree>
+			</field>
+		</record>
+        <record model="ir.ui.view" id="zue_fleet_maintenance.form_mntc_product_family_action">
+			<field name="name">zue form mntc product family</field>
+			<field name="model">mntc.product.family</field>
+			<field name="arch" type="xml">
+				<form>
+                    <sheet>
+						<group>
+							<field name="code"/>
+							<field name="name"/>
+						</group>
+                    </sheet>
+                </form>
+			</field>
+		</record>
+    </data>
+</odoo>

@@ -1,0 +1,18 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_hr_tipo_cotizante_manager,access_hr_tipo_cotizante_manager,model_hr_tipo_cotizante,,1,1,1,1
+access_hr_subtipo_cotizante_manager,access_hr_subtipo_cotizante_manager,model_hr_subtipo_cotizante,,1,1,1,1
+access_hr_indicador_especial_pensiones_manager, access_hr_indicador_especial_pensiones_manager,model_hr_indicador_especial_pila,,1,1,1,1
+access_hr_contribution_register,access_hr_contribution_register,model_hr_contribution_register,,1,1,1,1
+access_hr_contract_setting, access_hr_contract_setting,model_hr_contract_setting,,1,1,1,1
+access_hr_contract_setting_history, access_hr_contract_setting_history,model_hr_contract_setting_history,,1,1,1,1
+access_hr_contract_change_wage,access_hr_contract_change_wage,model_hr_contract_change_wage,,1,1,1,1
+access_hr_contract_risk, access_hr_contract_risk,model_hr_contract_risk,,1,1,1,1
+access_hr_contract_concepts, access_hr_contract_concepts,model_hr_contract_concepts,,1,1,1,1
+access_hr_types_employee, access_hr_types_employee,model_hr_types_employee,,1,1,1,1
+access_hr_employee_entities, access_hr_employee_entities,model_hr_employee_entities,,1,1,1,1
+access_hr_annual_parameters, access_hr_annual_parameters,model_hr_annual_parameters,,1,1,1,1
+access_hr_contract_deductions_rtf, access_hr_contract_deductions_rtf,model_hr_contract_deductions_rtf,,1,1,1,1
+access_hr_employee_dependents, access_hr_employee_dependents,model_hr_employee_dependents,,1,1,1,1
+access_hr_employee_labor_union, access_hr_employee_labor_union,model_hr_employee_labor_union,,1,1,1,1
+access_hr_salary_rule_accounting, access_hr_salary_rule_accounting,model_hr_salary_rule_accounting,,1,1,1,1
+access_hr_employee_documents, access_hr_employee_documents,model_hr_employee_documents,,1,1,1,1

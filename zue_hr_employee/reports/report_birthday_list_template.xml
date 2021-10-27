@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_birthday_list_document">
+        <t t-call="web.html_container">
+            <t t-foreach="inside_foreach_docs or docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="row">
+                        <div class="col-md-12 text-center">
+                            <h1>
+                                <strong>LISTA DE CUMPLEAÑOS</strong>
+                            </h1>
+                        </div>
+                    </div>
+                    <br/>
+                    <div class="page" style="font-style: normal; font-size: 12px;">
+                        <div class="oe_structure">
+                            <div class="row">
+                                <table class="table table-bordered" t-foreach="o.get_month()" t-as="m">
+                                    <thead style="font-style: normal; font-size: 12px;">
+                                        <tr>
+                                            <td colspan="4">
+                                                <h3>
+                                                    <span t-esc="o.get_name_month(m)"/>
+                                                </h3>
+                                            </td>
+                                        </tr>
+                                        <tr style="font-style: normal; font-size: 16px;">
+                                            <td style="width: 20%;">
+                                                <b>Compañia</b>
+                                            </td>
+                                            <td style="width: 10%;">
+                                                <b>Identificación</b>
+                                            </td>
+                                            <td style="width: 40%;">
+                                                <b>Nombre</b>
+                                            </td>
+                                            <td style="width: 20%;">
+                                                <b>Fecha de cumpleaños</b>
+                                            </td>
+                                        </tr>
+                                    </thead>
+                                    <tbody>                                        
+                                        <tr t-foreach="o.get_info_birthday(m)" t-as="info">
+                                            <td>
+                                                <span t-esc="info.company_id.name"/>
+                                            </td>
+                                            <td>
+                                                <span t-esc="info.identification_id"/>
+                                            </td>
+                                            <td>
+                                                <span t-esc="info.name"/>
+                                            </td>
+                                            <td>
+                                                <span t-esc="o.get_date_text(info.birthday)"/>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_birthday_list">
+        <t t-foreach="docs" t-as="o">
+            <t t-set="inside_foreach_docs" t-value="o"/>
+            <t t-call="zue_hr_employee.report_birthday_list_document"/>
+        </t>
+    </template>
+</odoo>

@@ -1,0 +1,21 @@
+<odoo>
+    <data>
+		<!-- Auxilios de vacaciones AlianzaT -->
+		<record model="ir.actions.act_window"  id="action_hr_assistance_vacation_alliancet">
+				<field name="name">Auxilios de vacaciones AlianzaT</field>
+				<field name="res_model">hr.assistance.vacation.alliancet</field>
+				<field name="view_mode">tree</field>
+		</record>
+        <record model="ir.ui.view" id="zue_hr_payroll.list_hr_assistance_vacation_alliancet">
+			    <field name="name">hr assistance vacation alliancet list</field>
+			    <field name="model">hr.assistance.vacation.alliancet</field>
+			    <field name="arch" type="xml">
+				<tree editable="bottom">
+					<field name="antiquity"/>                
+					<field name="vacation_relief"/>           					
+                    <field name="convention_vacation"/>                
+				</tree>
+			</field>
+		</record>
+    </data>
+</odoo>

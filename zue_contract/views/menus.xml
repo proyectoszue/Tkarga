@@ -1,0 +1,10 @@
+<odoo>
+    <data>
+        <menuitem name="Contratos" id="contract_main_menu" sequence="100"/> 
+            <menuitem id="cntr_contract_encab" name="Contratos" parent="contract_main_menu" action="cntr_contract_encab_action" sequence="1"/>
+            <menuitem id="cntr_contract_config" name="Configuraciones" parent="contract_main_menu" sequence="2"/>
+                <menuitem id="menu_contract_billing_uom" name="Unidades de facturación" parent="cntr_contract_config" action="cntr_contract_billing_uom_action" sequence="1"/>
+                <menuitem id="menu_contract_periodicity_action" name="Periodicidad" parent="cntr_contract_config" action="cntr_contract_periodicity_action" sequence="1"/>
+
+    </data>
+</odoo>

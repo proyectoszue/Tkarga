@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <template id="report_certificacion_laboral_document">
+        <t t-call="web.html_container">
+        <t t-foreach="inside_foreach_docs or docs" t-as="o">
+            <div class="header">                
+                <div class="col-md-12 text-right" style="margin-top:5px;">
+                    <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)" style="max-height: 100px;"/>
+                    <b><p syle="line-height:0px"><b>NIT: </b><span t-field="o.company_id.company_registry"></span></p></b>
+                    <p syle="line-height:0px">La mejor opción en soluciones de transporte especial de pasajeros</p>
+                </div>                
+            </div>
+
+            <div class="page">
+                <div class="oe_structure"></div>
+                <div class="row">
+                <br/><br/><br/>
+                <div class="col-md-12 text-center" style="text-align:center">
+                    <strong><h4><span t-field="o.employee_id.company_id.name"/></h4></strong>
+                    <p style="line-height:0px"><strong>NIT:</strong> <span t-field="o.employee_id.company_id.company_registry" /></p><br/>
+                    <p style="line-height:0px"><strong><h4>CERTIFICA QUE</h4></strong></p>
+                </div>
+                <br/><br/>
+                <div class="col-md-12">
+                    <p style="text-align:justify">
+                    <span t-if="o.employee_id.gender == 'male'">El señor</span> <span t-if="o.employee_id.gender == 'female'">La señora</span> <b><span t-esc="o.employee_id.name"/></b>
+                    , identificado con cédula de ciudadanía número <span t-esc="'{:20,.0f}'.format(int(o.employee_id.identification_id))"/>,
+                    labora en nuestra compañía desde el <span t-esc="o.get_date_text(o.date_start)"/>, mediante un <b><span t-esc="o.get_contract_type()"/></b>
+                    , desempeñando el cargo de <b><span t-esc="o.job_id.name"/></b> 
+                    en la seccional <b><span t-esc="o.employee_id.branch_id.name"/></b>
+                    , devengando un salario básico mensual de <b><span t-esc="o.get_amount_text(o.wage)"/> M/Cte.</b> (<span t-esc="o.wage" t-esc-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: &quot;o.company_id.currency_id&quot;}"/>),
+                    <t t-set="promedio_heyrec" t-value="o.get_average_concept_heyrec()"/>
+                    <t t-if="promedio_heyrec">                        
+                        y un promedio de horas extras mensual en los últimos tres meses de <b><span t-esc="o.get_amount_text(promedio_heyrec)"/> M/Cte.</b> (<span t-esc="promedio_heyrec" t-esc-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: &quot;o.company_id.currency_id&quot;}"/>),                       
+                    </t>
+
+                    <!-- <t t-set="ultimo" t-value="o.get_ultimo_concepto(o.id)"/>
+                    <t t-if="ultimo">
+                        <t t-foreach="ultimo.keys()" t-as="l">
+                        y <span t-esc="l"/> de <b> M/Cte.</b>  (<span t-esc="ultimo[l].get('total')" t-esc-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: &quot;o.employee_id.company_id.currency_id&quot;}"/>) promedio mensual.
+                        </t>
+                    </t> -->
+
+                    </p><br/>
+                    <p style="text-align:justify">
+                    Para constancia se firma en la ciudad de Bogotá D.C, <span t-esc="o.get_date_text(datetime.datetime.now(),1)"/>
+                    </p>
+                </div>
+                <br/><br/>
+                <div class="col-md-12 col-md-offset-12">
+                    <p style="text-align:justify">Cordialmente,</p>
+                    <br/><br/>
+                    <t t-set="autorizado" t-value="o.get_signature_certification()"/>
+                    <img t-if="autorizado.get('firma')" t-att-src="image_data_uri(autorizado.get('firma'))" style="max-height: 150px;"/>
+                    <p style="text-align:justify;line-height:0px"><strong><span t-esc="autorizado.get('nombre')"/></strong></p>
+                    <p style="text-align:justify;line-height:0px"><strong><span t-esc="autorizado.get('cargo')"/></strong></p>
+                    <p style="text-align:justify">
+                        <strong>Importante:</strong>Certificado emitido automáticamente por el sistema de Información Odoo. Si desea verificar la veracidad de esta información puede
+                        comunicarse a la Dirección Nacional de Talento Humano, líneas autorizadas (1)6197256 en Bogotá D.C. o al 3214633948.
+                    </p>
+                </div>
+                </div>
+            </div>
+
+            <div class="footer">            
+                <t t-if="o.employee_id.company_id.name == 'GRUPO EMPRESARIAL ALIANZA T S.A.'">
+                    <img src="/zue_hr_employee/static/src/img/footer_alianza.png"/>
+                </t>
+                <t t-if="o.employee_id.company_id.name != 'GRUPO EMPRESARIAL ALIANZA T S.A.'">
+                    <img src="/zue_hr_employee/static/src/img/footer.png"/>
+                </t>
+            </div>
+        </t>
+        </t>    
+        </template>
+
+         <template id="report_certificacion_laboral">
+         <t t-foreach="docs" t-as="o">
+            <t t-set="inside_foreach_docs" t-value="o"/>
+            <t t-call="zue_hr_employee.report_certificacion_laboral_document" t-lang="o.employee_id.address_home_id.lang"/>
+        </t>
+    </template>
+</odoo>

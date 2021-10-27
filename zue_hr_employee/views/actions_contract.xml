@@ -1,0 +1,137 @@
+<odoo>
+    <data>
+
+        <record id="ir_seq_hr_contract" model="ir.sequence">
+            <field name="name">RRHH Contratos Empleados</field>
+            <field name="code">hr.contract.seq</field>
+            <field name="prefix">CTO/</field>
+            <field name="padding">6</field>
+            <field name="number_increment">1</field>
+            <field name="use_date_range">True</field>
+            <field name="number_next_actual">1</field>
+            <field name="implementation">standard</field>
+        </record> 
+
+        <!-- Crear record rule para filtrar las sucursales - Contratos -->
+        <record id="rule_employee_contract_zue_res_branch" model="ir.rule">
+            <field name="name">Permisos sucursales contratos empleados</field>
+            <field name="model_id" ref="model_hr_contract"/>
+            <field name="domain_force">['|',('employee_id.branch_id','in',user.branch_ids.ids),('employee_id.branch_id','=',False)]</field>
+        </record>
+
+        <!-- Formulario de contratos - ajustes -->    
+        <record id="view_zue_hr_employee_form_contract" model="ir.ui.view">
+            <field name="name">hr.contract.zue.hr.employee.form.inherit</field>
+            <field name="model">hr.contract</field>
+            <field name="priority">20</field>
+            <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form[1]/header[1]/field[@name='state']" position="before">                    
+                    <button string="Activar" name="action_state_open" states="draft" type="object"/>
+                    <button string="Cancelar" name="action_state_cancel" type="object"/> 
+                </xpath>
+                <xpath expr="//form[1]/header[1]/field[@name='state']" position="attributes">
+                    <attribute name="attrs">{}</attribute>
+                    <attribute name="options">{}</attribute>
+                    <attribute name="force_save">True</attribute>
+                    <attribute name="readonly">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='active']" position="before">
+                    <field name="view_inherit_employee" attrs="{}" invisible="1"/>
+                </xpath>
+                <xpath expr="//field[@name='employee_id']" position="attributes">
+                    <attribute name="attrs">{"invisible": [["view_inherit_employee","=",True]]}</attribute>
+                </xpath>
+                <xpath expr="//field[@name='department_id']" position="after">
+                    <field name="sequence" force_save="1" readonly="1"/>                    
+                    <field name="contract_type"/>                    
+                    <field name="modality_salary"/>
+                    <field name="code_sena"/>
+                    <field name="type_employee" invisible="1"/>
+                </xpath>
+                <xpath expr="//field[@name='job_id']" position="after">
+                    <field name="risk_id"/>                    
+                </xpath>
+                <xpath expr="//field[@name='trial_date_end']" position="after">
+                    <field name="retirement_date"/>                                        
+                </xpath>
+                <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">
+                    <page string="Cambios salario" name="cambio_salario">
+                        <group>
+                            <field name="change_wage_ids" nolabel="1" force_save="True" readonly="1">
+                                <tree string="Cambios salario basico">
+                                    <field name="date_final"/>
+                                    <field name="wage"/>
+                                </tree>
+                            </field>
+                        </group>
+                    </page>
+                    <page string="Devengos &amp; Deducciones" name="dev_and_ded">
+                        <group>
+                            <field name="concepts_ids" nolabel="1" context="{'default_type_employee': type_employee}">
+                                <tree string="Deducciones o Devengos, conceptos de nómina">
+                                    <field name="type_employee" invisible="1"/>
+                                    <field name="input_id"/>
+                                    <field name="amount"/>
+                                    <field name="period"/>
+                                    <field name="aplicar"/>
+                                    <field name="date_start"/>
+                                    <!-- <field name="date_end"/> -->
+                                    <field name="partner_id"/>
+                                    <field name="state"/>                                    
+                                </tree>
+                                <form>
+                                    <header>
+                                        <button name="change_state_done" type="object" states="draft" string="Aprobar" class="oe_highlight"/>
+                                        <button name="change_state_cancel" type="object" states="done" string="Cancelar / Finalizar" class="oe_highlight"/>                                        
+                                        <field name="state" widget="statusbar"/>
+                                    </header>
+                                    <sheet string="Deducciones o Devengos, conceptos de nómina">
+                                        <group>
+                                            <group>
+                                                <field name="type_employee" invisible="1"/>
+                                                <field name="input_id"/>
+                                                <field name="amount"/>
+                                                <field name="period"/>
+                                                <field name="aplicar"/>
+                                            </group>
+                                            <group>
+                                                <field name="date_start"/>
+                                                <field name="date_end"/>
+                                                <field name="attached_name" invisible="1"/>
+                                                <field name="attached" widget="binary"/>                                                
+                                            </group>
+                                            <group string="Entidades">
+                                                <field name="partner_id"/>                                                   
+                                                <field name="embargo_judged"/>
+                                                <field name="embargo_process"/>
+                                            </group>
+                                        </group>                                        
+                                        <group col="4">
+                                            <field name="detail" colspan="4"/>
+                                        </group>
+                                    </sheet>
+                                </form>                                
+                            </field>
+                        </group>
+                    </page>
+                    <page string="Tributaria" name="tributaria">
+                        <group>
+                            <field name="retention_procedure" widget="radio"/>
+                            <field name="deductions_rtf_ids">
+                                <tree string="hr.contract.deductions.rtf" editable="bottom">
+                                    <field name="input_id"/>
+                                    <field name="date_start"/>
+                                    <field name="date_end"/>
+                                    <field name="number_months"/>
+                                    <field name="value_total"/>
+                                    <field name="value_monthly"/>
+                                </tree>
+                            </field>
+                        </group>
+                    </page>
+                </xpath>
+            </field>
+        </record>         
+    </data>
+</odoo>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data noupdate = "1">
+        <record id="mntc_workforce_type_1" model="mntc.workforce.type">
+            <field name="description">Mecanico</field>
+             <field name="code">MECA</field>
+        </record>
+        <record id="mntc_workforce_type_2" model="mntc.workforce.type">
+            <field name="description">Electricista</field>
+             <field name="code">ELEC</field>
+        </record>
+        <record id="mntc_workforce_type_3" model="mntc.workforce.type">
+            <field name="description">Auxiliar</field>
+             <field name="code">AUXI</field>
+        </record>
+        <record id="mntc_workforce_type_4" model="mntc.workforce.type">
+            <field name="description">Latonero</field>
+             <field name="code">LATO</field>
+        </record>
+        <record id="mntc_workforce_type_5" model="mntc.workforce.type">
+            <field name="description">Pintor</field>
+             <field name="code">PINT</field>
+        </record>
+        <record id="mntc_workforce_type_6" model="mntc.workforce.type">
+            <field name="description">Lubricador</field>
+             <field name="code">LUBR</field>
+        </record>
+        <record id="mntc_workforce_type_7" model="mntc.workforce.type">
+            <field name="description">Llantero</field>
+             <field name="code">LLAN</field>
+        </record>
+        <record id="mntc_workforce_type_8" model="mntc.workforce.type">
+            <field name="description">Lavador</field>
+             <field name="code">LAVA</field>
+        </record>
+        <record id="mntc_workforce_type_9" model="mntc.workforce.type">
+            <field name="description">Inspector</field>
+             <field name="code">INSP</field>
+        </record>
+        <record id="mntc_workforce_type_10" model="mntc.workforce.type">
+            <field name="description">Coordinator</field>
+             <field name="code">COOR</field>
+        </record>
+        <record id="mntc_workforce_type_11" model="mntc.workforce.type">
+            <field name="description">Programmer</field>
+             <field name="code">PROG</field>
+        </record>
+        <record id="mntc_workforce_type_12" model="mntc.workforce.type">
+            <field name="description">Director</field>
+             <field name="code">DIRE</field>
+        </record>
+        <record id="mntc_workforce_type_13" model="mntc.workforce.type">
+            <field name="description">Carrocero</field>
+             <field name="code">CARR</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,20 @@
+<odoo>
+  <data>
+    <record model="ir.actions.act_window" id="action_mntc_documents_types">
+        <field name="name">Documents Types</field>
+        <field name="res_model">mntc.documents.types</field>
+        <field name="view_mode">tree</field>
+    </record>
+    <record model="ir.ui.view" id="zue_fleet_maintenance.list_documents_types">
+        <field name="name">zue list mntc documents types</field>
+        <field name="model">mntc.documents.types</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/> 
+                <field name="format_code"/> 
+                <field name="version_code"/>                
+            </tree>
+      </field>
+    </record>
+  </data>
+</odoo>

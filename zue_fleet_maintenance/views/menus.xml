@@ -1,0 +1,53 @@
+<odoo>
+    <data>
+        <!-- Top menu item -->
+        <menuitem id="mntc_vehiculos_lineas" name="Linea del vehículo" parent="fleet.fleet_configuration" action="vehiculos_lineas_action" sequence="9"/>
+        <menuitem id="mntc_services_type" name="Services type" parent="fleet.fleet_configuration" action="action_mntc_services_type" sequence="10"/>
+        <menuitem id="mntc_carroceria" name="Carrocería" parent="fleet.fleet_configuration" action="action_mntc_carroceria" sequence="11"/>
+
+        <menuitem name="Maintenance" id="maintenance_main_menu" sequence="100"/> 
+            <menuitem id="menu_mntc_maintenance" name="Mantenimiento" parent="maintenance_main_menu" sequence="101"/>
+                <menuitem id="mntc_io_menu" name="Input/Output" parent="menu_mntc_maintenance" action="mntc_io_action" sequence="1"/>
+                <menuitem id="mntc_request_menu" name="Request" parent="menu_mntc_maintenance" action="mntc_request_action" sequence="2"/>
+                <menuitem id="mntc_workorder_menu" name="Workorder" parent="menu_mntc_maintenance" action="mntc_workorder_action" sequence="3"/>
+                <menuitem id="mntc_tasks_menu" name="Tasks" parent="menu_mntc_maintenance" action="mntc_tasks_action" sequence="5"/>
+                <menuitem id="mntc_program_wizard_menu" name="Planeación preventiva" parent="menu_mntc_maintenance" action="action_program_range_wizard" sequence="6"/>
+
+
+            <menuitem id="menu_mntc_maintenance_config" name="Configuraciones" parent="maintenance_main_menu" sequence="102"/>
+                <menuitem id="mntc_garage" name="Garage" parent="menu_mntc_maintenance_config" action="action_mntc_garage" sequence="1"/>
+                <menuitem id="menu_mntc_maintenance_parts" name="Códigos de falla" parent="menu_mntc_maintenance_config" sequence="2"/>
+                    <menuitem id="menu_mntc_maintenance_tax" name="Taxonomía" parent="menu_mntc_maintenance_parts" sequence="1"/>
+                        <menuitem id="mntc_component" name="Component" parent="menu_mntc_maintenance_tax" action="action_mntc_component" sequence="1"/>
+                        <menuitem id="mntc_spare_part_type_menu" name="Parte que falla" parent="menu_mntc_maintenance_tax" action="mntc_spare_part_type_action" sequence="2"/>
+                        <menuitem id="mntc_vehicle_system_menu" name="Sistema" parent="menu_mntc_maintenance_tax" action="action_mntc_vehicle_system" sequence="3"/>
+                        
+                    <menuitem id="mntc_symptoms_menu" name="Symptoms" parent="menu_mntc_maintenance_parts" action="action_mntc_symptoms" sequence="2"/>
+                    <menuitem id="mntc_causes" name="Causes" parent="menu_mntc_maintenance_parts" action="mntc_causes_action" sequence="3"/>
+                    <menuitem id="mntc_action_taken" name="Action Taken" parent="menu_mntc_maintenance_parts" action="action_mntc_action_taken" sequence="4"/>                    
+                    <menuitem id="mntc_technician_menu" name="Technician" parent="menu_mntc_maintenance_parts" action="action_mntc_technician" sequence="6"/>
+                    
+                <menuitem id="mntc_detection_methods_menu" name="Detection methods" parent="menu_mntc_maintenance_config" action="action_mntc_detection_methods" sequence="3"/>
+                
+                
+                    
+                <menuitem id="menu_mntc_configuration_routines" name="Routines" parent="menu_mntc_maintenance_config" sequence="4"/>
+                    <menuitem id="mntc_catalog_menu" name="Catalog" parent="menu_mntc_configuration_routines" action="mntc_catalog_action" sequence="1"/>
+                    <menuitem id="mntc_routines_menu" name="Routines" parent="menu_mntc_configuration_routines" action="mntc_routines_action" sequence="2"/>
+                    <menuitem id="mntc_activity_menu" name="Tareas" parent="menu_mntc_configuration_routines" action="mntc_activity_action" sequence="3"/>
+                    
+                    
+                <menuitem id="mntc_mntc_documents_types" name="Documents types" parent="menu_mntc_maintenance_config" action="action_mntc_documents_types" sequence="5"/>
+                <menuitem id="mntc_location_dest" name="Location dest" parent="menu_mntc_maintenance_config" action="action_mntc_location_dest" sequence="6"/>
+                <menuitem id="mntc_product_family" name="Familia de productos" parent="menu_mntc_maintenance_config" action="mntc_product_family_action" sequence="7"/>
+
+                <!-- Menú de nomina -->
+                <menuitem id="mntc_workforce_type_menu" name="Disciplina" parent="hr_payroll.menu_hr_payroll_configuration" action="action_mntc_workforce_type"/>
+            
+            <menuitem id="menu_mntc_maintenance_reportes" name="Reportes" parent="maintenance_main_menu" sequence="103"/>
+                <menuitem id="mntc_report_workorder_rh" name="Informe Generalizado Orden de trabajo" parent="menu_mntc_maintenance_reportes" action="mntc_workorder_report_rh_action" sequence="1"/>
+                <menuitem id="mntc_report_workorder_task" name="Informe Tarea-Orden de trabajo" parent="menu_mntc_maintenance_reportes" action="mntc_workorder_report_task_action" sequence="2"/>
+                <menuitem id="mntc_report_workorder_rrhh" name="RRHH Informe Orden de trabajo" parent="menu_mntc_maintenance_reportes" action="mntc_workorder_report_rrhh_action" sequence="3"/>
+                <menuitem id="availability_indicator_wizard" name="Informe de disponibilidad" parent="menu_mntc_maintenance_reportes" action="action_availability_indicator_wizard" sequence="4"/>
+    </data>
+</odoo>

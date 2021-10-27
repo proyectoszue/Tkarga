@@ -1,0 +1,245 @@
+<odoo>
+    <data>
+        <record model="ir.ui.view" id="fleet.fleet_vehicle_view_form">
+            <field name="name">zue form fleet vehicle</field>
+            <field name="model">fleet.vehicle</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="dar_baja" type="object" string="Dar de baja" class="oe_highlight"/>
+                        <button name="traslado_operacion" type="object" string="Traslado de operación" class="oe_highlight"/>
+                        <button name="cancelar_baja" attrs="{'invisible': [['disponibilidad','!=','baja']]}" type="object" string="Poner en operación" class="oe_highlight"/>
+                        <field name="disponibilidad" widget="statusbar"/>
+                    </header>
+                    <sheet string="Vehiculo">
+                        <!-- <field name="currency_id" invisible="1"/> -->
+                        <div class="oe_button_box" name="button_box">
+                            <button name="open_assignation_logs" type="object" class="oe_stat_button" icon="fa-history">
+                                <field name="history_count" widget="statinfo" string="Drivers History"/>
+                            </button>
+                            <button name="return_action_to_open" type="object" class="oe_stat_button" icon="fa-book" context="{'xml_id':'fleet_vehicle_log_contract_action'}" help="show the contract for this vehicle">
+                                <field name="contract_count" widget="statinfo" string="Contracts"/>
+                            </button>
+                            <button name="act_show_log_cost" type="object" class="oe_stat_button" icon="fa-usd" help="show all the costs for this vehicle">
+                                <field name="cost_count" widget="statinfo" string="Costs"/>
+                            </button>
+                            <button name="return_action_to_open" type="object" class="oe_stat_button" icon="fa-wrench" context="{'xml_id':'fleet_vehicle_log_services_action'}" help="show the services logs for this vehicle">
+                                <field name="service_count" widget="statinfo" string="Services"/>
+                            </button>
+                            <button name="return_action_to_open" type="object" class="oe_stat_button" icon="fa-flask" context="{'xml_id':'fleet_vehicle_log_fuel_action'}" help="show the fuel logs for this vehicle">
+                                <field name="fuel_logs_count" widget="statinfo" string="Fuel"/>
+                            </button>
+                            <button name="return_action_to_open" type="object" class="oe_stat_button" icon="fa-tachometer" context="{'xml_id':'fleet_vehicle_odometer_action'}" help="show the odometer logs for this vehicle">
+                                <field name="odometer_count" widget="statinfo" string="Odometer"/>
+                            </button>
+                        </div>
+                        <!-- <widget name="web_ribbon" title="Archived" bg_color="bg-danger" attrs="{'invisible': [('active', '=', True)]}"/>-->
+                        <group>
+                            <field name="image_128" widget="image" class="oe_avatar"/>
+                            <group>
+                                <field name="license_plate"/>
+                                <field name="placa_nro" required="1"/>
+                                <field name="movil_nro" required="1"/>
+                                <field name="daily_average" readonly="1"/>
+                                <field name="modelo" required="1"/>
+                            </group>
+                            <group>
+                                <field name="vehiculo_marca" required="1"/>
+                                <field name="model_id" domain="[('brand_id','=',vehiculo_marca)]"/>
+                                <field name="vehiculo_linea" domain="[('marca','=',vehiculo_marca)]" required="1"/>
+                                <field name="carroceria"/>
+                                <field name="catalog_id"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Informacion General">
+                                <group col="2" string="Propiedades Generales">
+                                    <group >
+                                        <field name="company_id" invisible="1"/>
+                                        <field name="owner_id" required="1"/>
+                                        <field name="is_rented" />
+                                        <field name="rented_to"  attrs="{'invisible':[['is_rented','=',False]]}"/>
+                                        <field name="afiliado_id" />
+                                    </group>
+                                    <group>
+                                        <field name="x_acquisition_date" />
+                                        <field name="car_value" />
+                                        <field name="active" />
+                                        <field name="type_of_service" />
+                                        <!-- <field name="location" /> -->
+                                    </group>
+                                </group>
+                                <group string="Información Contable">
+                                    <field name="account_analytic_id"/>
+                                    <!-- <field name="property_fleet_account_input_categ" />
+                                    <field name="property_fleet_account_output_categ" /> -->
+                                </group>
+                            </page>
+                            <page string="Informacion Tecnica">
+                                <group>
+                                    <group string="Capacidad">
+                                        <field name="seats" />
+                                        <field name="doors" />
+                                        <field name="vehiculo_peso_bruto"/>
+                                        <field name="vehiculo_numero_ejes"/>
+                                    </group>
+                                    <group  string="Informacion de partes">
+                                        <field name="vin_sn"/>
+                                        <field name="vehiculo_numero_motor"/>
+                                        <field name="vehiculo_numero_serie"/>
+                                        <!-- <field name="vehiculo_fogmaker"/> -->
+                                    </group>
+                                </group>
+                                <group string="Especificaciones Tecnicas">
+                                    <group>
+                                        <field name="color"/>
+                                        <field name="vehiculo_cilindrada"/>
+                                        <field name="fuel_type"/>
+                                        <field name="vehiculo_tipo_carroceria"/>
+                                        <field name="transmission"/>
+                                    </group>
+                                    <group>
+                                        <label for="co2"/>
+                                        <div>
+                                            <field name="co2" class="oe_inline"/> g/km
+                                        </div>
+                                        <field name="horsepower" />
+                                        <field name="horsepower_tax" />
+                                        <label for="power"/>
+                                        <div>
+                                            <field name="power" class="oe_inline"/> kw
+                                        </div>
+                                        <field name="active_gps" />
+                                    </group>
+                                </group>
+                                
+                            </page>
+                            <page string="Trazabilidad del vehículo">
+                                <group>
+                                    <field name="trazabilidad_disponibilida" nolabel="1" readonly="True">
+                                        <tree>
+                                            <field name="disponibilidad"/>
+                                            <field name="razon"/>
+                                            <field name="sucursal_origen"/>
+                                            <field name="sucursal"/>
+                                            <field name="create_date"/>
+                                            <field name="create_uid"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                            </page>
+                            <page string="Asignación">
+                                <group>
+                                    <field name="branch_id"/>
+                                    <field name="service_type_id"/>
+                                    <field name="assigned_company_id"/>
+                                </group>
+                                <group>
+                                    <field name="contrato" nolabel="1">
+                                        <tree>
+                                            <field name="name"/>
+                                            <field name="contrato_analitico"/>
+                                            <field name="cuenta_ingresos"/>
+                                            <field name="cuenta_gastos"/>
+                                            <field name="company_id"/>
+                                            <field name="responsable"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                            </page>
+                            <page string="Documentos">
+                                <group>
+                                    <field name="documents_ids" nolabel="1" context="{'default_placa': placa_nro}">                                    
+                                        <tree editable="bottom">
+                                            <field name="name"/>
+                                            <field name="expiration_date"/>
+                                            <field name="document"/> 
+                                            <!-- context="{'default_name': name+'_'+context.get('default_placa')}"                                           -->
+                                        </tree>
+                                    </field>
+                                </group>
+                            </page>
+                            <page string="Ruteros asignados" invisible="1">
+                                <field name="rodamiento_rutas" readonly="1" widget="dinamyc_planes">
+                                    <tree>
+
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Planes de mantenimiento" invisible="1">
+                                <field name="mtto_planes" readonly="1">
+                                    <tree  colors="red:estado=='proximo'; green:estado=='aplicado'">
+                                            <field name="notificado"/>
+                                            <field name="autorizado"/>
+                                            <field name="name"/>
+                                            <field name="rutines"/>
+                                            <field name="estado"/>
+                                            <field name="fecha_prevista"/>
+                                            <field name="costo_plan" sum="Costo total planes"/>
+                                        <field name="write_date" string="Fecha aplicacion" attrs="{'invisible':[('estado','!=','aplicado')]}"/>
+                                        <button name="aplicar_mmto" string="Aplicar" type="object" confirm="Esta seguro de procesar este plan de mantenimiento?" attrs="{'invisible':['|',('autorizado','=',False),('estado','=','aplicado')]}"/>
+                                    </tree>
+                                </field>
+                            </page>
+                            <page string="Mantenimientos correctivos" invisible="1">
+                                <field name="mtto_planes_correct" readonly="1">
+                                    <tree>
+                                            <field name="fecha"/>
+                                            <field name="producto_historico"/>
+                                            <field name="qty"/>
+                                            <field name="cost"/>
+                                            <field name="valor_total"	sum="Costo total"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="activity_ids" widget="mail_activity"/>
+                        <field name="message_ids" widget="mail_thread" options="{&quot;thread_level&quot;: 1}"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window"  id="vehiculo_trazabilidad_disponibilidad_action">
+            <field name="name">Movimiento del vehículo</field>
+            <field name="res_model">vehiculo.trazabilidad.disponibilidad</field>
+            <field name="view_mode">tree,form</field>
+		</record>
+
+        <record model="ir.ui.view" id="zue_fleet_maintenance.form_vehiculo_trazabilidad_disponibilidad_action">
+            <field name="name">zue form trazabilidad vehiculo</field>
+            <field name="model">vehiculo.trazabilidad.disponibilidad</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="disponibilidad"/>
+                            <field name="vehiculo"/>
+                            <field name="sucursal" attrs="{'invisible': [('disponibilidad', 'in', ['baja','operacion'])]}"/>
+                            <field name="razon" />
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_mntc_carroceria">
+            <field name="name">Carrocería</field>
+            <field name="res_model">mntc.carroceria</field>
+            <field name="view_mode">tree</field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_fleet_maintenance.list_mntc_carroceria">
+            <field name="name">zue list mntc carroceria</field>
+            <field name="model">mntc.carroceria</field>
+            <field name="arch" type="xml">
+			    <tree editable="bottom">
+					<field name="name"/>
+				</tree>
+			</field>
+		</record> 
+    </data>
+</odoo>

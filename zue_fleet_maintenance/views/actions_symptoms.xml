@@ -1,0 +1,109 @@
+<odoo>
+  <data>
+    
+    <record model="ir.actions.act_window" id="action_mntc_symptoms">
+        <field name="name">Symptoms</field>
+        <field name="res_model">mntc.symptoms</field>
+        <field name="view_mode">tree,form</field>
+        <field name="help" type="html">
+            <p class="oe_view_nocontent_create">Crear Sintoma
+            </p>
+        </field>
+    </record> 
+
+     <record model="ir.ui.view" id="zue_fleet_maintenance.list_action_mntc_symptoms">
+			    <field name="name">zue list mntc symptoms</field>
+			    <field name="model">mntc.symptoms</field>
+			    <field name="arch" type="xml">
+				<tree>
+					<field name="name"/>                
+					<field name="code"/> 
+					<field name="system_ids" widget="many2many_tags"/>                
+				</tree>
+			</field>
+		</record> 
+
+        <record model="ir.ui.view" id="zue_fleet_maintenance.form_action_mntc_symptoms">
+			    <field name="name">zue form mntc symptoms</field>
+			    <field name="model">mntc.symptoms</field>
+			    <field name="arch" type="xml">
+			 <form>
+                 <sheet string="Taller">
+                    <group>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                        <group>
+                            <field name="code"/> 
+                        </group>
+                    </group>
+                    <group>
+						<field name="system_ids" widget="many2many_tags"/> 
+                    </group>
+                 </sheet>
+              </form>
+			</field>
+		</record>
+
+    <record model="ir.actions.act_window" id="action_mntc_vehicle_system">
+        <field name="name">Vehicle system</field>
+        <field name="res_model">mntc.vehicle.system</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="oe_view_nocontent_create">Crear Sistema de vehiculo
+            </p>
+        </field>
+    </record> 
+
+    <record model="ir.ui.view" id="zue_fleet_maintenance.list_action_mntc_vehicle_system">
+			    <field name="name">zue list mntc vehicle system</field>
+			    <field name="model">mntc.vehicle.system</field>
+			    <field name="arch" type="xml">
+				<tree editable="bottom">
+					<field name="name"/>
+					<field name="initials"/>
+					<field name="component_ids" widget="many2many_tags"/> 
+				</tree>
+			</field>
+		</record>  
+
+    <record model="ir.actions.act_window" id="action_mntc_base_symptoms">
+        <field name="name">Base Symptoms</field>
+        <field name="res_model">mntc.base.symptoms</field>
+        <field name="view_mode">tree</field>
+        <field name="help" type="html">
+            <p class="oe_view_nocontent_create">Crear Base sintoma
+            </p>
+        </field>
+    </record>
+
+    <record model="ir.ui.view" id="zue_fleet_maintenance.list_mntc_base_symptoms">
+        <field name="name">zue list mntc base symptoms</field>
+        <field name="model">mntc.base.symptoms</field>
+        <field name="arch" type="xml">
+            <tree editable="bottom">
+                <field name="name"/>                
+            </tree>
+      </field>
+    </record>
+
+    <record model="ir.actions.act_window" id="action_mntc_workforce_type">
+        <field name="name">Disciplina</field>
+        <field name="res_model">mntc.workforce.type</field>
+        <field name="view_mode">tree,form</field>
+    </record>
+     <record model="ir.ui.view" id="zue_fleet_maintenance.list_action_mntc_workforce_type">
+        <field name="name">zue list mntc workforce type</field>
+        <field name="model">mntc.workforce.type</field>
+        <field name="arch" type="xml">
+            <tree>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="description"/>
+                <field name="estimated_time" widget="float_time"/>
+                <field name="active"/>
+            </tree>
+        </field>
+    </record> 
+  </data>
+</odoo>

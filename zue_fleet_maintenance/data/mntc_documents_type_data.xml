@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+    <data noupdate = "1">
+        <record id="mntc_documents_types_input_output" model="mntc.documents.types" >
+            <field name="name">REPORTE DE VEHICULO A MANTENIMIENTO</field>
+            <field name="format_code">FO-MF-007</field>
+            <field name="version_code">02</field>
+        </record>
+        <record id="mntc_documents_types_workorder" model="mntc.documents.types">
+            <field name="name">ORDEN DE TRABAJO</field>
+            <field name="format_code">FO-MF-004</field>
+            <field name="version_code">02</field>
+        </record>
+        <record id="mntc_documents_types_availability_indicator" model="mntc.documents.types" >
+            <field name="name">INDICADORES DE DISPONIBILIDAD</field>
+            <field name="format_code"/>
+            <field name="version_code"/>
+        </record>
+        <record id="mntc_documents_types_vehicle_task" model="mntc.documents.types">
+            <field name="name">TAREAS REALIZADAS</field>
+            <field name="format_code"/>
+            <field name="version_code"/>
+        </record>
+    </data>
+</odoo>

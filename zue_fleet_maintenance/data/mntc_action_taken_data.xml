@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<odoo>
+     <data noupdate = "1">
+        <record id="mntc_action_taken_serv" model="mntc.action.taken">
+            <field name="code">SERV</field>
+            <field name="description">SERVICIO</field>
+        </record>
+        <record id="mntc_action_taken_repa" model="mntc.action.taken">
+            <field name="code">REPA</field>
+            <field name="description">REPARAR</field>
+        </record>
+        <record id="mntc_action_taken_limp" model="mntc.action.taken">
+            <field name="code">LIMP</field>
+            <field name="description">LIMPIEZA</field>
+        </record>
+        <record id="mntc_action_taken_ajus" model="mntc.action.taken">
+            <field name="code">AJUS</field>
+            <field name="description">AJUSTAR</field>
+        </record>
+        <record id="mntc_action_taken_camb" model="mntc.action.taken">
+            <field name="code">CAMB</field>
+            <field name="description">CAMBIAR</field>
+        </record>
+        <record id="mntc_action_taken_alin" model="mntc.action.taken">
+            <field name="code">ALIN</field>
+            <field name="description">ALINEAR</field>
+        </record>
+        
+    </data>
+</odoo>

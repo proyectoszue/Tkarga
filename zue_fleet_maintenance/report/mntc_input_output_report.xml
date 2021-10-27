@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>    
+        <report
+            id="report_input_output"
+            string="Reporte de Entrada/Salida"
+            model="mntc.io"            
+            report_type="qweb-pdf"
+            file="zue_fleet_maintenance.report_input_document"
+            name="zue_fleet_maintenance.report_input_document"            
+        />
+    </data>
+</odoo>

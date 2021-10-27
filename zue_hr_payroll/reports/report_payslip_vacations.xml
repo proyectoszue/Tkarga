@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <report
+            id="action_report_payslip_vacation"
+            model="hr.payslip"
+            string="Liq. Vacaciones"
+            report_type="qweb-pdf"
+            name="zue_hr_payroll.report_liquidacion_vacaciones"
+            file="zue_hr_payroll.report_liquidacion_vacaciones"
+            print_report_name="'Liq. Vacaciones - %s' % (object.employee_id.name)"
+        />
+
+        <record id="liquidacion_format" model="report.paperformat">
+            <field name="name">Liquidacion vacaciones</field>
+            <field name="default" eval="True"/>
+            <field name="format">A4</field>            
+            <field name="orientation">Landscape</field>
+            <field name="margin_top">20</field>
+            <field name="margin_bottom">20</field>
+            <field name="margin_left">7</field>
+            <field name="margin_right">7</field>
+            <field name="header_line" eval="False" />
+            <field name="header_spacing">20</field>
+            <field name="dpi">90</field>
+        </record>
+
+        <record id="action_report_payslip_vacation" model="ir.actions.report">
+            <field name="paperformat_id" ref="zue_hr_payroll.liquidacion_format"/>
+        </record>
+        
+</odoo>
