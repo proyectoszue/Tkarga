@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record model="ir.actions.act_window"  id="indicators_mntc_action_filters">
+            <field name="name">Indicadores Mantenimiento Filtros</field>
+            <field name="res_model">mntc.indicators.dashboard.filters</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+		</record>
+
+        <record id="mntc_indicators_form_filter" model="ir.ui.view">
+            <field name="name">mntc.indicators.form.filters</field>
+            <field name="model">mntc.indicators.dashboard.filters</field>
+            <field name="arch" type="xml">
+                <form>
+                    <group>
+                        <group>
+                            <field name="date_start"/>
+                            <field name="date_end"/>
+                        </group>
+                        <group>
+                            <field name="branch_id"/>
+                        </group>
+                    </group>
+                    <footer>
+                        <button name="execute_indicators_dashboard" string="Ejecutar" type="object" class="oe_highlight"/>
+                    </footer>
+                </form>
+            </field>
+		</record>
+
+        <record model="ir.actions.act_window"  id="indicators_mntc_action">
+            <field name="name">Indicadores Mantenimiento</field>
+            <field name="res_model">mntc.indicators.dashboard</field>
+            <field name="view_mode">tree,form</field>
+		</record>
+
+        <record model="ir.ui.view" id="list_indicators_mntc_action">
+            <field name="name">zue lista indicadores de mantenimiento</field>
+            <field name="model">mntc.indicators.dashboard</field>
+            <field name="arch" type="xml">
+                <tree string="Indicadores de mantenimiento">
+                    <field name="name"/>
+                    <field name="indicators_respuestos_ids"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="mntc_indicators_form" model="ir.ui.view">
+            <field name="name">mntc.indicators.form</field>
+            <field name="model">mntc.indicators.dashboard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <div class="oe_right oe_button_box" name="buttons">
+                        <button name="return_action_to_open"
+                            class="oe_inline oe_stat_button" style="width: 200px !important;"
+                            icon="fa-list"
+                            attrs="{'invisible': [('counter_reports', '=', 0)]}"
+                            type="object">
+                            <field name="counter_reports" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <group col="1" colspan="12">
+                        <group string="Descripción">
+                            <field name="name" nolabel="1"/>
+                        </group>
+                    </group>
+                    <group col="3" colspan="12">
+                        <group string='PERSONAL - Laborando'>
+                            <field name="indicators_working_staff_ids" nolabel="1">
+                                <tree>
+                                    <field name="num_tecnicos"/>
+                                    <field name="horas_semana"/>
+                                    <field name="horas_disponibles"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group string='Ausentismos'>
+                            <field name="indicators_absenteeism_ids" nolabel="1">
+                                <tree>
+                                    <field name="ficha"/>
+                                    <field name="tecnico"/>
+                                    <field name="motivo"/>
+                                    <field name="horas_perdidas"/>
+                                </tree>
+                            </field>
+                        </group>
+                        <group string='SEGURIDAD - Accidentes Incidentes'>
+                            <field name="indicators_security_ids" nolabel="1">
+                                <tree>
+                                    <field name="ficha"/>
+                                    <field name="tecnico"/>
+                                    <field name="descripcion_evento"/>
+                                    <field name="horas_perdidas"/>
+                                    <field name="horas_perdidas_acum"/>
+                                </tree>
+                            </field>
+                        </group>
+                    </group>
+                    <group col="1" colspan="12" string="INDICADORES">
+                        <field name="indicators_respuestos_ids" nolabel="1">
+                            <tree>
+                                <field name="sucursal" invisible="1"/>
+                                <field name="servicio"/>
+                                <field name="total_equipos"/>
+                                <field name="dias_equipos_taller"/>
+                                <field name="equipos_soporte"/>
+                                <field name="disponibilidad"/>
+                                <field name="km_semana"/>
+                                <field name="num_varadas"/>
+                                <field name="num_urgencias"/>
+                                <field name="rutinas_atrasadas"/>
+                                <field name="mkbf_entradas"/>
+                                <field name="mttr_entradas"/>
+                                <field name="costo_repuesto"/>
+                                <field name="costo_campania"/>
+                                <field name="costo_total"/>
+                                <field name="cpk"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group col="4" colspan="12">
+                        <field name="indicators_events_ids" string="EVENTOS MAYORES DE LA SEMANA">
+                            <tree limit="20">
+                                <field name="sucursal" invisible="1"/>
+                                <field name="movil"/>
+                                <field name="evento" style="max-width: 150px"/>
+                                <field name="parte"/>
+                                <field name="falla"/>
+                                <field name="causa"/>
+                                <field name="accion"/>
+                            </tree>
+                        </field>
+                        <field name="indicators_ten_days_garage_ids" string="EQUIPOS > 10 DÍAS EN TALLER">
+                            <tree limit="20">
+                                <field name="sucursal" invisible="1"/>
+                                <field name="movil"/>
+                                <field name="entrada"/>
+                                <field name="ingreso"/>
+                                <field name="nro_dias"/>
+                                <field name="estado"/>
+                                <field name="fet"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group col="4" colspan="12">
+                        <field name="indicators_acum_costs" string="COSTOS DE LA SEMANA Y ACUMULADO (REPUESTOS Y SERVICIOS)">
+                            <tree>
+                                <field name="costo_acum_ano"/>
+                                <field name="costo_acum_mes"/>
+                                <field name="presupuesto_acum_ano"/>
+                                <field name="presupuesto_acum_mes"/>
+                            </tree>
+                        </field>
+                        <field name="indicators_campaigns" string="CAMPAÑAS">
+                            <tree>
+                                <field name="total_ejecutado"/>
+                                <field name="total_x_ejecutar"/>
+                                <field name="ejeutado_semana"/>
+                                <field name="pendientes"/>
+                                <field name="fet"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group col="4" colspan="12">
+                        <field name="indicators_accomplishment" string="CUMPLIMIENTO PROGRAMACIÓN">
+                            <tree>
+                                <field name="tipo_ot"/>
+                                <field name="equipos_programados"/>
+                                <field name="equipos_ejecutados"/>
+                                <field name="tareas_programadas"/>
+                                <field name="tareas_ejecutadas"/>
+                                <field name="cumplimiento"/>
+                                <field name="horas_planeadas"/>
+                                <field name="horas_ejecutadas"/>
+                                <field name="cumplimiento_hora"/>
+                                <field name="mttr_tarea"/>
+                            </tree>
+                        </field>
+                        <field name="indicators_week_schedule" string="PROGRAMACIÓN SEMANA SIGUIENTE">
+                            <tree>
+                                <field name="tipo"/>
+                                <field name="equipos_programados"/>
+                                <field name="tareas_programadas"/>
+                                <field name="horas_planeadas"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group col="4" colspan="12">
+                        <field name="indicators_weekly_work" string="TRABAJO DE LA SEMANA NO PROGRAMADOS">
+                            <tree>
+                                <field name="prioridad"/>
+                                <field name="equipos"/>
+                                <field name="cant_tareas"/>
+                                <field name="horas_empleado"/>
+                                <field name="horas_contratista"/>
+                                <field name="mttr_tarea"/>
+                            </tree>
+                        </field>
+                    </group>
+                </form>
+            </field>
+		</record>
+  </data>
+</odoo>

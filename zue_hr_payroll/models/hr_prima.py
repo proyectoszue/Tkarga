@@ -72,6 +72,10 @@ class Hr_payslip(models.Model):
         
         employee = self.employee_id
         contract = self.contract_id
+
+        if contract.modality_salary == 'integral' or contract.contract_type == 'aprendizaje':
+            return result.values()
+
         year = self.date_from.year
         annual_parameters = self.env['hr.annual.parameters'].search([('year', '=', year)])
 
@@ -108,9 +112,11 @@ class Hr_payslip(models.Model):
                 amount_base = amount
                 dias_trabajados = self.dias360(self.date_from, self.date_to)
                 dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_from),('date_to','<=',self.date_to),('state','=','validate'),('employee_id','=',self.employee_id.id),('unpaid_absences','=',True)])])
+                dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_from), ('end_date', '<=', self.date_to),('employee_id', '=', self.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
                 if inherit_contrato != 0:                    
                     dias_trabajados = self.dias360(self.date_prima, self.date_liquidacion)
                     dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_prima),('date_to','<=',self.date_liquidacion),('state','=','validate'),('employee_id','=',self.employee_id.id),('unpaid_absences','=',True)])])
+                    dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_prima), ('end_date', '<=', self.date_liquidacion),('employee_id', '=', self.employee_id.id),('leave_type_id.unpaid_absences', '=', True)])])
                 dias_liquidacion = dias_trabajados - dias_ausencias
 
                 if rule.code == 'PRIMA':    
@@ -153,8 +159,8 @@ class Hr_payslip(models.Model):
                         'rate': rate,
                         'slip_id': self.id,
                     }
-        
+
         if inherit_contrato == 0:
             return result.values()  
         else:
-            return localdict,result           
+            return localdict,result          

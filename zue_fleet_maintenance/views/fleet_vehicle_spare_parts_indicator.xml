@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_vehicle_spare_parts_indicator_form" model="ir.ui.view">
+            <field name="name">mntc.vehicle.spare.parts.indicator.form</field>
+            <field name="model">mntc.vehicle.spare.parts.indicator</field>
+            <field name="arch" type="xml">
+                <form string="Select test">
+                    <form string="Seguimiento vehículos en espera">
+                        <group>
+                            <field name="company_id"/>
+                        </group>
+                        <footer>
+                            <button name="export_excel" string="Generar Excel" type="object" class="oe_highlight"/>
+                        </footer>
+                    </form>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_vehicle_spare_parts_indicator" model="ir.actions.act_window">
+            <field name="name">Seguimiento vehículos en espera</field>
+            <field name="type">ir.actions.act_window</field>
+            <field name="res_model">mntc.vehicle.spare.parts.indicator</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+    </data>
+</odoo>

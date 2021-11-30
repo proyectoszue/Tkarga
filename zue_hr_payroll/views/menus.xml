@@ -24,7 +24,8 @@
         <menuitem name="Copias de seguridad" id="zue_hr_payroll.menu_backups" parent="zue_erp.menu_root" sequence="10"/>                                
         <menuitem name="Archivo plano de pago de nómina" id="zue_hr_payroll.menu_payroll_flat_file_backup" parent="zue_hr_payroll.menu_backups" action="action_zue_payroll_flat_file_backup" sequence="1"/>                                
         <!-- Menu Informe de nómina ZUE -->
-        <menuitem name="Informe" id="zue_hr_payroll.menu_payroll_report" parent="hr_payroll.menu_hr_payroll_report" action="action_hr_payroll_report_zue_filter" sequence="20"/>                                
+        <menuitem name="Informe" id="zue_hr_payroll.menu_payroll_report" parent="hr_payroll.menu_hr_payroll_report" action="action_hr_payroll_report_zue_filter" sequence="20"/>
+        <menuitem name="Reporte acumulados" id="zue_hr_payroll.hr_accumulated_reports" parent="hr_payroll.menu_hr_payroll_report" action="action_hr_accumulated_reports" sequence="21"/>
         
         <!-- Menus de Nóminas -->
         <menuitem name="Liquidaciones" id="zue_hr_payroll.menu_payroll_initial" parent="hr_payroll.menu_hr_payroll_payslips" sequence="0"/>
@@ -45,8 +46,8 @@
             <menuitem name="Archivo plano de pago" id="zue_hr_payroll.menu_payroll_flat_file_account" parent="zue_hr_payroll.menu_payroll_payment_account" action="action_hr_payroll_flat_file" sequence="1"/> 
             <menuitem name="Contabilización del pago" id="zue_hr_payroll.menu_payroll_posting_account" parent="zue_hr_payroll.menu_payroll_payment_account" action="action_hr_payroll_posting" sequence="2"/> 
         <!-- Menu Comprobantes de nómina -->
-        <menuitem name="Comprobantes de nómina" id="zue_hr_payroll.menu_payroll_voucher_sending" parent="hr_payroll.menu_hr_payroll_payslips" action="action_hr_voucher_sending" sequence="3"/> 
+        <menuitem name="Comprobantes de nómina" id="zue_hr_payroll.menu_payroll_voucher_sending" parent="hr_payroll.menu_hr_payroll_payslips" action="action_hr_voucher_sending" sequence="3"/>
         <!-- Menu Acumulados de nómina -->
-        <menuitem name="Acumulados" id="zue_hr_payroll.menu_payroll_accumulated" parent="hr_payroll.menu_hr_payroll_payslips" action="action_hr_accumulated_payroll" sequence="4"/> 
+        <menuitem name="Acumulados" id="zue_hr_payroll.menu_payroll_accumulated" parent="hr_payroll.menu_hr_payroll_payslips" action="action_hr_accumulated_payroll" sequence="4"/>
     </data>
 </odoo>

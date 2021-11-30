@@ -65,3 +65,14 @@ access_mntc_workforce_type_time,mntc.workforce.type.time,model_mntc_workforce_ty
 access_mntc_workorder_report_rh,mntc.workorder.report.rh,model_mntc_workorder_report_rh,,1,1,1,1
 access_mntc_workorder_report_task,mntc.workorder.report.task,model_mntc_workorder_report_task,,1,1,1,1
 access_mntc_workorder_report_rrhh,mntc.workorder.report.task,model_mntc_workorder_report_rrhh,,1,1,1,1
+access_mntc_respuestos_indicators,mntc.respuestos.indicators,model_mntc_respuestos_indicators,,1,1,1,1
+access_mntc_working_staff,mntc.working.staff,model_mntc_working_staff,,1,1,1,1
+access_mntc_absenteeism_indicator,mntc.absenteeism.indicator,model_mntc_absenteeism_indicator,,1,1,1,1
+access_mntc_security_working_indicator,mntc.security.working.indicator,model_mntc_security_working_indicator,,1,1,1,1
+access_mntc_events_indicator,mntc.events.indicator,model_mntc_events_indicator,,1,1,1,1
+access_mntc_days_garage_vehicle_ind,mntc.days.garage.vehicle.ind,model_mntc_days_garage_vehicle_ind,,1,1,1,1
+access_mntc_acum_cost_indicator,mntc.acum.cost.indicator,model_mntc_acum_cost_indicator,,1,1,1,1
+access_mntc_campaign_indicator,mntc.campaign.indicator,model_mntc_campaign_indicator,,1,1,1,1
+access_mntc_accomplishment_indicator,mntc.accomplishment.indicator,model_mntc_accomplishment_indicator,,1,1,1,1
+access_mntc_week_schedule_indicator,mntc.week.schedule.indicator,model_mntc_week_schedule_indicator,,1,1,1,1
+access_mntc_weekly_work_indicator,mntc.weekly.work.indicator,model_mntc_weekly_work_indicator,,1,1,1,1

@@ -99,14 +99,14 @@ class Payslips(BrowsableObject):
         from_month = from_date.month
         from_year = from_date.year
 
-        to_month = to_date.month
-        to_year = to_date.year
+        to_month = to_date.month + 1 if to_date.month != 12 else 1
+        to_year = to_date.year + 1 if to_date.month == 12 else to_date.year
         
         self.env.cr.execute("""Select COALESCE(sum(pl.total),0) as suma FROM hr_payslip as hp 
                             Inner Join hr_payslip_line as pl on  hp.id = pl.slip_id 
                             Inner Join hr_salary_rule_category hc on pl.category_id = hc.id 
                             Inner Join hr_salary_rule_category hc_parent on hc.parent_id = hc_parent.id 
-                            WHERE hp.state = 'done' and hp.contract_id = %s AND hp.date_from >= '%s-%s-01' AND hp.date_to <= '%s-%s-15'  
+                            WHERE hp.state = 'done' and hp.contract_id = %s AND hp.date_from >= '%s-%s-01' AND hp.date_from < '%s-%s-01'
                             AND (hc.code = %s OR hc_parent.code = %s)""",
                     (self.contract_id.id, from_year, from_month, to_year, to_month, code, code))
         res = self.env.cr.fetchone()
@@ -118,13 +118,13 @@ class Payslips(BrowsableObject):
         from_month = from_date.month
         from_year = from_date.year
 
-        to_month = to_date.month
-        to_year = to_date.year
+        to_month = to_date.month + 1 if to_date.month != 12 else 1
+        to_year = to_date.year + 1 if to_date.month == 12 else to_date.year
         
         self.env.cr.execute("""Select COALESCE(sum(pl.total),0) as suma FROM hr_payslip as hp 
                             Inner Join hr_payslip_line as pl on  hp.id = pl.slip_id 
                             Inner Join hr_salary_rule hc on pl.salary_rule_id = hc.id 
-                            WHERE hp.state = 'done' and hp.contract_id = %s AND hp.date_from >= '%s-%s-01' AND hp.date_to <= '%s-%s-15'  
+                            WHERE hp.state = 'done' and hp.contract_id = %s AND hp.date_from >= '%s-%s-01' AND hp.date_from < '%s-%s-01'  
                             AND hc.code = %s""",
                     (self.contract_id.id, from_year, from_month, to_year, to_month, code))
         res = self.env.cr.fetchone()
@@ -163,14 +163,14 @@ class Payslips(BrowsableObject):
         from_month = from_date.month
         from_year = from_date.year
 
-        to_month = to_date.month
-        to_year = to_date.year        
+        to_month = to_date.month + 1 if to_date.month != 12 else 1
+        to_year = to_date.year + 1 if to_date.month == 12 else to_date.year
         
         self.env.cr.execute("""Select coalesce(number_of_days,0) as dias from hr_payslip_worked_days hd
                                     Inner Join hr_payslip as hp on hp.id = hd.payslip_id and hp.state = 'done'
                                     Inner Join hr_work_entry_type as wt on hd.work_entry_type_id = wt.id
                                     Where wt.code = %s AND hp.contract_id = %s
-                                    AND hp.date_from >= '%s-%s-01' AND hp.date_to <= '%s-%s-15'""",
+                                    AND hp.date_from >= '%s-%s-01' AND hp.date_to < '%s-%s-01'""",
                     (code_work_entry_type,self.contract_id.id, from_year, from_month, to_year, to_month))
         res = self.env.cr.fetchone()
 

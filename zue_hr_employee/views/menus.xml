@@ -1,5 +1,7 @@
 <odoo>
     <data>
+        <!-- Menu Devengos & deducciones por contrato -->
+        <menuitem name="Devengos y Deducciones por contrato" id="zue_hr_employee.menu_contract_concepts" parent="hr_payroll.menu_hr_payroll_employees_root" action="zue_menu_action_contract_concepts" sequence="10"/>
         <!-- Menu tipos de empleados -->
         <menuitem name="Tipos de empleado" id="zue_hr_employee.menu_types_employee" parent="hr.menu_human_resources_configuration_employee" action="zue_menu_action_types_employee"/>                
         <!-- Menu parametrización riesgos profesionales -->

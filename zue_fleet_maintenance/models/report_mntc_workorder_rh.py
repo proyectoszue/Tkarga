@@ -35,6 +35,8 @@ class mntc_workorder_report_rh(models.Model):
     odometro  = fields.Float(string='Odómetro', default=0.0, readonly=True)
     servicios  = fields.Char(string='Servicios', readonly=True)
     sucursal  = fields.Char(string='Sucursal', readonly=True)
+    movil  = fields.Char(string='Móvil (OT)', readonly=True)
+    vehiculo  = fields.Char(string='Vehículo (OT)', readonly=True)
     
     @api.model
     def _query(self):
@@ -76,9 +78,13 @@ class mntc_workorder_report_rh(models.Model):
 					coalesce(h.programmed_time ,0) as tiempo_estimado_rrhh,
 					coalesce(g.odometer,0) as odometro,
                     coalesce(j.name,'') as servicios,
-					coalesce(k.name,'') as sucursal
+					coalesce(k.name,'') as sucursal,
+                    coalesce(a.movil_nro,'') as movil,
+                    coalesce(concat(coalesce(modelbrand.name,''), '/' , coalesce(model.name,''),'/',coalesce(bb.placa_nro,''),'/',coalesce(bb.movil_nro,'')),'') as vehiculo
                 from mntc_workorder as a
-                    inner join fleet_vehicle as bb on a.vehicle_id = bb.id  
+                    inner join fleet_vehicle as bb on a.vehicle_id = bb.id
+                    left  join fleet_vehicle_model as model on bb.model_id = model.id 
+                    left  join fleet_vehicle_model_brand as modelbrand  on bb.brand_id = modelbrand.id 
                     left join mntc_tasks as b on a.id = b.workorder_id 
                     left join mntc_executed_workforce_type_rh as c on b.id = c.task_id
                     left join mntc_technician as d on d.id = c.technician_id 

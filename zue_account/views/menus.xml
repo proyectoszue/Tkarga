@@ -2,5 +2,9 @@
     <data>
         <!-- Menu Archivo de pago proveedores -->
         <menuitem name="Archivo de pago" id="zue_account.zue_payment_file_menu" parent="account.menu_finance_payables" sequence="30" action="zue_account.action_payment_file"/>
+        <!-- Menu información exógeno -->
+        <menuitem name="Información exógena" id="zue_account.zue_menu_exogenous_information" parent="account_accountant.menu_accounting"/> 
+            <menuitem name="Código Fiscal" id="zue_account.zue_menu_fiscal_accounting_code" sequence="1" parent="zue_account.zue_menu_exogenous_information" action="action_fiscal_accounting_code"/> 
+            <menuitem name="Grupo Fiscal" id="zue_account.zue_menu_fiscal_accounting_group" sequence="2" parent="zue_account.zue_menu_exogenous_information" action="action_fiscal_accounting_group"/> 
     </data>
 </odoo>

@@ -154,6 +154,7 @@ class hr_salary_rule(models.Model):
     modality_value = fields.Selection([('fijo', 'Valor fijo'),
                                        ('diario', 'Valor diario'),
                                        ('diario_efectivo', 'Valor diario del día efectivamente laborado')],'Modalidad de valor', track_visibility='onchange')
+    deduction_applies_bonus = fields.Boolean('Aplicar deducción en Prima', track_visibility='onchange')
     #Es incapacidad / deducciones
     is_leave = fields.Boolean('Es Ausencia', track_visibility='onchange')
     deduct_deductions = fields.Selection([('all', 'Todas las deducciones'),

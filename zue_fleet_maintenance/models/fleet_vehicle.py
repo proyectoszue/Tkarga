@@ -147,7 +147,7 @@ class fleet_vehicle(models.Model):
 
             placa = record.placa_nro
 
-            obj_odometer = obj_ws.connection_requests(date_str,placa)
+            obj_odometer = obj_ws.connection_requests(date_str, placa)
 
             if 'odometro' in obj_odometer:
                 for odometer_list in obj_odometer['odometro']:
