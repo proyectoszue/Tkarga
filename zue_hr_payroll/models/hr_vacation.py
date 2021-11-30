@@ -47,6 +47,33 @@ class hr_vacation(models.Model):
         res = super(hr_vacation, self).create(vals)
         return res
 
+class hr_payslip_paid_vacation(models.Model):
+    _name = 'hr.payslip.paid.vacation'
+    _description = 'Liquidación vacaciones remuneradas'
+
+    slip_id = fields.Many2one('hr.payslip',string='Nómina', required=True)
+    paid_vacation_days = fields.Integer(string='Cantidad de días', required=True)
+    start_date_paid_vacation = fields.Date(string='Fecha inicial', required=True)
+    end_date_paid_vacation = fields.Date(string='Fecha final', required=True)
+
+    @api.onchange('paid_vacation_days','start_date_paid_vacation')
+    def _onchange_paid_vacation_days(self):
+        for record in self:
+            if record.paid_vacation_days > 0 and record.start_date_paid_vacation:
+                date_to = record.start_date_paid_vacation - timedelta(days=1)
+                cant_days = record.paid_vacation_days
+                days = 0
+                days_31 = 0
+                while cant_days > 0:
+                    date_add = date_to + timedelta(days=1)
+                    cant_days = cant_days - 1
+                    days += 1
+                    days_31 += 1 if date_add.day == 31 else 0
+                    date_to = date_add
+
+                record.end_date_paid_vacation = date_to
+                record.paid_vacation_days = days - days_31
+
 class Hr_payslip_line(models.Model):
     _inherit = 'hr.payslip.line'
 
@@ -56,8 +83,9 @@ class Hr_payslip_line(models.Model):
     holiday_units = fields.Integer('Unidades festivos')
 
 class Hr_payslip(models.Model):
-    _inherit = 'hr.payslip'    
-    
+    _inherit = 'hr.payslip'
+
+    paid_vacation_ids = fields.One2many('hr.payslip.paid.vacation', 'slip_id',string='Vacaciones remuneradas')
     refund_date = fields.Date(string='Fecha reintegro')
 
     #--------------------------------------------------LIQUIDACIÓN DE VACACIONES---------------------------------------------------------#
@@ -126,9 +154,9 @@ class Hr_payslip(models.Model):
         leaves_time = []
         leaves_money = []
         leaves = {}
-        for leave in work_entries:  
+        for leave in work_entries.sorted(key=lambda w:w.date_start):
             leaves = {}          
-            if leave.leave_id.holiday_status_id.is_vacation and leave.leave_id.holiday_status_id.type_vacation == 'time':
+            if leave.leave_id.holiday_status_id.is_vacation:
                 leave_holidays = leave.leave_id.holidays
                 leave_business_days = leave.leave_id.business_days
                 leave_number_of_days = leave.leave_id.number_of_days
@@ -139,11 +167,17 @@ class Hr_payslip(models.Model):
                 leaves['BUSINESS'+leave.work_entry_type_id.code] = leave_business_days     
 
                 leaves_time.append(leaves)
-            if leave.leave_id.holiday_status_id.is_vacation and leave.leave_id.holiday_status_id.type_vacation == 'money':
-                leave_number_of_days = leave.leave_id.number_of_days
-                leaves['IDLEAVE'] = leave.leave_id.id
-                leaves[leave.work_entry_type_id.code] = leave_number_of_days
-            
+
+        #Vacaciones Remuneradas
+        if len(self.paid_vacation_ids) > 0:
+            for paid in self.paid_vacation_ids.sorted(key=lambda w:w.start_date_paid_vacation):
+                leaves = {}
+
+                leave_number_of_days = paid.paid_vacation_days
+                leaves['IDPAID'] = paid.id
+                leaves['VACREMUNERADAS'] = leave_number_of_days
+                leaves['DATE'] = paid.start_date_paid_vacation
+
                 leaves_money.append(leaves)
         
         '''
@@ -180,7 +214,7 @@ class Hr_payslip(models.Model):
         
         #Ejecutar las reglas salariales y su respectiva lógica
         for rule in sorted(self.struct_id.rule_ids, key=lambda x: x.sequence):
-            localdict.update({                
+            localdict.update({
                 'result': None,
                 'result_qty': 1.0,
                 'result_rate': 100})
@@ -199,6 +233,11 @@ class Hr_payslip(models.Model):
                             days_vacations += leave_equals.number_of_days if leave_equals.business_days == 0 else leave_equals.business_days
                             days_vacations_business += leave_equals.business_days
                             days_vacations_holidays += leave_equals.holidays
+                        #Remuneradas
+                        for paid_vacation in self.paid_vacation_ids:
+                            if obj_leave.request_date_from:
+                                if paid_vacation.start_date_paid_vacation >= obj_leave.request_date_from and paid_vacation.end_date_paid_vacation <= obj_leave.request_date_to:
+                                    days_vacations += paid_vacation.paid_vacation_days
 
                         localdict.update({'leaves':  BrowsableObject(employee.id, leaves, self.env)})
                         amount, qty, rate = rule._compute_rule(localdict)
@@ -260,10 +299,9 @@ class Hr_payslip(models.Model):
                     initial_accrual_date = False
                     final_accrual_date = False                    
                     for leaves in leaves_money:
-                        id_leave = leaves.get('IDLEAVE')
-                        obj_leave = self.env['hr.leave'].search([('id', '=', id_leave)])  
-                        obj_leave_equals = self.env['hr.leave'].search([('state','=','validate'),('employee_id','=',employee.id),('id','!=',id_leave),('is_vacation','=',True),('request_date_from', '=', obj_leave.request_date_from)])  #('request_date_to', '<=', obj_leave.request_date_to)
-                        days_vacations = obj_leave.number_of_days if obj_leave.business_days == 0 else obj_leave.business_days
+                        id_leave = leaves.get('IDPAID')
+                        obj_leave_equals = self.env['hr.leave'].search([('state','=','validate'),('employee_id','=',employee.id),('is_vacation','=',True),('request_date_from', '=', leaves.get('DATE'))])  #('request_date_to', '<=', obj_leave.request_date_to)
+                        days_vacations = leaves.get('VACREMUNERADAS')
                         for leave_equals in obj_leave_equals:
                             days_vacations += leave_equals.number_of_days if leave_equals.business_days == 0 else leave_equals.business_days
 
@@ -335,6 +373,7 @@ class Hr_payslip(models.Model):
                         acumulados_promedio = 0
                         dias_trabajados = self.dias360(self.date_vacaciones, self.date_liquidacion)
                         dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_vacaciones),('date_to','<=',self.date_liquidacion),('state','=','validate'),('employee_id','=',self.employee_id.id),('unpaid_absences','=',True)])])
+                        dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_vacaciones), ('end_date', '<=', self.date_liquidacion),('employee_id', '=', self.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
                         dias_liquidacion = dias_trabajados - dias_ausencias
 
                         if (self.date_liquidacion - contract.date_start).days <= 365:

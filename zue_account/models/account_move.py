@@ -38,15 +38,15 @@ class account_move(models.Model):
         for record in self:
             for lines in record.line_ids:
                 if lines.required_partner and not lines.partner_id: 
-                    raise ValidationError(_('La cuenta "' + lines.account_id.name + '" obliga un tercero y este no ha sido digitado. Por favor verifique!'))
+                    raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga un tercero y este no ha sido digitado. Por favor verifique!'))
                 
                 if lines.required_analytic_account and not lines.analytic_account_id and not record.stock_move_id.picking_id:
-                    raise ValidationError(_('La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
+                    raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
             
             for lines in record.invoice_line_ids:
                 if lines.required_partner and not lines.partner_id: 
-                    raise ValidationError(_('La cuenta "' + lines.account_id.name + '" obliga un tercero y este no ha sido digitado. Por favor verifique!'))
+                    raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga un tercero y este no ha sido digitado. Por favor verifique!'))
                 
                 if lines.required_analytic_account and not lines.analytic_account_id and not record.stock_move_id.picking_id:
-                    raise ValidationError(_('La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
+                    raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
             

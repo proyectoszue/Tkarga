@@ -1,2 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_zue_payment_file,zue.payment.file,model_zue_payment_file,,1,1,1,1
+access_fiscal_accounting_code,fiscal.accounting.code,model_fiscal_accounting_code,,1,1,1,1
+access_fiscal_accounting_group,fiscal.accounting.group,model_fiscal_accounting_group,,1,1,1,1

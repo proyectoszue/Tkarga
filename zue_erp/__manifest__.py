@@ -7,11 +7,10 @@
 
     'description': """
         .ZUE ERP.
-        App general con la parametrización estandar para usar las aplicaciones desarrolladas por ZUE & ZBOX
     """,
 
     'author': "ZUE S.A.S",
-    'website': "http://www.zue.com.co",
+    #'website': "http://www.zue.com.co",
 
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml

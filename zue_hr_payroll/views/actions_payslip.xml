@@ -46,6 +46,17 @@
                             <field name="date_vacaciones" attrs="{'invisible':[('struct_process', '!=', 'contrato')], 'required':[('struct_process', '=', 'contrato')], 'readonly':[('state', '=', 'done')]}"/>
                         </group>
                     </group>
+                    <group attrs="{'invisible':[('struct_process', '!=', 'vacaciones')]}" style="border-style:solid; padding:10px">
+                        <group colspan="4">
+                            <field name="paid_vacation_ids" attrs="{'invisible':[('struct_process', '!=', 'vacaciones')], 'readonly':[('state', '=', 'done')]}">
+                                <tree editable="bottom">
+                                    <field name="paid_vacation_days"/>
+                                    <field name="start_date_paid_vacation"/>
+                                    <field name="end_date_paid_vacation" readonly="1" force_save="1"/>
+                                </tree>
+                            </field>
+                        </group>
+                    </group>
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/notebook[1]/page[2]/field[@name='line_ids']/tree[1]/field[@name='code']" position="attributes">
                     <attribute name="attrs">{}</attribute>

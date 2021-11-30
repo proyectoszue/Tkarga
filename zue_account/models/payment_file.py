@@ -121,7 +121,7 @@ class Zue_Payment_File(models.Model):
         query = '''
             Select coalesce(case when b.x_document_type = '12' then '4' --Tarjeta de Identidad
 				 when b.x_document_type = '13' then '1' --Cedula de ciudadania
-				 when b.x_document_type = '22' then '2' --Cdeula de extranjeria
+				 when b.x_document_type = '22' then '2' --Cedula de extranjeria
 				 when b.x_document_type = '31' then '3' --NIT
 				 when b.x_document_type = '41' then '5' --Pasaporte
                     else '' end,'') as TipoDocumentoBeneficiario,
@@ -143,7 +143,7 @@ class Zue_Payment_File(models.Model):
             left join res_partner_bank c on a.partner_bank_account_id = c.id 
             left join res_bank d on c.bank_id = d.id
             left join (select min(id) as id,partner_id from res_partner_bank group by partner_id) e on e.partner_id = b.id
-            left join res_partner_bank f on e.id = f.id
+            left join res_partner_bank f on e.id = f.id and f.is_main = true 
             left join res_bank g on f.bank_id = g.id
             where partner_type = 'supplier' and a.id in (%s)
         ''' % (payments_ids)
@@ -151,7 +151,11 @@ class Zue_Payment_File(models.Model):
         self._cr.execute(query)
         _res = self._cr.dictfetchall()
         return _res
-    
+
+    def validate_info_bank(self,vat,name,bank):
+        if bank == '':
+            raise ValidationError(_(f'El tercero {vat}-{name} no tiene información bancaria o no esta marcada como principal, por favor verificar.'))
+
     #Actualizar Pagos
     def update_payments(self):
         values_update = {
@@ -228,6 +232,7 @@ class Zue_Payment_File(models.Model):
                     if columns == 3:
                         tipo_transaccion = right('  '+row,2)
                     if columns == 4:
+                        self.validate_info_bank(nit_beneficiario,nombre_beneficiario,row)
                         banco_destino = right('000000000'+row,9) 
                     if columns == 5:
                         no_cuenta_beneficiario = right('0'*17+row,17)
@@ -454,6 +459,7 @@ class Zue_Payment_File(models.Model):
                     if columns == 3:
                         tipo_transaccion = right('  '+row,2)
                     if columns == 4:
+                        self.validate_info_bank(nit_beneficiario, nombre_beneficiario, row)
                         banco_destino = right('000000000'+row,9) 
                     if columns == 5:
                         no_cuenta_beneficiario = left(row+' '*17,17)
@@ -573,6 +579,7 @@ class Zue_Payment_File(models.Model):
                         tipo_transaccion = 'A' if row == '37' else 'A'
                         tipo_transaccion = 'C' if row == '27' else tipo_transaccion                        
                     if columns == 4:
+                        self.validate_info_bank(nit_beneficiario, nombre_beneficiario, row)
                         banco_destino = '0'+right(3*'0'+row,3)
                         forma_de_pago = '2' if row == '1023' else forma_de_pago
                     if columns == 5:
@@ -598,7 +605,9 @@ class Zue_Payment_File(models.Model):
                     if columns == 11:
                         fecha_aplicacion = row
                     if columns == 12:
-                        nit_beneficiario = right(11*'0'+nit_beneficiario+row,11) 
+                        digito_verificacion = str(row)
+                        if str(tipo_documento) == '3':
+                            nit_beneficiario = right(11*'0'+str(nit_beneficiario)+str(digito_verificacion),11)
                         
                     columns = columns + 1
                 columns = 0

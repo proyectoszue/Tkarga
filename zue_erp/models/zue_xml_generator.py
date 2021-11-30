@@ -14,7 +14,8 @@ class zue_xml_generator_details(models.Model):
     sequence = fields.Integer(string='Secuencia', required=True)
     is_parent = fields.Boolean(string='Es Padre')
     name_parent = fields.Char('Nombre Tag - Padre')
-    code_python = fields.Text(string='Código')    
+    code_python = fields.Text(string='Código')
+    code_validation_python = fields.Text(string='Código Validación')
 
 class zue_xml_generator_header(models.Model):
     _name = 'zue.xml.generator.header'
@@ -34,8 +35,9 @@ class zue_xml_generator_header(models.Model):
 
         #Recorre estructura para armar el XML
         tag_initial = ''
-        val = ''
         for item in sorted(self.details_ids, key=lambda x: x.sequence):
+            val = ''
+            validation = True
             if item.sequence == 1:
                 tag_initial = item.name
 
@@ -51,24 +53,33 @@ class zue_xml_generator_header(models.Model):
                     exec(item.code_python,ldict)
                     val = ldict.get('val')
                     cont = 0
-                    if type(val) is list:
-                        for i in val:
-                            cont += 1
-                            asigne_element = f"{item.name.replace('&',str(cont))} = etree.Element('{item.name.replace('&',str(cont))}')"
-                            exec(asigne_element)
-                            val = str(i)
-                            asigne_element = f"{item.name.replace('&',str(cont))}.text = val"
+
+                    if item.code_validation_python:
+                        exec(item.code_validation_python, ldict)
+                        validation = ldict.get('validation')
+
+                    if validation == True:
+                        if type(val) is list:
+                            for i in val:
+                                cont += 1
+                                asigne_element = f"{item.name.replace('&',str(cont))} = etree.Element('{item.name.replace('&',str(cont))}')"
+                                exec(asigne_element)
+                                val = str(i)
+                                asigne_element = f"{item.name.replace('&',str(cont))}.text = val"
+                                exec(asigne_element)
+                                if item.name_parent:
+                                    assignee_parent = f"{item.name_parent}.append({item.name.replace('&',str(cont))})"
+                                    exec(assignee_parent)
+                        else:
+                            if type(val) is float:
+                                val = "{:.2f}".format(val)
+                            else:
+                                val = str(val)
+                            asigne_element = f"{item.name}.text = val"
                             exec(asigne_element)
                             if item.name_parent:
-                                assignee_parent = f"{item.name_parent}.append({item.name.replace('&',str(cont))})"
+                                assignee_parent = f"{item.name_parent}.append({item.name})"
                                 exec(assignee_parent)
-                    else:
-                        val = str(val)
-                        asigne_element = f"{item.name}.text = val"
-                        exec(asigne_element)
-                        if item.name_parent:
-                            assignee_parent = f"{item.name_parent}.append({item.name})"
-                            exec(assignee_parent)
                 except Exception as e:
                     raise UserError(_('Error al ejecutar el código python del item %s, %s') % (item.name, e))  
             else:
@@ -76,12 +87,13 @@ class zue_xml_generator_header(models.Model):
                     assignee_parent = f"{item.name_parent}.append({item.name})"
                     exec(assignee_parent)
 
-            tree_str = f"s = etree.tostring({tag_initial}, pretty_print=True)"
+            tree_str = f"xml = etree.tostring({tag_initial})"
             exec(tree_str)
 
-        return eval("s")
-
-
-
-
-
+        xml_full_tags = etree.fromstring(eval("xml"))
+        #Remover tags vacios
+        for element in xml_full_tags.xpath(".//*[not(node())]"):
+            element.getparent().remove(element)
+        #Retornar XML Final
+        xml_finally = etree.tostring(xml_full_tags, pretty_print=True)
+        return xml_finally

@@ -4,9 +4,7 @@ from odoo import models, fields, api
 class hr_leave_type(models.Model):
     _inherit = 'hr.leave.type'
 
-    is_vacation = fields.Boolean('Tipo de ausencia para vacaciones')
-    type_vacation = fields.Selection([('time', 'En días'),
-                                      ('money','En dinero')], 'Tipo de vacaciones')
+    is_vacation = fields.Boolean('Tipo de ausencia para vacaciones disfrutadas')
     #Validación
     obligatory_attachment  = fields.Boolean('Obligar adjunto')
     #Configuración de la EPS/ARL

@@ -100,24 +100,29 @@ class Hr_payslip(models.Model):
                         'quantity': qty,
                         'rate': rate,
                         'slip_id': self.id,
-                    } 
+                    }
 
-        # 3.Vacaciones
-        obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','vacaciones')])        
-        self.struct_id = obj_struct_payroll.id
-        localdict, result_vac = self._get_payslip_lines_vacation(inherit_contrato=1,localdict=localdict)
-
-        if contract.modality_salary != 'integral':
-            # 4.Cesantias e intereses
-            obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','cesantias_e_intereses')])        
+        if contract.contract_type != 'aprendizaje':
+            # 3.Vacaciones
+            obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','vacaciones')])
             self.struct_id = obj_struct_payroll.id
-            localdict, result_cesantias = self._get_payslip_lines_cesantias(inherit_contrato=1,localdict=localdict)
+            localdict, result_vac = self._get_payslip_lines_vacation(inherit_contrato=1,localdict=localdict)
 
-            # 5.Prima
-            obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','prima')])        
-            self.struct_id = obj_struct_payroll.id
-            localdict, result_prima = self._get_payslip_lines_prima(inherit_contrato=1,localdict=localdict)
+            if contract.modality_salary != 'integral':
+                # 4.Cesantias e intereses
+                obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','cesantias_e_intereses')])
+                self.struct_id = obj_struct_payroll.id
+                localdict, result_cesantias = self._get_payslip_lines_cesantias(inherit_contrato=1,localdict=localdict)
+
+                # 5.Prima
+                obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','prima')])
+                self.struct_id = obj_struct_payroll.id
+                localdict, result_prima = self._get_payslip_lines_prima(inherit_contrato=1,localdict=localdict)
+            else:
+                result_cesantias = {}
+                result_prima = {}
         else:
+            result_vac = {}
             result_cesantias = {}
             result_prima = {}
 

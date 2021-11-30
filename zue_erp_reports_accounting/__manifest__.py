@@ -13,6 +13,7 @@
         Libro Mayor
         Consultas
         Balance analítico
+        Balance Costo por Vehículo
     """,
 
     'author': "ZUE S.A.S",

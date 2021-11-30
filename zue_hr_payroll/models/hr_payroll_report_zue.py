@@ -97,6 +97,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
         query = '''
             Select * from
             (
+                --VALORES LIQUIDADOS
                 Select  c.item as "Item",
                         COALESCE(c.identification_id,'') as "Identificación",COALESCE(c.name,'') as "Empleado",COALESCE(d.date_start,'1900-01-01') as "Fecha Ingreso",
                         COALESCE(e.name,'') as "Seccional",COALESCE(f.name,'') as "Cuenta Analítica",
@@ -132,7 +133,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
                 Group By c.item,c.identification_id,c.name,d.date_start,e.name,
 							f.name,g.name,d.code_sena,rp.name,dt.name,d.wage,h.number_of_days,b.name,hc.code,
 							rp_et.x_business_name,rp_et.name,hc.name,b.sequence
-                Union
+                Union -- CANTIDAD SOLO PARA HORAS EXTRAS Y PRESTACIONES SOCIALES (CESANTIAS & PRIMA)
                 Select c.item as "Item",
                     COALESCE(c.identification_id,'') as "Identificación",COALESCE(c.name,'') as "Empleado",COALESCE(d.date_start,'1900-01-01') as "Fecha Ingreso",
                     COALESCE(e.name,'') as "Seccional",COALESCE(f.name,'') as "Cuenta Analítica",
@@ -142,7 +143,43 @@ class HrPayrollReportZueFilter(models.TransientModel):
                     hc.name as "Categoría",b.sequence as "Secuencia",COALESCE(Sum(b.quantity),0) as "Cantidad"
                 From hr_payslip as a 
                 Inner Join hr_payslip_line as b on a.id = b.slip_id                
-                Inner Join hr_salary_rule_category as hc on b.category_id = hc.id and hc.code = 'HEYREC'
+                Inner Join hr_salary_rule_category as hc on b.category_id = hc.id and hc.code in ('HEYREC','PRESTACIONES_SOCIALES')
+                --Info Empleado
+                Inner Join (Select distinct row_number() over(order by a.name) as item,
+                            a.id,identification_id,a.name,a.branch_id,a.analytic_account_id,a.job_id,
+                            address_id,a.department_id
+                            From hr_employee as a) as c on a.employee_id = c.id
+                Inner Join hr_contract as d on c.id = d.employee_id and d.state = 'open'
+                Left join zue_res_branch as e on c.branch_id = e.id
+                Left join account_analytic_account as f on c.analytic_account_id = f.id
+                Left join hr_job g on c.job_id = g.id
+                Left Join hr_department dt on c.department_id = dt.id
+                Left Join res_partner rp on c.address_id = rp.id
+                --Entidad
+                Left Join hr_employee_entities et on b.entity_id = et.id
+                Left Join res_partner rp_et on et.partner_id = rp_et.id
+                --Dias laborados
+                Left Join (select b.employee_id,sum(number_of_days) as number_of_days 
+                			from hr_payslip_worked_days as a
+                			inner join hr_payslip as b on a.payslip_id = b.id and b.id in (%s)
+                			inner join hr_employee as c on b.employee_id = c.id
+                			where work_entry_type_id = 1 
+                			group by b.employee_id) as h on c.id = h.employee_id 
+                Where a.id in (%s)
+                Group By c.item,c.identification_id,c.name,d.date_start,e.name,
+							f.name,g.name,d.code_sena,rp.name,dt.name,d.wage,h.number_of_days,b.name,hc.code,
+							rp_et.x_business_name,rp_et.name,hc.name,b.sequence
+				Union -- BASE SOLO PARA PRESTACIONES SOCIALES (CESANTIAS & PRIMA)
+				Select c.item as "Item",
+                    COALESCE(c.identification_id,'') as "Identificación",COALESCE(c.name,'') as "Empleado",COALESCE(d.date_start,'1900-01-01') as "Fecha Ingreso",
+                    COALESCE(e.name,'') as "Seccional",COALESCE(f.name,'') as "Cuenta Analítica",
+                    COALESCE(g.name,'') as "Cargo",COALESCE(d.code_sena,'') as "Código SENA",COALESCE(rp.name,'') as "Ubicación Laboral",COALESCE(dt.name,'') as "Departamento",
+                    COALESCE(d.wage,0) as "Salario Base",COALESCE(h.number_of_days,0) as "Dias Laborados",'' as "Novedades",
+                    b.name as "Regla Salarial",'Base de ' || b.name as "Reglas Salariales + Entidad",
+                    hc.name as "Categoría",b.sequence as "Secuencia",COALESCE(Sum(b.amount_base),0) as "Base"
+                From hr_payslip as a 
+                Inner Join hr_payslip_line as b on a.id = b.slip_id                
+                Inner Join hr_salary_rule_category as hc on b.category_id = hc.id and hc.code in ('PRESTACIONES_SOCIALES')
                 --Info Empleado
                 Inner Join (Select distinct row_number() over(order by a.name) as item,
                             a.id,identification_id,a.name,a.branch_id,a.analytic_account_id,a.job_id,
@@ -169,7 +206,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
 							f.name,g.name,d.code_sena,rp.name,dt.name,d.wage,h.number_of_days,b.name,hc.code,
 							rp_et.x_business_name,rp_et.name,hc.name,b.sequence
             ) as a 
-        ''' % (str_ids,str_ids,str_ids,str_ids)
+        ''' % (str_ids,str_ids,str_ids,str_ids,str_ids,str_ids)
         
         query_totales = '''
             Select 5000 as "Item",'' as "Identificación", '' as "Empleado", '1900-01-01' as "Fecha Ingreso",

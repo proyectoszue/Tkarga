@@ -4,9 +4,12 @@ from odoo.exceptions import UserError, ValidationError
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from pytz import timezone
+from lxml import etree
 
+import random
 import base64
 import io
+import uuid
 
 class hr_electronic_payroll_detail(models.Model):
     _name = 'hr.electronic.payroll.detail'
@@ -17,12 +20,27 @@ class hr_electronic_payroll_detail(models.Model):
     contract_id = fields.Many2one('hr.contract', string='Contrato')
     item = fields.Integer(string='Item')
     sequence = fields.Char(string='Prefijo+Consecutivo')
-    cune_dian = fields.Char(string='CUNE')
+    nonce = fields.Char(string='Nonce')
+    transaction_id = fields.Char(string='Id Transacción')
     return_file_dian = fields.Binary(string='Archivo DIAN')
-    payslip_ids = fields.Many2many('hr.payslip',string='Nóminas')
+    payslip_ids = fields.Many2many('hr.payslip',string='Nóminas', domain="[('employee_id','=',employee_id)]")
     # XML
     xml_file = fields.Binary('XML')
     xml_file_name = fields.Char('XML name', size=64)
+    result_upload_xml = fields.Text(string='Respuesta envio XML', readonly=True)
+    status = fields.Char(String='Estado')
+    result_status = fields.Text(string='Descripción estado', readonly=True)
+
+    resource_type_document = fields.Selection([
+        ('ORIGINAL_DOCUMENT', 'Documento original'),
+        ('SIGNED_XML', 'XML firmado'),
+        ('PDF', 'Archivo PDF'),
+        ('DIAN_RESULT', 'Resultado Dian'),
+        ('DOCUMENT_TRANSFORMED', 'Documento transformado a la salida'),
+        ('ATTACHED_DOCUMENT', 'Attached document de nómina'),
+    ], string='Tipo de archivo', default='PDF')
+    data_file = fields.Binary('Data File')
+    data_file_name = fields.Char('Data file name', size=64)
 
     def download_xml(self):
         action = {
@@ -38,13 +56,119 @@ class hr_electronic_payroll_detail(models.Model):
         obj_xml = self.env['zue.xml.generator.header'].search([('code','=','NomElectronica_Carvajal')])
         xml = obj_xml.xml_generator(self)
 
-        filename = obj_xml.name+'.xml'
+        filename = f'NominaElectronica{str(self.electronic_payroll_id.year)}-{self.electronic_payroll_id.month}_{str(self.employee_id.identification_id)}.xml'
         self.write({
             'xml_file': base64.encodestring(xml),
             'xml_file_name': filename,
         })
 
         return True
+
+    def consume_web_service_send_xml(self):
+        username = self.electronic_payroll_id.username_ws
+        password = self.electronic_payroll_id.password_ws
+        nonce = self.nonce+'_'+str(uuid.uuid4())
+        date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
+        time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
+        created = f'{str(date)}T{str(time)}-05:00'
+        filename = self.xml_file_name
+        filedata = str(self.xml_file).split("'")[1]
+        company_id = self.electronic_payroll_id.company_id_ws
+        account_id = self.electronic_payroll_id.account_id_ws
+        service = self.electronic_payroll_id.service_ws
+
+        #Ejecutar ws
+        obj_ws = self.env['zue.request.ws'].search([('name', '=', 'ne_upload_xml')])
+        if not obj_ws:
+            raise ValidationError(_("Error! No ha configurado un web service con el nombre 'ne_upload_xml'"))
+        result = obj_ws.connection_requests(username,password,nonce,created,filename,filedata,company_id,account_id,service)
+        self.result_upload_xml = result
+        self.convert_result_send_xml(result)
+
+    def convert_result_send_xml(self,result=''):
+        if result == '':
+            result = self.result_upload_xml
+
+        if result.find('<status>') > -1:
+            status = result[result.find('<status>') + len('<status>'):result.find('</status>')]
+            self.result_upload_xml = f'Status: {status}'
+        if result.find('<transactionId>') > -1:
+            transaction_id = result[result.find('<transactionId>') + len('<transactionId>'):result.find('</transactionId>')]
+            self.transaction_id = transaction_id
+
+    def consume_web_service_status_document(self):
+        username = self.electronic_payroll_id.username_ws
+        password = self.electronic_payroll_id.password_ws
+        nonce = self.nonce + '_' + str(uuid.uuid4())
+        date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
+        time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
+        created = f'{str(date)}T{str(time)}-05:00'
+        company_id = self.electronic_payroll_id.company_id_ws
+        account_id = self.electronic_payroll_id.account_id_ws
+        transaction_id = self.transaction_id
+        service = self.electronic_payroll_id.service_ws
+        # Ejecutar ws
+        obj_ws = self.env['zue.request.ws'].search([('name', '=', 'ne_status_document')])
+        if not obj_ws:
+            raise ValidationError(_("Error! No ha configurado un web service con el nombre 'ne_status_document'"))
+        result = obj_ws.connection_requests(username, password, nonce, created, company_id,
+                                            account_id, transaction_id, service)
+
+        result_status = ''
+        if result.find('<processName>') > -1:
+            result_status = 'Último proceso realizado: '+result[result.find('<processName>') + len('<processName>'):result.find('</processName>')] +'\n'
+        if result.find('<processStatus>') > -1:
+            result_status = result_status + 'Estado último proceso realizado: '+result[result.find('<processStatus>') + len('<processStatus>'):result.find('</processStatus>')] +'\n'
+        if result.find('<processDate>') > -1:
+            result_status = result_status + 'Fecha último proceso realizado: '+result[result.find('<processDate>') + len('<processDate>'):result.find('</processDate>')] +'\n'
+        if result.find('<legalStatus>') > -1:
+            result_status = result_status + 'Estado legal del documento, con base a la información recibida por la DIAN: '+result[result.find('<legalStatus>') + len('<legalStatus>'):result.find('</legalStatus>')] +'\n'
+            self.status = result[result.find('<legalStatus>') + len('<legalStatus>'):result.find('</legalStatus>')]
+        if result.find('<governmentResponseDescription>') > -1:
+            result_status = result_status + 'Descripción: '+result[result.find('<governmentResponseDescription>') + len('<governmentResponseDescription>'):result.find('</governmentResponseDescription>')] +'\n'
+
+        self.result_status = result_status
+
+    def consume_web_service_download_files(self):
+        username = self.electronic_payroll_id.username_ws
+        password = self.electronic_payroll_id.password_ws
+        nonce = self.nonce + '_' + str(uuid.uuid4())
+        date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
+        time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
+        created = f'{str(date)}T{str(time)}-05:00'
+        company_id = self.electronic_payroll_id.company_id_ws
+        account_id = self.electronic_payroll_id.account_id_ws
+        document_type = 'NM'
+        document_number = self.sequence
+        resource_type = self.resource_type_document
+        service = self.electronic_payroll_id.service_ws
+        # Ejecutar ws
+        obj_ws = self.env['zue.request.ws'].search([('name', '=', 'ne_download_file_document')])
+        if not obj_ws:
+            raise ValidationError(_("Error! No ha configurado un web service con el nombre 'ne_download_file_document'"))
+        result = obj_ws.connection_requests(username, password, nonce, created, company_id,
+                                            account_id, document_type, document_number, resource_type, service)
+        if result.find('<downloadData>') > -1:
+            download_data = result[result.find('<downloadData>') + len('<downloadData>'):result.find('</downloadData>')]
+
+            filename = f'{self.resource_type_document}_{str(self.electronic_payroll_id.year)}-{self.electronic_payroll_id.month}_{str(self.employee_id.identification_id)}'
+            filename = filename+'.pdf' if self.resource_type_document == 'PDF' else filename+'.xml'
+
+            self.write({
+                'data_file': download_data,
+                'data_file_name': filename,
+            })
+
+            action = {
+                'name': self.resource_type_document,
+                'type': 'ir.actions.act_url',
+                'url': "web/content/?model=hr.electronic.payroll.detail&id=" + str(
+                    self.id) + "&filename_field=data_file_name&field=data_file&download=true&filename=" + self.data_file_name,
+                'target': 'self',
+            }
+            return action
+        else:
+            raise ValidationError(_('Error al descargar el archivo, intente mas tarde.'))
 
     def get_type_contract(self):
         type = self.contract_id.contract_type
@@ -169,7 +293,7 @@ class hr_electronic_payroll(models.Model):
     _name = 'hr.electronic.payroll'
     _description = 'Nómina electrónica'
 
-    year = fields.Integer('Año', required=True)
+    year = fields.Integer('Año', required=True, copy=False, default=fields.Date.today().year)
     month = fields.Selection([('1', 'Enero'),
                             ('2', 'Febrero'),
                             ('3', 'Marzo'),
@@ -182,20 +306,29 @@ class hr_electronic_payroll(models.Model):
                             ('10', 'Octubre'),
                             ('11', 'Noviembre'),
                             ('12', 'Diciembre')        
-                            ], string='Mes', required=True)
-    observations = fields.Text('Observaciones')
+                            ], string='Mes', required=True, copy=False, default=str(fields.Date.today().month))
+    observations = fields.Text('Observaciones', copy=False)
     state = fields.Selection([
             ('draft', 'Borrador'),
-            ('done', 'Realizado'),
-            ('accounting', 'Contabilizado'),
-        ], string='Estado', default='draft')
+            ('xml', 'XML Generados'),
+            ('ws', 'Enviados por WS'),
+            ('close', 'Finalizado'),
+        ], string='Estado', default='draft', copy=False)
     #Proceso
     prefix = fields.Char(string='Prefijo', required=True)
+    qty_failed = fields.Integer(string='Cantidad Fallidos / Sin Respuesta', default=0, copy=False)
+    qty_done = fields.Integer(string='Cantidad Aceptados', default=0, copy=False)
     executing_electronic_payroll_ids = fields.One2many('hr.electronic.payroll.detail', 'electronic_payroll_id', string='Ejecución', ondelete='cascade' )
-    time_process = fields.Char(string='Tiempo ejecución')
+    time_process = fields.Char(string='Tiempo ejecución', copy=False)
     
     company_id = fields.Many2one('res.company', string='Compañía', readonly=True, required=True,
         default=lambda self: self.env.company)
+
+    username_ws = fields.Char(string='Usuario WS', required=True, default='...')
+    password_ws = fields.Char(string='Contraseña WS', required=True, default='...')
+    company_id_ws = fields.Char(string='Identificador compañia WS', required=True, default='...')
+    account_id_ws = fields.Char(string='Identificador cuenta WS', required=True, default='...')
+    service_ws = fields.Char(string='Servicio WS', required=True, default='PAYROLL')
 
     _sql_constraints = [('electronic_payroll_period_uniq', 'unique(company_id,year,month)', 'El periodo seleccionado ya esta registrado para esta compañía, por favor verificar.')]
 
@@ -227,7 +360,7 @@ class hr_electronic_payroll(models.Model):
             select distinct b.id 
             from hr_payslip a 
             inner join hr_employee b on a.employee_id = b.id 
-            where a.state = 'done' and a.date_from >= '%s' and a.date_to <= '%s' and a.company_id = %s            
+            where a.state = 'done' and a.date_from >= '%s' and a.date_from <= '%s' and a.company_id = %s
         ''' % (date_start, date_end, self.company_id.id)
 
         self.env.cr.execute(query)
@@ -238,22 +371,31 @@ class hr_electronic_payroll(models.Model):
             employee_ids.append(result)
         obj_employee = self.env['hr.employee'].search([('id', 'in', employee_ids)])
 
+        query_max_item = '''
+        Select max(a.item) as next_item from hr_electronic_payroll_detail as a 
+        inner join hr_electronic_payroll as b on a.electronic_payroll_id = b.id and b.prefix = '%s' and b.id != %s
+        ''' % (self.prefix,self.id)
+        self.env.cr.execute(query_max_item)
+        res_max_item = self.env.cr.fetchone()
+        max_item = res_max_item[0] or 0
+
         item = 0
         for employee in obj_employee:
             item += 1
             # Obtener contrato activo
-            obj_contract = self.env['hr.contract'].search([('state', '=', 'open'), ('employee_id', '=', employee.id)])
+            obj_contract = self.env['hr.contract'].search([('state', '=', 'open'), ('employee_id', '=', employee.id), ('date_start','<=',date_end)])
             if not obj_contract:
                 obj_contract = self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id', '=', employee.id), ('retirement_date', '>=', date_start)],limit=1)
                 # Obtener nóminas en ese rango de fechas
-            obj_payslip = self.env['hr.payslip'].search([('state', '=', 'done'), ('employee_id', '=', employee.id), ('contract_id', '=', obj_contract.id),('date_from', '>=', date_start), ('date_to', '<=', date_end)])
+            obj_payslip = self.env['hr.payslip'].search([('state', '=', 'done'), ('employee_id', '=', employee.id), ('contract_id', '=', obj_contract.id),('date_from', '>=', date_start), ('date_from', '<=', date_end)])
 
             value_detail = {
                 'electronic_payroll_id':self.id,
                 'employee_id':employee.id,
                 'contract_id':obj_contract.id,
-                'item':item,
-                'sequence': self.prefix+''+str(item),
+                'item':item+max_item,
+                'sequence': self.prefix+''+str(item+max_item),
+                'nonce': 'ZUE_NOMINAELECTRONICA_'+self.prefix+''+str(item+max_item),
                 'payslip_ids':[(6, 0, obj_payslip.ids)]
             }
 
@@ -261,3 +403,60 @@ class hr_electronic_payroll(models.Model):
 
         for detail in self.executing_electronic_payroll_ids:
             detail.get_xml()
+
+        self.write({'state':'xml'})
+
+    def executing_electronic_payroll_failed(self):
+        for record in self.executing_electronic_payroll_ids:
+            if record.status:
+                if record.status != 'ACCEPTED' and record.status != '':
+                    record.get_xml()
+            else:
+                if not record.transaction_id:
+                    record.get_xml()
+
+    def consume_ws(self):
+        for record in self.executing_electronic_payroll_ids:
+            record.consume_web_service_send_xml()
+        self.write({'state': 'ws'})
+
+    def consume_ws_failed(self):
+        for record in self.executing_electronic_payroll_ids:
+            if record.status:
+                if record.status != 'ACCEPTED' and record.status != '':
+                    record.consume_web_service_send_xml()
+            else:
+                if not record.transaction_id:
+                    record.consume_web_service_send_xml()
+
+    def consume_web_service_status_document_all(self):
+        qty_failed = 0
+        qty_done = 0
+        for record in self.executing_electronic_payroll_ids:
+            if record.status != 'ACCEPTED' and record.transaction_id:
+                record.consume_web_service_status_document()
+            if record.status != 'ACCEPTED':
+                qty_failed += 1
+            else:
+                qty_done += 1
+
+        self.write({'qty_failed':qty_failed,
+                    'qty_done':qty_done})
+
+        if qty_failed == 0:
+            self.write({'state': 'close'})
+
+
+    def convert_result_send_xml_all(self):
+        for record in self.executing_electronic_payroll_ids:
+            record.convert_result_send_xml()
+
+    def cancel_process(self):
+        self.env['hr.electronic.payroll.detail'].search([('electronic_payroll_id', '=', self.id)]).unlink()
+        self.write({'state': 'draft'})
+
+    def unlink(self):
+        for record in self:
+            if record.state != 'draft':
+                raise ValidationError(_('No se puede eliminar debido a que su estado es diferente de borrador.'))
+        return super(hr_electronic_payroll, self).unlink()
