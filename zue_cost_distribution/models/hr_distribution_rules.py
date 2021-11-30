@@ -81,18 +81,23 @@ class hr_distribution_rules(models.Model):
     @api.depends('initial_month', 'initial_year')
     def _get_initial_date(self):
         for record in self:
-            start_date = datetime.strptime(('1/' + str(record.initial_month) + '/' + str(record.initial_year)), '%d/%m/%Y')
-
-            record.initial_date = start_date.date()
+            if not record.initial_month or not record.initial_year:
+                record.initial_date = None
+            else:
+                start_date = datetime.strptime(('1/' + str(record.initial_month) + '/' + str(record.initial_year)), '%d/%m/%Y')
+                record.initial_date = start_date.date()
 
     @api.depends('final_month', 'final_year')
     def _get_final_date(self):
         for record in self:
-            end_date = datetime.strptime(('1/' + str(record.final_month) + '/' + str(record.final_year)), '%d/%m/%Y')
-            end_date = end_date + relativedelta(months=1)
-            end_date = end_date - timedelta(days=1)
+            if not record.final_month or not record.final_year:
+                record.final_date = None
+            else:
+                end_date = datetime.strptime(('1/' + str(record.final_month) + '/' + str(record.final_year)), '%d/%m/%Y')
+                end_date = end_date + relativedelta(months=1)
+                end_date = end_date - timedelta(days=1)
 
-            record.final_date = end_date.date()
+                record.final_date = end_date.date()
 
 
     @api.constrains('distribution_rules_details')
@@ -166,19 +171,25 @@ class distribution_rules_execution(models.Model):
     @api.depends('initial_month', 'initial_year')
     def _get_initial_date(self):
         for record in self:
-            start_date = datetime.strptime(('1/' + str(record.initial_month) + '/' + str(record.initial_year)),
-                                           '%d/%m/%Y')
-
-            record.initial_date = start_date.date()
+            if not record.initial_month or not record.initial_year:
+                record.initial_date = None
+            else:
+                start_date = datetime.strptime(('1/' + str(record.initial_month) + '/' + str(record.initial_year)),
+                                               '%d/%m/%Y')
+                record.initial_date = start_date.date()
 
     @api.depends('final_month', 'final_year')
     def _get_final_date(self):
         for record in self:
-            end_date = datetime.strptime(('1/' + str(record.final_month) + '/' + str(record.final_year)), '%d/%m/%Y')
-            end_date = end_date + relativedelta(months=1)
-            end_date = end_date - timedelta(days=1)
+            if not record.final_month or not record.final_year:
+                record.final_date = None
+            else:
+                end_date = datetime.strptime(('1/' + str(record.final_month) + '/' + str(record.final_year)),
+                                             '%d/%m/%Y')
+                end_date = end_date + relativedelta(months=1)
+                end_date = end_date - timedelta(days=1)
 
-            record.final_date = end_date.date()
+                record.final_date = end_date.date()
 
     def return_action_to_open(self):
         res = {

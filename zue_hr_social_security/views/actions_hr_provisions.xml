@@ -52,8 +52,8 @@
                         <group>
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="time_process" readonly="1"/>
-                            <field name="details_ids" readonly="1">
-                                <tree>
+                            <field name="details_ids">
+                                <tree editable="top">
                                     <field name="provision"/>             
                                     <field name="employee_id"/>             
                                     <field name="contract_id" optional="show"/>             

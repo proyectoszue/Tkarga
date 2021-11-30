@@ -30,6 +30,9 @@
             <field name="model">zue.request.ws</field>
             <field name="arch" type="xml">
                 <form>
+                    <header>
+                        <button name="ejecutar_ws_test" type="object" string="Ejecutar WS Test"/>
+                    </header>
                     <sheet string="Configuración Solicitudes WS">
                         <group string="Configuración">
                             <field name="name" required="1"/>
@@ -38,7 +41,7 @@
                             <field name="active"/>
                         </group>
                         <group string="Headers">
-                            <group>
+                            <group string="Basic - Authorization">
                                 <field name="username"/>
                                 <field name="password" password="True"/>
                             </group>
@@ -46,6 +49,9 @@
                                 <field name="postman_token" password="True"/>
                                 <field name="authorization" password="True"/>
                             </group>
+                        </group>
+                        <group string="Body">
+                            <field name="body" nolabel="1"/>
                         </group>
                         <group>
                             <field name="parameters_id" nolabel="1">

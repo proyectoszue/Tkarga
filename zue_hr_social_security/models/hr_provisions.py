@@ -87,21 +87,21 @@ class hr_executing_provisions(models.Model):
 
                         #Obtener fecha cesantias
                         date_cesantias = contract.date_start     
-                        obj_cesantias = env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id)])
+                        obj_cesantias = env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('payslip','=',False),('final_accrual_date','<=',date_end)])
                         if obj_cesantias:
                             for history in sorted(obj_cesantias, key=lambda x: x.final_accrual_date):
                                 date_cesantias = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_cesantias else date_cesantias             
 
                         #Obtener fecha prima
                         date_prima = contract.date_start     
-                        obj_prima = env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id)])
+                        obj_prima = env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('payslip','=',False),('final_accrual_date','<=',date_end)])
                         if obj_prima:
                             for history in sorted(obj_prima, key=lambda x: x.final_accrual_date):
                                 date_prima = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_prima else date_prima                                   
 
                         #Obtener fecha vacaciones
                         date_vacation = contract.date_start     
-                        obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id)])
+                        obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('payslip','=',False),('final_accrual_date','<=',date_end)])
                         if obj_vacation:
                             for history in sorted(obj_vacation, key=lambda x: x.final_accrual_date):
                                 date_vacation = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_vacation else date_vacation             
@@ -157,8 +157,11 @@ class hr_executing_provisions(models.Model):
                                     provision = 'vacaciones'
 
                                 #Obtener provisiones anteriores que afectan el valor
+                                date_month_ant = date_start - timedelta(days=1)
+
                                 obj_provisions = env['hr.executing.provisions.details']
-                                executing_provisions = env['hr.executing.provisions.details'].search([('executing_provisions_id.state','in',['done','accounting']),('executing_provisions_id','!=',self.id),('executing_provisions_id.date_end','<',date_end),('provision','=',provision),('contract_id','=',contract.id)])
+
+                                executing_provisions = env['hr.executing.provisions.details'].search([('executing_provisions_id.state','in',['done','accounting']),('executing_provisions_id','!=',self.id),('executing_provisions_id.date_end','=',date_month_ant),('provision','=',provision),('contract_id','=',contract.id)])
                                 value_balance = sum([i.amount for i in obj_provisions.browse(executing_provisions.ids)])
                                 
                                 #Guardar valores
@@ -243,7 +246,7 @@ class hr_executing_provisions(models.Model):
         time_process = date_finally_process - date_start_process
         time_process = time_process.seconds / 60
 
-        self.time_process = 'El proceso se demoro '+str(time_process)+' minutos.'
+        self.time_process = "El proceso se demoro {:.2f} minutos.".format(time_process)
         self.date_end = date_end
         self.state = 'done'
 

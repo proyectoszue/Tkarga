@@ -112,9 +112,11 @@ class Hr_payslip(models.Model):
                 amount_base = amount
                 dias_trabajados = self.dias360(self.date_from, self.date_to)
                 dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_from),('date_to','<=',self.date_to),('state','=','validate'),('employee_id','=',self.employee_id.id),('unpaid_absences','=',True)])])
+                dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_from), ('end_date', '<=', self.date_to),('employee_id', '=', self.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
                 if inherit_contrato != 0:                    
                     dias_trabajados = self.dias360(self.date_cesantias, self.date_liquidacion)
                     dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_cesantias),('date_to','<=',self.date_liquidacion),('state','=','validate'),('employee_id','=',self.employee_id.id),('unpaid_absences','=',True)])])
+                    dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_cesantias), ('end_date', '<=', self.date_liquidacion),('employee_id', '=', self.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
                 dias_liquidacion = dias_trabajados - dias_ausencias
 
                 if rule.code == 'CESANTIAS':   

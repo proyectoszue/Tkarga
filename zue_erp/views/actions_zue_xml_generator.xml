@@ -42,6 +42,7 @@
                                 1. Los tags marcados como Padres, no deben tener información en el campo código, si la tiene el sistema no la procesara.<br/>
                                 2. En el campo Código se debe asignar el valor que debe contener el tag en la variable "val".<br/>
                                 3. Al realizar el llamado de un método o función se debe anteponer "o." <br/>
+                                4. En el campo Código Validación se debe asignar la validación y su resultado debe quedar en la variable "validation" y usar la variable "val" Ej. validation = val > 0<br/>
 
                                 Para ejecutar el XML se debe crear un objeto de este modelo y ejecutar el método xml_generator que recibe como parametro el objeto sobre el cual se ejecutaran las consultas.
                                 Se recomienda el siguente código.<br/><br/>
@@ -58,6 +59,7 @@
                                     <field name="is_parent"/>
                                     <field name="name_parent"/>
                                     <field name="code_python"/>
+                                    <field name="code_validation_python"/>
                                 </tree>
                             </field>
                         </group>

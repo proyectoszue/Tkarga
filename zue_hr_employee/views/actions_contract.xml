@@ -132,6 +132,97 @@
                     </page>
                 </xpath>
             </field>
-        </record>         
+        </record>
+
+        <!-- DEVENGOS & DEDUCCIONES VIEWS -->
+        <record id="zue_menu_action_contract_concepts" model="ir.actions.act_window">
+            <field name="name">Devengos y Deducciones por Contrato</field>
+            <field name="res_model">hr.contract.concepts</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_hr_employee.list_contract_concepts">
+            <field name="name">zue list contract concepts</field>
+            <field name="model">hr.contract.concepts</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="type_employee" invisible="1"/>
+                    <field name="contract_id"/>
+                    <field name="input_id"/>
+                    <field name="amount"/>
+                    <field name="period"/>
+                    <field name="aplicar"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_hr_employee.form_contract_concepts">
+            <field name="name">zue form contract concepts</field>
+            <field name="model">hr.contract.concepts</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="change_state_done" type="object" states="draft" string="Aprobar" class="oe_highlight"/>
+                        <button name="change_state_cancel" type="object" states="done" string="Cancelar / Finalizar" class="oe_highlight"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="type_employee" invisible="1"/>
+                                <field name="contract_id"/>
+                                <field name="input_id"/>
+                                <field name="amount"/>
+                                <field name="period"/>
+                                <field name="aplicar"/>
+                            </group>
+                            <group>
+                                <field name="date_start"/>
+                                <field name="date_end"/>
+                                <field name="attached_name" invisible="1"/>
+                                <field name="attached" widget="binary"/>
+                            </group>
+                            <group string="Entidades">
+                                <field name="partner_id"/>
+                                <field name="embargo_judged"/>
+                                <field name="embargo_process"/>
+                            </group>
+                        </group>
+                        <group col="4">
+                            <field name="detail" colspan="4"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <!--
+        Domain:
+        ['&','|',('contract_id.employee_id.branch_id','in',user.branch_ids.ids),('contract_id.employee_id.branch_id','=',False),'|',('contract_id.employee_id.company_id','=',False),('contract_id.employee_id.company_id', 'in', company_ids)]
+
+        <record id="rule_contract_concepts_zue_res_branch" model="ir.rule">
+            <field name="name">Permisos sucursales conceptos por contrato empleado</field>
+            <field name="model_id" ref="model_hr_contract_concepts"/>
+            <field name="domain_force">['|',('contract_id.employee_id.branch_id','in',user.branch_ids.ids),('contract_id.employee_id.branch_id','=',False)]</field>
+        </record>
+        <record id="rule_contract_concepts_company" model="ir.rule">
+            <field name="name">Permisos compañia conceptos por contrato empleado</field>
+            <field name="model_id" ref="model_hr_contract_concepts"/>
+            <field name="domain_force">['|',('contract_id.employee_id.company_id','=',False),('contract_id.employee_id.company_id', 'in', company_ids)]</field>
+        </record>
+        !-->
+
+        <record id="search_contract_concepts" model="ir.ui.view">
+            <field name="name">zue list contract concepts</field>
+            <field name="model">hr.contract.concepts</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="contract_id"/>
+                    <field name="input_id"/>
+                </search>
+            </field>
+        </record>
+
     </data>
 </odoo>

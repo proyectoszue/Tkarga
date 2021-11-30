@@ -23,23 +23,35 @@ class zue_request_ws(models.Model):
     postman_token = fields.Char(string='Postman-token')
     authorization = fields.Char(string='Authorization')
     parameters_id = fields.One2many('zue.request.parameters.ws', 'ws_id', string='Parámetros')
+    body = fields.Text('Body')
 
     sql_constraints = [
         ('name', 'UNIQUE (name)', 'Ya existe un registro con este nombre!')
     ]
 
+    def ejecutar_ws_test(self):
+        obj_prueba = None
+        for record in self:
+            obj_prueba = record.connection_requests('enviofacturacionelectronicaamtur@alianzatsa.com','2021-10-28T16:06:42.975-05:00')
+
+        if obj_prueba:
+            raise ValidationError(_(obj_prueba))
+        else:
+            return True
+
     @api.model
-    def connection_requests(self,*args):
+    def connection_requests(self, *args):
         for obj_ws in self:
             name = ''
             value = ''
+            data_body = ''
             count_parameter = 0
             
             if not obj_ws.active:
                 raise ValidationError(_("El servicio web con el nombre " + obj_ws.name + " no se encuentra activo.")) 
                 
             url = ''
-            url_parameters = ''
+            url_parameters, aut_user, aut_pass = '', '', ''
             final_url = ''
 
             if not obj_ws:
@@ -56,10 +68,10 @@ class zue_request_ws(models.Model):
                 }
 
                 if obj_ws.username:
-                    headers["username"] = obj_ws.username
+                    aut_user = obj_ws.username
 
                 if obj_ws.password:
-                    headers["password"] = obj_ws.password
+                    aut_pass = obj_ws.password
 
                 if obj_ws.postman_token:
                     headers["postman-token"] = obj_ws.postman_token
@@ -67,32 +79,73 @@ class zue_request_ws(models.Model):
                 if obj_ws.authorization:
                     headers["authorization"] = obj_ws.authorization
 
-                for parameters in obj_ws.parameters_id:
-                    name = parameters.parameter_name
-                    value = parameters.parameter_value
+                # Se leen los parametros ZUE_PARAMETER en el body y se asocian en base a la grilla
+                if args:
+                    string = obj_ws.body
+                    pos_i, pos_f, i = 0, 0, 1
+                    stringF = ''
 
-                    if value == 'ZUE_PARAMETER':
-                        value = str(args[count_parameter])
-                        count_parameter += 1
+                    while i != 99:
+                        tmp_string = ''
+                        if pos_i > 0:
+                            string_a = string[pos_i:]
+                        else:
+                            if not string:
+                                string_a = ''
+                            else:
+                                string_a = string
+                        pos_f = string_a.find('ZUE_PARAMETER')
+                        if pos_f < 0:
+                            i = 99
+                            stringF += string_a
+                        else:
+                            pos_f = pos_f + 13
+
+                            tmp_string = string_a[:pos_f]
+
+                            pos_i += pos_f
+
+                            tmp_string = tmp_string.replace('ZUE_PARAMETER', str(args[count_parameter]))
+                            count_parameter += 1
+
+                            stringF += tmp_string
+                    data_body = stringF
+
+                if len(args) > count_parameter:
+                    for parameters in obj_ws.parameters_id:
+                        name = parameters.parameter_name
+                        value = parameters.parameter_value
+
+                        if value == 'ZUE_PARAMETER':
+                            value = str(args[count_parameter])
+                            count_parameter += 1
 
 
-                    if not url_parameters:
-                        url_parameters = '?'
-                        url_parameters += name + '=' + value
-                    else:
-                        url_parameters += '&' + name + '=' + value
+                        if not url_parameters:
+                            url_parameters = '?'
+                            url_parameters += name + '=' + value
+                        else:
+                            url_parameters += '&' + name + '=' + value
 
                 if url_parameters:
                     final_url = url + url_parameters
                 else:
                     final_url = url
 
-                response = requests.request(obj_ws.method, final_url, headers=headers)
+                if aut_user and aut_pass:
+                    response = requests.request(obj_ws.method, final_url, headers=headers, data=data_body, auth=(aut_user, aut_pass))
+                else:
+                    response = requests.request(obj_ws.method, final_url, data=data_body, headers=headers)
 
                 if response.status_code == 404:
                     raise ValidationError(_("Error! No se encontró el método configurado en el servicio web " + obj_ws.name))
                 
                 if response:
-                    return response.json()
+                    if obj_ws.name == 'check_vehicle_odometer' or obj_ws.name == 'get_contract_services' or obj_ws.name == 'get_contracts_logirastreo':
+                        return response.json()
+                    if response.content:
+                        return str(response.content)
+                    else:
+                        return response.json()
                 else:
                     raise ValidationError(_("Error! El servicio web no retorno un valor válido."))

@@ -33,8 +33,13 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="executing_electronic_payroll" type="object" string="Ejecutar" class="oe_highlight" states="draft"/>
-                        <button name="cancel_process" type="object" string="Cancelar" states="done"/>
+                        <button name="executing_electronic_payroll" type="object" string="Crear XML" class="oe_highlight" states="draft"/>
+                        <button name="consume_ws" type="object" string="Enviar a WS" class="oe_highlight" states="xml"/>
+                        <button name="cancel_process" type="object" string="Cancelar" states="xml"/>
+                        <button name="consume_web_service_status_document_all" type="object" string="Actualizar estado DIAN" class="oe_highlight" states="ws"/>
+                        <button name="executing_electronic_payroll_failed" type="object" string="Actualizar XML (Fallidos)" states="ws"/>
+                        <button name="consume_ws_failed" type="object" string="Enviar a WS (Fallidos)" states="ws"/>
+                        <button name="convert_result_send_xml_all" type="object" string="Actualizar resultado envío" states="ws" invisible="1"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>
@@ -54,16 +59,26 @@
                         <hr style="border-style:solid;border-width:2px;width:100%;"/>
                         <h2 style="text-align:center">Proceso</h2>
                         <notebook>
+                            <page string="Configuración WS" name="ws">
+                                    <group>
+                                        <field name="username_ws"/>
+                                        <field name="password_ws"/>
+                                        <field name="company_id_ws"/>
+                                        <field name="account_id_ws"/>
+                                        <field name="service_ws"/>
+                                    </group>
+                            </page>
                             <page string="Ejecución" name="ejecucion">
-                                <field name="executing_electronic_payroll_ids">
+                                <group>
+                                    <field name="qty_failed" readonly="1"/>
+                                    <field name="qty_done" readonly="1"/>
+                                </group>
+                                <field name="executing_electronic_payroll_ids" nolabel="1">
                                     <tree>
-                                        <field name="employee_id" optional="show" readonly="1"/>
-                                        <field name="contract_id" optional="hide" readonly="1"/>
-                                        <field name="sequence" optional="show" readonly="1"/>
-                                        <field name="payslip_ids" optional="show" widget="many2many_tags" readonly="1"/>
-                                        <field name="xml_file_name" invisible="1"/>
-                                        <field name="xml_file" optional="hide" filename="xml_file_name"/>
-                                        <field name="cune_dian" optional="hide" readonly="1"/>
+                                        <field name="employee_id" optional="show"/>
+                                        <field name="sequence" optional="show"/>
+                                        <field name="status" optional="show"/>
+                                        <field name="payslip_ids" optional="show" widget="many2many_tags"/>
                                     </tree>
                                     <form>
                                         <sheet>
@@ -71,10 +86,26 @@
                                                 <field name="employee_id" readonly="1"/>
                                                 <field name="contract_id" readonly="1"/>
                                                 <field name="sequence" readonly="1"/>
-                                                <field name="payslip_ids" widget="many2many_tags" readonly="1"/>
-                                                <field name="cune_dian" readonly="1"/>
+                                                <field name="payslip_ids" widget="many2many_tags" force_save="1" attrs="{'readonly': [('status', '=', 'ACCEPTED')]}"/>
+                                                <field name="result_upload_xml" readonly="1"/>
+                                                <field name="status" readonly="1"/>
+                                                <field name="result_status" readonly="1"/>
                                             </group>
-                                            <button name="download_xml" type="object" string="Descargar XML"/>
+                                            <group string="Procesos">
+                                                <group string="XML" attrs="{'invisible':[('status', '=', 'ACCEPTED')]}">
+                                                    <button name="get_xml" type="object" string="Crear/Actualizar XML"/>
+                                                    <button name="download_xml" type="object" string="Descargar XML"/>
+                                                    <br/><br/>
+                                                    <button name="convert_result_send_xml" type="object" string="Actualizar respuesta envío xml" invisible="1"/>
+                                                </group>
+                                                <group string="WS">
+                                                    <button name="consume_web_service_send_xml" type="object" string="Enviar XML" attrs="{'invisible':[('status', '=', 'ACCEPTED')]}"/>
+                                                    <button name="consume_web_service_status_document" type="object" string="Consultar Estado" attrs="{'invisible':[('status', '=', 'ACCEPTED')]}"/>
+                                                    <br/><br/>
+                                                    <field name="resource_type_document"/>
+                                                    <button name="consume_web_service_download_files" type="object" string="Descargar archivo"/>
+                                                </group>
+                                            </group>
                                         </sheet>
                                     </form>
                                 </field>

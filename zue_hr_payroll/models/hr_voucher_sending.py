@@ -10,6 +10,11 @@ import base64
 import threading
 #---------------------------Modelo para generar Archivo plano de pago de nómina-------------------------------#
 
+class mail_mail(models.Model):
+    _inherit = 'mail.mail'
+
+    payroll_voucher = fields.Boolean(string='Email para comprobante de nómina')
+
 class hr_voucher_sending_failed(models.Model):
     _name = 'hr.voucher.sending.failed'
     _description = 'Ejecución comprobantes de nómina Fallidos'
@@ -76,6 +81,7 @@ class hr_voucher_sending(models.Model):
                                                 'email_to': correo_envio,
                                                 'email_from': self.env.user.email, 
                                                 'body_html':message.encode('utf-8'),
+                                                'payroll_voucher': True,
                                                 'attachment_ids': [(6, 0, [atts_id.id])] })
                             # create and send email
                             if email_vals:

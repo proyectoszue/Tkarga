@@ -14,6 +14,7 @@
                 <menuitem id="mntc_program_wizard_menu" name="Planeación preventiva" parent="menu_mntc_maintenance" action="action_program_range_wizard" sequence="6"/>
 
 
+
             <menuitem id="menu_mntc_maintenance_config" name="Configuraciones" parent="maintenance_main_menu" sequence="102"/>
                 <menuitem id="mntc_garage" name="Garage" parent="menu_mntc_maintenance_config" action="action_mntc_garage" sequence="1"/>
                 <menuitem id="menu_mntc_maintenance_parts" name="Códigos de falla" parent="menu_mntc_maintenance_config" sequence="2"/>
@@ -49,5 +50,8 @@
                 <menuitem id="mntc_report_workorder_task" name="Informe Tarea-Orden de trabajo" parent="menu_mntc_maintenance_reportes" action="mntc_workorder_report_task_action" sequence="2"/>
                 <menuitem id="mntc_report_workorder_rrhh" name="RRHH Informe Orden de trabajo" parent="menu_mntc_maintenance_reportes" action="mntc_workorder_report_rrhh_action" sequence="3"/>
                 <menuitem id="availability_indicator_wizard" name="Informe de disponibilidad" parent="menu_mntc_maintenance_reportes" action="action_availability_indicator_wizard" sequence="4"/>
+                <menuitem id="mntc_indicators" name="Indicadores" parent="menu_mntc_maintenance_reportes" action="indicators_mntc_action_filters" sequence="5"/>
+
+            <menuitem id="mntc_fleet_vehicle_indicator_menu" name="Seguimiento vehículos en espera" parent="stock.menu_warehouse_report" action="action_vehicle_spare_parts_indicator" sequence="516"/>
     </data>
 </odoo>

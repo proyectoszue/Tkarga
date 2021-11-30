@@ -266,7 +266,7 @@ class hr_payroll_social_security(models.Model):
             obj_change_wage = self.env['hr.contract.change.wage'].search([('contract_id','=',item.contract_id.id),('date_final','!=',False),('date_final','>=',date_start),('date_final','<=',date_end)],limit=1)
             cVSP = 'X' if len(obj_change_wage) > 0 else ' '
             cCorrecciones = ' '
-            cVST = 'X' if item.nSueldo != item.nValorBaseSalud and item.nDiasLiquidados > 0 and cTipoCotizante not in ('12','19') else ' '
+            cVST = 'X' if item.nSueldo != item.nValorBaseSalud and item.nDiasLiquidados > 0 and cTipoCotizante not in ('12','19') and cVSP != 'X' else ' '
             
             cSLN = 'X' if item.nDiasLicencia > 0 else ' '
             cIGE = 'X' if item.nDiasIncapacidadEPS > 0 else ' '
@@ -393,7 +393,7 @@ class hr_payroll_social_security(models.Model):
         #Unir Encabezado y Detalle
         content_txt = encab_part +'\n'+ detalle_part 
         #Reemplazar la tecla Ñ por N
-        content_txt = content_txt.replace("Ñ",'N')
+        #content_txt = content_txt.replace("Ñ",'N')
 
         #Crear archivo
         if self.presentation_form != 'U':

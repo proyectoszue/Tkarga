@@ -28,6 +28,7 @@
         'views/actions_account_move.xml',
         'views/actions_documents.xml',
         'views/actions_account_aged_partner.xml',
+        'views/actions_exogenous_information.xml',
         'views/menus.xml',
     ],
 }

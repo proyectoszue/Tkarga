@@ -44,6 +44,8 @@
         'views/actions_hr_history_prima.xml',
         'views/actions_hr_work_entry.xml',
         'views/actions_hr_electronic_payroll.xml',
+        'views/actions_accumulated_reports.xml',
+        'views/actions_hr_absence_history.xml',
         'reports/report_payslip.xml',
         'reports/report_payslip_vacations_templates.xml',
         'reports/report_payslip_vacations.xml',        
