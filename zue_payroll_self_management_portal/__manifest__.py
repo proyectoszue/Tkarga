@@ -25,6 +25,7 @@
     'data': [
         # 'security/ir.model.access.csv',
         'views/index.xml',
+        'views/res_users.xml',
         'views/payroll_vouchers.xml'
     ],
 }
