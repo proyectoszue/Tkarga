@@ -17,7 +17,7 @@ class ZuePayrollSelfManagementPortal(Controller):
         if not request.env.user:
             return request.not_found()
 
-        obj_employee = request.env['hr.employee'].search([('user_id','=',request.env.user.id)])
+        obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)])
 
         for employee in obj_employee:
             obj_contract = request.env['hr.contract'].search([('employee_id','=',employee.id),('state','=','open')], limit=1)                           
@@ -34,7 +34,7 @@ class ZuePayrollSelfManagementPortal(Controller):
             department = employee.department_id.name
             job = employee.job_id.name
             date_start = obj_contract.date_start
-            email = employee.work_email
+            email = employee.personal_email
         
         info_employee = {
             'title': 'Portal de autogestión de nómina',

@@ -17,7 +17,7 @@ class ZuePayrollBooksReportsPortal(Controller):
         if not request.env.user:
             return request.not_found()
 
-        obj_employee = request.env['hr.employee'].search([('user_id','=',request.env.user.id)], limit=1)
+        obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)], limit=1)
         obj_contract = request.env['hr.contract'].search([('employee_id','=',obj_employee.id),('state','=','open')], limit=1)                           
 
         pdf_writer = PdfFileWriter()
@@ -50,7 +50,7 @@ class ZuePayrollBooksReportsPortal(Controller):
         if not request.env.user:
             return request.not_found()
 
-        obj_employee = request.env['hr.employee'].search([('user_id','=',request.env.user.id)], limit=1)
+        obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)], limit=1)
         obj_contract = request.env['hr.contract'].search([('employee_id','=',obj_employee.id),('state','=','open')], limit=1)                           
 
         pdf_writer = PdfFileWriter()

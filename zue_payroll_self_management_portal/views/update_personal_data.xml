@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="update_personal_data" name="Actualizar datos personales">
+            <t t-call="website.layout">
+                <div class="oe_structure">
+                    <div class="container">
+                        <br/>
+                        <center>
+                            <h1>
+                                <b>Actualizar datos personales</b>
+                            </h1>
+                        </center>
+                        <hr/>
+                        <div>
+                            <form action='/zue_payroll_self_management_portal/update_personal_data_save' method="POST">
+                                <label class="control-label col-md-2">Dirección</label>
+                                <input type="text" id="street" name="street" t-att-value="obj.address_home_id.street" class="form-control"/>
+                                <br/>
+                                <label class="control-label col-md-2">Telefono</label>
+                                <input type="text" id="phone" name="phone" t-att-value="obj.personal_mobile" class="form-control"/>
+                                <br/>
+                                <label class="control-label col-md-2">Fecha de nacimiento</label>
+                                <input type="text" id="date_birthday" name="date_birthday" t-att-value="obj.birthday" class="form-control"/>
+                                <br/>
+                                <label class="control-label col-md-2">Email</label>
+                                <input type="text" id="email" name="email" t-att-value="obj.personal_email" class="form-control"/>
+                                <br/>
+                                <input type="submit" class="btn btn-warning" value="Actualizar"/>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </template>
+    </data>
+</odoo>
