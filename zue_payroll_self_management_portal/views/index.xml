@@ -138,8 +138,17 @@
                             </h6>
                           </td>
                         </tr>
+                        <tr>
+                          <td/>
+                          <td class="text-right">
+                            <a class="btn btn-warning" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/update_personal_data">
+                              Actualizar datos personales
+                            </a>
+                          </td>
+                        </tr>
                       </tbody>
                     </table>
+
                   </div>
                 </div>
                 <!-- Información Laboral -->
