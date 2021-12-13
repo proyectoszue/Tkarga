@@ -12,6 +12,7 @@ class HrEmployeePublic(models.Model):
 
 class HrEmployeeUpdateTmp(models.TransientModel):
     _name = 'hr.employee.update.tmp'
+    _description = 'Tabla tmp empleados - Portal autogestion'
 
     employee_id = fields.Many2one('hr.employee',readonly=True)
 
