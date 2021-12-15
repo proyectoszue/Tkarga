@@ -9,10 +9,12 @@ class HrEmployeePublic(models.Model):
     birthday = fields.Date(readonly=True)
     type_employee = fields.Many2one('hr.types.employee',readonly=True)
     personal_email = fields.Char(readonly=True)
+    gender = fields.Char(string='Genero')
+    branch_id = fields.Many2one('zue.res.branch',string='Sucursal')
 
 class HrEmployeeUpdateTmp(models.TransientModel):
     _name = 'hr.employee.update.tmp'
-    _description = 'Tabla tmp para actualizar empleados - Portal autogestión'
+    _description = 'Tabla tmp empleados - Portal autogestion'
 
     employee_id = fields.Many2one('hr.employee',readonly=True)
 

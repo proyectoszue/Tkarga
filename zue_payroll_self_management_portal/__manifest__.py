@@ -23,10 +23,11 @@
 
     # always loaded
     'data': [
-        # 'security/ir.model.access.csv',
         'views/index.xml',
         'views/res_users.xml',
         'views/payroll_vouchers.xml',
-        'views/update_personal_data.xml'
+        'views/update_personal_data.xml',
+        'reports/laboral_certification.xml',
+        'security/ir.model.access.csv',
     ],
 }
