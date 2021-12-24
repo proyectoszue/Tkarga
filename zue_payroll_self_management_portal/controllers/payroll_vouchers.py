@@ -55,14 +55,14 @@ class ZuePayrollVouchersPortal(Controller):
         report_name = 'Nómina'
 
         obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)], limit=1)
-        payslips = request.env['hr.payslip'].search([('state','=','verify'),('employee_id','=',obj_employee.id),('date_from','>=',date_start),('date_to','<=',date_end)])
+        payslips = request.env['hr.payslip.public'].search([('state','=','verify'),('employee_id','=',obj_employee.id),('date_from','>=',date_start),('date_to','<=',date_end)])
         
         pdf_writer = PdfFileWriter()
 
         for payslip in payslips:
             report_name = payslip.struct_id.name + ' del ' + str(year) + '-' +  str(month)
             if not payslip.struct_id or not payslip.struct_id.report_id:
-                report = request.env.ref('hr_payroll.action_report_payslip', False)
+                report = request.env.ref('zue_payroll_self_management_portal.report_payslip_portal_action', False)
             else:
                 report = payslip.struct_id.report_id
             pdf_content, _ = report.render_qweb_pdf(payslip.id)

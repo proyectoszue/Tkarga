@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <report
+            id="report_book_vacation_portal_action"
+            model="hr.contract.public"
+            string="Libro de Vacaciones Portal Web"
+            report_type="qweb-pdf"
+            name="zue_payroll_self_management_portal.report_book_vacation_portal"
+            file="zue_payroll_self_management_portal.report_book_vacation_portal"
+        />
+
+         <report
+            id="report_book_cesantias_portal_action"
+            model="hr.contract.public"
+            string="Libro de Cesantías Portal Web"
+            report_type="qweb-pdf"
+            name="zue_payroll_self_management_portal.report_book_cesantias_portal"
+            file="zue_payroll_self_management_portal.report_book_cesantias_portal"
+        />
+
+        <!-- <record id="report_book_vacation_portal_action" model="ir.actions.report">
+            <field name="paperformat_id" ref="zue_hr_payroll.book_vacation"/>
+        </record> -->
+     </data>
+</odoo>

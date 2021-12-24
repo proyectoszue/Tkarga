@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<odoo>
+    <data>
+        <report
+            id="report_payslip_portal_action"
+            model="hr.payslip.public"
+            string="Payrrol Vouchers Portal"
+            report_type="qweb-pdf"
+            name="hr_payroll.report_payslip_lang"
+            file="hr_payroll.report_payslip_lang"
+            print_report_name="'Payslip - %s' % (object.employee_id.name)"
+        />
+    </data>
+</odoo>
