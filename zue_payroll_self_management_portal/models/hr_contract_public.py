@@ -2,7 +2,7 @@ from odoo import fields, models, api, tools
 
 
 class HrContractPublic(models.Model):
-    _name = 'hr.contract.public'
+    _name = 'hr.contract.public' 
     _description = 'Vista de la tabla de contratos empleados'
     _auto = False
     _log_access = True
@@ -45,3 +45,9 @@ class HrContractPublic(models.Model):
 
     def get_signature_certification(self):
         return self.sudo().env['hr.contract'].search([('id','=',self.id)]).get_signature_certification()
+
+    def get_info_book_vacation(self):
+        return self.sudo().env['hr.contract'].search([('id','=',self.id)]).get_info_book_vacation()
+    
+    def get_info_book_cesantias(self):
+        return self.sudo().env['hr.contract'].search([('id','=',self.id)]).get_info_book_cesantias()

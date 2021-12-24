@@ -18,12 +18,12 @@ class ZuePayrollBooksReportsPortal(Controller):
             return request.not_found()
 
         obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)], limit=1)
-        obj_contract = request.env['hr.contract'].search([('employee_id','=',obj_employee.id),('state','=','open')], limit=1)                           
+        obj_contract = request.env['hr.contract.public'].search([('employee_id','=',obj_employee.id),('state','=','open')], limit=1)                           
 
         pdf_writer = PdfFileWriter()
 
         for contract in obj_contract:
-            report = request.env.ref('zue_hr_payroll.report_book_vacation_action', False)
+            report = request.env.ref('zue_payroll_self_management_portal.report_book_vacation_portal_action', False)
             pdf_content, _ = report.render_qweb_pdf(contract.id)
             reader = PdfFileReader(io.BytesIO(pdf_content), strict=False, overwriteWarnings=False)
 
@@ -51,12 +51,12 @@ class ZuePayrollBooksReportsPortal(Controller):
             return request.not_found()
 
         obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)], limit=1)
-        obj_contract = request.env['hr.contract'].search([('employee_id','=',obj_employee.id),('state','=','open')], limit=1)                           
+        obj_contract = request.env['hr.contract.public'].search([('employee_id','=',obj_employee.id),('state','=','open')], limit=1)                           
 
         pdf_writer = PdfFileWriter()
 
         for contract in obj_contract:
-            report = request.env.ref('zue_hr_payroll.report_book_cesantias_action', False)
+            report = request.env.ref('zue_payroll_self_management_portal.report_book_cesantias_portal_action', False)
             pdf_content, _ = report.render_qweb_pdf(contract.id)
             reader = PdfFileReader(io.BytesIO(pdf_content), strict=False, overwriteWarnings=False)
 

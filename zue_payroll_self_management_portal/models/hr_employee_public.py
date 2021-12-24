@@ -11,6 +11,23 @@ class HrEmployeePublic(models.Model):
     personal_email = fields.Char(readonly=True)
     gender = fields.Char(string='Genero')
     branch_id = fields.Many2one('zue.res.branch',string='Sucursal')
+    mobile_phone = fields.Char(readonly=True)
+    work_phone = fields.Char(readonly=True)
+    licencia_rh = fields.Char(readonly=True)
+    licencia_categoria = fields.Char(readonly=True)
+    licencia_vigencia = fields.Date(readonly=True)
+    licencia_restricciones = fields.Char(readonly=True)
+    country_id = fields.Many2one('res.country',readonly=True)
+    place_of_birth = fields.Char(readonly=True)
+    country_of_birth = fields.Many2one('res.country',readonly=True)
+    emergency_contact = fields.Char(readonly=True)
+    emergency_phone = fields.Char(readonly=True)
+    emergency_relationship = fields.Char(readonly=True)
+    certificate = fields.Char(readonly=True)
+    study_field = fields.Char(readonly=True)
+    study_school = fields.Char(readonly=True)
+    marital = fields.Char(readonly=True)
+
 
 class HrEmployeeUpdateTmp(models.TransientModel):
     _name = 'hr.employee.update.tmp'

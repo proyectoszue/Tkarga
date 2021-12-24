@@ -39,25 +39,25 @@
                   <div class="text-center">
                     <ul style="list-style: none;">
                       <li>
-                        <a class="btn btn-warning" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/certification">
+                        <a class="btn btn-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/certification">
                       Certificado Laboral
                         </a>
                       </li>
                       <br/>
                       <li>
-                        <a class="btn btn-warning" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/generate_vouchers">
+                        <a class="btn btn-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/generate_vouchers">
                       Comprobantes de nómina
                         </a>
                       </li>
                       <br/>
                       <li>
-                        <a class="btn btn-warning" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/book_vacation">
+                        <a class="btn btn-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/book_vacation">
                       Libro de vacaciones 
                         </a>
                       </li>
                       <br/>
                       <li>
-                        <a class="btn btn-warning" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/book_cesantias">
+                        <a class="btn btn-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/book_cesantias">
                       Libro de cesantías
                         </a>
                       </li>
@@ -80,7 +80,7 @@
                       <tbody>
                         <tr>
                           <td>
-                            <h5 class="badge">Tipo de Empleado</h5>
+                            <h5 >Tipo de Empleado</h5>
                           </td>
                           <td>
                             <h6>
@@ -90,7 +90,7 @@
                         </tr>
                         <tr>
                           <td>
-                            <h5 class="badge">Identificación</h5>
+                            <h5 >Identificación</h5>
                           </td>
                           <td>
                             <h6>
@@ -100,7 +100,7 @@
                         </tr>
                         <tr>
                           <td>
-                            <h5 class="badge">Dirección</h5>
+                            <h5 >Dirección</h5>
                           </td>
                           <td>
                             <h6>
@@ -110,7 +110,7 @@
                         </tr>
                         <tr>
                           <td>
-                            <h5 class="badge">Email</h5>
+                            <h5 >Email</h5>
                           </td>
                           <td>
                             <h6>
@@ -120,7 +120,7 @@
                         </tr>
                         <tr>
                           <td>
-                            <h5 class="badge">Teléfono</h5>
+                            <h5 >Teléfono</h5>
                           </td>
                           <td>
                             <h6>
@@ -130,7 +130,7 @@
                         </tr>
                         <tr>
                           <td>
-                            <h5 class="badge">Fecha Nacimiento</h5>
+                            <h5 >Fecha Nacimiento</h5>
                           </td>
                           <td>
                             <h6>
@@ -138,17 +138,11 @@
                             </h6>
                           </td>
                         </tr>
-                        <tr>
-                          <td/>
-                          <td class="text-right">
-                            <a class="btn btn-warning" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/update_personal_data">
-                              Actualizar datos personales
-                            </a>
-                          </td>
-                        </tr>
                       </tbody>
                     </table>
-
+                    <a class="btn btn-primary center" t-attf-href="/zue_payroll_self_management_portal/update_personal_data">
+                      Actualizar datos personales
+                    </a>
                   </div>
                 </div>
                 <!-- Información Laboral -->
@@ -167,7 +161,7 @@
                       <tbody>
                         <tr>
                           <td>
-                            <h5 class="badge">Compañía</h5>
+                            <h5 >Compañía</h5>
                           </td>
                           <td>
                             <h6>
@@ -177,7 +171,7 @@
                         </tr>
                         <tr>
                           <td>
-                            <h5 class="badge">Tipo de Contrato</h5>
+                            <h5 >Tipo de Contrato</h5>
                           </td>
                           <td>
                             <h6>
@@ -187,7 +181,7 @@
                         </tr>
                         <tr>
                           <td>
-                            <h5 class="badge">Departamento</h5>
+                            <h5 >Departamento</h5>
                           </td>
                           <td>
                             <h6>
@@ -197,7 +191,7 @@
                         </tr>
                         <tr>
                           <td>
-                            <h5 class="badge">Cargo Actual</h5>
+                            <h5 >Cargo Actual</h5>
                           </td>
                           <td>
                             <h6>
@@ -207,7 +201,7 @@
                         </tr>
                         <tr>
                           <td>
-                            <h5 class="badge">Fecha de Ingreso</h5>
+                            <h5 >Fecha de Ingreso</h5>
                           </td>
                           <td>
                             <h6>
@@ -222,8 +216,8 @@
               </div>
             </div>
             <br/>
-            <p class="text-center">
-              <b>NOTA:</b> La información aquí mostrada no es modificable desde el portal. Para actualizar sus datos debe acercarse a la persona encargada de recurso humano.
+            <p class="text-center callout callout-info ">
+              <b>NOTA:</b> Para actualizar sus datos adicionales debe acercarse a la persona encargada de recurso humano.
             </p>
 
             <br/>
