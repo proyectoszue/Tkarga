@@ -183,7 +183,7 @@ class hr_employee(models.Model):
                                             ('PA', 'Pasaporte')], 'Tipo de identificación cónyuge', track_visibility='onchange')
     num_identification_spouse = fields.Char('Número de identificación cónyuge', track_visibility='onchange')
 
-    _sql_constraints = [('emp_identification_uniq', 'unique(identification_id)', 'La cédula debe ser unica. La cédula ingresada ya existe')]
+    _sql_constraints = [('emp_identification_uniq', 'unique(company_id,identification_id)', 'La cédula debe ser unica. La cédula ingresada ya existe en esta compañía')]
 
     @api.onchange('partner_encab_id')
     def _onchange_partner_encab(self):
