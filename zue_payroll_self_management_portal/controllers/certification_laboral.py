@@ -17,13 +17,13 @@ class ZuePayrollCertificationLaboralPortal(Controller):
         if not request.env.user:
             return request.not_found()
 
-        obj_employee = request.env['hr.employee'].search([('user_id','=',request.env.user.id)], limit=1)
-        obj_contract = request.env['hr.contract'].search([('employee_id','=',obj_employee.id),('state','=','open')], limit=1)                           
+        obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)], limit=1)
+        obj_contract = request.env['hr.contract.public'].search([('employee_id','=',obj_employee.id),('state','=','open')], limit=1)
 
         pdf_writer = PdfFileWriter()
 
         for contract in obj_contract:
-            report = request.env.ref('zue_hr_employee.report_certificacion_laboral_action', False)
+            report = request.env.ref('zue_payroll_self_management_portal.report_certificacion_laboral_portal_action', False)
             pdf_content, _ = report.render_qweb_pdf(contract.id)
             reader = PdfFileReader(io.BytesIO(pdf_content), strict=False, overwriteWarnings=False)
 

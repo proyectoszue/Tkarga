@@ -1,0 +1,52 @@
+:root {
+    --gray: #EAEBF3;
+    --dark-gray: #6c757d;
+    --black: #000000;
+    --cyan: #0dcaf0;
+    --blue-primary :#0d6efd;
+    --text-sm: 10px;
+    --text-md: 12px;
+    --text-lg: 14px;
+}
+
+.text-sm {
+    font-size: var(--text-sm);
+    text-align: center;
+    margin: 0;
+}
+
+.text-md {
+    font-size: var(--text-md);
+    text-align: center;
+    margin: 0;
+}
+
+.text-lg {
+    font-size: var(--text-lg);
+    text-align: center;
+    margin: 0;
+}
+
+body{
+    color: var(--black);
+}
+
+.center {
+    display: grid;
+    place-items: center;
+}
+
+.control-edit{
+    margin: 20px 10px;
+}
+
+.title{
+    margin: 25px 0px;
+    color: var(--blue-primary);
+}
+
+.form-update-data{
+    margin-top: 20px;
+    margin-bottom: 40px;
+    
+}

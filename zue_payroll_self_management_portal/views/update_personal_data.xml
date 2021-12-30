@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="assets_frontend" inherit_id="web.assets_frontend">
+            <xpath expr="." position="inside">
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous"/>
+                <link rel="stylesheet" href="/zue_payroll_self_management_portal/static/src/css/main.css"/>
+                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p" crossorigin="anonymous"></script>
+            </xpath>
+        </template>
+        <template id="update_personal_data" name="Actualizar datos personales">
+            <!-- <link rel="stylesheet" type="text/scss" href="/zue_payroll_self_management_portal/static/src/css/main.css"/> -->
+            <t t-call="website.layout">
+                <div class="oe_structure">
+                    <main class="container">
+                        <h1 class="center title">
+                            <strong>Actualización de Datos</strong>
+                        </h1>
+                        <div>
+                            <form class="form-update-data" action='/zue_payroll_self_management_portal/update_personal_data_save' method="POST">
+                                <section class="control-edit">
+                                    <!-- <h2>Información Basica</h2> -->
+                                    <div class="form-row">
+                                        <div class="form-group col-md-3">
+                                            <div class="form-floating mb-3">
+                                                <input type="text" class="form-control" id="phone" placeholder="Telefono" t-att-value="obj.personal_mobile" name="phone" />
+                                                <label for="phone">Teléfono</label>
+                                                </div>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <div class="form-floating mb-3">
+                                                <input type="email" id="email" name="email"  placeholder="Email" t-att-value="obj.personal_email" class="form-control"/>
+                                                <label for="email">Email</label>
+                                            </div>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <div class="form-floating mb-3">
+                                                <input type="text" id="street" name="street" placeholder="Dirección" t-att-value="obj.address_home_id.street" class="form-control"/>
+                                                <label for="street">Dirección</label>
+                                            </div>
+                                        </div>
+                                        <div class="form-group col-md-3">
+                                            <div class="form-floating">
+                                                <select class="form-select" id="marital" name="marital" placeholder="Estado Civil">
+                                                    <option value="single"  t-att-selected="obj.marital == 'single'">Soltero(a)</option>
+                                                    <option value="married"  t-att-selected="obj.marital == 'married'">Casado(a)</option>
+                                                    <option value="cohabitant"  t-att-selected="obj.marital == 'cohabitant'">Cohabitante legal</option>
+                                                    <option value="widower"  t-att-selected="obj.marital == 'widower'">Viudo(a)</option>
+                                                    <option value="divorced"  t-att-selected="obj.marital == 'divorced'">Divorciado(a)</option>
+                                                </select>
+                                                <label for="marital">Estado Civil</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </section>
+                                <nav>
+                                    <div class="nav nav-tabs" id="nav-tab" role="tablist">
+                                        <!-- <button class="nav-link active" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#basic-data" type="button" role="tab" aria-controls="nav-home" aria-selected="true">Basica</button> -->
+                                        <button class="nav-link active" id="nav-profile-tab" data-bs-toggle="tab" data-bs-target="#info-public" type="button" role="tab" aria-controls="nav-profile" aria-selected="true"><strong>Información Pública</strong></button>
+                                        <button class="nav-link" id="nav-contact-tab" data-bs-toggle="tab" data-bs-target="#info-private" type="button" role="tab" aria-controls="nav-contact" aria-selected="false"><strong>Información Privada</strong></button>
+                                        <!-- <button class="nav-link" id="nav-contact-tab" data-bs-toggle="tab" data-bs-target="#info-plus" type="button" role="tab" aria-controls="nav-contact" aria-selected="false">Información Adicional</button> -->
+                                    </div>
+                                </nav>
+                                <div class="tab-content" id="InfoTabContent">
+                                    <!-- <div class="tab-pane fade show active" id="basic-data" role="tabpanel" aria-labelledby="home-tab">
+                                        
+                                    </div> -->
+                                    <div class="tab-pane fade show active" id="info-public" role="tabpanel" aria-labelledby="profile-tab">
+                                        <section class="control-edit">
+                                            <div class="form-row">
+                                                <div class="form-group col-md-4">
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="mobile_phone" name="mobile_phone" t-att-value="obj.mobile_phone" class="form-control" placeholder="Movil del trabajo"/>
+                                                        <label for="mobile_phone">Movil del trabajo</label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-4">
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="work_phone" name="work_phone" t-att-value="obj.work_phone" class="form-control" placeholder="Teléfono trabajo"/>
+                                                        <label for="work_phone">Teléfono trabajo</label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-4">
+                                                    <div class="form-floating">
+                                                        <select class="form-select" id="licencia_rh" name="licencia_rh" t-att-selected="obj.licencia_rh">
+                                                            <option value="op" t-att-selected="obj.licencia_rh == 'op'">O+</option>
+                                                            <option value="ap" t-att-selected="obj.licencia_rh == 'ap'">A+</option>
+                                                            <option value="bp" t-att-selected="obj.licencia_rh == 'bp'">B+</option>
+                                                            <option value="abp" t-att-selected="obj.licencia_rh == 'abp'">AB+</option>
+                                                            <option value="on" t-att-selected="obj.licencia_rh == 'on'">O-</option>
+                                                            <option value="an" t-att-selected="obj.licencia_rh == 'an'">A-</option>
+                                                            <option value="bn" t-att-selected="obj.licencia_rh == 'bn'">B-</option>
+                                                            <option value="abn" t-att-selected="obj.licencia_rh == 'abn'">AB-</option>
+                                                        </select>
+                                                        <label for="licencia_rh">Tipo de sangre</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <h3>Información Licencia</h3>
+                                           <div class="form-row">
+                                                <div class="form-group col-md-4">
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="licencia_categoria" name="licencia_categoria" t-att-value="obj.licencia_categoria" class="form-control" placeholder="Categoria"/>
+                                                        <label for="licencia_categoria">Categoria</label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-4">
+                                                    <div class="form-floating mb-3">
+                                                        <input type="date" id="licencia_vigencia" name="licencia_vigencia" t-att-value="obj.licencia_vigencia" class="form-control" placeholder="Vigencia"/>
+                                                        <label for="licencia_vigencia">Vigencia</label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-4">
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="licencia_restricciones" name="licencia_restricciones" t-att-value="obj.licencia_restricciones" class="form-control" placeholder="Restricciones"/>
+                                                        <label for="licencia_categoria">Restricciones</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </section>
+                                    </div>
+                                    <div class="tab-pane fade" id="info-private" role="tabpanel" aria-labelledby="contact-tab">
+                                        <section class="control-edit">
+                                            <div class="form-row">
+                                                <div class="form-group col-md-6">
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="country_id" name="country_id" t-att-value="obj.country_id.name" class="form-control" placeholder="Nacionalidad" readonly="true" />
+                                                        <label for="country_id">Nacionalidad</label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-6">
+                                                    <div class="form-floating">
+                                                        <select class="form-select" id="gender" name="gender" >
+                                                                <option value="male" t-att-selected="obj.gender == 'male'">Hombre</option>
+                                                                <option value="female" t-att-selected="obj.gender == 'female'">Mujer</option>
+                                                                <option value="other" t-att-selected="obj.gender == 'other'">Otro</option>
+                                                            </select>
+                                                        <label for="gender">Sexo</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group col-md-4">
+                                                    <div class="form-floating mb-3">
+                                                        <input type="date" id="date_birthday" name="date_birthday" t-att-value="obj.birthday" class="form-control" placeholder="Fecha de nacimiento"/>
+                                                        <label for="date_birthday">Fecha de nacimiento</label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-4">
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="place_of_birth" name="place_of_birth" t-att-value="obj.place_of_birth" class="form-control" placeholder="Lugar de nacimiento"/>
+                                                        <label for="place_of_birth">Lugar de nacimiento</label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-4">
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="country_of_birth" name="country_of_birth" t-att-value="obj.country_of_birth.name" class="form-control" placeholder="País de nacimiento" disabled="true"/>
+                                                        <label for="country_of_birth">País de Nacimiento</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group col-md-4">
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="emergency_contact" name="emergency_contact" t-att-value="obj.emergency_contact" class="form-control" placeholder="Contacto de emergencia"/>
+                                                        <label class="control-label" for="emergency_contact">Contacto de emergencia</label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-4">
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="emergency_phone" name="emergency_phone" t-att-value="obj.emergency_phone" class="form-control" placeholder="Teléfono de emergencia"/>
+                                                        <label for="emergency_phone">Teléfono de emergencia</label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-4">
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="emergency_relationship" name="emergency_relationship" t-att-value="obj.emergency_relationship" class="form-control" placeholder="Parentesco"/>
+                                                        <label for="emergency_relationship">Parentesco</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="form-row">
+                                                <div class="form-group col-md-4">
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="certificate" name="certificate" t-att-value="obj.certificate" class="form-control" placeholder="Nivel de certificado"/>
+                                                        <label for="certificate">Nivel de certificado</label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-4">
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="study_field" name="study_field" t-att-value="obj.study_field" class="form-control" placeholder="Campo de estudio"/>
+                                                        <label for="study_field">Campo de estudio</label>
+                                                    </div>
+                                                </div>
+                                                <div class="form-group col-md-4">
+                                                    <div class="form-floating mb-3">
+                                                        <input type="text" id="study_school" name="study_school" t-att-value="obj.study_school" class="form-control" placeholder="Escuela"/>
+                                                        <label for="study_school">Escuela</label>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </section>
+                                    </div>
+                                </div>
+                               
+                                <br/>
+                                <input type="submit" class="btn btn-outline-success btn-lg btn-block" value="Actualizar"/>
+                            </form>
+                            <br/>
+                        </div>
+                    </main>
+                </div>
+            </t>
+        </template>
+    </data>
+</odoo>

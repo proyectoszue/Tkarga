@@ -23,8 +23,16 @@
 
     # always loaded
     'data': [
-        # 'security/ir.model.access.csv',
         'views/index.xml',
-        'views/payroll_vouchers.xml'
+        'views/res_users.xml',
+        'views/payroll_vouchers.xml',
+        'views/update_personal_data.xml',
+        'reports/laboral_certification.xml',
+        'reports/books_reports.xml',
+        'reports/book_vacation_portal_template.xml',
+        'reports/book_cesantias_portal_template.xml',
+        'reports/payroll_vouchers.xml',
+        'security/ir.model.access.csv',
     ],
+    'bootstrap': True,
 }
