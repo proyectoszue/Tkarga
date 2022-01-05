@@ -1,7 +1,7 @@
 <odoo>
     <data>
         <!-- Estructura salariales herencia -->
-         <record id="hr_payroll_structure_form_inherit" model="ir.ui.view">
+        <record id="hr_payroll_structure_form_inherit" model="ir.ui.view">
             <field name="name">hr.payroll.structure.form.inherit</field>
             <field name="model">hr.payroll.structure</field>
             <field name="priority">20</field>
@@ -14,18 +14,18 @@
         </record>
 
         <!-- categoria de reglas salariales herencia -->
-         <record id="hr_salary_rule_category_form_inherit" model="ir.ui.view">
+        <record id="hr_salary_rule_category_form_inherit" model="ir.ui.view">
             <field name="name">hr.salary.rule.category.form.inherit</field>
             <field name="model">hr.salary.rule.category</field>
             <field name="priority">20</field>
             <field name="inherit_id" ref="hr_payroll.hr_salary_rule_category_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='parent_id']" position="after">
-                    <field name="group_payroll_voucher"/>       
+                    <field name="group_payroll_voucher"/>
                 </xpath>
             </field>
-        </record>   
-        <!-- RIESGOS PROFESIONALES VIEWS -->    
+        </record>
+        <!-- RIESGOS PROFESIONALES VIEWS -->
         <record id="zue_menu_action_contract_risk" model="ir.actions.act_window">
             <field name="name">Riesgos profesionales</field>
             <field name="res_model">hr.contract.risk</field>
@@ -43,25 +43,25 @@
             <field name="arch" type="xml">
                 <tree editable="bottom">
                     <field name="code"/>
-                    <field name="name"/>          
+                    <field name="name"/>
                     <field name="percent"/>
                     <field name="date"/>
                 </tree>
             </field>
         </record>
-        <!-- Formulario de tipos de ausencia - ajustes -->    
+        <!-- Formulario de tipos de ausencia - ajustes -->
         <record id="view_zue_hr_employee_form_leave_type" model="ir.ui.view">
             <field name="name">hr.leave.type.zue.hr.employee.form.inherit</field>
             <field name="model">hr.leave.type</field>
             <field name="priority">20</field>
             <field name="inherit_id" ref="hr_holidays.edit_holiday_status_form"/>
-            <field name="arch" type="xml">  
+            <field name="arch" type="xml">
                 <xpath expr="//field[@name='request_unit']" position="after">
                     <field name="unpaid_absences"/>
                     <field name="is_vacation"/>
                 </xpath>
                 <xpath expr="//field[@name='validation_type']" position="after">
-                    <field name="obligatory_attachment"/>                    
+                    <field name="obligatory_attachment"/>
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/group[1]" position="after">
                     <group>
@@ -80,7 +80,7 @@
                 </xpath>
             </field>
         </record>
-        <!-- PARAMETROS ANUALES VIEWS -->    
+        <!-- PARAMETROS ANUALES VIEWS -->
         <record id="zue_menu_action_annual_parameters" model="ir.actions.act_window">
             <field name="name">Parámetros anuales</field>
             <field name="res_model">hr.annual.parameters</field>
@@ -98,14 +98,14 @@
             <field name="arch" type="xml">
                 <tree>
                     <field name="year"/>
-                    <field name="smmlv_monthly"/>          
+                    <field name="smmlv_monthly"/>
                     <field name="transportation_assistance_monthly"/>
                     <field name="min_integral_salary"/>
                     <field name="hours_daily"/>
                 </tree>
             </field>
         </record>
-        
+
         <record model="ir.ui.view" id="zue_hr_employee.form_annual_parameters">
             <field name="name">zue form annual parameters</field>
             <field name="model">hr.annual.parameters</field>
@@ -113,7 +113,7 @@
                 <form>
                     <sheet string="Parametros anuales">
                         <group>
-                            <field name="year"/>                            
+                            <field name="year"/>
                         </group>
                         <notebook colspan="4">
                             <page string="Básicos" autofocus="autofocus">
@@ -183,9 +183,28 @@
                                         <field name="value_uvt"/>
                                         <field name="value_top_source_retention"/>
                                     </group>
-                                     <group string="Incrementos" name="incrementos" priority="2">
+                                    <group string="Incrementos" name="incrementos" priority="2">
                                         <field name="value_porc_increment_smlv"/>
                                         <field name="value_porc_ipc"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page string="Certificado Ingresos y Retenciones">
+                                <group>
+                                    <group>
+                                        <field name="taxable_year"/>
+                                        <field name="gross_equity"/>
+                                        <field name="total_revenues"/>
+                                        <field name="credit_card"/>
+                                        <field name="purchases_and_consumption"/>
+                                    </group>
+                                    <group>
+                                        <field name="conf_certificate_income_ids">
+                                            <tree editable="bottom">
+                                                <field name="sequence"/>
+                                                <field name="salary_rule_id"/>
+                                            </tree>
+                                        </field>
                                     </group>
                                 </group>
                             </page>

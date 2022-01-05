@@ -501,7 +501,10 @@ class hr_payroll_social_security(models.Model):
                                             nValorPensioTotalEmpleado += nValorPensionEmpleado
                                             nValorPensionTotalEmpresa += nValorPensionEmpresa
                                             #Calculos fondo solidaridad
-                                            nValorBaseFondoPensionTotal = dict_social_security['BaseSeguridadSocial'].dict.get('BASE', 0) #TOTAL
+                                            nValorBaseFondoPensionTotal = dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL', 0) #BASE
+                                            if contract_id.modality_salary == 'integral':
+                                                porc_integral_salary = annual_parameters.porc_integral_salary / 100
+                                                nValorBaseFondoPensionTotal = nValorBaseFondoPensionTotal * porc_integral_salary
                                             if (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) > 4 and (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) < 16:
                                                 nPorcFondoSolidaridad = 1
                                             if  (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) >= 16 and (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) <= 17:
@@ -516,8 +519,8 @@ class hr_payroll_social_security(models.Model):
                                                 nPorcFondoSolidaridad = 2
                                             if nPorcFondoSolidaridad > 0:
                                                 nPorcFondoSolidaridadCalculo = (nPorcFondoSolidaridad/100)/2
-                                                nValorFondoSolidaridad = roundup100(nValorBaseFondoPension*nPorcFondoSolidaridadCalculo)
-                                                nValorFondoSubsistencia = roundup100(nValorBaseFondoPension*nPorcFondoSolidaridadCalculo)
+                                                nValorFondoSolidaridad = roundup100(nValorBaseFondoPensionTotal*nPorcFondoSolidaridadCalculo)
+                                                nValorFondoSubsistencia = roundup100(nValorBaseFondoPensionTotal*nPorcFondoSolidaridadCalculo)
                                                 nValorTotalFondos += (nValorFondoSolidaridad + nValorFondoSubsistencia)
                                     else:
                                         nValorBaseFondoPension = 0
@@ -536,7 +539,7 @@ class hr_payroll_social_security(models.Model):
                                         else:
                                             nValorBaseCajaCom = roundupdecimal((executing.nSueldo / 30) * nDias) if abs(((executing.nSueldo / 30) * nDias) - nValorBaseCajaCom) < nRedondeoDecimalesDif else nValorBaseCajaCom
                                         #nValorBaseCajaCom = ((executing.nSueldo / 30) * nDias) if nValorBaseCajaCom == 0 else (nValorBaseCajaCom)
-                                        if nValorBaseCajaCom > 0 and nDiasAusencias == 0:
+                                        if nValorBaseCajaCom > 0 and nDiasAusencias-executing.nDiasLicenciaRenumerada == 0:
                                             nPorcAporteCajaCom = annual_parameters.value_porc_compensation_box_company
                                             nValorCajaCom = roundup100(nValorBaseCajaCom * nPorcAporteCajaCom / 100)
                                     else:
@@ -699,10 +702,9 @@ class hr_payroll_social_security(models.Model):
                 i += 1   
 
             for hilo in array_thread:
-                while hilo.is_alive():
-                    date_finally_process = datetime.now()  
+                hilo.join()
 
-
+        date_finally_process = datetime.now()
         time_process = date_finally_process - date_start_process
         time_process = time_process.seconds / 60
 

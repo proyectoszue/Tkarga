@@ -41,7 +41,7 @@ if obj_salary_rule and dias != 0.0 and contract.contract_type != 'aprendizaje':
             if (contract.wage <= auxtransporte_tope) and (total <= auxtransporte_tope):
                 result = round(dias * auxtransporte /30)
 #---------------------------------------Salud Empleado--------------------------------------------------------
-result = 0.0    
+result = 0.0
 obj_salary_rule = payslip.get_salary_rule('SSOCIAL001',employee.type_employee.id)
 if obj_salary_rule and contract.contract_type != 'aprendizaje':
     day_initial_payrroll = payslip.date_from.day
@@ -50,6 +50,19 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje':
     if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
         porc = annual_parameters.value_porc_health_employee/100
         total = categories.DEV_SALARIAL if aplicar == 0 else categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from, payslip.date_to)
+        #Ley 1393
+        if payslip.date_from.day > 15 or (inherit_contrato != 0):
+            total_salarial = categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from,
+                                                                               payslip.date_to)
+            auxtransporte = AUX000 + payslip.sum_mount_x_rule('AUX000', payslip.date_from, payslip.date_to)
+            total_no_salarial = categories.DEV_NO_SALARIAL + payslip.sum_mount('DEV_NO_SALARIAL', payslip.date_from,
+                                                                               payslip.date_to) - auxtransporte
+            gran_total = total_salarial + total_no_salarial
+            statute_value = (gran_total/100)*annual_parameters.value_porc_statute_1395
+            total_statute = total_no_salarial-statute_value
+            if total_statute > 0:
+                total += total_statute
+        # Fin Ley 1393
         total = annual_parameters.top_twenty_five_smmlv if total >= annual_parameters.top_twenty_five_smmlv else total             
         if contract.modality_salary == 'integral':
             porc_integral_salary = annual_parameters.porc_integral_salary/100
@@ -65,6 +78,19 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje' and employee.subt
     if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
         porc = annual_parameters.value_porc_pension_employee/100
         total = categories.DEV_SALARIAL if aplicar == 0 else categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from, payslip.date_to)
+        # Ley 1393
+        if payslip.date_from.day > 15 or (inherit_contrato != 0):
+            total_salarial = categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from,
+                                                                         payslip.date_to)
+            auxtransporte = AUX000 + payslip.sum_mount_x_rule('AUX000', payslip.date_from, payslip.date_to)
+            total_no_salarial = categories.DEV_NO_SALARIAL + payslip.sum_mount('DEV_NO_SALARIAL', payslip.date_from,
+                                                                               payslip.date_to) - auxtransporte
+            gran_total = total_salarial + total_no_salarial
+            statute_value = (gran_total / 100) * annual_parameters.value_porc_statute_1395
+            total_statute = total_no_salarial - statute_value
+            if total_statute > 0:
+                total += total_statute
+        # Fin Ley 1393
         total = annual_parameters.top_twenty_five_smmlv if total >= annual_parameters.top_twenty_five_smmlv else total             
         if contract.modality_salary == 'integral':
             porc_integral_salary = annual_parameters.porc_integral_salary/100
@@ -80,6 +106,19 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje':
     if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
         salario_minimo = annual_parameters.smmlv_monthly
         total = categories.DEV_SALARIAL if aplicar == 0 and inherit_contrato==0 else categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from, payslip.date_to)
+        # Ley 1393
+        if payslip.date_from.day > 15 or (inherit_contrato != 0):
+            total_salarial = categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from,
+                                                                         payslip.date_to)
+            auxtransporte = AUX000 + payslip.sum_mount_x_rule('AUX000', payslip.date_from, payslip.date_to)
+            total_no_salarial = categories.DEV_NO_SALARIAL + payslip.sum_mount('DEV_NO_SALARIAL', payslip.date_from,
+                                                                               payslip.date_to) - auxtransporte
+            gran_total = total_salarial + total_no_salarial
+            statute_value = (gran_total / 100) * annual_parameters.value_porc_statute_1395
+            total_statute = total_no_salarial - statute_value
+            if total_statute > 0:
+                total += total_statute
+        # Fin Ley 1393
         if contract.modality_salary == 'integral':
             porc_integral_salary = annual_parameters.porc_integral_salary/100
             total = total*porc_integral_salary
@@ -141,7 +180,7 @@ if obj_salary_rule:
             porc = 15
             result = (round((total)*porc/100)*-1)
             result_qty = obj_concept.amount if obj_concept.amount != 0 else 0           
-#---------------------------------------Embargo todo %--------------------------------------------------------
+#---------------------------------------Embargotodo--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('EMBARGO008',employee.type_employee.id) 
 if obj_salary_rule:
@@ -438,8 +477,14 @@ if obj_salary_rule:
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('INTCESANTIAS',employee.type_employee.id)
 if obj_salary_rule:
-    result = CESANTIAS
-
+    date_start = payslip.date_from
+    date_end = payslip.date_to
+    if inherit_contrato != 0:
+        date_start = payslip.date_cesantias
+        date_end = payslip.date_liquidacion
+    #Obtener acumulados
+    accumulated = payslip.get_accumulated_cesantias(date_start,date_end) + values_base_cesantias
+    result = accumulated
 
 #---------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------

@@ -13,6 +13,9 @@ class hr_history_cesantias(models.Model):
     
     employee_id = fields.Many2one('hr.employee', 'Empleado')
     employee_identification = fields.Char('Identificación empleado')
+    type_history = fields.Selection(
+        [('cesantias', 'Cesantías'), ('intcesantias', 'Intereses de cesantías'), ('all', 'Ambos')], string='Tipo',
+        default='all', required=True)
     initial_accrual_date = fields.Date('Fecha inicial de causación')
     final_accrual_date = fields.Date('Fecha final de causación')
     settlement_date = fields.Date('Fecha de liquidación')
@@ -26,7 +29,8 @@ class hr_history_cesantias(models.Model):
     def name_get(self):
         result = []
         for record in self:
-            result.append((record.id, "Cesantias {} del {} al {}".format(record.employee_id.name, str(record.initial_accrual_date),str(record.final_accrual_date))))
+            type_text = 'Intereses de cesantías' if record.type_history == 'intcesantias' else 'Cesantías'
+            result.append((record.id, "{} {} del {} al {}".format(type_text,record.employee_id.name, str(record.initial_accrual_date),str(record.final_accrual_date))))
         return result
 
     @api.model
@@ -59,13 +63,22 @@ class Hr_payslip(models.Model):
 
         #Validar fecha inicial de causación
         if inherit_contrato==0:
-            date_cesantias = self.contract_id.date_start     
-            obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', self.employee_id.id),('contract_id', '=', self.contract_id.id)])
+            date_cesantias = self.contract_id.date_start
+            obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', self.employee_id.id),('contract_id', '=', self.contract_id.id),('type_history','=','all')])
+            if self.struct_id.process == 'cesantias':
+                obj_cesantias += self.env['hr.history.cesantias'].search([('employee_id', '=', self.employee_id.id),('contract_id', '=', self.contract_id.id),('type_history','=','cesantias')])
+            if self.struct_id.process == 'intereses_cesantias':
+                obj_cesantias += self.env['hr.history.cesantias'].search([('employee_id', '=', self.employee_id.id), ('contract_id', '=', self.contract_id.id),('type_history','=','intcesantias')])
+
             if obj_cesantias:
                 for history in sorted(obj_cesantias, key=lambda x: x.final_accrual_date):
-                    date_cesantias = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_cesantias else date_cesantias             
-            self.date_from = date_cesantias if self.date_from < date_cesantias else self.date_from
-        
+                    date_cesantias = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_cesantias else date_cesantias
+            if date_cesantias > self.date_to:
+                result = {}
+                return result.values()
+            else:
+                self.date_from = date_cesantias if self.date_from < date_cesantias else self.date_from
+
         self.ensure_one()
         result = {}
         rules_dict = {}
@@ -97,8 +110,8 @@ class Hr_payslip(models.Model):
             }
         else:
             localdict.update({
-                'inherit_contrato':inherit_contrato,})        
-        
+                'inherit_contrato':inherit_contrato,})
+
         #Ejecutar las reglas salariales y su respectiva lógica
         for rule in sorted(self.struct_id.rule_ids, key=lambda x: x.sequence):
             localdict.update({                
@@ -107,19 +120,21 @@ class Hr_payslip(models.Model):
                 'result_rate': 100})
             if rule._satisfy_condition(localdict):                
                 amount, qty, rate = rule._compute_rule(localdict)
-                
+                dias_ausencias, amount_base = 0, 0
                 #Cuando es cesantias o intereses de cesantias, la regla retorna la base y el calculo se realiza a continuación
                 amount_base = amount
-                dias_trabajados = self.dias360(self.date_from, self.date_to)
-                dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_from),('date_to','<=',self.date_to),('state','=','validate'),('employee_id','=',self.employee_id.id),('unpaid_absences','=',True)])])
-                dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_from), ('end_date', '<=', self.date_to),('employee_id', '=', self.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
-                if inherit_contrato != 0:                    
-                    dias_trabajados = self.dias360(self.date_cesantias, self.date_liquidacion)
-                    dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_cesantias),('date_to','<=',self.date_liquidacion),('state','=','validate'),('employee_id','=',self.employee_id.id),('unpaid_absences','=',True)])])
-                    dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_cesantias), ('end_date', '<=', self.date_liquidacion),('employee_id', '=', self.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
-                dias_liquidacion = dias_trabajados - dias_ausencias
 
-                if rule.code == 'CESANTIAS':   
+                if rule.code == 'CESANTIAS' or rule.code == 'INTCESANTIAS':
+                    dias_trabajados = self.dias360(self.date_from, self.date_to)
+                    dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_from),('date_to','<=',self.date_to),('state','=','validate'),('employee_id','=',self.employee_id.id),('unpaid_absences','=',True)])])
+                    dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_from), ('end_date', '<=', self.date_to),('employee_id', '=', self.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
+                    if inherit_contrato != 0:
+                        dias_trabajados = self.dias360(self.date_cesantias, self.date_liquidacion)
+                        dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_cesantias),('date_to','<=',self.date_liquidacion),('state','=','validate'),('employee_id','=',self.employee_id.id),('unpaid_absences','=',True)])])
+                        dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_cesantias), ('end_date', '<=', self.date_liquidacion),('employee_id', '=', self.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
+                    dias_liquidacion = dias_trabajados - dias_ausencias
+
+                    #Acumulados
                     acumulados_promedio = (amount/dias_liquidacion) * 30
                     wage = contract.wage
                     auxtransporte = annual_parameters.transportation_assistance_monthly
@@ -133,11 +148,17 @@ class Hr_payslip(models.Model):
                     amount = round(amount_base / 360, 0)
                     qty = dias_liquidacion
 
-                if rule.code == 'INTCESANTIAS':
-                    #amount = round(amount * dias_liquidacion * 0.12 / 360, 0)
-                    amount = round(amount / 360, 0)
-                    qty = dias_liquidacion
-                    rate = 12
+                    if rule.code == 'INTCESANTIAS':
+                        amount_base = round(amount * qty * rate / 100.0,0)
+                        amount = round(amount_base / 360, 0)
+                        qty = dias_liquidacion
+                        rate = 12
+
+                entity_cesantias = False
+                if rule.code == 'CESANTIAS':
+                    for entity in self.employee_id.social_security_entities:
+                        if entity.contrib_id.type_entities == 'cesantias':
+                            entity_cesantias = entity.partner_id
 
                 amount = round(amount,0) #Se redondean los decimales de todas las reglas
                 #check if there is already a rule computed with that code
@@ -163,6 +184,8 @@ class Hr_payslip(models.Model):
                         'amount': amount,
                         'quantity': qty,
                         'rate': rate,
+                        'entity_id':entity_cesantias.id if entity_cesantias != False else entity_cesantias,
+                        'days_unpaid_absences':dias_ausencias,
                         'slip_id': self.id,
                     }
         

@@ -57,7 +57,7 @@ class Hr_payslip(models.Model):
             date_start = self.date_from
             date_end = self.date_to
             query_prima = self.get_query('base_prima', date_start, date_end)
-        elif self.struct_id.process == 'cesantias_e_intereses':
+        elif self.struct_id.process == 'cesantias' or self.struct_id.process == 'intereses_cesantias':
             date_start = self.date_from
             date_end = self.date_to
             query_cesantias = self.get_query('base_cesantias', date_start, date_end)
