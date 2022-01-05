@@ -50,7 +50,7 @@
                     <field name="type_employee" invisible="1"/>
                 </xpath>
                 <xpath expr="//field[@name='job_id']" position="after">
-                    <field name="risk_id"/>                    
+                    <field name="risk_id" required="1"/>
                 </xpath>
                 <xpath expr="//field[@name='trial_date_end']" position="after">
                     <field name="retirement_date"/>                                        

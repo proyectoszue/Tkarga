@@ -108,19 +108,20 @@ class Hr_payslip(models.Model):
                 'result_rate': 100})
             if rule._satisfy_condition(localdict):                
                 amount, qty, rate = rule._compute_rule(localdict)
-                
-                amount_base = amount
-                dias_trabajados = self.dias360(self.date_from, self.date_to)
-                dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_from),('date_to','<=',self.date_to),('state','=','validate'),('employee_id','=',self.employee_id.id),('unpaid_absences','=',True)])])
-                dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_from), ('end_date', '<=', self.date_to),('employee_id', '=', self.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
-                if inherit_contrato != 0:                    
-                    dias_trabajados = self.dias360(self.date_prima, self.date_liquidacion)
-                    dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_prima),('date_to','<=',self.date_liquidacion),('state','=','validate'),('employee_id','=',self.employee_id.id),('unpaid_absences','=',True)])])
-                    dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_prima), ('end_date', '<=', self.date_liquidacion),('employee_id', '=', self.employee_id.id),('leave_type_id.unpaid_absences', '=', True)])])
-                dias_liquidacion = dias_trabajados - dias_ausencias
+                dias_ausencias, amount_base = 0, 0
 
-                if rule.code == 'PRIMA':    
-                    acumulados_promedio = (amount/dias_liquidacion) * 30
+                if rule.code == 'PRIMA':
+                    amount_base = amount
+                    dias_trabajados = self.dias360(self.date_from, self.date_to)
+                    dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_from),('date_to','<=',self.date_to),('state','=','validate'),('employee_id','=',self.employee_id.id),('unpaid_absences','=',True)])])
+                    dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_from), ('end_date', '<=', self.date_to),('employee_id', '=', self.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
+                    if inherit_contrato != 0:
+                        dias_trabajados = self.dias360(self.date_prima, self.date_liquidacion)
+                        dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_prima),('date_to','<=',self.date_liquidacion),('state','=','validate'),('employee_id','=',self.employee_id.id),('unpaid_absences','=',True)])])
+                        dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_prima), ('end_date', '<=', self.date_liquidacion),('employee_id', '=', self.employee_id.id),('leave_type_id.unpaid_absences', '=', True)])])
+                    dias_liquidacion = dias_trabajados - dias_ausencias
+
+                    acumulados_promedio = (amount/dias_liquidacion) * 30 # dias_trabajados
                     wage = contract.wage
                     auxtransporte = annual_parameters.transportation_assistance_monthly
                     auxtransporte_tope = annual_parameters.top_max_transportation_assistance
@@ -130,10 +131,10 @@ class Hr_payslip(models.Model):
                         amount_base = round(wage + acumulados_promedio, 0)              
 
                     #amount = round(amount_base * dias_liquidacion / 360, 0)
-                    amount = round(amount_base / 360, 0)
+                    amount = amount_base / 360
                     qty = dias_liquidacion
 
-                amount = round(amount,0) #Se redondean los decimales de todas las reglas
+                #amount = round(amount,0) #Se redondean los decimales de todas las reglas
                 #check if there is already a rule computed with that code
                 previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
                 #set/overwrite the amount computed for this rule in the localdict
@@ -157,10 +158,21 @@ class Hr_payslip(models.Model):
                         'amount': amount,
                         'quantity': qty,
                         'rate': rate,
+                        'days_unpaid_absences':dias_ausencias,
                         'slip_id': self.id,
                     }
 
+        # Ejecutar reglas salariales de la nómina de pago regular
         if inherit_contrato == 0:
-            return result.values()  
+            obj_struct_payroll = self.env['hr.payroll.structure'].search(
+                [('regular_pay', '=', True), ('process', '=', 'nomina')])
+            struct_original = self.struct_id.id
+            self.struct_id = obj_struct_payroll.id
+            result_payroll = self._get_payslip_lines(inherit_prima=1, localdict=localdict)
+            self.struct_id = struct_original
+
+            result_finally = {**result, **result_payroll}
+            # Retornar resultado final de la liquidación de nómina
+            return result_finally.values()
         else:
-            return localdict,result          
+            return localdict, result

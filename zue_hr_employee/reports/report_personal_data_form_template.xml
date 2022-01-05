@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="report_personal_data_form_document">
+        <t t-call="web.html_container">
+            <t t-foreach="inside_foreach_docs or docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <div class="row text-center">
+                        <h1>
+                            <strong>Formulario Datos Personales</strong>
+                        </h1>
+                    </div>
+                    <br/>
+                    <div class="table-responsive">
+                        <table class="table table-borderless table-sm">
+                            <thead>
+                                <tr>
+                                    <td>Documento:</td>
+                                    <td>
+                                        <span t-field="o.identification_id"/>
+                                    </td>
+                                    <td>Empleado:</td>
+                                    <td>
+                                        <span t-field="o.name"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Sucursal:</td>
+                                    <td>
+                                        <span t-field="o.branch_id"/>
+                                    </td>
+                                    <td>Título de Trabajo:</td>
+                                    <td>
+                                        <span t-field="o.job_id.name"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Edad:</td>
+                                    <td>
+                                        <span t-esc="o.get_age_for_date(o.birthday)"/>
+                                    </td>
+                                    <td>Correo Personal:</td>
+                                    <td>
+                                        <span t-field="o.personal_email"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Genero:</td>
+                                    <td>
+                                        <span t-field="o.gender"/>
+                                    </td>
+                                    <td>Celular:</td>
+                                    <td>
+                                        <span t-field="o.address_home_id.mobile"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Estado Civil:</td>
+                                    <td>
+                                        <span t-field="o.marital"/>
+                                    </td>
+                                    <td>Direccion de residencia:</td>
+                                    <td>
+                                        <span t-field="o.address_home_id.street"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Ciudad de residencia:</td>
+                                    <td>
+                                        <span t-field="o.address_home_id.x_city"/>
+                                    </td>
+                                    <td>Contacto de emergencia:</td>
+                                    <td>
+                                        <span t-field="o.emergency_contact"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Telefono de emergencia:</td>
+                                    <td>
+                                        <span t-field="o.emergency_phone"/>
+                                    </td>
+                                    <td>Fecha Ingreso:</td>
+                                    <td>
+                                        <span t-esc="o.get_info_contract().date_start"/>
+                                    </td>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <td colspan="3">
+                                        <h4>Documentación</h4>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>NOMBRE</td>
+                                    <td>FECHA DE VENCIMIENTO</td>
+                                    <td>CATEGORÍA</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.documents_ids" t-as="d">
+                                    <td>
+                                        <span t-field="d.document.name"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="d.expiration_date"/>
+                                    </td>
+                                    <td>
+                                        <t t-foreach="d.document.tag_ids" t-as="t">
+                                           » <span t-esc="t.name"/> <br/>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <td colspan="3">
+                                        <h4>Entidades</h4>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>TIPO</td>
+                                    <td>ENTIDAD</td>
+                                    <td>FECHA DE INGRESO</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.social_security_entities" t-as="l">
+                                    <td>
+                                        <span t-field="l.contrib_id"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="l.partner_id.partner_id.name"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="l.date_change"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <td colspan="3">
+                                        <h4>Formación Académica (Estudios Culminados)</h4>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>NIVEL DE CERTIFICACIÓN</td>
+                                    <td>INSTITUCIÓN</td>
+                                    <td>CAMPO DE ESTUDIO</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>
+                                        <span t-field="o.certificate"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="o.study_school"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="o.study_field"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <td colspan="4">
+                                        <h4>Grupo Familiar (Personas con las que convive)</h4>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Nombres y Apellidos</td>
+                                    <td>Parentesco</td>
+                                    <td>Edad</td>
+                                    <td>Genero</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.dependents_information" t-as="d">
+                                    <td>
+                                        <span t-field="d.name"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="d.dependents_type"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="o.get_age_for_date(d.date_birthday)"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="d.genero"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <td colspan="4">
+                                        <h4>Experiencia laboral</h4>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Empresa</td>
+                                    <td>Fecha Inicial</td>
+                                    <td>Fecha Final</td>
+                                    <td>Descripción</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.resume_line_ids" t-as="r">
+                                    <td>
+                                        <span t-field="r.name"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="r.date_start"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="r.date_end"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="r.description"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm">
+                            <thead>
+                                <tr>
+                                    <td colspan="4">
+                                        <h4>Aspectos personales</h4>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>Tipo</td>
+                                    <td>Nivel</td>
+                                    <td>Habilidad</td>
+                                    <td>Dominio (%)</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.employee_skill_ids" t-as="s">
+                                    <td>
+                                        <span t-field="s.skill_type_id"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="s.skill_level_id"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="s.skill_id"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="s.level_progress"/>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <br/>
+                    <p style="line-height:15px;margin:10px;font-size: 100%;">
+                        <b>Observaciones:</b>
+                        <span t-field="o.ed_observation"/>
+                    </p>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_personal_data_form_template">
+        <t t-foreach="docs" t-as="o">
+            <t t-set="inside_foreach_docs" t-value="o"/>
+            <t t-call="zue_hr_employee.report_personal_data_form_document"/>
+        </t>
+    </template>
+
+</odoo>

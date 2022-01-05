@@ -355,6 +355,27 @@ class hr_electronic_payroll(models.Model):
         except:
             raise UserError(_('El año digitado es invalido, por favor verificar.'))
 
+        #Validar que todas las reglas salariales sean usadas en el proceso de Nómina electronica
+        obj_salary_rules_value_zero = self.env['hr.salary.rule'].search([('active', '=', True), ('amount_select', '=', 'fix'), ('amount_fix', '=', 0.00)])
+        obj_salary_rules_value_null = self.env['hr.salary.rule'].search([('active', '=', True), ('amount_select', '=', 'fix'), ('amount_fix', '=', False)])
+        obj_salary_rules = self.env['hr.salary.rule'].search(
+            [('active', '=', True), ('type_concept', '!=', 'tributaria'), ('category_id.code', '!=', 'HEYREC'),
+             ('id', 'not in', obj_salary_rules_value_zero.ids),('id', 'not in', obj_salary_rules_value_null.ids)])
+        obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', 'NomElectronica_Carvajal')])
+
+        lst_rule_not_include = []
+        for rule in obj_salary_rules:
+            lst_rule_include = []
+            for tags_xml in obj_xml.details_ids:
+                 if tags_xml.code_python:
+                     if tags_xml.code_python.find(rule.code) != -1:
+                         lst_rule_include.append(rule.code)
+            if len(lst_rule_include) == 0:
+                lst_rule_not_include.append(rule.code)
+
+        if len(lst_rule_not_include) >= 1:
+            raise ValidationError(_(f'Las siguentes reglas salariales no estan asociadas a ningun tag {str(lst_rule_not_include)}.'))
+
         # Obtener empleados que tuvieron liquidaciones en el mes
         query = '''
             select distinct b.id 

@@ -1,12 +1,16 @@
 # -*- coding: utf-8 -*-
-from odoo import models, fields, api, _
+from odoo import models, fields, api, _, SUPERUSER_ID
 from odoo.exceptions import UserError, ValidationError
 from .browsable_object import BrowsableObject, InputLine, WorkedDays, Payslips
 from odoo.tools import float_compare, float_is_zero
-
+from logging import exception
 from collections import defaultdict
 from datetime import datetime, timedelta, date, time
+
+import math
 import pytz
+import odoo
+import threading
 
 #---------------------------LIQUIDACIÓN DE NÓMINA-------------------------------#
 
@@ -18,6 +22,7 @@ class Account_journal(models.Model):
 class HrPayslipRun(models.Model):
     _inherit = 'hr.payslip.run'
 
+    time_process = fields.Char(string='Tiempo ejecución')
     observations = fields.Text('Observaciones')
     definitive_plan = fields.Boolean(string='Plano definitivo generado')
 
@@ -28,8 +33,20 @@ class HrPayslipRun(models.Model):
     def restart_payroll_batch(self):
         self.mapped('slip_ids').action_payslip_cancel()
         self.mapped('slip_ids').unlink()
-        return self.write({'state': 'draft','observations':False})
-    
+        return self.write({'state': 'draft','observations':False,'time_process':False})
+
+    def restart_payroll_account_batch(self):
+        for payslip in self.slip_ids:
+            #Eliminar contabilización y el calculo
+            payslip.mapped('move_id').unlink()
+            #Eliminar historicos
+            self.env['hr.vacation'].search([('payslip', '=', payslip.id)]).unlink()
+            self.env['hr.history.prima'].search([('payslip', '=', payslip.id)]).unlink()
+            self.env['hr.history.cesantias'].search([('payslip', '=', payslip.id)]).unlink()
+            #Reversar Liquidación
+            payslip.write({'state': 'verify'})
+        return self.write({'state': 'verify'})
+
     def restart_full_payroll_batch(self):
         for payslip in self.slip_ids.with_progress(msg='Reversando nómina contabilizada',cancellable=False):
             #Eliminar contabilización
@@ -73,6 +90,44 @@ class HrPayslipEmployees(models.TransientModel):
 
         return calendar_is_not_covered
 
+    def compute_sheet_thread(self,obj_structure_id,obj_payslip_run,obj_contracts):
+        with odoo.api.Environment.manage():
+            registry = odoo.registry(self._cr.dbname)
+            with registry.cursor() as cr:
+                env = api.Environment(cr, SUPERUSER_ID, {})
+
+                payslips = env['hr.payslip']
+                Payslip = env['hr.payslip']
+                default_values = Payslip.default_get(Payslip.fields_get())
+
+                contracts = env['hr.contract'].search([('id', 'in', obj_contracts.ids)])
+                structure_id = env['hr.payroll.structure'].search([('id', 'in', obj_structure_id.ids)])
+                payslip_run = env['hr.payslip.run'].search([('id', 'in', obj_payslip_run.ids)])
+
+                try:
+                    # Se agrega metodo with_progress para mostrar una barra de progreso
+                    for contract in contracts:
+                        values = dict(default_values, **{
+                            'employee_id': contract.employee_id.id,
+                            'credit_note': payslip_run.credit_note,
+                            'payslip_run_id': payslip_run.id,
+                            'date_from': payslip_run.date_start,
+                            'date_to': payslip_run.date_end,
+                            'contract_id': contract.id,
+                            'struct_id': structure_id.id or contract.structure_type_id.default_struct_id.id,
+                        })
+                        payslip = env['hr.payslip'].new(values)
+                        payslip._onchange_employee()
+                        values = payslip._convert_to_write(payslip._cache)
+                        payslips += Payslip.create(values)
+                    payslips.compute_sheet()
+                except Exception as e:
+                    msg = 'ERROR: ' + str(e.args[0])
+                    if payslip_run.observations:
+                        payslip_run.write({'observations':payslip_run.observations + '\n' + msg})
+                    else:
+                        payslip_run.write({'observations':msg})
+
     def compute_sheet(self):
         self.ensure_one()
         if not self.env.context.get('active_id'):
@@ -90,13 +145,6 @@ class HrPayslipEmployees(models.TransientModel):
         if not employees:
             raise UserError(_("You must select employee(s) to generate payslip(s)."))
 
-        payslips = self.env['hr.payslip']
-        Payslip = self.env['hr.payslip']
-
-        observations = False
-        contracts = employees._get_contracts(payslip_run.date_start, payslip_run.date_end, states=['open']) # , 'close'
-        contracts._generate_work_entries(payslip_run.date_start, payslip_run.date_end)
-        
         if self.structure_id.use_worked_day_lines:
             work_entries = self.env['hr.work.entry'].search([
                 ('date_start', '<=', payslip_run.date_end),
@@ -107,11 +155,11 @@ class HrPayslipEmployees(models.TransientModel):
 
             if calendar_is_not_covered:
                 date_start = fields.Datetime.to_datetime(payslip_run.date_start)
-                date_stop = datetime.combine(fields.Datetime.to_datetime(payslip_run.date_end), datetime.max.time())        
+                date_stop = datetime.combine(fields.Datetime.to_datetime(payslip_run.date_end),datetime.max.time())
                 self.env['hr.work.entry'].search([('date_start', '>=', date_start),
-                                                    ('date_stop', '<=', date_stop),
-                                                    ('contract_id', 'in', calendar_is_not_covered.ids)]).unlink()
-                
+                                             ('date_stop', '<=', date_stop),
+                                             ('contract_id', 'in', calendar_is_not_covered.ids)]).unlink()
+
                 vals_list = calendar_is_not_covered._get_work_entries_values(date_start, date_stop)
                 self.env['hr.work.entry'].create(vals_list)
 
@@ -119,38 +167,49 @@ class HrPayslipEmployees(models.TransientModel):
                     ('date_start', '<=', payslip_run.date_end),
                     ('date_stop', '>=', payslip_run.date_start),
                     ('employee_id', 'in', employees.ids),
-                ])                
+                ])
 
             validated = work_entries.action_validate()
             if not validated:
                 observations = 'Algunas entradas de trabajo no se pudieron validar.'
-                #raise UserError(_("Some work entries could not be validated."))
+                payslip_run.observations = observations
+                # raise UserError(_("Some work entries could not be validated."))
 
-            # for calendar in calendar_is_not_covered:
-            #     observations = '' if observations == False else observations
-            #     msg = ("Alguna parte del calendario de %s no está cubierta por ninguna entrada de trabajo. Por favor complete el horario.") % calendar.employee_id.name
-            #     observations = observations + '\n' + msg
+        contracts = employees._get_contracts(payslip_run.date_start, payslip_run.date_end,
+                                             states=['open'])  # , 'close'
+        contracts._generate_work_entries(payslip_run.date_start, payslip_run.date_end)
 
-        default_values = Payslip.default_get(Payslip.fields_get())
-        
-        #Se agrega metodo with_progress para mostrar una barra de progreso
-        for contract in contracts.with_progress(msg='Paso 1 de 2 - Creando nómina',cancellable=False):
-            values = dict(default_values, **{
-                'employee_id': contract.employee_id.id,
-                'credit_note': payslip_run.credit_note,
-                'payslip_run_id': payslip_run.id,
-                'date_from': payslip_run.date_start,
-                'date_to': payslip_run.date_end,
-                'contract_id': contract.id,
-                'struct_id': self.structure_id.id or contract.structure_type_id.default_struct_id.id,
-            })
-            payslip = self.env['hr.payslip'].new(values)
-            payslip._onchange_employee()
-            values = payslip._convert_to_write(payslip._cache)
-            payslips += Payslip.create(values)
-        payslips.compute_sheet()
+        #--------------------------MANEJO POR HILOS PARA LA LIQUIDACIÓN EN LOTE--------------------------------
+
+        # Se dividen los contratos en 3 lotes para ser ejecutados en 2 hilos
+        div = math.ceil(len(contracts) / 3)
+        contracts_array_def, i, j = [], 0, div
+        while i <= len(contracts):
+            contracts_array_def.append(contracts[i:j])
+            i = j
+            j += div
+
+        # ----------------------------Recorrer empleados por multihilos
+        threads = []
+        date_start_process = datetime.now()
+
+        for i_contracts in contracts_array_def:
+            if len(i_contracts) > 0:
+                t = threading.Thread(target=self.compute_sheet_thread, args=(self.structure_id,payslip_run,i_contracts,))
+                threads.append(t)
+                t.start()
+
+        for thread in threads:
+            thread.join()
+
+        date_finally_process = datetime.now()
+        time_process = date_finally_process - date_start_process
+        time_process = time_process.seconds / 60
+        str_time_process = "El proceso se demoro {:.2f} minutos.".format(time_process)
+
+        #Finalización del proceso
+        payslip_run.time_process = str_time_process
         payslip_run.state = 'verify'
-        payslip_run.observations = observations
 
         return {
             'type': 'ir.actions.act_window',
@@ -175,7 +234,8 @@ class Hr_payslip_line(models.Model):
     _inherit = 'hr.payslip.line'
 
     entity_id = fields.Many2one('hr.employee.entities', string="Entidad")
-    loan_id = fields.Many2one('hr.loans', 'Prestamo', readonly=True)    
+    loan_id = fields.Many2one('hr.loans', 'Prestamo', readonly=True)
+    days_unpaid_absences = fields.Integer(string='Días de ausencias no pagadas',readonly=True)
     amount_base = fields.Float('Base')
 
     @api.depends('quantity', 'amount', 'rate')
@@ -238,24 +298,25 @@ class Hr_payslip(models.Model):
     @api.onchange('worked_days_line_ids', 'input_line_ids')
     def _onchange_worked_days_inputs(self):
         if self.line_ids and self.state in ['draft', 'verify']:
-            if self.struct_id.process == 'nomina' or self.struct_id.process == 'otro':
+            if self.struct_id.process == 'nomina':
                 values = [(5, 0, 0)] + [(0, 0, line_vals) for line_vals in self._get_payslip_lines()]                
             elif self.struct_id.process == 'vacaciones':
                 values = [(5, 0, 0)] + [(0, 0, line_vals) for line_vals in self._get_payslip_lines_vacation()]                
-            elif self.struct_id.process == 'cesantias_e_intereses':
+            elif self.struct_id.process == 'cesantias' or self.struct_id.process == 'intereses_cesantias':
                 values = [(5, 0, 0)] + [(0, 0, line_vals) for line_vals in self._get_payslip_lines_cesantias()]                
             elif self.struct_id.process == 'prima':
                 values = [(5, 0, 0)] + [(0, 0, line_vals) for line_vals in self._get_payslip_lines_prima()]
             elif self.struct_id.process == 'contrato':                
-                values = [(5, 0, 0)] + [(0, 0, line_vals) for line_vals in self._get_payslip_lines_contrato()]                
+                values = [(5, 0, 0)] + [(0, 0, line_vals) for line_vals in self._get_payslip_lines_contrato()]
+            elif self.struct_id.process == 'otro':
+                values = [(5, 0, 0)] + [(0, 0, line_vals) for line_vals in self._get_payslip_lines_other()]
             else:
                 raise ValidationError(_('La estructura seleccionada se encuentra en desarrollo.'))
 
             self.update({'line_ids': values})
 
     def compute_sheet(self):
-        #Se agrega metodo with_progress para mostrar una barra de progreso
-        for payslip in self.filtered(lambda slip: slip.state not in ['cancel', 'done']).with_progress(msg='Paso 2 de 2 - Calculando nómina',cancellable=False):
+        for payslip in self.filtered(lambda slip: slip.state not in ['cancel', 'done']):
             number = payslip.number or self.env['ir.sequence'].next_by_code('salary.slip')
             # delete old payslip lines
             payslip.line_ids.unlink()
@@ -263,16 +324,18 @@ class Hr_payslip(models.Model):
 
             #Seleccionar proceso a ejecutar
             lines = []
-            if payslip.struct_id.process == 'nomina' or payslip.struct_id.process == 'otro':
+            if payslip.struct_id.process == 'nomina':
                 lines = [(0, 0, line) for line in payslip._get_payslip_lines()]
             elif payslip.struct_id.process == 'vacaciones':
                 lines = [(0, 0, line) for line in payslip._get_payslip_lines_vacation()]
-            elif payslip.struct_id.process == 'cesantias_e_intereses':
+            elif payslip.struct_id.process == 'cesantias' or payslip.struct_id.process == 'intereses_cesantias':
                 lines = [(0, 0, line) for line in payslip._get_payslip_lines_cesantias()]
             elif payslip.struct_id.process == 'prima':
                 lines = [(0, 0, line) for line in payslip._get_payslip_lines_prima()]
             elif payslip.struct_id.process == 'contrato':                
                 lines = [(0, 0, line) for line in payslip._get_payslip_lines_contrato()]                
+            elif payslip.struct_id.process == 'otro':
+                lines = [(0, 0, line) for line in payslip._get_payslip_lines_other()]
             else:
                 raise ValidationError(_('La estructura seleccionada se encuentra en desarrollo.'))
 
@@ -411,7 +474,8 @@ class Hr_payslip(models.Model):
                     'values_base_int_cesantias': 0,
                     'values_base_vacremuneradas': 0,
                     'values_base_vacdisfrutadas': 0,
-                    'inherit_contrato':inherit_contrato_ded+inherit_contrato_dev, 
+                    'inherit_contrato':inherit_contrato_ded+inherit_contrato_dev,
+                    'inherit_prima':inherit_prima,
                 }
             }
         else:
@@ -424,7 +488,8 @@ class Hr_payslip(models.Model):
                 'values_base_int_cesantias': 0,
                 'values_base_vacremuneradas': 0,
                 'values_base_vacdisfrutadas': 0,
-                'inherit_contrato':inherit_contrato_ded+inherit_contrato_dev,})
+                'inherit_contrato':inherit_contrato_ded+inherit_contrato_dev,
+                'inherit_prima':inherit_prima,})
 
         #Saber si tiene días de vacaciones
         days_vac = 0
@@ -439,7 +504,7 @@ class Hr_payslip(models.Model):
         obj_novelties = self.env['hr.novelties.different.concepts'].search([('employee_id', '=', employee.id),
                                                             ('date', '>=', self.date_from),('date', '<=', self.date_to)])
         for concepts in obj_novelties:
-            if concepts.amount != 0:
+            if concepts.amount != 0 and inherit_prima == 0:
                 previous_amount = concepts.salary_rule_id.code in localdict and localdict[concepts.salary_rule_id.code] or 0.0
                 #set/overwrite the amount computed for this rule in the localdict
                 tot_rule = round(concepts.amount * 1.0 * 100 / 100.0,0)
@@ -516,7 +581,7 @@ class Hr_payslip(models.Model):
                             loan_id = concept.loan_id.id
                             amount, qty, rate = rule._compute_rule(localdict)
                             #Validar si no tiene dias trabajados, si no tiene revisar las ausencias y sus caracteristicas para calcular la deducción
-                            if rule.dev_or_ded == 'deduccion' and rule.type_concept != 'ley' and (worked_days_entry + leaves_days_all) == 0:
+                            if rule.dev_or_ded == 'deduccion' and rule.type_concept != 'ley' and (worked_days_entry + leaves_days_all) == 0 and inherit_prima == 0:
                                 amount, qty, rate = 0,1.0,100    
 
                             #LIQUIDACION DE CONTRATO SOLO DEV OR DED DEPENDIENTO SU ORIGEN
@@ -525,7 +590,8 @@ class Hr_payslip(models.Model):
                             if ((inherit_contrato_dev != 0 or inherit_contrato_ded != 0) and self.settle_payroll_concepts == False and not rule.code in ['TOTALDEV','TOTALDED','NET'])\
                                     or (inherit_contrato_dev != 0 and rule.dev_or_ded != 'devengo')\
                                     or (inherit_contrato_ded != 0 and rule.dev_or_ded != 'deduccion'and not rule.code in ['TOTALDEV','NET'])\
-                                    or (inherit_prima != 0 and rule.dev_or_ded != 'deduccion' and rule.deduction_applies_bonus == False)\
+                                    or (inherit_prima != 0 and rule.dev_or_ded != 'deduccion' and not rule.code in ['TOTALDEV','NET']) \
+                                    or (inherit_prima != 0 and rule.dev_or_ded == 'deduccion' and rule.deduction_applies_bonus == False) \
                                     or (inherit_vacation != 0 and rule.dev_or_ded != 'deduccion' and not rule.code in ['TOTALDEV','NET']):
                                 amount, qty, rate = 0,1.0,100
 
@@ -595,7 +661,7 @@ class Hr_payslip(models.Model):
                             # create/overwrite the rule in the temporary results
                             if amount != 0:
                                 result_item = rule.code+'-'+str(concept.id) if concept.id else rule.code
-                                if rule.dev_or_ded == 'deduccion':
+                                if rule.dev_or_ded == 'deduccion' and inherit_prima == 0:
                                     if rule.type_concept == 'ley':
                                         value_tmp_neto = localdict['categories'].dict.get('DEV_SALARIAL',0) + localdict['categories'].dict.get('DEV_NO_SALARIAL',0) + localdict['categories'].dict.get('DEDUCCIONES',0) 
                                     else:
@@ -639,7 +705,7 @@ class Hr_payslip(models.Model):
                 else:
                     amount, qty, rate = rule._compute_rule(localdict)
                     #Validar si no tiene dias trabajados, si no tiene revisar las ausencias y sus caracteristicas para calcular la deducción
-                    if rule.dev_or_ded == 'deduccion' and rule.type_concept != 'ley' and (worked_days_entry + leaves_days_all) == 0:
+                    if rule.dev_or_ded == 'deduccion' and rule.type_concept != 'ley' and (worked_days_entry + leaves_days_all) == 0 and inherit_prima==0:
                         amount, qty, rate = 0,1.0,100 
 
                     #LIQUIDACION DE CONTRATO SOLO DEV OR DED DEPENDIENTO SU ORIGEN
@@ -653,8 +719,9 @@ class Hr_payslip(models.Model):
                     # PRIMA SOLAMENTE DEDUCCIONES QUE ESTEN CONFIGURADAS
                     # VACACIONES SOLAMENTE DEDUCCIONES
                     if (inherit_contrato_dev != 0 and rule.dev_or_ded != 'devengo')\
-                            or (inherit_contrato_ded != 0 and rule.dev_or_ded != 'deduccion' and not rule.code in ['TOTALDEV','NET'])\
-                            or (inherit_prima != 0 and rule.dev_or_ded != 'deduccion' and rule.deduction_applies_bonus == False)\
+                            or (inherit_contrato_ded != 0 and rule.dev_or_ded != 'deduccion' and not rule.code in ['TOTALDEV','NET']) \
+                            or (inherit_prima != 0 and rule.dev_or_ded != 'deduccion' and not rule.code in ['TOTALDEV','NET']) \
+                            or (inherit_prima != 0 and rule.dev_or_ded == 'deduccion' and rule.deduction_applies_bonus == False) \
                             or (inherit_vacation != 0 and rule.dev_or_ded != 'deduccion' and not rule.code in ['TOTALDEV','NET']):
                         amount, qty, rate = 0,1.0,100
 
@@ -677,7 +744,7 @@ class Hr_payslip(models.Model):
                     
                     # create/overwrite the rule in the temporary results
                     if amount != 0:
-                        if rule.dev_or_ded == 'deduccion':
+                        if rule.dev_or_ded == 'deduccion' and inherit_prima == 0:
                             if rule.type_concept == 'ley':
                                 value_tmp_neto = localdict['categories'].dict.get('DEV_SALARIAL',0) + localdict['categories'].dict.get('DEV_NO_SALARIAL',0) + localdict['categories'].dict.get('DEDUCCIONES',0) 
                             else:
@@ -795,12 +862,12 @@ class Hr_payslip(models.Model):
                             'final_accrual_date': line.final_accrual_date,
                             'departure_date': record.date_from,
                             'return_date': record.date_to,
-                            'business_units': line.business_units,
+                            'business_units': line.business_units + line.business_31_units,
                             'value_business_days': line.business_units * line.amount,
-                            'holiday_units': line.holiday_units,
+                            'holiday_units': line.holiday_units + line.holiday_31_units,
                             'holiday_value': line.holiday_units * line.amount,                            
                             'base_value': line.amount_base,
-                            'total': (line.business_units * line.amount)+line.holiday_units * line.amount,
+                            'total': (line.business_units * line.amount)+(line.holiday_units * line.amount),
                             'payslip': record.id
                         }
                     if line.code == 'VACREMUNERADAS':
@@ -824,7 +891,7 @@ class Hr_payslip(models.Model):
                     for history in history_vacation:
                         self.env['hr.vacation'].create(history) 
 
-            if record.struct_id.process == 'cesantias_e_intereses':
+            if record.struct_id.process == 'cesantias' or record.struct_id.process == 'intereses_cesantias':
                 his_cesantias = {}         
                 his_intcesantias = {}
 
@@ -834,6 +901,7 @@ class Hr_payslip(models.Model):
                         his_cesantias = {
                             'employee_id': record.employee_id.id,
                             'contract_id': record.contract_id.id,
+                            'type_history': 'cesantias',
                             'initial_accrual_date': record.date_from,
                             'final_accrual_date': record.date_to,
                             'settlement_date': record.date_to,                        
@@ -845,8 +913,17 @@ class Hr_payslip(models.Model):
 
                     if line.code == 'INTCESANTIAS':
                         his_intcesantias = {
+                            'employee_id': record.employee_id.id,
+                            'contract_id': record.contract_id.id,
+                            'type_history': 'intcesantias',
+                            'initial_accrual_date': record.date_from,
+                            'final_accrual_date': record.date_to,
+                            'settlement_date': record.date_to,
+                            'time': line.quantity,
+                            'base_value': line.amount_base,
                             'severance_interest_value': line.total,
-                        }           
+                            'payslip': record.id
+                        }
 
                 info_cesantias = {**his_cesantias,**his_intcesantias}        
                 if info_cesantias:

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <report
+            id="report_personal_data_form_action"
+            model="hr.employee"
+            string="Formato Datos Personales"
+            report_type="qweb-pdf"
+            name="zue_hr_employee.report_personal_data_form_template"
+            file="zue_hr_employee.report_personal_data_form_template"
+        />
+</odoo>

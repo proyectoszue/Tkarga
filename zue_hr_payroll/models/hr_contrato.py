@@ -110,9 +110,12 @@ class Hr_payslip(models.Model):
 
             if contract.modality_salary != 'integral':
                 # 4.Cesantias e intereses
-                obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','cesantias_e_intereses')])
+                obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','cesantias')])
                 self.struct_id = obj_struct_payroll.id
                 localdict, result_cesantias = self._get_payslip_lines_cesantias(inherit_contrato=1,localdict=localdict)
+                obj_struct_payroll = self.env['hr.payroll.structure'].search([('process', '=', 'intereses_cesantias')])
+                self.struct_id = obj_struct_payroll.id
+                localdict, result_intcesantias = self._get_payslip_lines_cesantias(inherit_contrato=1, localdict=localdict)
 
                 # 5.Prima
                 obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','prima')])
@@ -120,10 +123,12 @@ class Hr_payslip(models.Model):
                 localdict, result_prima = self._get_payslip_lines_prima(inherit_contrato=1,localdict=localdict)
             else:
                 result_cesantias = {}
+                result_intcesantias = {}
                 result_prima = {}
         else:
             result_vac = {}
             result_cesantias = {}
+            result_intcesantias = {}
             result_prima = {}
 
         # 6.Deducciones
@@ -133,5 +138,5 @@ class Hr_payslip(models.Model):
 
         # 7.Guardar proceso
         self.struct_id = struct_original
-        result_finally = {**result_dev,**result_contrato,**result_vac,**result_cesantias,**result_prima,**result_ded}   
+        result_finally = {**result_dev,**result_contrato,**result_vac,**result_cesantias,**result_intcesantias,**result_prima,**result_ded}
         return result_finally.values()  

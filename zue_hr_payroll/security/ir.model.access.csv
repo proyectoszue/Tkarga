@@ -11,6 +11,7 @@ access_hr_employee_rtefte,hr.employee.rtefte,model_hr_employee_rtefte,,1,1,1,1
 access_zue_payroll_flat_file_backup,zue.payroll.flat.file.backup,model_zue_payroll_flat_file_backup,,1,0,1,0
 access_hr_vacation,hr.vacation,model_hr_vacation,,1,1,1,1
 access_hr_novelties_different_concepts,hr.novelties.different.concepts,model_hr_novelties_different_concepts,,1,1,1,1
+access_hr_novelties_independents,hr.novelties.independents,model_hr_novelties_independents,,1,1,1,1
 access_hr_payroll_posting,hr.payroll.posting,model_hr_payroll_posting,,1,1,1,1
 access_hr_payroll_posting_distribution,hr.payroll.posting.distribution,model_hr_payroll_posting_distribution,,1,1,1,1
 access_hr_payslip_not_line,hr.payslip.not.line,model_hr_payslip_not_line,,1,1,1,1

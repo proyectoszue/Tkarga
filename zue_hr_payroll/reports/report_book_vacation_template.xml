@@ -20,7 +20,7 @@
                                                 <span t-esc="o.employee_id.identification_id"/> - <span t-esc="o.employee_id.name"/>
                                             </th>
                                             <th colspan="4" style="border:none;">
-                                                Días acumulados de vacaciones 0.0
+                                                Días acumulados de vacaciones <span t-esc="o.get_accumulated_vacation_days()"/>
                                             </th>
                                         </tr>
                                         <tr>

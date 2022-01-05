@@ -27,6 +27,7 @@ class hr_vacation(models.Model):
     money_value = fields.Float('Valor en dinero')
     total = fields.Float('Total')
     payslip = fields.Many2one('hr.payslip', 'Liquidación')
+    leave_id = fields.Many2one('hr.leave', 'Ausencia')
     contract_id = fields.Many2one('hr.contract', 'Contrato')
 
     def name_get(self):
@@ -80,7 +81,9 @@ class Hr_payslip_line(models.Model):
     initial_accrual_date = fields.Date('C. Inicio')
     final_accrual_date = fields.Date('C. Fin')
     business_units = fields.Integer('Unidades hábiles')
+    business_31_units = fields.Integer('Unidades hábiles - Días 31')
     holiday_units = fields.Integer('Unidades festivos')
+    holiday_31_units = fields.Integer('Unidades festivos  - Días 31')
 
 class Hr_payslip(models.Model):
     _inherit = 'hr.payslip'
@@ -202,9 +205,9 @@ class Hr_payslip(models.Model):
                     'contract': contract,
                     'annual_parameters': annual_parameters,
                     'antiquity_employee': antiquity_employee,
-                    'inherit_contrato':inherit_contrato, 
+                    'inherit_contrato':inherit_contrato,
                     'values_base_vacremuneradas': 0,
-                    'values_base_vacdisfrutadas': 0,  
+                    'values_base_vacdisfrutadas': 0,
                 }
             }
         else:
@@ -226,13 +229,17 @@ class Hr_payslip(models.Model):
                         id_leave = leaves.get('IDLEAVE')
                         obj_leave = self.env['hr.leave'].search([('id', '=', id_leave)])  
                         obj_leave_equals = self.env['hr.leave'].search([('state','=','validate'),('employee_id','=',employee.id),('id','!=',id_leave),('is_vacation','=',True),('request_date_from', '>=', obj_leave.request_date_from),('request_date_to', '<=', obj_leave.request_date_to)])  
-                        days_vacations = obj_leave.number_of_days if obj_leave.business_days == 0 else obj_leave.business_days
+                        days_vacations = obj_leave.number_of_days if obj_leave.business_days + obj_leave.days_31_business == 0 else obj_leave.business_days + obj_leave.days_31_business
                         days_vacations_business = obj_leave.business_days
+                        days_vacations_31_business = obj_leave.days_31_business
                         days_vacations_holidays = obj_leave.holidays
+                        days_vacations_31_holidays = obj_leave.days_31_holidays
                         for leave_equals in obj_leave_equals:
-                            days_vacations += leave_equals.number_of_days if leave_equals.business_days == 0 else leave_equals.business_days
+                            days_vacations += leave_equals.number_of_days if leave_equals.business_days + leave_equals.days_31_business == 0 else leave_equals.business_days + leave_equals.days_31_business
                             days_vacations_business += leave_equals.business_days
+                            days_vacations_31_business += leave_equals.days_31_business
                             days_vacations_holidays += leave_equals.holidays
+                            days_vacations_31_holidays += leave_equals.days_31_holidays
                         #Remuneradas
                         for paid_vacation in self.paid_vacation_ids:
                             if obj_leave.request_date_from:
@@ -286,7 +293,9 @@ class Hr_payslip(models.Model):
                                 'final_accrual_date': final_accrual_date,
                                 'amount_base': amount*30,
                                 'business_units': days_vacations_business,
+                                'business_31_units': days_vacations_31_business,
                                 'holiday_units': days_vacations_holidays,
+                                'holiday_31_units': days_vacations_31_holidays,
                                 'salary_rule_id': rule.id,
                                 'contract_id': contract.id,
                                 'employee_id': employee.id,                        
@@ -303,7 +312,7 @@ class Hr_payslip(models.Model):
                         obj_leave_equals = self.env['hr.leave'].search([('state','=','validate'),('employee_id','=',employee.id),('is_vacation','=',True),('request_date_from', '=', leaves.get('DATE'))])  #('request_date_to', '<=', obj_leave.request_date_to)
                         days_vacations = leaves.get('VACREMUNERADAS')
                         for leave_equals in obj_leave_equals:
-                            days_vacations += leave_equals.number_of_days if leave_equals.business_days == 0 else leave_equals.business_days
+                            days_vacations += leave_equals.number_of_days if leave_equals.business_days + leave_equals.days_31_business == 0 else leave_equals.business_days + leave_equals.days_31_business
 
                         localdict.update({'leaves':  BrowsableObject(employee.id, leaves, self.env)})
                         amount, qty, rate = rule._compute_rule(localdict)
@@ -362,7 +371,7 @@ class Hr_payslip(models.Model):
                             }
                 else:
                     amount, qty, rate = rule._compute_rule(localdict)
-                    amount_base = 0
+                    dias_ausencias,amount_base = 0,0
                     initial_accrual_date = False
                     final_accrual_date = False
 
@@ -412,6 +421,7 @@ class Hr_payslip(models.Model):
                             'amount': amount,
                             'quantity': qty,
                             'rate': rate,
+                            'days_unpaid_absences':dias_ausencias,
                             'slip_id': self.id,
                         }
         

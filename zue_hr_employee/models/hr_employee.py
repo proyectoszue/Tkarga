@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
+from datetime import date
 
 class hr_tipo_cotizante(models.Model):
     _name = 'hr.tipo.cotizante'
@@ -29,8 +30,8 @@ class hr_contract_setting(models.Model):
     _name = 'hr.contract.setting'
     _description = 'Configuracion nomina entidades'
 
-    contrib_id = fields.Many2one('hr.contribution.register', 'Tipo Entidad', help='Concepto de aporte')
-    partner_id = fields.Many2one('hr.employee.entities', 'Entidad', help='Entidad relacionada', domain="[('types_entities','in',[contrib_id])]")
+    contrib_id = fields.Many2one('hr.contribution.register', 'Tipo Entidad', help='Concepto de aporte', required=True)
+    partner_id = fields.Many2one('hr.employee.entities', 'Entidad', help='Entidad relacionada', domain="[('types_entities','in',[contrib_id])]", required=True)
     date_change = fields.Date(string='Fecha de ingreso')
     # account_debit_id = fields.Many2one('account.account', 'Cuenta deudora')
     # account_credit_id = fields.Many2one('account.account', 'Cuenta acreedora')
@@ -105,6 +106,17 @@ class hr_employee_documents(models.Model):
     expiration_date = fields.Date('Fecha de vencimiento')
     document = fields.Many2one('documents.document',string='Documento',required=True)
 
+class hr_cost_distribution_employee(models.Model):
+    _name = 'hr.cost.distribution.employee'
+    _description = 'Distribucion de costos empleados'
+
+    employee_id = fields.Many2one('hr.employee', string='Empleado', required=True)
+    analytic_account_id = fields.Many2one('account.analytic.account', string='Cuenta analítica', required=True)
+    porcentage = fields.Float(string='Porcentaje', required=True)
+
+    _sql_constraints = [('change_distribution_analytic_uniq', 'unique(employee_id,analytic_account_id)',
+                         'Ya existe una cuenta analítica asignada, por favor verificar')]
+
 class hr_employee(models.Model):
     _inherit = 'hr.employee'
 
@@ -154,6 +166,7 @@ class hr_employee(models.Model):
                                     ('cc', 'Cargo CC')], 'Tipo de cargo', track_visibility='onchange')
     emergency_relationship = fields.Char(string='Parentesco contacto')
     documents_ids = fields.One2many('hr.employee.documents', 'employee_id', 'Documentos')
+    distribution_cost_information = fields.One2many('hr.cost.distribution.employee', 'employee_id', string='Distribución de costos empleado')
     #PILA
     extranjero = fields.Boolean('Extranjero', help='Extranjero no obligado a cotizar a pensión', track_visibility='onchange')
     residente = fields.Boolean('Residente en el Exterior', help='Colombiano residente en el exterior', track_visibility='onchange')
@@ -205,14 +218,29 @@ class hr_employee(models.Model):
                 self.phone = partner.phone
                 self.personal_mobile = partner.mobile
 
+    @api.constrains('distribution_cost_information')
+    def _check_porcentage_distribution_cost(self):
+        for record in self:
+            if len(record.distribution_cost_information) > 0:
+                porc_total = 0
+                for distribution in record.distribution_cost_information:
+                    porc_total += distribution.porcentage
+                if porc_total != 100:
+                    raise UserError(_('Los porcentajes de la distribución de costos no suman un 100%, por favor verificar.'))
 
     @api.constrains('identification_id')
     def _check_identification(self):  
         for record in self:
             if record.identification_id != record.address_home_id.vat:
-                raise UserError(_('El número de identificación debe ser igual al tercero seleccionado.'))              
+                raise UserError(_('El número de identificación debe ser igual al tercero seleccionado.'))
             if record.identification_id != record.partner_encab_id.vat:
-                raise UserError(_('El número de identificación debe ser igual al tercero seleccionado.'))              
+                raise UserError(_('El número de identificación debe ser igual al tercero seleccionado.'))
+
+    @api.constrains('social_security_entities')
+    def _check_social_security_entities(self):
+        for record in self:
+            if len(record.social_security_entities) == 0:
+                raise ValidationError(_('El empelado no tiene entidades asignadas, por favor verificar.'))
 
     @api.model
     def create(self, vals):
@@ -222,7 +250,20 @@ class hr_employee(models.Model):
             vals['address_home_id'] = vals.get('partner_encab_id')         
         
         res = super(hr_employee, self).create(vals)
-        return res    
+        return res
+
+    def get_info_contract(self):
+        for record in self:
+            obj_contract = self.env['hr.contract'].search([('employee_id','=',record.id),('state','=','open')],limit=1)
+            if len(obj_contract) == 0:
+                obj_contract += self.env['hr.contract'].search([('employee_id', '=', record.id), ('state', '=', 'close')],limit=1)
+            return obj_contract
+
+    def get_age_for_date(self,date):
+        today = date.today()
+        return today.year - date.year - ((today.month, today.day) < (date.month, date.day))
+
+
             
                 
                     
