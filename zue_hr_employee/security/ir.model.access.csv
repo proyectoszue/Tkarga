@@ -16,3 +16,5 @@ access_hr_employee_dependents, access_hr_employee_dependents,model_hr_employee_d
 access_hr_employee_labor_union, access_hr_employee_labor_union,model_hr_employee_labor_union,,1,1,1,1
 access_hr_salary_rule_accounting, access_hr_salary_rule_accounting,model_hr_salary_rule_accounting,,1,1,1,1
 access_hr_employee_documents, access_hr_employee_documents,model_hr_employee_documents,,1,1,1,1
+access_hr_cost_distribution_employee, access_hr_cost_distribution_employee,model_hr_cost_distribution_employee,,1,1,1,1
+access_hr_conf_certificate_income, access_hr_conf_certificate_income,model_hr_conf_certificate_income,,1,1,1,1

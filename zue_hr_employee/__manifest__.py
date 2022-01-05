@@ -34,7 +34,9 @@
         'reports/report_certification.xml',         
         'reports/report_certification_template.xml',
         'reports/report_birthday_list.xml', 
-        'reports/report_birthday_list_template.xml',  
+        'reports/report_birthday_list_template.xml',
+        'reports/report_personal_data_form_template.xml', 
+        'reports/report_personal_data_form.xml',   
         'views/menus.xml',
     ],
 

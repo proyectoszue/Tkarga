@@ -62,6 +62,7 @@
                                     <field name="time" optional="show"/>
                                     <field name="amount" optional="show"/>
                                     <field name="value_payments" optional="show"/>
+                                    <field name="current_payable_value" optional="show"/>
                                     <field name="value_balance" optional="show"/>
                                 </tree>
                             </field>

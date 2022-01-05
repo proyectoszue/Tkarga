@@ -27,9 +27,10 @@ class hr_executing_provisions_details(models.Model):
     value_wage = fields.Float('Salario')
     value_base = fields.Float('Base')
     time = fields.Float('Unidades')
-    value_balance = fields.Float('Saldo')
+    value_balance = fields.Float('Valor Provisión Mes')
     value_payments = fields.Float('Pagos realizados')
     amount = fields.Float('Valor liquidado')
+    current_payable_value = fields.Float('Valor a Pagar Actual')
 
 class hr_executing_provisions(models.Model):
     _name = 'hr.executing.provisions'
@@ -72,7 +73,7 @@ class hr_executing_provisions(models.Model):
             result.append((record.id, "Periodo {}-{}".format(record.month,str(record.year))))
         return result
   
-    def executing_provisions_thread(self,date_start,date_end,struct_vacaciones,struct_prima,struct_cesantias,contracts):
+    def executing_provisions_thread(self,date_start,date_end,struct_vacaciones,struct_prima,struct_cesantias,struct_intcesantias,contracts):
         with odoo.api.Environment.manage():
             registry = odoo.registry(self._cr.dbname)
             with registry.cursor() as cr:
@@ -82,6 +83,7 @@ class hr_executing_provisions(models.Model):
                     contract = env['hr.contract'].search([('id', '=', obj_contract.id)])
                     try:
                         result_cesantias = {}
+                        result_intcesantias = {}
                         result_prima = {}
                         result_vac = {}
 
@@ -115,8 +117,8 @@ class hr_executing_provisions(models.Model):
                                 'date_prima': date_prima,
                                 'date_vacaciones':date_vacation,
                                 'date_from': date_start,
-                                'date_to': date_end,
-                                'date_liquidacion':date_end,
+                                'date_to': date_end if contract.retirement_date == False else contract.retirement_date,
+                                'date_liquidacion':date_end if contract.retirement_date == False else contract.retirement_date,
                                 'contract_id': contract.id,
                                 'struct_id': struct_cesantias.id
                             })
@@ -130,6 +132,9 @@ class hr_executing_provisions(models.Model):
                                 #Cesantias
                                 obj_provision.write({'struct_id': struct_cesantias.id})
                                 localdict,result_cesantias = obj_provision._get_payslip_lines_cesantias(inherit_contrato=1)
+                                # Intereses de Cesantias
+                                obj_provision.write({'struct_id': struct_intcesantias.id})
+                                localdict, result_intcesantias = obj_provision._get_payslip_lines_cesantias(inherit_contrato=1)
                                 #Prima
                                 obj_provision.write({'struct_id': struct_prima.id})
                                 localdict,result_prima = obj_provision._get_payslip_lines_prima(inherit_contrato=1)
@@ -142,7 +147,7 @@ class hr_executing_provisions(models.Model):
                         obj_provision.unlink()
                         
                         #Guardar resultado
-                        result_finally = {**result_cesantias,**result_prima,**result_vac}   
+                        result_finally = {**result_cesantias,**result_intcesantias,**result_prima,**result_vac}
                         
                         #Restar las provisiones anteriores
                         for line in result_finally.values():
@@ -161,9 +166,46 @@ class hr_executing_provisions(models.Model):
 
                                 obj_provisions = env['hr.executing.provisions.details']
 
-                                executing_provisions = env['hr.executing.provisions.details'].search([('executing_provisions_id.state','in',['done','accounting']),('executing_provisions_id','!=',self.id),('executing_provisions_id.date_end','=',date_month_ant),('provision','=',provision),('contract_id','=',contract.id)])
+                                executing_provisions = env['hr.executing.provisions.details'].search(
+                                    [('executing_provisions_id.state', 'in', ['done', 'accounting']),
+                                     ('executing_provisions_id', '!=', self.id),
+                                     ('executing_provisions_id.date_end', '=', date_month_ant),
+                                     ('provision', '=', provision), ('contract_id', '=', contract.id)])
                                 value_balance = sum([i.amount for i in obj_provisions.browse(executing_provisions.ids)])
-                                
+
+                                #Obtener pagos realizados en el mes
+                                code_filter = [provision.upper()] if provision != 'vacaciones' else ['VACCONTRATO','VACDISFRUTADAS','VACREMUNERADAS']
+
+                                obj_payslip = env['hr.payslip.line']
+                                lines_payslip = env['hr.payslip.line'].search(
+                                    [('slip_id.state', '=', 'done'), ('slip_id.date_from', '>=', date_start),
+                                     ('slip_id.date_from', '<=', date_end), ('code', 'in', code_filter),
+                                     ('slip_id.contract_id', '=', contract.id)])
+                                lines_payslip += env['hr.payslip.line'].search(
+                                    [('slip_id.state', '=', 'done'), ('slip_id.date_to', '>=', date_start),
+                                     ('slip_id.date_to', '<=', date_end), ('code', 'in', code_filter),
+                                     ('slip_id.contract_id', '=', contract.id),('id','not in',lines_payslip.ids),
+                                     ('slip_id.struct_id.process','in',['cesantias','intereses_cesantias','prima'])])
+                                if len(lines_payslip) > 0:
+                                    value_payments = sum([i.total for i in obj_payslip.browse(lines_payslip.ids)])
+                                else:
+                                    value_payments = 0
+
+                                #Calcular valor a pagar actual
+                                amount = round((line['amount'] * line['quantity'] * line['rate'])/100,0)
+
+                                obj_provisions = env['hr.executing.provisions.details']
+                                executing_provisions = env['hr.executing.provisions.details'].search(
+                                    [('executing_provisions_id.state', 'in', ['done', 'accounting']),
+                                     ('executing_provisions_id', '!=', self.id),('value_payments','>',0),
+                                     ('provision', '=', provision), ('contract_id', '=', contract.id)])
+
+                                if len(executing_provisions) > 0:
+                                    payable_value = sum([i.value_payments for i in obj_provisions.browse(executing_provisions.ids)])
+                                    current_payable_value = amount - (payable_value+value_payments)
+                                else:
+                                    current_payable_value = amount - value_payments
+
                                 #Guardar valores
                                 values_details = {
                                     'executing_provisions_id':self.id,
@@ -173,10 +215,11 @@ class hr_executing_provisions(models.Model):
                                     'value_wage': contract.wage,
                                     'value_base': line['amount_base'],
                                     'time': line['quantity'],
-                                    'value_balance': round((line['amount'] * line['quantity'] * line['rate'])/100,0) - value_balance,
-                                    'value_payments': 0,
-                                    'amount': round((line['amount'] * line['quantity'] * line['rate'])/100,0)
-                                } 
+                                    'value_balance': amount - value_balance,
+                                    'value_payments': value_payments,
+                                    'current_payable_value': current_payable_value,
+                                    'amount': amount
+                                }
                                 env['hr.executing.provisions.details'].create(values_details)
                     
                     except Exception as e:
@@ -205,12 +248,17 @@ class hr_executing_provisions(models.Model):
 
 
         #Obtener estructuras
-        struct_cesantias = self.env['hr.payroll.structure'].search([('process', '=', 'cesantias_e_intereses')])
+        struct_cesantias = self.env['hr.payroll.structure'].search([('process', '=', 'cesantias')])
+        struct_intcesantias = self.env['hr.payroll.structure'].search([('process', '=', 'intereses_cesantias')])
         struct_prima = self.env['hr.payroll.structure'].search([('process', '=', 'prima')])
         struct_vacaciones = self.env['hr.payroll.structure'].search([('process', '=', 'vacaciones')])
 
-        #Obtener contratos activos
-        obj_contracts = self.env['hr.contract'].search([('state', '=', 'open'), ('date_start','<=', date_start), ('company_id', '=', self.env.company.id)])
+        #Obtener contratos activos o desactivados en el mes de ejecución
+        obj_contracts = self.env['hr.contract'].search(
+            [('state', '=', 'open'), ('date_start', '<=', date_end), ('company_id', '=', self.env.company.id)])
+        obj_contracts += self.env['hr.contract'].search(
+            [('state', '=', 'close'), ('retirement_date', '>=', date_start), ('retirement_date', '<=', date_end),
+             ('company_id', '=', self.env.company.id)])
         
         #Guardo los contratos en lotes de a 20
         contracts_array, i, j = [], 0 , 20            
@@ -233,16 +281,15 @@ class hr_executing_provisions(models.Model):
         for contracts in contracts_array_def:
             array_thread = []
             for contract in contracts:
-                t = threading.Thread(target=self.executing_provisions_thread, args=(date_start,date_end,struct_vacaciones,struct_prima,struct_cesantias,contract,))                
+                t = threading.Thread(target=self.executing_provisions_thread, args=(date_start,date_end,struct_vacaciones,struct_prima,struct_cesantias,struct_intcesantias,contract,))
                 t.start()
                 array_thread.append(t)
-                i += 1   
+                i += 1
 
             for hilo in array_thread:
-                while hilo.is_alive():
-                    date_finally_process = datetime.now()  
+                hilo.join()
 
-
+        date_finally_process = datetime.now()
         time_process = date_finally_process - date_start_process
         time_process = time_process.seconds / 60
 

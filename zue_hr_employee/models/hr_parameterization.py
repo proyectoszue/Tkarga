@@ -105,7 +105,8 @@ class hr_payroll_structure(models.Model):
     process = fields.Selection([('nomina', 'Nónima'),
                                 ('vacaciones', 'Vacaciones'),
                                 ('prima', 'Prima'),
-                                ('cesantias_e_intereses', 'Cesantías e Intereses'),
+                                ('cesantias', 'Cesantías'),
+                                ('intereses_cesantias', 'Intereses de cesantías'),
                                 ('contrato', 'Liq. de Contrato'),
                                 ('otro', 'Otro')], string='Proceso')
 
@@ -171,6 +172,18 @@ class hr_salary_rule(models.Model):
     #Contabilización
     salary_rule_accounting = fields.One2many('hr.salary.rule.accounting', 'salary_rule', string="Contabilización", track_visibility='onchange') 
 
+#Grilla Certificados ingresos y retenciones
+class hr_conf_certificate_income(models.Model):
+    _name = 'hr.conf.certificate.income'
+    _description = 'Configuración conceptos para informe de ingresos y retenciones'
+
+    annual_parameters_id = fields.Many2one('hr.annual.parameters', string='Parametro Anual', required=True)
+    sequence = fields.Integer(string='Secuencia', required=True)
+    salary_rule_id = fields.Many2one('hr.salary.rule', string='Regla Salarial', required=True)
+
+    _sql_constraints = [('change_conf_rule_uniq', 'unique(annual_parameters_id,salary_rule_id)',
+                         'Ya existe una regla salarial asignada para el reporte de ingresos y retenciones, por favor verificar')]
+
 #Tabla de parametros anuales
 class hr_annual_parameters(models.Model):
     _name = 'hr.annual.parameters'
@@ -226,6 +239,13 @@ class hr_annual_parameters(models.Model):
     #Incrementos
     value_porc_increment_smlv = fields.Float('Incremento SMLV', required=True)
     value_porc_ipc = fields.Float('Porcentaje IPC', required=True)
+    #Certificado Ingresos/Retencion
+    taxable_year = fields.Integer(string='Año gravable')
+    gross_equity = fields.Float(string='Patrimonio bruto')
+    total_revenues = fields.Float(string='Ingresos totales')
+    credit_card = fields.Float(string='Tarjeta de crédito')
+    purchases_and_consumption = fields.Float(string='Compras y consumos')
+    conf_certificate_income_ids = fields.One2many('hr.conf.certificate.income', 'annual_parameters_id', string='Configuración de reglas salariales')
 
     #Metodos
     def name_get(self):

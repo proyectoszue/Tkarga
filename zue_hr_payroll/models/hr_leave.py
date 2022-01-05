@@ -20,6 +20,10 @@ class HolidaysRequest(models.Model):
     is_vacation = fields.Boolean(related='holiday_status_id.is_vacation', string='Es vacaciones',store=True)
     business_days = fields.Integer(string='Días habiles')
     holidays = fields.Integer(string='Días festivos')
+    days_31_business = fields.Integer(string='Días 31 habiles', help='Este día no se tiene encuenta para el calculo del pago pero si afecta su historico de vacaciones.')
+    days_31_holidays = fields.Integer(string='Días 31 festivos', help='Este día no se tiene encuenta para el calculo del pago ni afecta su historico de vacaciones.')
+    alert_days_vacation = fields.Boolean(string='Alerta días vacaciones')
+    accumulated_vacation_days = fields.Float(string='Días acumulados de vacaciones')
     
     @api.onchange('date_from', 'date_to', 'employee_id')
     def _onchange_leave_dates(self):
@@ -64,9 +68,21 @@ class HolidaysRequest(models.Model):
                 #Guardar calculo en el campo fecha final
                 record.business_days = business_days - days_31_b
                 record.holidays = holidays - days_31_h
+                record.days_31_business = days_31_b
+                record.days_31_holidays = days_31_h
                 record.request_date_to = date_to
                 days_31 = days_31_b+days_31_h
                 record.number_of_days = (business_days + holidays) - days_31
+                #Verficar alerta
+                obj_contract = self.env['hr.contract'].search(
+                    [('employee_id', '=', record.employee_id.id), ('state', '=', 'open')])
+                if business_days > obj_contract.get_accumulated_vacation_days():
+                    record.accumulated_vacation_days = obj_contract.get_accumulated_vacation_days()
+                    record.alert_days_vacation =  True
+                else:
+                    record.accumulated_vacation_days = obj_contract.get_accumulated_vacation_days()
+                    record.alert_days_vacation = False
+
 
     @api.constrains('state', 'number_of_days', 'holiday_status_id')
     def _check_holidays(self):
@@ -82,12 +98,51 @@ class HolidaysRequest(models.Model):
                 #                         'Please also check the time off waiting for validation.'))
 
     def action_approve(self):
+        #Validación adjunto
         for holiday in self:
             if holiday.holiday_status_id.obligatory_attachment:
                 attachment = self.env['ir.attachment'].search([('res_model', '=', 'hr.leave'),('res_id','=',holiday.id)])    
                 if not attachment:    
                     raise ValidationError(_('Es obligatorio agregar un adjunto para la ausencia '+holiday.display_name+'.'))
-        return super(HolidaysRequest, self).action_approve()
+        #Ejecución metodo estandar
+        obj = super(HolidaysRequest, self).action_approve()
+        #Creación registro en el historico de vacaciones cuando es una ausencia no remunerada
+        for record in self:
+            if record.unpaid_absences:
+                days_unpaid_absences = record.number_of_days
+                days_vacation_represent = round((days_unpaid_absences * 15) / 365,0)
+                # Obtener contrato y ultimo historico de vacaciones
+                obj_contract = self.env['hr.contract'].search([('employee_id','=',record.employee_id.id),('state','=','open')])
+                date_vacation = obj_contract.date_start
+                obj_vacation = self.env['hr.vacation'].search(
+                    [('employee_id', '=', record.employee_id.id), ('contract_id', '=', obj_contract.id)])
+                if obj_vacation:
+                    for history in sorted(obj_vacation, key=lambda x: x.final_accrual_date):
+                        date_vacation = history.final_accrual_date + timedelta(
+                            days=1) if history.final_accrual_date > date_vacation else date_vacation
+                #Fechas de causación
+                initial_accrual_date = date_vacation
+                final_accrual_date = date_vacation + timedelta(days=days_unpaid_absences)
+
+                info_vacation = {
+                    'employee_id': record.employee_id.id,
+                    'contract_id': obj_contract.id,
+                    'initial_accrual_date': initial_accrual_date,
+                    'final_accrual_date': final_accrual_date,
+                    'departure_date': record.request_date_from,
+                    'return_date': record.request_date_to,
+                    'business_units': days_vacation_represent,
+                    'leave_id': record.id
+                }
+                self.env['hr.vacation'].create(info_vacation)
+
+        return obj
+
+    def action_refuse(self):
+        obj = super(HolidaysRequest, self).action_refuse()
+        for record in self:
+            self.env['hr.vacation'].search([('leave_id','=',record.id)]).unlink()
+        return obj
 
     @api.model
     def create(self, vals):

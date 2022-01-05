@@ -9,8 +9,11 @@
                 <t t-if="o.struct_id.process == 'prima'">                                     
                     <div class="col-md-12 text-center"><strong>LIQUIDACION DE PRIMA</strong></div>
                 </t>
-                <t t-if="o.struct_id.process == 'cesantias_e_intereses'">                                                           
+                <t t-if="o.struct_id.process == 'cesantias'">
                     <div class="col-md-12 text-center"><strong>LIQUIDACION DE CESANTÍAS</strong></div>
+                </t>
+                <t t-if="o.struct_id.process == 'intereses_cesantias'">
+                    <div class="col-md-12 text-center"><strong>LIQUIDACION DE INTERESES DE CESANTÍAS</strong></div>
                 </t>
             </div>       
             <br/><br/>  

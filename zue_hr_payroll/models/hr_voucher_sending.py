@@ -123,9 +123,9 @@ class hr_voucher_sending(models.Model):
             array_thread.append(t)
 
         for hilo in array_thread:
-                while hilo.is_alive():
-                    date_finally_process = datetime.now() 
+            hilo.join()
 
+        date_finally_process = datetime.now()
         time_process = date_finally_process - date_start_process
         time_process = time_process.seconds / 60
         print(time_process) 
@@ -149,12 +149,12 @@ class hr_voucher_sending(models.Model):
             t = threading.Thread(target=self.create_document_inmemory, args=(send,))                
             t.start()
             array_thread.append(t)
-            i += 1 
+            i += 1
 
         for hilo in array_thread:
-                while hilo.is_alive():
-                    date_finally_process = datetime.now() 
+            hilo.join()
 
+        date_finally_process = datetime.now()
         time_process = date_finally_process - date_start_process
         time_process = time_process.seconds / 60
         print(time_process)                 
