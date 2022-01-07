@@ -5,6 +5,9 @@
         <!-- Menu información exógeno -->
         <menuitem name="Información exógena" id="zue_account.zue_menu_exogenous_information" parent="account_accountant.menu_accounting"/> 
             <menuitem name="Código Fiscal" id="zue_account.zue_menu_fiscal_accounting_code" sequence="1" parent="zue_account.zue_menu_exogenous_information" action="action_fiscal_accounting_code"/> 
-            <menuitem name="Grupo Fiscal" id="zue_account.zue_menu_fiscal_accounting_group" sequence="2" parent="zue_account.zue_menu_exogenous_information" action="action_fiscal_accounting_group"/> 
+            <menuitem name="Grupo Fiscal" id="zue_account.zue_menu_fiscal_accounting_group" sequence="2" parent="zue_account.zue_menu_exogenous_information" action="action_fiscal_accounting_group"/>
+            <menuitem name="Informe Formatos" id="zue_account.zue_menu_format_encab" sequence="3" parent="zue_account.zue_menu_exogenous_information" action="action_format_encab"/>
+        <!-- Menu Configuración tipo de impuestos -->
+        <menuitem name="Tipo de Impuestos" id="zue_account.zue_tax_type_menu" parent="account.account_invoicing_menu" sequence="30" action="account_tax_type_action"/>
     </data>
 </odoo>

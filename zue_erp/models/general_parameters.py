@@ -6,6 +6,16 @@ import datetime
 _logger = logging.getLogger(__name__)
 
 
+# Fechas comemorativas
+class zue_dates_commemorated(models.Model):
+    _name = 'zue.dates.commemorated'
+    _description = 'Fechas conmemorativas'
+
+    name = fields.Char('Descripción', required=True)
+    date = fields.Date('Fecha', required=True)
+
+    _sql_constraints = [('date_commemorated_uniq', 'unique(date)', 'Ya existe un día conmemorativo en esta fecha, por favor verificar.')]
+
 # Dias festivos
 class ZueHolidays(models.Model):
     _name = 'zue.holidays'

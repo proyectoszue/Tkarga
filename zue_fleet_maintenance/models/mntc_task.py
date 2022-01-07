@@ -59,6 +59,8 @@ class mntc_tasks(models.Model):
     spare_part_type_id = fields.Many2one('mntc.spare.part.type', string='Parte que falla', domain="[('component_ids','in',[component_id])]")
     workorder_state = fields.Selection(related='workorder_id.state',string='Estado ot')
     branch_id = fields.Many2one(related='garage_id.branch_id')
+    request_classification1 = fields.Many2one(related='request_id.classification1', string='Clasificación solicitud',store=True)
+    request_priority_id = fields.Selection(related='request_id.priority_id', string='Prioridad solicitud', store=True)
  
     def _get_technicians(self):
         context = self._context.copy()

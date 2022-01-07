@@ -24,6 +24,7 @@ class zue_request_ws(models.Model):
     authorization = fields.Char(string='Authorization')
     parameters_id = fields.One2many('zue.request.parameters.ws', 'ws_id', string='Parámetros')
     body = fields.Text('Body')
+    content_type = fields.Char(string='Content-Type', default='application/json')
 
     sql_constraints = [
         ('name', 'UNIQUE (name)', 'Ya existe un registro con este nombre!')
@@ -62,10 +63,16 @@ class zue_request_ws(models.Model):
                 else:
                     raise ValidationError(_("No se ha configurado una URL para el servicio web con el nombre " + obj_ws.name)) 
 
-                headers = {
-                    'content-type': "application/json",
-                    'cache-control': "no-cache"
-                }
+                if obj_ws.content_type:
+                    headers = {
+                        'content-type': obj_ws.content_type,
+                        'cache-control': "no-cache"
+                    }
+                else:
+                    headers = {
+                        'content-type': 'application/json',
+                        'cache-control': "no-cache"
+                    }
 
                 if obj_ws.username:
                     aut_user = obj_ws.username

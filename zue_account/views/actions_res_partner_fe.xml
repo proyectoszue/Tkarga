@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_partner_zue_account_fe_form" model="ir.ui.view">
+            <field name="name">res.partner.zue.account.fe.form.inherit</field>
+            <field name="model">res.partner</field>
+            <field name="priority">50</field>
+            <field name="inherit_id" ref="account.view_partner_property_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='banks']" position="after">
+                    <group string="Facturación Electrónica" name="zue_fe">
+                        <field name="x_tax_responsibilities" widget="many2many_tags"/>
+                        <field name="zue_electronic_invoice_fiscal_regimen"/>
+                        <field name="zue_electronic_invoice_responsable_iva"/>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_company_zue_account_form" model="ir.ui.view">
+            <field name="name">res.company.zue.account.form.inherit</field>
+            <field name="model">res.company</field>
+            <field name="priority">50</field>
+            <field name="inherit_id" ref="base.view_company_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//group[@name='social_media']" position="after">
+                    <group string="Notas Facturación Electrónica">
+                        <field name="note_id" nolabel="1">
+                            <tree editable="bottom">
+                                <field name="note"/>
+            					<field name="company_id" invisible="1"/>
+                            </tree>
+                        </field>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+<!--        <record model="ir.actions.act_window"  id="res_company_note_action">-->
+<!--			<field name="name">Notas</field>-->
+<!--			<field name="res_model">res.company.note</field>-->
+<!--			<field name="view_mode">tree,form</field>-->
+<!--		</record>-->
+
+<!--        <record model="ir.ui.view" id="zue_account.list_res_company_note_action">-->
+<!--			<field name="name">zue list Notas</field>-->
+<!--			<field name="model">res.company.note</field>-->
+<!--			<field name="arch" type="xml">-->
+<!--				<tree>-->
+<!--					<field name="note"/>-->
+<!--					<field name="company_id" invisible="1"/>-->
+<!--				</tree>-->
+<!--			</field>-->
+<!--		</record>-->
+
+<!--        <record model="ir.ui.view" id="zue_account.form_res_company_note_action">-->
+<!--			<field name="name">zue form Notas</field>-->
+<!--			<field name="model">res.company.note</field>-->
+<!--			<field name="arch" type="xml">-->
+<!--				<form>-->
+<!--                    <sheet>-->
+<!--						<group>-->
+<!--							<group>-->
+<!--								<field name="note"/>-->
+<!--					            <field name="company_id" invisible="1"/>-->
+<!--							</group>-->
+<!--						</group>-->
+<!--                    </sheet>-->
+<!--                </form>-->
+<!--			</field>-->
+<!--		</record>-->
+    </data>
+</odoo>

@@ -52,6 +52,16 @@ class account_move(models.Model):
         return obj_account_move
 
     def action_post(self):
+        #validacion para obligar documentos soporte
+        if self.is_rcm:
+            count_rcm_document = 0
+            for line in self.invoice_line_ids:
+                if line.rcm_document:
+                    count_rcm_document += 1
+
+            if count_rcm_document == 0:
+                raise ValidationError(_('No existen documentos soporte, por favor verifique.'))
+
         obj_action_post = super(account_move, self).action_post()
 
         if self.is_rcm:

@@ -1,0 +1,22 @@
+<odoo>
+    <data>
+		<record id="view_zue_account_form_account_journal" model="ir.ui.view">
+			<field name="name">zue_account.account_journal_inherit</field>
+			<field name="model">account.journal</field>
+			<field name="priority">20</field>
+			<field name="inherit_id" ref="account.view_account_journal_form"/>
+			<field name="arch" type="xml">
+                <xpath expr="//field[@name='restrict_mode_hash_table']" position="after">
+					<hr/><br/>
+					<label for="dian_authorization_number" string="Resolución DIAN (ZUE)"/>
+					<br/>
+					<field name="dian_authorization_number" type="object"/>
+					<field name="dian_authorization_date" type="object"/>
+					<field name="dian_authorization_end_date" type="object"/>
+					<field name="dian_min_range_number" type="object"/>
+					<field name="dian_max_range_number" type="object"/>
+                </xpath>
+			</field>
+		</record>
+    </data>
+</odoo>

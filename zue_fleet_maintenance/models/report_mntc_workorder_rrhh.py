@@ -44,6 +44,8 @@ class mntc_workorder_report_rrhh(models.Model):
     tiempo_estimado_rrhh = fields.Float(string='Tiempo Estimado RRHH', readonly=True)
     servicios  = fields.Char(string='Servicios', readonly=True)
     sucursal  = fields.Char(string='Sucursal', readonly=True)
+    clasificacion_solicitud  = fields.Char(string='Clasificación (Solicitud)', readonly=True)
+    prioridad_solicitud  = fields.Char(string='Prioridad (Solicitud)', readonly=True)
     
     @api.model
     def _query(self):
@@ -102,7 +104,12 @@ class mntc_workorder_report_rrhh(models.Model):
                         coalesce(data_programmed.tiempo_estimado_rrhh ,0) as tiempo_estimado_rrhh,
                         coalesce(o.odometer,0) as odometro,
                         coalesce(i.name,'') as servicios,
-			  		    coalesce(j.name,'') as sucursal 
+			  		    coalesce(j.name,'') as sucursal,
+                        coalesce(mntc_classification.name,'') as clasificacion_solicitud,
+						case 	when mntc_solicitud.priority_id = 'priority_1' then 'Emergencia'
+                         		when mntc_solicitud.priority_id = 'priority_2' then 'Urgente'
+                         		when mntc_solicitud.priority_id = 'priority_3' then 'Programado'
+                    			else coalesce(mntc_solicitud.priority_id,'') end as prioridad_solicitud 
                         from mntc_workorder as a 
                         inner join fleet_vehicle as b on a.vehicle_id = b.id 
                         left join mntc_garage as c on a.garage_id = c.id
@@ -136,6 +143,8 @@ class mntc_workorder_report_rrhh(models.Model):
                                     left join mntc_workforce_type as j on j.id = i.workforce_type_id
                                     left join mntc_technician as k on k.id = i.technician_id 
                                 ) As data_executed on a.id = data_executed.id and h.id = data_executed.id_tarea and data_executed.id_disciplina = data_programmed.id_disciplina
+                        left join mntc_request as mntc_solicitud on mntc_solicitud.id = a.request_id
+						left join mntc_workorder_classification as mntc_classification  on mntc_classification.id = mntc_solicitud.classification1
                                     Where a.state = 'programmed'							  
         Union All
             select   
@@ -190,7 +199,12 @@ class mntc_workorder_report_rrhh(models.Model):
 					coalesce(data_programmed.tiempo_estimado_rrhh ,0) as tiempo_estimado_rrhh,
 					coalesce(o.odometer,0) as odometro,
                     coalesce(i.name,'') as servicios,
-			  		coalesce(j.name,'') as sucursal 
+			  		coalesce(j.name,'') as sucursal,
+                    coalesce(mntc_classification.name,'') as clasificacion_solicitud,
+					case 	when mntc_solicitud.priority_id = 'priority_1' then 'Emergencia'
+                         	when mntc_solicitud.priority_id = 'priority_2' then 'Urgente'
+                         	when mntc_solicitud.priority_id = 'priority_3' then 'Programado'
+                    		else coalesce(mntc_solicitud.priority_id,'') end as prioridad_solicitud
 					from mntc_workorder as a 
 					inner join fleet_vehicle as b on a.vehicle_id = b.id 
 					left join mntc_garage as c on a.garage_id = c.id
@@ -224,6 +238,8 @@ class mntc_workorder_report_rrhh(models.Model):
 								left join mntc_workforce_type_rh as l on  l.task_id = h.id 
 								left join mntc_workforce_type as m on m.id = l.workforce_type_id 
 							  ) As data_programmed on a.id = data_programmed.id and h.id = data_programmed.id_tarea and data_executed.id_disciplina = data_programmed.id_disciplina
+                    left join mntc_request as mntc_solicitud on mntc_solicitud.id = a.request_id
+					left join mntc_workorder_classification as mntc_classification  on mntc_classification.id = mntc_solicitud.classification1
 					Where a.state != 'programmed'
 			) as A						  
         ''' 

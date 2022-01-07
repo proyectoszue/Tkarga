@@ -76,3 +76,7 @@ access_mntc_campaign_indicator,mntc.campaign.indicator,model_mntc_campaign_indic
 access_mntc_accomplishment_indicator,mntc.accomplishment.indicator,model_mntc_accomplishment_indicator,,1,1,1,1
 access_mntc_week_schedule_indicator,mntc.week.schedule.indicator,model_mntc_week_schedule_indicator,,1,1,1,1
 access_mntc_weekly_work_indicator,mntc.weekly.work.indicator,model_mntc_weekly_work_indicator,,1,1,1,1
+access_mntc_main_urgency_indicator,mntc.main.urgency.indicator,model_mntc_main_urgency_indicator,,1,1,1,1
+access_mntc_draft_requests_indicator,mntc.draft.requests.indicator,model_mntc_draft_requests_indicator,,1,1,1,1
+access_mntc_pending_workorder_indicator,mntc.pending.workorder.indicator,model_mntc_pending_workorder_indicator,,1,1,1,1
+

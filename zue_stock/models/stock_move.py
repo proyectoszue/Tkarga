@@ -24,7 +24,7 @@ class stock_immediate_transfer(models.TransientModel):
         for stock_pick in self.pick_ids:
             for stock_move in stock_pick.move_ids_without_package:
                 obj_account_move = self.env['account.move'].search([('stock_move_id', '=', stock_move.id)])
-                obj_account_move_line = self.env['account.move.line'].search([('move_id', '=', obj_account_move.id)])
+                obj_account_move_line = self.env['account.move.line'].search([('move_id', 'in', obj_account_move.ids)])
 
                 obj_account_move_line.write({'analytic_account_id': stock_move.analytic_account_id.id})
 
@@ -111,7 +111,7 @@ class StockBackorderConfirmation(models.TransientModel):
             for stock_pick in confirmation.pick_ids:
                 for stock_move in stock_pick.move_ids_without_package:
                     obj_account_move = self.env['account.move'].search([('stock_move_id', '=', stock_move.id)])
-                    obj_account_move_line = self.env['account.move.line'].search([('move_id', '=', obj_account_move.id)])
+                    obj_account_move_line = self.env['account.move.line'].search([('move_id', 'in', obj_account_move.ids)])
 
                     obj_account_move_line.write({'analytic_account_id': stock_move.analytic_account_id.id})
 

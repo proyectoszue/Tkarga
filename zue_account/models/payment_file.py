@@ -119,7 +119,7 @@ class Zue_Payment_File(models.Model):
         
         #Consulta final
         query = '''
-            Select coalesce(case when b.x_document_type = '12' then '4' --Tarjeta de Identidad
+            Select distinct coalesce(case when b.x_document_type = '12' then '4' --Tarjeta de Identidad
 				 when b.x_document_type = '13' then '1' --Cedula de ciudadania
 				 when b.x_document_type = '22' then '2' --Cedula de extranjeria
 				 when b.x_document_type = '31' then '3' --NIT
@@ -142,11 +142,10 @@ class Zue_Payment_File(models.Model):
             inner join res_partner b on a.partner_id = b.id
             left join res_partner_bank c on a.partner_bank_account_id = c.id 
             left join res_bank d on c.bank_id = d.id
-            left join (select min(id) as id,partner_id from res_partner_bank group by partner_id) e on e.partner_id = b.id
-            left join res_partner_bank f on e.id = f.id and f.is_main = true 
+            left join res_partner_bank f on b.id = f.partner_id and f.is_main = true and f.company_id = %s 
             left join res_bank g on f.bank_id = g.id
             where partner_type = 'supplier' and a.id in (%s)
-        ''' % (payments_ids)
+        ''' % (self.env.company.id,payments_ids)
         
         self._cr.execute(query)
         _res = self._cr.dictfetchall()
@@ -154,7 +153,7 @@ class Zue_Payment_File(models.Model):
 
     def validate_info_bank(self,vat,name,bank):
         if bank == '':
-            raise ValidationError(_(f'El tercero {vat}-{name} no tiene información bancaria o no esta marcada como principal, por favor verificar.'))
+            raise ValidationError(_(f'El tercero {vat}-{name} no tiene información bancaria o no esta marcada como principal para la compañía {self.env.company.name}, por favor verificar.'))
 
     #Actualizar Pagos
     def update_payments(self):
