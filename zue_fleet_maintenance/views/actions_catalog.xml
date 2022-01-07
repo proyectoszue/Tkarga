@@ -98,6 +98,10 @@
 			<field name="arch" type="xml">
 				<tree editable="bottom">
 					<field name="producto" context="{'default_esRepuesto': True}"/>
+					<field name="familia"/>
+                    <field name="marca"/>
+                    <field name="linea"/>
+                    <field name="sistema"/>
 					<field name="uom_id"/> 
 					<field name="cantidad"/>
 					<field name="standard_price"/>

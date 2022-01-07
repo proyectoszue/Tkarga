@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<odoo>
+    <data>
+<!--        <record id="view_zue_fleet_maintenance_form_purchase_order" model="ir.ui.view">-->
+<!--			<field name="name">zue_fleet_maintenance.purchase_order_inherit</field>-->
+<!--			<field name="model">purchase.order</field>-->
+<!--			<field name="priority">30</field>-->
+<!--			<field name="inherit_id" ref="purchase.purchase_order_form"/>-->
+<!--			<field name="arch" type="xml">-->
+<!--                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[1]/field[@name='order_line']/tree[1]/field[@name='name']" position="after">-->
+<!--                    <field name="familia"/>-->
+<!--                    <field name="marca"/>-->
+<!--                    <field name="linea"/>-->
+<!--                    <field name="sistema"/>-->
+<!--                </xpath>-->
+<!--			</field>-->
+<!--		</record>-->
+
+        <record id="zue_fleet_maintenance_form_stock_picking" model="ir.ui.view">
+			<field name="name">zue_fleet_maintenance.stock_picking_inherit</field>
+			<field name="model">stock.picking</field>
+			<field name="priority">30</field>
+			<field name="inherit_id" ref="stock.view_picking_form"/>
+			<field name="arch" type="xml">
+                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[3]/field[@name='move_ids_without_package']/tree[1]/field[@name='product_id']" position="after">
+                    <field name="familia"/>
+                    <field name="marca"/>
+                    <field name="linea"/>
+                    <field name="sistema"/>
+                </xpath>
+			</field>
+		</record>
+    </data>
+</odoo>

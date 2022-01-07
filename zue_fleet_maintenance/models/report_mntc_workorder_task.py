@@ -46,6 +46,8 @@ class mntc_workorder_report_task(models.Model):
     costo_servicio  = fields.Float(string='Costo de Servicio', readonly=True)
     servicios  = fields.Char(string='Servicios', readonly=True)
     sucursal  = fields.Char(string='Sucursal', readonly=True)
+    clasificacion_solicitud  = fields.Char(string='Clasificación (Solicitud)', readonly=True)
+    prioridad_solicitud  = fields.Char(string='Prioridad (Solicitud)', readonly=True)
     
     @api.model
     def _query(self):
@@ -107,7 +109,12 @@ class mntc_workorder_report_task(models.Model):
 					coalesce(h.program_cost_supplier,0) as costo_servicio,
                     --Servicio
 					coalesce(i.name,'') as servicios,
-					coalesce(j.name,'') as sucursal
+					coalesce(j.name,'') as sucursal,
+                    coalesce(mntc_classification.name,'') as clasificacion_solicitud,
+					case 	when mntc_solicitud.priority_id = 'priority_1' then 'Emergencia'
+                         	when mntc_solicitud.priority_id = 'priority_2' then 'Urgente'
+                         	when mntc_solicitud.priority_id = 'priority_3' then 'Programado'
+                    		else coalesce(mntc_solicitud.priority_id,'') end as prioridad_solicitud
 					from mntc_workorder as a 
 					inner join fleet_vehicle as b on a.vehicle_id = b.id 
 					left join mntc_garage as c on a.garage_id = c.id
@@ -120,6 +127,8 @@ class mntc_workorder_report_task(models.Model):
 					left join mntc_tasks as h on a.id = h.workorder_id
                     left join mntc_services_type as i on i.id = b.service_type_id
 					left join zue_res_branch as j on j.id = b.branch_id
+                    left join mntc_request as mntc_solicitud on mntc_solicitud.id = a.request_id
+					left join mntc_workorder_classification as mntc_classification  on mntc_classification.id = mntc_solicitud.classification1
         ''' 
 
     def init(self):

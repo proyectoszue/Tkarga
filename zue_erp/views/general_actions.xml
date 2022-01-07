@@ -40,6 +40,37 @@
             </field>
         </record>
 
+        <!-- FECHAS CONMEMORATIVAS VIEWS -->
+        <record id="zue_menu_action_dates_commemorated" model="ir.actions.act_window">
+            <field name="name">Fechas conmemorativas</field>
+            <field name="res_model">zue.dates.commemorated</field>
+            <field name="view_mode">calendar,tree</field>
+            <field name="domain">[]</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">Crear fecha conmemorativa
+                </p>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_erp.list_commemorated">
+            <field name="name">zue list commemorated</field>
+            <field name="model">zue.dates.commemorated</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom">
+                    <field name="name"/>
+                    <field name="date"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_erp.calendar_commemorated">
+            <field name="name">zue calendar commemorated</field>
+            <field name="model">zue.dates.commemorated</field>
+            <field name="arch" type="xml">
+                <calendar date_start="date" date_stop="date" string="Fecha conmemorativa" mode="month"></calendar>
+            </field>
+        </record>
+
         <!-- DIAS FESTIVOS VIEWS -->    
         <record id="zue_menu_action_holidays" model="ir.actions.act_window">
             <field name="name">Días Festivos</field>
@@ -146,7 +177,7 @@
         <record id="zue_menu_action_responsibilities_rut" model="ir.actions.act_window">
             <field name="name">Responsabilidades RUT</field>
             <field name="res_model">zue.responsibilities_rut</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">tree</field>
             <field name="domain">[]</field>
             <field name="help" type="html">
                 <p class="oe_view_nocontent_create">Crear responsabilidad RUT
@@ -158,10 +189,10 @@
         <field name="name">zue list responsibilities_rut</field>
         <field name="model">zue.responsibilities_rut</field>
         <field name="arch" type="xml">
-            <tree>                      
-            <field name="code"/>                 
-            <field name="description"/>   
-            <field name="valid_for_fe"/>                                   
+            <tree editable="bottom">
+                <field name="code"/>
+                <field name="description"/>
+                <field name="valid_for_fe"/>
             </tree>
         </field>
         </record>

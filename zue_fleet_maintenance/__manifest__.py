@@ -54,6 +54,7 @@
         'views/availability_indicator_report_document_template.xml',
         'views/actions_indicators_maintenance.xml',
         'views/fleet_vehicle_spare_parts_indicator.xml',
+        'views/zue_product_fields_interface.xml',
         'views/menus.xml',
         # 'data/mntc_detection_methods_data.xml',
         'security/ir.model.access.csv',        

@@ -87,6 +87,21 @@ class mntc_indicators_dashboard(models.TransientModel):
         obj_reporte.init(self.env.context)
         return self.env['mntc.weekly.work.indicator'].search([('id', '!=', False)]).ids
 
+    def get_main_urgency(self):
+        obj_reporte = self.env['mntc.main.urgency.indicator']
+        obj_reporte.init(self.env.context)
+        return self.env['mntc.main.urgency.indicator'].search([('id', '!=', False)]).ids
+
+    def get_draft_requests(self):
+        obj_reporte = self.env['mntc.draft.requests.indicator']
+        obj_reporte.init(self.env.context)
+        return self.env['mntc.draft.requests.indicator'].search([('id', '!=', False)]).ids
+
+    def get_pending_workorder(self):
+        obj_reporte = self.env['mntc.pending.workorder.indicator']
+        obj_reporte.init(self.env.context)
+        return self.env['mntc.pending.workorder.indicator'].search([('id', '!=', False)]).ids
+
 
     name = fields.Char(string='Reporte', required=True)
     indicators_respuestos_ids = fields.Many2many('mntc.respuestos.indicators', string='Indicadores',default=get_indicators_respuestos, readonly=True)
@@ -100,11 +115,14 @@ class mntc_indicators_dashboard(models.TransientModel):
     indicators_accomplishment = fields.Many2many('mntc.accomplishment.indicator', string='Cumplimiento', default=get_accomplishment,readonly=True)
     indicators_week_schedule = fields.Many2many('mntc.week.schedule.indicator', string='Programación Semana', default=get_week_schedule, readonly=True)
     indicators_weekly_work = fields.Many2many('mntc.weekly.work.indicator', string='Trabajo de la Semana', default=get_weekly_work, readonly=True)
-    counter_reports = fields.Integer(compute='compute_counter_reports', string='Reportes Generados')
+    indicators_main_urgency = fields.Many2many('mntc.main.urgency.indicator', string='Causa principal urgencias', default=get_main_urgency, readonly=True)
+    indicators_draft_requests = fields.Many2many('mntc.draft.requests.indicator', string='Solicitudes en borrador', default=get_draft_requests, readonly=True)
+    indicators_pending_workorder = fields.Many2many('mntc.pending.workorder.indicator', string='Órdenes de trabajo pendientes', default=get_pending_workorder, readonly=True)
+    counter_reports = fields.Integer(compute='compute_counter_reports', string='Reporte Generado')
 
     def compute_counter_reports(self):
-        count = self.env['mntc.indicators.dashboard'].search_count([('id', '!=', False)])
-        self.counter_reports = count
+        #count = self.env['mntc.indicators.dashboard'].search_count([('id', '!=', False)])
+        self.counter_reports = 1
 
     def return_action_to_open(self):
         res = {
@@ -113,7 +131,8 @@ class mntc_indicators_dashboard(models.TransientModel):
             'view_type': 'form',
             'view_mode': 'tree,form',
             'res_model': 'mntc.indicators.dashboard',
-            'target': 'current'
+            'target': 'current',
+            'domain': "[('id','in',[" + str(self._ids[0]) + "])]"
         }
         return res
 
@@ -141,17 +160,21 @@ class mntc_respuestos_indicators(models.Model):
 
     @api.model
     def _query(self,filter_context):
-        return f'''
+        num_urgencias = 0
+        # round(cast((km_semana / cant_entradas) + (dias_equipos_taller / cant_entradas) + costo_repuesto + costo_campania as numeric), 2) else
+        # round(cast(((km_semana / cant_entradas) + (dias_equipos_taller / cant_entradas) + costo_repuesto + costo_campania) / num_urgencias as numeric), 2) end as cpk
+        query = f'''
             select row_number() over(order by servicio) as id, servicio, sucursal, total_equipos, round(cast(dias_equipos_taller as numeric), 2) as dias_equipos_taller, equipos_soporte, 
-                    round(cast(((total_equipos*7)/((total_equipos*7)+dias_equipos_taller)*100) as numeric), 2) as disponibilidad,
+                    round(cast((((total_equipos * date_part('days', '{filter_context.get('date_end', '1900-01-01')}'::timestamp - '{filter_context.get('date_start', '1900-01-01')}'::timestamp)
+                    )-dias_equipos_taller)/((total_equipos* date_part('days', '{filter_context.get('date_end', '1900-01-01')}'::timestamp - '{filter_context.get('date_start', '1900-01-01')}'::timestamp)
+                    ))*100) as numeric), 2) as disponibilidad,
                     km_semana, num_varadas, num_urgencias, 0 as rutinas_atrasadas, round(cast((km_semana/cant_entradas) as numeric), 2)  as mkbf_entradas,
                     round(cast((duracion_entradas_h/cant_entradas) as numeric), 2) as mttr_entradas, round(cast(costo_repuesto as numeric), 2) as costo_repuesto, costo_campania, 
                     round(cast((km_semana/cant_entradas) + (dias_equipos_taller/cant_entradas) + costo_repuesto + costo_campania as numeric), 2) as costo_total, 
-                    case when num_urgencias = 0 then round(cast((km_semana/cant_entradas) + (dias_equipos_taller/cant_entradas) + costo_repuesto + costo_campania as numeric), 2) else 
-                    round(cast(((km_semana/cant_entradas) + (dias_equipos_taller/cant_entradas) + costo_repuesto + costo_campania)/num_urgencias as numeric), 2) end as cpk
+                    case when km_semana = 0 then 0 else round(cast(costo_repuesto / km_semana as numeric), 2) end as cpk                    
             from 
             (
-                select count(a.id) as total_equipos, servicio, sucursal, coalesce(sum(dias_taller)/24, 0) as dias_equipos_taller, 0 as equipos_soporte, sum(km_recorrido) as km_semana, 
+                select B.total_equipos, A.servicio, sucursal, coalesce(sum(dias_taller)/24, 0) as dias_equipos_taller, 0 as equipos_soporte, sum(km_recorrido) as km_semana, 
                         sum(urgencia) as num_urgencias, sum(cant_entradas) as cant_entradas, sum(cant_tareas) as cant_tareas, sum(duracion_tareas) as duracion_tareas,
                         sum(costo_repuesto) as costo_repuesto, sum(cant_orden_t) as cant_orden_t, sum(costo_repuesto_camp) as costo_campania, sum(num_varadas) as num_varadas,
                         sum(dias_taller) as duracion_entradas_h
@@ -230,10 +253,23 @@ class mntc_respuestos_indicators(models.Model):
                     where F."name" = '{filter_context.get('branch_id', '')}'
                     group by A.id, D."name", F."name", dias_taller, km_recorrido, urgencia, cant_entradas
                 ) A
-                group by servicio, sucursal
+                inner join 
+                (
+                    select count(id) as total_equipos, servicio 
+                    from 
+                    (
+                        select A.id, B."name" as servicio 
+                        from fleet_vehicle A
+                        inner join mntc_services_type B on A.service_type_id = B.id 
+                    ) a
+                    group by servicio     	
+                ) B on A.servicio = B.servicio
+                group by A.servicio, sucursal, B.total_equipos
             ) main 
             order by servicio 
         '''
+
+        return query
 
     def init(self,filter_context={}):
         tools.drop_view_if_exists(self.env.cr, self._table)
@@ -804,8 +840,8 @@ class mntc_weekly_work_indicator(models.Model):
     _auto = False
 
     prioridad = fields.Char(string='Tipo', readonly=True)
-    equipos = fields.Integer(string='Equipos programados', readonly=True)
-    cant_tareas = fields.Integer(string='Tareas programadas', readonly=True)
+    equipos = fields.Integer(string='Equipos', readonly=True)
+    cant_tareas = fields.Integer(string='Tareas', readonly=True)
     horas_empleado = fields.Float(string='Hrs empleado', readonly=True)
     horas_contratista = fields.Float(string='Hrs contratista', readonly=True)
     mttr_tarea = fields.Float(string='MTTR tarea', readonly=True)
@@ -886,6 +922,144 @@ class mntc_weekly_work_indicator(models.Model):
                 ) C on A.id = C.id 
                 where A.priority = 'priority_2' and F."name" = '{filter_context.get('branch_id', '')}' and A.create_date >= '{filter_context.get('date_start', '1900-01-01')}' and A.create_date <= '{filter_context.get('date_end', '1900-01-01')}'
             ) B on A.priority = B.priority 
+        '''
+
+    def init(self,filter_context={}):
+        tools.drop_view_if_exists(self.env.cr, self._table)
+        self.env.cr.execute('''
+                CREATE OR REPLACE VIEW %s AS (
+                    %s 
+                )
+            ''' % (
+            self._table, self._query(filter_context)
+        ))
+
+
+class mntc_main_urgency_indicator(models.Model):
+    _name = "mntc.main.urgency.indicator"
+    _description = "Indicador de causas principales de urgencias"
+    _auto = False
+
+    num_tareas = fields.Integer(string='# Tareas', readonly=True)
+    servicio = fields.Char(string='Servicio', readonly=True)
+    sistema = fields.Char(string='Sistema', readonly=True)
+    componente = fields.Char(string='Componente', readonly=True)
+    parte = fields.Char(string='Parte', readonly=True)
+    falla = fields.Char(string='Falla', readonly=True)
+    accion = fields.Char(string='Acción', readonly=True)
+    horas_hombre = fields.Integer(string='HH', readonly=True)
+    costo = fields.Float(string='Costo', readonly=True)
+
+    @api.model
+    def _query(self,filter_context):
+        return f'''
+                select row_number() over(order by sucursal) as id, num_tareas, sucursal, servicio, 
+                        sistema, componente, parte, falla, accion, horas_hombre, costo 
+                from 
+                (
+                    select count(A.id) as num_tareas, J."name" as sucursal, H."name" as servicio, B."name" as sistema, 
+                            C."name" as componente, D."name" as parte, E."name" as falla, F."name" as accion, 
+                            sum(A.spent_time) as horas_hombre, sum(A.program_cost) as costo
+                    from mntc_tasks A
+                    left join mntc_vehicle_system B on A.system_id = B.id 
+                    left join mntc_component C on A.component_id = C.id 
+                    left join mntc_spare_part_type D on A.spare_part_type_id = D.id 
+                    left join mntc_causes E on A.cause_id = E.id 
+                    left join mntc_action_taken F on A.action_taken_id = F.id 
+                    left join mntc_services_type H on A.service_type_id = H.id 
+                    inner join mntc_workorder G on A.workorder_id = G.id and G.priority = 'priority_2'
+                    inner join mntc_garage I on G.garage_id = I.id 
+                    inner join zue_res_branch J on I.branch_id = J.id 
+                    where J.name = '{filter_context.get('branch_id', '')}'
+                            and A.create_date between '{filter_context.get('date_start', '1900-01-01')}' and '{filter_context.get('date_end', '1900-01-01')}'
+                    group by J."name", H."name", B."name", C."name", D."name", E."name", F."name"
+                    having count(A.id) > 1 
+                ) main
+        '''
+
+    def init(self,filter_context={}):
+        tools.drop_view_if_exists(self.env.cr, self._table)
+        self.env.cr.execute('''
+                CREATE OR REPLACE VIEW %s AS (
+                    %s 
+                )
+            ''' % (
+            self._table, self._query(filter_context)
+        ))
+
+class mntc_draft_requests_indicator(models.Model):
+    _name = "mntc.draft.requests.indicator"
+    _description = "Indicador de solicitudes en borrador"
+    _auto = False
+
+    prioridad = fields.Char(string='Prioridad', readonly=True)
+    metodo_d = fields.Char(string='Método de detección', readonly=True)
+    cantidad = fields.Integer(string='Cantidad', readonly=True)
+    observacion = fields.Char(string='Observación', readonly=True)
+
+    @api.model
+    def _query(self,filter_context):
+        return f'''
+                select row_number() over(order by prioridad) as id, prioridad, metodo_d, cantidad, observacion 
+                from 
+                (
+                    select case when A.priority_id = 'priority_1' then 'EMERGENCIA'
+                            when A.priority_id = 'priority_2' then 'URGENCIA'
+                            when A.priority_id = 'priority_3' then 'PROGRAMADO' 
+                            else 'NO DEFINIDO' end as prioridad, 
+                            B."name" as metodo_d, count(A.id) as cantidad,
+                            A.cancel_osbservation as observacion
+                    from mntc_request A 
+                    left join mntc_detection_methods B on A.detection_method = B.id
+                    left join mntc_garage C on A.garage_id = C.id 
+                    inner join zue_res_branch D on C.branch_id = D.id 
+                    where state = 'draft' and date_part('days', now() - request_date) > 20  
+                            and A.request_date between '{filter_context.get('date_start', '1900-01-01')}' and '{filter_context.get('date_end', '1900-01-01')}'
+                            and D."name" = '{filter_context.get('branch_id', '')}'
+                    group by A.priority_id, B."name", A.cancel_osbservation 
+                ) main
+        '''
+
+    def init(self,filter_context={}):
+        tools.drop_view_if_exists(self.env.cr, self._table)
+        self.env.cr.execute('''
+                CREATE OR REPLACE VIEW %s AS (
+                    %s 
+                )
+            ''' % (
+            self._table, self._query(filter_context)
+        ))
+
+class mntc_pending_workorder_indicator(models.Model):
+    _name = "mntc.pending.workorder.indicator"
+    _description = "Indicador de solicitudes en borrador"
+    _auto = False
+
+    estado = fields.Char(string='Estado', readonly=True)
+    cantidad = fields.Integer(string='Cantidad', readonly=True)
+    horas_hombre = fields.Integer(string='HH', readonly=True)
+    observacion = fields.Char(string='Observación', readonly=True)
+
+    @api.model
+    def _query(self,filter_context):
+        return f'''
+                select row_number() over(order by cantidad) as id, estado, cantidad , horas_hombre, observacion 
+                from 
+                (
+                    select case when A.state = 'planeacion' then 'PLANEACIÓN'
+                            when A.state = 'waiting_parts' then 'REPUESTO'
+                            when A.state = 'programmed' then 'PROGRAMADA'
+                            when A.state = 'in_progress' then 'EJECUCIÓN' end as estado,  
+                            count(A.id) as cantidad, sum(spent_time) as horas_hombre, observation as observacion
+                    from mntc_workorder A 
+                    left join mntc_garage B on A.garage_id = B.id 
+                    inner join zue_res_branch C on B.branch_id = C.id 
+                    where state in ('planeacion', 'waiting_parts', 'programmed', 'in_progress')
+                            and  date_part('days', now() - A.approved_date) > 20  
+                            and A.approved_date between '{filter_context.get('date_start', '1900-01-01')}' and '{filter_context.get('date_end', '1900-01-01')}'
+                            and C."name" = '{filter_context.get('branch_id', '')}'
+                    group by A.state, A.observation 
+                ) main
         '''
 
     def init(self,filter_context={}):

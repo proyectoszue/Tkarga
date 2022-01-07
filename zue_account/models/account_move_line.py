@@ -13,6 +13,5 @@ class account_move_line(models.Model):
     #Niveles cuenta analitica    
     account_analytic_level_three = fields.Many2one(string='Grupo Analítico / Nivel 3', store=True, readonly=True, related='analytic_account_id.group_id')
     account_analytic_level_two = fields.Many2one(string='Grupo Analítico / Nivel 2', store=True, readonly=True, related='account_analytic_level_three.parent_id')
-    account_analytic_level_one = fields.Many2one(string='Grupo Analítico / Nivel 1', store=True, readonly=True, related='account_analytic_level_two.parent_id')    
-
-
+    account_analytic_level_one = fields.Many2one(string='Grupo Analítico / Nivel 1', store=True, readonly=True, related='account_analytic_level_two.parent_id')
+    accounting_class = fields.Char(string='Clase', store=True, readonly=True, related='account_id.accounting_class')

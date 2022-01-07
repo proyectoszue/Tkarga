@@ -204,6 +204,7 @@ class ResPartner(models.Model):
                     raise UserError(_('Ya existe un Cliente con este número de NIT pero se encuentra archivado.')) 
     
     #-----------Validaciones
+
     @api.constrains('vat')
     def _check_vatnumber(self):
         for record in self:
@@ -252,7 +253,17 @@ class ResPartner(models.Model):
             if cant_vat_ind > 1:
                 raise ValidationError(_('Ya existe un Tercero ('+name_tercer+') con este número de ID creado por '+user_create+'.'))                
             if cant_vat_archivado_ind > 1:
-                raise ValidationError(_('Ya existe un Tercero ('+name_tercer+') con este número de ID pero se encuentra archivado, fue creado por '+user_create+'.'))                
+                raise ValidationError(_('Ya existe un Tercero ('+name_tercer+') con este número de ID pero se encuentra archivado, fue creado por '+user_create+'.'))
+
+    @api.constrains('bank_ids')
+    def _check_bank_ids(self):
+        for record in self:
+            if len(record.bank_ids) > 0:
+                count_main = 0
+                for bank in record.bank_ids:
+                    count_main += 1 if bank.is_main else 0
+                if count_main > 1:
+                    raise ValidationError(_('No puede tener más de una cuenta principal, por favor verificar.'))
 
     @api.constrains('x_type_thirdparty','name','x_document_type','vat','street','state_id','country_id','x_city','phone','mobile','email')
     def _check_fields_required(self):  

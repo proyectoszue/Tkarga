@@ -316,11 +316,11 @@ class hr_payroll_social_security(models.Model):
                                     result['dFechaInicioSLN'] = leave['date_start'] if leave['type'] in ('LICENCIA_NO_REMUNERADA','INAS_INJU','SANCION','SUSP_CONTRATO') else False
                                     result['dFechaFinSLN'] = leave['date_end'] if leave['type'] in ('LICENCIA_NO_REMUNERADA','INAS_INJU','SANCION','SUSP_CONTRATO') else False
                                     #Licencia Remunerada
-                                    nDiasLicenciaRenumerada = leave['days'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO') else 0 # Categoria: LICENCIA_REMUNERADA
+                                    nDiasLicenciaRenumerada = leave['days'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','REP_VACACIONES') else 0 # Categoria: LICENCIA_REMUNERADA
                                     dict_social_security['Dias'].dict['nDiasLicenciaRenumerada'] = dict_social_security['Dias'].dict.get('nDiasLicenciaRenumerada', 0) + nDiasLicenciaRenumerada
                                     result['nDiasLicenciaRenumerada']	= nDiasLicenciaRenumerada
-                                    result['dFechaInicioVACLR'] = leave['date_start'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS') else False
-                                    result['dFechaFinVACLR'] = leave['date_end'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS') else False
+                                    result['dFechaInicioVACLR'] = leave['date_start'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS','REP_VACACIONES') else False
+                                    result['dFechaFinVACLR'] = leave['date_end'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS','REP_VACACIONES') else False
                                     #Maternida
                                     nDiasMaternidad = leave['days'] if leave['type'] in ('MAT','PAT') else 0 # Categoria: LICENCIA_MATERNIDAD
                                     dict_social_security['Dias'].dict['nDiasMaternidad'] = dict_social_security['Dias'].dict.get('nDiasMaternidad', 0) + nDiasMaternidad
@@ -331,8 +331,8 @@ class hr_payroll_social_security(models.Model):
                                     nDiasVacaciones = leave['days'] if leave['type'] == 'VACDISFRUTADAS' else 0 # Categoria: VACACIONES
                                     dict_social_security['Dias'].dict['nDiasVacaciones'] = dict_social_security['Dias'].dict.get('nDiasVacaciones', 0) + nDiasVacaciones
                                     result['nDiasVacaciones'] = nDiasVacaciones
-                                    result['dFechaInicioVACLR'] = leave['date_start'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS') else False
-                                    result['dFechaFinVACLR'] = leave['date_end'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS') else False
+                                    result['dFechaInicioVACLR'] = leave['date_start'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS','REP_VACACIONES') else False
+                                    result['dFechaFinVACLR'] = leave['date_end'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS','REP_VACACIONES') else False
                                     #ARL
                                     nDiasIncapacidadARP = leave['days'] if leave['type'] in ('EP','AT') else 0 # Categoria: ACCIDENTE_TRABAJO
                                     dict_social_security['Dias'].dict['nDiasIncapacidadARP'] = dict_social_security['Dias'].dict.get('nDiasIncapacidadARP', 0) + nDiasIncapacidadARP

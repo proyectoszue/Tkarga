@@ -85,10 +85,16 @@
 			<field name="priority">20</field>
 			<field name="inherit_id" ref="purchase.purchase_order_form"/>
 			<field name="arch" type="xml">
-				<xpath expr="//field[@name='origin']" position="after">
+                <xpath expr="//field[@name='origin']" position="after">
 					<field name="branch_id"/>
 					<xpath expr="//field[@name='picking_type_id']" position="move"/>
 				</xpath>
+				<xpath expr="//form[1]/sheet[1]/notebook[1]/page[1]/field[@name='order_line']/tree[1]/field[@name='name']" position="after">
+                    <field name="familia"/>
+                    <field name="marca"/>
+                    <field name="linea"/>
+                    <field name="sistema"/>
+                </xpath>
 			</field>
 		</record>
 	</data>

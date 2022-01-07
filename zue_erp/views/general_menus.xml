@@ -19,7 +19,8 @@
                 <menuitem name="Grupos de trabajo" id="zue_erp.menu_work_groups" parent="zue_erp.menus_parameterization"  sequence="6" action="zue_menu_action_work_groups"/>                
                 <menuitem name="Responsabilidades RUT" id="zue_erp.menu_responsibilities_rut" parent="zue_erp.menus_parameterization"  sequence="7" action="zue_menu_action_responsibilities_rut"/>    
                 <menuitem name="Grupos presupuestales" id="zue_erp.menu_budget_group" parent="zue_erp.menus_parameterization"  sequence="8" action="zue_menu_action_budget_group"/>    
-                <menuitem name="Rango de activos" id="zue_erp.menu_asset_range" parent="zue_erp.menus_parameterization"  sequence="9" action="zue_menu_action_asset_range"/>    
+                <menuitem name="Rango de activos" id="zue_erp.menu_asset_range" parent="zue_erp.menus_parameterization"  sequence="9" action="zue_menu_action_asset_range"/>
+                <menuitem name="Fechas conmemorativas" id="zue_erp.menu_dates_commemorated" parent="zue_erp.menus_parameterization"  sequence="10" action="zue_menu_action_dates_commemorated"/>
             <!-- menu Reportes -->        
             <menuitem name="Reportes" id="zue_erp.menus_reports" sequence="4" parent="zue_erp.menu_root" action="zue_menu_action_reports"/>                
             <!-- menu Alertas -->        

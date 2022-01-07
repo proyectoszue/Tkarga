@@ -46,6 +46,10 @@ class mntc_repuestos(models.Model):
     qty_done = fields.Float('Cantidad recibida', compute='get_stock_picking')
     qty_available = fields.Float('Cantidad disponible', compute='get_stock_quant')
     move_line_id = fields.Many2one('stock.move', 'Producto con solicitud de cotización', default=None)
+    familia = fields.Many2one(related='producto.family_id')
+    marca = fields.Many2one(related='producto.brand_id')
+    linea = fields.Many2one(related='producto.vehiculo_linea_id')
+    sistema = fields.Many2one(related='producto.system_id')
     # stock_picking_id = fields.Many2one('stock.picking', 'Solicitud de cotización', default=None)
 
     @api.onchange('producto')
