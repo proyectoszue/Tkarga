@@ -332,7 +332,7 @@ class hr_executing_provisions(models.Model):
                         bool_company = True
                     # Validar departamento
                     bool_department = False
-                    if account_rule.department.id == slip.employee_id.department_id.id or account_rule.department.id == slip.employee_id.department_id.parent_id.id or account_rule.department.id == False:
+                    if account_rule.department.id == slip.employee_id.department_id.id or account_rule.department.id == slip.employee_id.department_id.parent_id.id or account_rule.department.id == slip.employee_id.department_id.parent_id.parent_id.id or account_rule.department.id == False:
                         bool_department = True
 
                     if bool_department and bool_company and bool_work_location:
