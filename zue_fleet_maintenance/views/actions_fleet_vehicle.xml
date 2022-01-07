@@ -57,6 +57,7 @@
                                     <group >
                                         <field name="company_id" invisible="1"/>
                                         <field name="owner_id" required="1"/>
+                                        <field name="locator"/>
                                         <field name="is_rented" />
                                         <field name="rented_to"  attrs="{'invisible':[['is_rented','=',False]]}"/>
                                         <field name="afiliado_id" />

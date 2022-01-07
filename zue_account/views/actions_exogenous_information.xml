@@ -23,8 +23,7 @@
                     <field name="concept_dian"/>
                     <field name="code_description"/>
                     <field name="account_type"/>
-                    <field name="fiscal_format"/>
-                    <field name="concept"/>
+                    <field name="format_id"/>
                 </tree>
             </field>
         </record>
@@ -38,22 +37,22 @@
                         <group>
                             <group>
                                 <field name="concept_dian"/>
-                                <field name="fiscal_format"/>
+                                <field name="format_id"/>
                                 <field name="account_type"/>
                                 <field name="company_id" readonly="1"/>
                             </group>
                             <group>
                                 <field name="code_description"/>
-                                <field name="concept"/>
-                                <field name="account_code"/>
                             </group>
                         </group>
                         <notebook>
-                            <page string="Cuenta">
-                                <field name="account_ids"/>
-                            </page>
-                            <page string="Documentos Excluidos">
-                                <field name="excluded_documents_ids"/>
+                            <page string="Cuentas">
+                                <field name="accounting_details_ids">
+                                        <tree editable="bottom">
+                                            <field name="account_id"/>
+                                            <field name="move_type"/>
+                                        </tree>
+                                </field>
                             </page>
                         </notebook>
                     </sheet>
@@ -90,7 +89,6 @@
             </field>
         </record>
 
-
         <record model="ir.ui.view" id="fiscal_accounting_group_form">
             <field name="name">fiscal accounting group form</field>
             <field name="model">fiscal.accounting.group</field>
@@ -121,5 +119,68 @@
                 </form>
             </field>
         </record>
+
+        
+
+        <!-- Formato -->
+        <record model="ir.actions.act_window" id="action_format_encab">
+            <field name="name">Formato de Código Fiscal</field>
+            <field name="res_model">format.encab</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Crear record rule para filtrar las compañias -->
+        <record id="rule_format_encab" model="ir.rule">
+            <field name="name">Permisos compañia Formato Código Fiscal</field>
+            <field name="model_id" ref="model_format_encab"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record model="ir.ui.view" id="format_encab_tree">
+            <field name="name">format encab</field>
+            <field name="model">format.encab</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="company_id"/>
+                    <field name="format_id"/>
+                    <field name="description"/>
+                    <field name="format_associated_id"/>
+                </tree>
+            </field>
+        </record>
+
+
+        <record model="ir.ui.view" id="format_encab_group_form">
+            <field name="name">format encab group form</field>
+            <field name="model">format.encab</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="format_id"/>
+                                <field name="description"/>
+                            </group>
+                            <group>
+                                <field name="format_associated_id"/>
+                                <field name="fields_associated_code_fiscal_ids" widget="many2many_tags" readonly="1" force_save="1"/>
+                                <field name="company_id" readonly="1"/>
+                            </group>
+                        </group>
+                        <notebook>
+                            <page string="Campos Disponibles">
+                                 <field name="details_ids">
+                                        <tree editable="bottom">
+                                            <field name="sequence" widget="handle"/>
+                                            <field name="available_fields"/>
+                                        </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
     </data>
 </odoo>

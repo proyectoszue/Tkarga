@@ -37,6 +37,8 @@ class mntc_workorder_report_rh(models.Model):
     sucursal  = fields.Char(string='Sucursal', readonly=True)
     movil  = fields.Char(string='Móvil (OT)', readonly=True)
     vehiculo  = fields.Char(string='Vehículo (OT)', readonly=True)
+    clasificacion_solicitud  = fields.Char(string='Clasificación (Solicitud)', readonly=True)
+    prioridad_solicitud  = fields.Char(string='Prioridad (Solicitud)', readonly=True)
     
     @api.model
     def _query(self):
@@ -80,7 +82,12 @@ class mntc_workorder_report_rh(models.Model):
                     coalesce(j.name,'') as servicios,
 					coalesce(k.name,'') as sucursal,
                     coalesce(a.movil_nro,'') as movil,
-                    coalesce(concat(coalesce(modelbrand.name,''), '/' , coalesce(model.name,''),'/',coalesce(bb.placa_nro,''),'/',coalesce(bb.movil_nro,'')),'') as vehiculo
+                    coalesce(concat(coalesce(modelbrand.name,''), '/' , coalesce(model.name,''),'/',coalesce(bb.placa_nro,''),'/',coalesce(bb.movil_nro,'')),'') as vehiculo,
+                    coalesce(m.name,'') as clasificacion_solicitud,
+					case when l.priority_id = 'priority_1' then 'Emergencia'
+                         when l.priority_id = 'priority_2' then 'Urgente'
+                         when l.priority_id = 'priority_3' then 'Programado'
+                    else coalesce(l.priority_id,'') end as prioridad_solicitud
                 from mntc_workorder as a
                     inner join fleet_vehicle as bb on a.vehicle_id = bb.id
                     left  join fleet_vehicle_model as model on bb.model_id = model.id 
@@ -94,7 +101,9 @@ class mntc_workorder_report_rh(models.Model):
 					left join mntc_workforce_type_rh as h on b.id = h.task_id
 					left join mntc_workforce_type as i on i.id = h.workforce_type_id
                     left join mntc_services_type as j on j.id = bb.service_type_id
-					left join zue_res_branch as k on k.id = bb.branch_id      
+					left join zue_res_branch as k on k.id = bb.branch_id
+                    left join mntc_request as l on l.id = a.request_id
+					left join mntc_workorder_classification as m on m.id = l.classification1      
         ''' 
 
     def init(self):

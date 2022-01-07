@@ -87,6 +87,7 @@ class fleet_vehicle(models.Model):
     placa_nro = fields.Char('No. placa', help='Número de la placa', track_visibility='onchange')
     modelo = fields.Char('Año modelo', help='Número del móvil asignado intenrnamente por la compañía')
     owner_id = fields.Many2one('res.partner', 'Propietario', help='Propietario del vehículo', track_visibility='onchange')
+    locator = fields.Char(string='Locatario')
     property_fleet_account_input_categ = fields.Many2one('account.account', string='Ingresos vehículo', help='Cuenta para registrar los ingresos del vehículo')
     service_type_id = fields.Many2one('mntc.services.type', string='Services Type', track_visibility='onchange')
     type_of_service = fields.Selection([('public','Público'),('private','Particular')], 'Type of service')

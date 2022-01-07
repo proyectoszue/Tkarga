@@ -29,6 +29,10 @@
         'views/actions_documents.xml',
         'views/actions_account_aged_partner.xml',
         'views/actions_exogenous_information.xml',
+        'views/actions_res_config_settings.xml',
+        'views/actions_res_partner_fe.xml',
+        'views/actions_account_journal.xml',
+        'views/actions_account_tax.xml',
         'views/menus.xml',
     ],
 }

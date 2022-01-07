@@ -199,6 +199,39 @@
                             </tree>
                         </field>
                     </group>
+                    <group col="4" colspan="12">
+                        <field name="indicators_main_urgency" string="CAUSAS PRINCIPALES DE TRABAJOS URGENTES">
+                            <tree>
+                                <field name="num_tareas"/>
+                                <field name="servicio"/>
+                                <field name="sistema"/>
+                                <field name="componente"/>
+                                <field name="parte"/>
+                                <field name="falla"/>
+                                <field name="accion"/>
+                                <field name="horas_hombre"/>
+                                <field name="costo"/>
+                            </tree>
+                        </field>
+                    </group>
+                    <group col="4" colspan="12">
+                        <field name="indicators_draft_requests" string="SOLICITUDES BORRADOR">
+                            <tree>
+                                <field name="prioridad"/>
+                                <field name="metodo_d"/>
+                                <field name="cantidad"/>
+                                <field name="observacion" style="max-width: 150px"/>
+                            </tree>
+                        </field>
+                        <field name="indicators_pending_workorder" string="OT PENDIENTES">
+                            <tree>
+                                <field name="estado"/>
+                                <field name="cantidad"/>
+                                <field name="horas_hombre"/>
+                                <field name="observacion" style="max-width: 150px"/>
+                            </tree>
+                        </field>
+                    </group>
                 </form>
             </field>
 		</record>

@@ -58,6 +58,8 @@ class mntc_workorder(models.Model):
     #workorder_odometer = fields.One2many('mntc.workorder.routines', 'workorder_id', string='Orden de trabajo x Rutina')
     odometer = fields.Integer(string='Odómetro')
     assigned_company_id = fields.Many2one(related='vehicle_id.assigned_company_id')
+    classification1 = fields.Many2one(related='request_id.classification1', string='Clasificación solicitud',store=True)
+    priority_id = fields.Selection(related='request_id.priority_id', string='Prioridad solicitud',store=True)
  
     def call_up_wizard(self):
         yes_no = ''

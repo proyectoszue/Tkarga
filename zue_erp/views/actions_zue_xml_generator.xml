@@ -60,6 +60,8 @@
                                     <field name="name_parent"/>
                                     <field name="code_python"/>
                                     <field name="code_validation_python"/>
+                                    <field name="is_for"/>
+                                    <field name="internal_for"/>
                                 </tree>
                             </field>
                         </group>
