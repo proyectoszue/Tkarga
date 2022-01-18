@@ -1,3 +1,6 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_hr_contract_public,hr_contract_public,model_hr_contract_public,,1,1,1,1
 access_hr_payslip_public,hr_payslip_public,model_hr_payslip_public,,1,1,1,1
+access_hr_payslip_worked_days_public,hr_payslip_worked_days_public,model_hr_payslip_worked_days_public,,1,1,1,1
+access_hr_payslip_line_public,hr_payslip_line_public,model_hr_payslip_line_public,,1,1,1,1
+

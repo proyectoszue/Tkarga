@@ -100,7 +100,17 @@
                                            <div class="form-row">
                                                 <div class="form-group col-md-4">
                                                     <div class="form-floating mb-3">
-                                                        <input type="text" id="licencia_categoria" name="licencia_categoria" t-att-value="obj.licencia_categoria" class="form-control" placeholder="Categoria"/>
+                                                        <select class="form-select" id="licencia_categoria" name="licencia_categoria" t-att-selected="obj.licencia_categoria">
+                                                            <option value="">Seleccione una opcion</option>
+                                                            <option value="a1" t-att-selected="obj.licencia_categoria == 'a1'">A1</option>
+                                                            <option value="a2" t-att-selected="obj.licencia_categoria == 'a2'">A2</option>
+                                                            <option value="b1" t-att-selected="obj.licencia_categoria == 'b1'">B1</option>
+                                                            <option value="b2" t-att-selected="obj.licencia_categoria == 'b2'">B2</option>
+                                                            <option value="b3" t-att-selected="obj.licencia_categoria == 'b3'">B3</option>
+                                                            <option value="c1" t-att-selected="obj.licencia_categoria == 'c1'">C1</option>
+                                                            <option value="c2" t-att-selected="obj.licencia_categoria == 'c2'">C2</option>
+                                                            <option value="c3" t-att-selected="obj.licencia_categoria == 'c3'">C3</option>
+                                                        </select>
                                                         <label for="licencia_categoria">Categoria</label>
                                                     </div>
                                                 </div>
@@ -123,18 +133,24 @@
                                         <section class="control-edit">
                                             <div class="form-row">
                                                 <div class="form-group col-md-6">
-                                                    <div class="form-floating mb-3">
-                                                        <input type="text" id="country_id" name="country_id" t-att-value="obj.country_id.name" class="form-control" placeholder="Nacionalidad" readonly="true" />
+                                                    <div class="form-floating mb-3">                                                      
+                                                        <select class="form-select" id="country_id" name="country_id" >
+                                                            <t t-foreach="list_countries" t-as="country">
+                                                                <option t-att-value="country['id']" t-att-selected="obj.country_id.id == country['id']">
+                                                                    <t t-esc="country['name']"/>
+                                                                </option>
+                                                            </t>
+                                                        </select>
                                                         <label for="country_id">Nacionalidad</label>
                                                     </div>
                                                 </div>
                                                 <div class="form-group col-md-6">
                                                     <div class="form-floating">
                                                         <select class="form-select" id="gender" name="gender" >
-                                                                <option value="male" t-att-selected="obj.gender == 'male'">Hombre</option>
-                                                                <option value="female" t-att-selected="obj.gender == 'female'">Mujer</option>
-                                                                <option value="other" t-att-selected="obj.gender == 'other'">Otro</option>
-                                                            </select>
+                                                            <option value="male" t-att-selected="obj.gender == 'male'">Hombre</option>
+                                                            <option value="female" t-att-selected="obj.gender == 'female'">Mujer</option>
+                                                            <option value="other" t-att-selected="obj.gender == 'other'">Otro</option>
+                                                        </select>
                                                         <label for="gender">Sexo</label>
                                                     </div>
                                                 </div>
@@ -154,7 +170,14 @@
                                                 </div>
                                                 <div class="form-group col-md-4">
                                                     <div class="form-floating mb-3">
-                                                        <input type="text" id="country_of_birth" name="country_of_birth" t-att-value="obj.country_of_birth.name" class="form-control" placeholder="País de nacimiento" disabled="true"/>
+                                                        <!-- <input type="text" id="country_of_birth" name="country_of_birth" t-att-value="obj.country_of_birth.name" class="form-control" placeholder="País de nacimiento" disabled="true"/> -->
+                                                        <select class="form-select" id="country_of_birth" name="country_of_birth" >
+                                                            <t t-foreach="list_countries" t-as="country">
+                                                                <option t-att-value="country['id']" t-att-selected="obj.country_of_birth.id == country['id']">
+                                                                    <t t-esc="country['name']"/>
+                                                                </option>
+                                                            </t>
+                                                        </select>
                                                         <label for="country_of_birth">País de Nacimiento</label>
                                                     </div>
                                                 </div>
@@ -182,7 +205,21 @@
                                             <div class="form-row">
                                                 <div class="form-group col-md-4">
                                                     <div class="form-floating mb-3">
-                                                        <input type="text" id="certificate" name="certificate" t-att-value="obj.certificate" class="form-control" placeholder="Nivel de certificado"/>
+                                                        <!-- <input type="text" id="certificate" name="certificate" t-att-value="obj.certificate" class="form-control" placeholder="Nivel de certificado"/> -->
+                                                        <select class="form-select" id="certificate" name="certificate" t-att-selected="obj.certificate">
+                                                            <option value="">Seleccione una opcion</option>
+                                                            <option value="bachelor" t-att-selected="obj.certificate == 'bachelor'">Graduado</option>
+                                                            <option value="master" t-att-selected="obj.certificate == 'master'">Licenciado</option>
+                                                            <option value="other" t-att-selected="obj.certificate == 'other'">Otro</option>
+                                                            <option value="primary" t-att-selected="obj.certificate == 'primary'">Primaria</option>
+                                                            <option value="academic_bachelor" t-att-selected="obj.certificate == 'academic_bachelor'">Bachiller</option>
+                                                            <option value="apprentice" t-att-selected="obj.certificate == 'apprentice'">Aprendiz</option>
+                                                            <option value="technical" t-att-selected="obj.certificate == 'technical'">Tecnico</option>
+                                                            <option value="technologist" t-att-selected="obj.certificate == 'technologist'">Tecnologo</option>
+                                                            <option value="academic" t-att-selected="obj.certificate == 'academic'">Universitario</option>
+                                                            <option value="specialist" t-att-selected="obj.certificate == 'specialist'">Especialista</option>
+                                                            <option value="magister" t-att-selected="obj.certificate == 'magister'">Maestria</option>
+                                                        </select>
                                                         <label for="certificate">Nivel de certificado</label>
                                                     </div>
                                                 </div>

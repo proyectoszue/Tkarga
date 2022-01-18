@@ -27,7 +27,7 @@ class HrEmployeePublic(models.Model):
     study_field = fields.Char(readonly=True)
     study_school = fields.Char(readonly=True)
     marital = fields.Char(readonly=True)
-
+    contract_id = fields.Many2one('hr.contract.public',string='Contrato')
 
 class HrEmployeeUpdateTmp(models.TransientModel):
     _name = 'hr.employee.update.tmp'

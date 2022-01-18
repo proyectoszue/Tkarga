@@ -20,7 +20,7 @@ class ZuePayrollSelfManagementPortal(Controller):
         obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)])
 
         for employee in obj_employee:
-            obj_contract = request.env['hr.contract'].search([('employee_id','=',employee.id),('state','=','open')], limit=1)                           
+            obj_contract = request.env['hr.contract.public'].search([('employee_id','=',employee.id),('state','=','open')], limit=1)                           
 
             photo = employee.image_1920
             name = employee.name
