@@ -61,10 +61,7 @@ class ZuePayrollVouchersPortal(Controller):
 
         for payslip in payslips:
             report_name = payslip.struct_id.name + ' del ' + str(year) + '-' +  str(month)
-            if not payslip.struct_id or not payslip.struct_id.report_id:
-                report = request.env.ref('zue_payroll_self_management_portal.report_payslip_portal_action', False)
-            else:
-                report = payslip.struct_id.report_id
+            report = request.env.ref('zue_payroll_self_management_portal.report_payslip_portal_action', False)
             pdf_content, _ = report.render_qweb_pdf(payslip.id)
             reader = PdfFileReader(io.BytesIO(pdf_content), strict=False, overwriteWarnings=False)
 

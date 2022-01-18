@@ -13,6 +13,11 @@ class HrPayslipPublic(models.Model):
     state = fields.Char(string='Estado')
     date_from = fields.Date(string='Fecha inicio')
     date_to = fields.Date(string='Fecha fin')
+    contract_id = fields.Many2one('hr.contract.public',string='Contrato')
+    company_id = fields.Many2one('res.company',string='Compañia')
+    observation  = fields.Char(string='Estado')
+    # worked_days_line_ids = fields.One2many('hr.payslip.worked_days', 'payslip_id',
+    #     string='Payslip Worked Days', copy=True, readonly=True)
 
 
     @api.model
@@ -27,3 +32,15 @@ class HrPayslipPublic(models.Model):
                     %s
                 FROM hr_payslip payslip
             )""" % (self._table, self._get_fields()))
+
+    #Dias laborados
+    def worked_days_line_ids(self):
+        obj_worked_days_line_ids = self.sudo().env['hr.payslip.worked.days.public'].search([('payslip_id', '=', self.id)])
+        return obj_worked_days_line_ids
+
+    #Detalle nomina
+    def line_ids(self):
+        obj_line_ids = self.sudo().env['hr.payslip.line.public'].search([('slip_id','=',self.id)])
+        return obj_line_ids
+        
+        

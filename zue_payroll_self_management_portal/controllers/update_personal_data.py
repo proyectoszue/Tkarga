@@ -13,11 +13,15 @@ class ZuePayrollUpdatePersonalDataPortal(Controller):
         if not request.env.user:
             return request.not_found()
 
+        countries = []
         obj_employee = request.env['hr.employee.public'].search([('user_id', '=', request.env.user.id)], limit=1)
-        obj_countries = request.env['res.country']
+        obj_countries = request.env['res.country'].search([('id','>',0)])
+
+        for line in obj_countries:
+            countries.append({'id': line.id,'name': line.name})
 
         return request.render('zue_payroll_self_management_portal.update_personal_data',
-                              {'obj': obj_employee,'list_countries': obj_countries})
+                              {'obj': obj_employee,'list_countries': countries})
 
     @route(["/zue_payroll_self_management_portal/update_personal_data_save"], type='http', auth='user', website=True, csrf=False)
     def update_personal_data_save(self, **post):
@@ -40,6 +44,8 @@ class ZuePayrollUpdatePersonalDataPortal(Controller):
                             'emergency_phone': post['emergency_phone'],
                             'emergency_relationship': post['emergency_relationship'],
                             'certificate': post['certificate'],
+                            'country_id': int(post['country_id']),
+                            'country_of_birth': int(post['country_of_birth']),
                             'study_field': post['study_field'],
                             'study_school': post['study_school'],
                             'marital': post['marital'],
