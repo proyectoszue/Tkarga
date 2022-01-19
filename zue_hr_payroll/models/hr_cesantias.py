@@ -136,9 +136,16 @@ class Hr_payslip(models.Model):
 
                     #Acumulados
                     acumulados_promedio = (amount/dias_liquidacion) * 30
-                    wage = contract.wage
+                    #Salario - Se toma el salario correspondiente a la fecha de liquidación
+                    wage = 0
+                    obj_wage = self.env['hr.contract.change.wage'].search([('contract_id','=',contract.id),('date_start','<',self.date_to)])
+                    for change in sorted(obj_wage, key=lambda x: x.date_start): #Obtiene el ultimo salario vigente antes de la fecha de liquidacion
+                        wage = change.wage
+                    wage = contract.wage if wage == 0 else wage
+                    #Auxilio de transporte
                     auxtransporte = annual_parameters.transportation_assistance_monthly
                     auxtransporte_tope = annual_parameters.top_max_transportation_assistance
+                    #Calculo base
                     if wage <= auxtransporte_tope:
                         amount_base = round(wage + auxtransporte + acumulados_promedio, 0)
                     else:

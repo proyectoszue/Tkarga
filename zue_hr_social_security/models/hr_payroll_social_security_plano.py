@@ -263,7 +263,7 @@ class hr_payroll_social_security(models.Model):
             cTAE = 'X' if entity_eps_history else ' '
             cTDP = ' ' 
             cTAP = 'X' if entity_pension_history else ' '
-            obj_change_wage = self.env['hr.contract.change.wage'].search([('contract_id','=',item.contract_id.id),('date_final','!=',False),('date_final','>=',date_start),('date_final','<=',date_end)],limit=1)
+            obj_change_wage = self.env['hr.contract.change.wage'].search([('contract_id','=',item.contract_id.id),('date_start','!=',False),('date_start','>=',date_start),('date_start','<=',date_end)],limit=1)
             cVSP = 'X' if len(obj_change_wage) > 0 else ' '
             cCorrecciones = ' '
             cVST = 'X' if item.nSueldo != item.nValorBaseSalud and item.nDiasLiquidados > 0 and cTipoCotizante not in ('12','19') and cVSP != 'X' else ' '

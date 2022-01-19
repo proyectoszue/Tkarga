@@ -1,4 +1,10 @@
+from datetime import date
 from odoo import models, fields, api, _
+
+import base64
+import io
+import xlsxwriter
+import math
 
 #Código fiscal
 class fiscal_accounting_code_details(models.Model):
@@ -28,8 +34,11 @@ class fiscal_accounting_code(models.Model):
     account_type = fields.Selection([('movement', 'Movimiento'),
                               ('balance', 'Balance'),
                               ], 'Tipo de cuenta')
+    move_type = fields.Selection([('debit', 'Débito'),
+                                  ('credit', 'Crédito'),
+                                  ('net', 'Neto')], string='Tipo de movimiento', required=True)
     #account_code = fields.Char(string="Código de cuenta")
-    accounting_details_ids = fields.One2many('fiscal.accounting.code.details','fiscal_accounting_id',string='Cuentas')
+    accounting_details_ids = fields.Many2many('account.account',string='Cuentas')
     #excluded_documents_ids = fields.Many2many('account.journal', string="Documentos Excluidos")
     #fiscal_group_id = fields.Many2one('fiscal.accounting.group',string="Grupo Fiscal")
 
@@ -111,7 +120,7 @@ class format_detail(models.Model):
                               ('state_id', 'Código Departamento'),
                               ('x_city', 'Código Ciudad'),
                               ('amount', 'Valor Pesos'),
-                              ('operador', 'Operador'),
+                              ('operator', 'Operador'),
                               ('tax', 'Base Impuestos'),
                               ('x_code_dian', 'Código País DIAN'),
                               ('phone', 'Teléfono Tercero'),
@@ -119,3 +128,123 @@ class format_detail(models.Model):
                               ('email', 'Email'),
                               ('higher_value_iva', 'Mayor Valor Iva'),
                               ], 'Campos Seleccionados', required=True)
+    
+class generate_media_magnetic(models.TransientModel):
+    _name = 'generate.media.magnetic'
+    _description = 'Generar Medios Magneticos'
+
+    company_id = fields.Many2one('res.company',string='Compañia', required=True, default=lambda self: self.env.company)
+    type_media_magnetic = fields.Selection([('dian', 'Generar Artículo 631'),
+                                            ('distrital', 'Generar Impuesto Distrital')],'Tipo de medio magnético', default='dian')
+    year =  fields.Integer(string="Año", required=True)
+
+    excel_file = fields.Binary('Excel file')
+    excel_file_name = fields.Char('Excel name')
+
+    def generate_media_magnetic_dian(self):
+        #Variables excel
+        filename = f'MedioMagtenico_{str(self.year)}.xlsx'
+        stream = io.BytesIO()
+        book = xlsxwriter.Workbook(stream, {'in_memory': True})
+        #Variables proceso
+        date_start = str(self.year) +'-01-01'
+        date_end = str(self.year) +'-12-31'
+        obj_account_fiscal = self.env['fiscal.accounting.code'].search([('format_id','!=',False)])
+
+        for fiscal in obj_account_fiscal:
+            lst_Mvto = []
+            obj_move_line = self.env['account.move.line'].search([('date', '>=', date_start), ('date', '<=', date_end),
+                                                                  ('account_id', 'in',
+                                                                   fiscal.accounting_details_ids.ids)])
+            obj_group_fiscal = self.env['fiscal.accounting.group'].search([('concept_dian_ids','in',fiscal.ids)],limit=1)
+            format_fields = fiscal.format_id.details_ids
+
+            for line in obj_move_line:
+                dict_documents = dict(self.env['res.partner']._fields['x_document_type'].selection)
+                document_type = dict_documents.get(line.move_id.partner_id.x_document_type) if line.move_id.partner_id.x_document_type else ''
+                info = {'fiscal_accounting_id': fiscal.concept_dian,
+                         'concept_dian': fiscal.code_description,
+                         'format':fiscal.format_id.format_id,
+                         'x_document_type': document_type,
+                         'vat': line.move_id.partner_id.vat,
+                         'x_first_name': line.move_id.partner_id.x_first_name,
+                         'x_second_name': line.move_id.partner_id.x_second_name,
+                         'x_first_lastname': line.move_id.partner_id.x_first_lastname,
+                         'x_second_lastname': line.move_id.partner_id.x_second_lastname,
+                         'commercial_company_name': line.move_id.partner_id.name,
+                         'x_digit_verification': line.move_id.partner_id.x_digit_verification,
+                         'street': line.move_id.partner_id.street,
+                         'state_id': line.move_id.partner_id.state_id.name,
+                         'x_city': line.move_id.partner_id.x_city.name,
+                         'amount': line.balance,
+                         'operator':obj_group_fiscal.operator,
+                         'tax': line.tax_base_amount,
+                         'x_code_dian':line.move_id.partner_id.x_city.code,
+                         'phone': line.move_id.partner_id.phone or line.move_id.partner_id.mobile,
+                         'unit_rate': 0,
+                         'email': line.move_id.partner_id.email,
+                         'higher_value_iva': 0,
+                      }
+                media_magnetic = {}
+                for field in sorted(format_fields, key=lambda x: x.sequence):
+                    if field.available_fields in info:
+                        media_magnetic[field.available_fields] = info.get(field.available_fields)
+
+                lst_Mvto.append(media_magnetic)
+            #Generar hoja de excel
+            sheet = book.add_worksheet(fiscal.format_id.format_id)
+            columns = []
+            for field in sorted(format_fields, key=lambda x: x.sequence):
+                field_name = dict(self.env['format.detail']._fields['available_fields'].selection).get(field.available_fields)
+                columns.append(field_name)
+            # Agregar columnas
+            aument_columns = 0
+            for column in columns:
+                sheet.write(0, aument_columns, column)
+                aument_columns = aument_columns + 1
+            # Agregar valores
+            aument_columns = 0
+            aument_rows = 1
+            for info in lst_Mvto:
+                for row in info.values():
+                    width = len(str(row)) + 10
+                    sheet.write(aument_rows, aument_columns, row)
+                    # Ajustar tamaño columna
+                    sheet.set_column(aument_columns, aument_columns, width)
+                    aument_columns = aument_columns + 1
+                aument_rows = aument_rows + 1
+                aument_columns = 0
+
+            # Convertir en tabla
+            array_header_table = []
+            for i in columns:
+                dict_h = {'header': i}
+                array_header_table.append(dict_h)
+            sheet.add_table(0, 0, aument_rows, len(columns)-1, {'style': 'Table Style Medium 2', 'columns': array_header_table})
+
+        book.close()
+        self.write({
+            'excel_file': base64.encodestring(stream.getvalue()),
+            'excel_file_name': filename,
+        })
+
+        action = {
+            'name': 'Export Medio magnetico información exogena',
+            'type': 'ir.actions.act_url',
+            'url': "web/content/?model=generate.media.magnetic&id=" + str(
+                self.id) + "&filename_field=excel_file_name&field=excel_file&download=true&filename=" + self.excel_file_name,
+            'target': 'self',
+        }
+        return action
+
+    def generate_media_magnetic_distrital(self):
+        date_start = str(self.year) +'-01-01'
+        date_end = str(self.year) +'-12-31'
+        lst_Mvto = []
+
+    def generate_media_magnetic(self):
+        if self.type_media_magnetic == 'dian':
+            return self.generate_media_magnetic_dian()
+        if self.type_media_magnetic == 'distrital':
+            return self.generate_media_magnetic_distrital()
+

@@ -1,0 +1,6 @@
+<odoo>
+    <data>
+        <!-- Menu Configuración tipo de impuestos -->
+        <menuitem name="Tipo de Impuestos" id="zue_electronic_invoice.zue_tax_type_menu" parent="account.account_invoicing_menu" sequence="30" action="account_tax_type_action"/>
+    </data>
+</odoo>

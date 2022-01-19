@@ -77,6 +77,7 @@ class hr_distribution_rules(models.Model):
     initial_date = fields.Date('Fecha Inicial', compute='_get_initial_date', store=True)
     final_date = fields.Date('Fecha Final', compute='_get_final_date', store=True)
     distribution_rules_execution_id = fields.Many2one('distribution.rules.execution', 'Ejecución')
+    company_id = fields.Many2one('res.company', string='Compañía', required=True, default=lambda self: self.env.company)
 
     @api.depends('initial_month', 'initial_year')
     def _get_initial_date(self):
@@ -167,6 +168,7 @@ class distribution_rules_execution(models.Model):
                                                   "('final_date', '<=', final_date)]")
     history_id = fields.One2many('distribution.rules.execution.history','execution_rule_id', string='Histórico de ejecución')
     counter_contab = fields.Integer(compute='compute_counter_contab', string='Movimientos')
+    company_id = fields.Many2one('res.company', string='Compañía', required=True, default=lambda self: self.env.company)
 
     @api.depends('initial_month', 'initial_year')
     def _get_initial_date(self):
@@ -284,7 +286,8 @@ class distribution_rules_execution(models.Model):
                     obj_contract = self.env['cntr.contract.encab'].search([('account_analytic_id', '=', rule.origin_analytical_account_id.id)])
 
                     if not obj_move:
-                        raise ValidationError(_("No se encontraron movimientos para las cuentas contables seleccionadas en la regla '" + rule.name + "'. Por favor verifique!"))
+                        continue
+                        #raise ValidationError(_("No se encontraron movimientos para las cuentas contables seleccionadas en la regla '" + rule.name + "'. Por favor verifique!"))
                     if not obj_contract:
                         partner_id = self.env.company.id
                     else:

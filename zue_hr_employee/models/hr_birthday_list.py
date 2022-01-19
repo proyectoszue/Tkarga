@@ -55,7 +55,7 @@ class hr_birthday_list(models.TransientModel):
 
         return month
 
-    def get_date_text(self,date,calculated_week=0):
+    def get_date_text(self,date,calculated_week=0,hide_year=0):
         #Mes
         month = self.get_name_month(date.month)
         #Dia de la semana
@@ -67,11 +67,17 @@ class hr_birthday_list(models.TransientModel):
         week = 'Viernes' if date.weekday() == 4 else week
         week = 'Sábado' if date.weekday() == 5 else week
         week = 'Domingo' if date.weekday() == 6 else week
-        
-        if calculated_week == 0:
-            date_text = date.strftime('%d de '+month+' del %Y')
+
+        if hide_year == 0:
+            if calculated_week == 0:
+                date_text = date.strftime('%d de '+month+' del %Y')
+            else:
+                date_text = date.strftime(week+', %d de '+month+' del %Y')
         else:
-            date_text = date.strftime(week+', %d de '+month+' del %Y')
+            if calculated_week == 0:
+                date_text = date.strftime('%d de '+month)
+            else:
+                date_text = date.strftime(week+', %d de '+month)
 
         return date_text
 

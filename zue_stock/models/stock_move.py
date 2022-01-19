@@ -21,12 +21,41 @@ class stock_immediate_transfer(models.TransientModel):
     def process(self):
         r = super(stock_immediate_transfer, self).process()
 
+        tmp_partner_id = None
+
         for stock_pick in self.pick_ids:
+            if stock_pick.x_studio_intercompany:
+                tmp_partner_id = stock_pick.partner_id
+            else:
+                tmp_partner_id = stock_pick.company_id.partner_id
+
+            for moves in stock_pick.account_move_ids:
+                detail_move = moves.line_ids
+                detail_move.write({'partner_id': tmp_partner_id})
+
             for stock_move in stock_pick.move_ids_without_package:
                 obj_account_move = self.env['account.move'].search([('stock_move_id', '=', stock_move.id)])
                 obj_account_move_line = self.env['account.move.line'].search([('move_id', 'in', obj_account_move.ids)])
 
                 obj_account_move_line.write({'analytic_account_id': stock_move.analytic_account_id.id})
+
+                for obj_lines in obj_account_move_line.filtered(lambda x: x.analytic_account_id is not None):
+                    self.env['account.analytic.line'].create(
+                        {
+                            'name': obj_lines.ref,
+                            'account_id': stock_move.analytic_account_id.id,
+                            'ref': obj_lines.ref,
+                            'partner_id': obj_lines.partner_id.id,
+                            'date': obj_lines.date,
+                            'company_id': obj_lines.company_id.id,
+                            'amount': obj_lines.credit - obj_lines.debit,
+                            'unit_amount': obj_lines.quantity,
+                            'product_id': obj_lines.product_id.id,
+                            'product_uom_id': obj_lines.product_id.product_tmpl_id.uom_id.id,
+                            'general_account_id': obj_lines.account_id.id,
+                            'move_id': obj_lines.id
+                        }
+                    )
 
             if stock_pick.workorder_id.work_task_ids:
                 stock_pick.workorder_id.work_task_ids.compute_tasks_cost()
@@ -114,6 +143,24 @@ class StockBackorderConfirmation(models.TransientModel):
                     obj_account_move_line = self.env['account.move.line'].search([('move_id', 'in', obj_account_move.ids)])
 
                     obj_account_move_line.write({'analytic_account_id': stock_move.analytic_account_id.id})
+
+                    for obj_lines in obj_account_move_line.filtered(lambda x: x.analytic_account_id is not None):
+                        self.env['account.analytic.line'].create(
+                            {
+                                'name': obj_lines.ref,
+                                'account_id': stock_move.analytic_account_id.id,
+                                'ref': obj_lines.ref,
+                                'partner_id': obj_lines.partner_id.id,
+                                'date': obj_lines.date,
+                                'company_id': obj_lines.company_id.id,
+                                'amount': obj_lines.credit - obj_lines.debit,
+                                'unit_amount': obj_lines.quantity,
+                                'product_id': obj_lines.product_id,
+                                'product_uom_id': obj_lines.product_id.product_tmpl_id.uom_id.id,
+                                'general_account_id': obj_lines.account_id.id,
+                                'move_id': obj_lines.id
+                            }
+                        )
 
                 if stock_pick.workorder_id.work_task_ids:
                     stock_pick.workorder_id.work_task_ids.compute_tasks_cost()

@@ -41,7 +41,9 @@
                             <field name="active"/>
                         </group>
                         <group string="Headers">
-                            <field name="content_type"/>
+                            <group>
+                                <field name="content_type"/>
+                            </group>
                             <group string="Basic - Authorization">
                                 <field name="username"/>
                                 <field name="password" password="True"/>
