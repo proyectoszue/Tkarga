@@ -55,8 +55,9 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje':
             total_salarial = categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from,
                                                                                payslip.date_to)
             auxtransporte = AUX000 + payslip.sum_mount_x_rule('AUX000', payslip.date_from, payslip.date_to)
+            vac_no_salarial = categories.VNS + + payslip.sum_mount('VNS', payslip.date_from,payslip.date_to)
             total_no_salarial = categories.DEV_NO_SALARIAL + payslip.sum_mount('DEV_NO_SALARIAL', payslip.date_from,
-                                                                               payslip.date_to) - auxtransporte
+                                                                               payslip.date_to) - auxtransporte - vac_no_salarial
             gran_total = total_salarial + total_no_salarial
             statute_value = (gran_total/100)*annual_parameters.value_porc_statute_1395
             total_statute = total_no_salarial-statute_value
@@ -83,8 +84,9 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje' and employee.subt
             total_salarial = categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from,
                                                                          payslip.date_to)
             auxtransporte = AUX000 + payslip.sum_mount_x_rule('AUX000', payslip.date_from, payslip.date_to)
+            vac_no_salarial = categories.VNS + + payslip.sum_mount('VNS', payslip.date_from, payslip.date_to)
             total_no_salarial = categories.DEV_NO_SALARIAL + payslip.sum_mount('DEV_NO_SALARIAL', payslip.date_from,
-                                                                               payslip.date_to) - auxtransporte
+                                                                               payslip.date_to) - auxtransporte - vac_no_salarial
             gran_total = total_salarial + total_no_salarial
             statute_value = (gran_total / 100) * annual_parameters.value_porc_statute_1395
             total_statute = total_no_salarial - statute_value
@@ -111,8 +113,9 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje':
             total_salarial = categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from,
                                                                          payslip.date_to)
             auxtransporte = AUX000 + payslip.sum_mount_x_rule('AUX000', payslip.date_from, payslip.date_to)
+            vac_no_salarial = categories.VNS + + payslip.sum_mount('VNS', payslip.date_from, payslip.date_to)
             total_no_salarial = categories.DEV_NO_SALARIAL + payslip.sum_mount('DEV_NO_SALARIAL', payslip.date_from,
-                                                                               payslip.date_to) - auxtransporte
+                                                                               payslip.date_to) - auxtransporte - vac_no_salarial
             gran_total = total_salarial + total_no_salarial
             statute_value = (gran_total / 100) * annual_parameters.value_porc_statute_1395
             total_statute = total_no_salarial - statute_value

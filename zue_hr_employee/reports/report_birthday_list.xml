@@ -5,24 +5,20 @@
 				<field name="name">Listado de cumpleaños</field>
 				<field name="res_model">hr.birthday.list</field>
 				<field name="view_mode">form</field>
+                <field name="target">new</field>
 		</record>
 
         <record id="hr_employee_report_birthday_form" model="ir.ui.view">
             <field name="name">Listado de cumpleaños</field>
             <field name="model">hr.birthday.list</field>
             <field name="arch" type="xml">
-                    <form string="Listado de cumpleaños"> 
+                    <form string="Listado de cumpleaños">
                         <group>
-                            <group>
-                                <h1>Listado de cumpleaños</h1>
-                                <group>
-                                    <field name="month"/>
-                                </group>                            
-                            </group>
-                            <br/><br/>           
-                            <button name="generate_report" string="Generar" type="object" class="oe_highlight"/>  
+                            <field name="month"/>
                         </group>
-                        <footer></footer>
+                        <footer>
+                            <button name="generate_report" string="Generar" type="object" class="oe_highlight"/>
+                        </footer>
                     </form>
                 </field>
         </record>

@@ -13,6 +13,8 @@
         <!-- Menu Parámetros anuales -->
         <menuitem name="Parámetros anuales" id="zue_hr_employee.menu_annual_parameters" parent="hr_payroll.menu_hr_payroll_configuration" action="zue_menu_action_annual_parameters"/>                        
         <!-- Menu Listado de cumpleaños -->
-        <menuitem name="Listado de cumpleaños" id="zue_hr_employee.menu_report_birthday" parent="hr_payroll.menu_hr_payroll_report" action="action_hr_employee_report_birthday" sequence="50"/>                                
+        <menuitem name="Listado de cumpleaños" id="zue_hr_employee.menu_report_birthday" parent="hr_payroll.menu_hr_payroll_report" action="action_hr_employee_report_birthday" sequence="50"/>
+        <!-- Certificados laborales -->
+        <menuitem name="Certificados laborales generados" id="zue_hr_employee.menu_labor_certificate_history" parent="hr_payroll.menu_hr_payroll_report" action="action_hr_labor_certificate_history" sequence="55"/>
     </data>
 </odoo>

@@ -2,7 +2,8 @@
 <odoo>
         <template id="report_certificacion_laboral_document">
         <t t-call="web.html_container">
-        <t t-foreach="inside_foreach_docs or docs" t-as="o">
+        <t t-foreach="inside_foreach_docs or docs" t-as="m">
+            <t t-set="o" t-value="m.contract_id"/>
             <div class="header">                
                 <div class="col-md-12 text-right" style="margin-top:5px;">
                     <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)" style="max-height: 100px;"/>
@@ -43,7 +44,8 @@
 
                     </p><br/>
                     <p style="text-align:justify">
-                    Para constancia se firma en la ciudad de Bogotá D.C, <span t-esc="o.get_date_text(datetime.datetime.now(),1)"/>
+                        Se expide a solicitud del interesado <span t-esc="m.info_to"/><br/>
+                        Para constancia se firma en la ciudad de Bogotá D.C, <span t-esc="o.get_date_text(datetime.datetime.now(),1)"/>
                     </p>
                 </div>
                 <br/><br/>
@@ -62,14 +64,17 @@
                 </div>
             </div>
 
-            <div class="footer">            
+            <footer>
                 <t t-if="o.employee_id.company_id.name == 'GRUPO EMPRESARIAL ALIANZA T S.A.'">
                     <img src="/zue_hr_employee/static/src/img/footer_alianza.png"/>
                 </t>
                 <t t-if="o.employee_id.company_id.name != 'GRUPO EMPRESARIAL ALIANZA T S.A.'">
                     <img src="/zue_hr_employee/static/src/img/footer.png"/>
                 </t>
-            </div>
+                <p style="text-align:justify">
+                    Certificado N° <span t-esc="m.sequence"/>
+                </p>
+            </footer>
         </t>
         </t>    
         </template>
@@ -77,7 +82,7 @@
          <template id="report_certificacion_laboral">
          <t t-foreach="docs" t-as="o">
             <t t-set="inside_foreach_docs" t-value="o"/>
-            <t t-call="zue_hr_employee.report_certificacion_laboral_document" t-lang="o.employee_id.address_home_id.lang"/>
+            <t t-call="zue_hr_employee.report_certificacion_laboral_document" t-lang="o.contract_id.employee_id.address_home_id.lang"/>
         </t>
     </template>
 </odoo>

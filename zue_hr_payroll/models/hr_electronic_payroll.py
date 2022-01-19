@@ -408,7 +408,13 @@ class hr_electronic_payroll(models.Model):
             if not obj_contract:
                 obj_contract = self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id', '=', employee.id), ('retirement_date', '>=', date_start)],limit=1)
                 # Obtener nóminas en ese rango de fechas
-            obj_payslip = self.env['hr.payslip'].search([('state', '=', 'done'), ('employee_id', '=', employee.id), ('contract_id', '=', obj_contract.id),('date_from', '>=', date_start), ('date_from', '<=', date_end)])
+            obj_payslip = self.env['hr.payslip'].search(
+                [('state', '=', 'done'), ('employee_id', '=', employee.id), ('contract_id', '=', obj_contract.id),
+                 ('date_from', '>=', date_start), ('date_from', '<=', date_end)])
+            obj_payslip += self.env['hr.payslip'].search(
+                [('state', '=', 'done'), ('employee_id', '=', employee.id), ('contract_id', '=', obj_contract.id),
+                 ('id', 'not in', obj_payslip.ids),('struct_id.process', 'in', ['cesantias', 'intereses_cesantias', 'prima']),
+                 ('date_to', '>=', date_start), ('date_to', '<=', date_end)])
 
             value_detail = {
                 'electronic_payroll_id':self.id,
