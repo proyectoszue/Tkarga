@@ -86,24 +86,35 @@ class hr_executing_provisions(models.Model):
                         result_intcesantias = {}
                         result_prima = {}
                         result_vac = {}
+                        retirement_date = contract.retirement_date
+                        date_end_without_31 = date_end - timedelta(days=1) if date_end.day == 31 else date_end
 
                         #Obtener fecha cesantias
-                        date_cesantias = contract.date_start     
-                        obj_cesantias = env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('payslip','=',False),('final_accrual_date','<=',date_end)])
+                        date_cesantias = contract.date_start
+                        if retirement_date == False:
+                            obj_cesantias = env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<',date_end),('final_accrual_date','<',date_end_without_31)])
+                        else:
+                            obj_cesantias = env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date)])
                         if obj_cesantias:
                             for history in sorted(obj_cesantias, key=lambda x: x.final_accrual_date):
                                 date_cesantias = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_cesantias else date_cesantias             
 
                         #Obtener fecha prima
-                        date_prima = contract.date_start     
-                        obj_prima = env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('payslip','=',False),('final_accrual_date','<=',date_end)])
+                        date_prima = contract.date_start
+                        if retirement_date == False:
+                            obj_prima = env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<',date_end),('final_accrual_date','<',date_end_without_31)])
+                        else:
+                            obj_prima = env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date)])
                         if obj_prima:
                             for history in sorted(obj_prima, key=lambda x: x.final_accrual_date):
                                 date_prima = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_prima else date_prima                                   
 
                         #Obtener fecha vacaciones
-                        date_vacation = contract.date_start     
-                        obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('payslip','=',False),('final_accrual_date','<=',date_end)])
+                        date_vacation = contract.date_start
+                        if retirement_date == False:
+                            obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<',date_end)])
+                        else:
+                            obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date)])
                         if obj_vacation:
                             for history in sorted(obj_vacation, key=lambda x: x.final_accrual_date):
                                 date_vacation = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_vacation else date_vacation             
@@ -171,7 +182,7 @@ class hr_executing_provisions(models.Model):
                                      ('executing_provisions_id', '!=', self.id),
                                      ('executing_provisions_id.date_end', '=', date_month_ant),
                                      ('provision', '=', provision), ('contract_id', '=', contract.id)])
-                                value_balance = sum([i.amount for i in obj_provisions.browse(executing_provisions.ids)])
+                                value_balance = sum([i.current_payable_value for i in obj_provisions.browse(executing_provisions.ids)])
 
                                 #Obtener pagos realizados en el mes
                                 code_filter = [provision.upper()] if provision != 'vacaciones' else ['VACCONTRATO','VACDISFRUTADAS','VACREMUNERADAS']
@@ -194,17 +205,21 @@ class hr_executing_provisions(models.Model):
                                 #Calcular valor a pagar actual
                                 amount = round((line['amount'] * line['quantity'] * line['rate'])/100,0)
 
-                                obj_provisions = env['hr.executing.provisions.details']
-                                executing_provisions = env['hr.executing.provisions.details'].search(
-                                    [('executing_provisions_id.state', 'in', ['done', 'accounting']),
-                                     ('executing_provisions_id', '!=', self.id),('value_payments','>',0),
-                                     ('provision', '=', provision), ('contract_id', '=', contract.id)])
+                                # ------------------------
+                                # 19/01/2022 - Luis Buitrón | Carolina Rincón : Se comenta buscar los pagos historicos
+                                #  debido a que solamente debe tener en cuenta los pagos realizados en el mes
+                                # ------------------------
+                                #obj_provisions = env['hr.executing.provisions.details']
+                                #executing_provisions = env['hr.executing.provisions.details'].search(
+                                #    [('executing_provisions_id.state', 'in', ['done', 'accounting']),
+                                #     ('executing_provisions_id', '!=', self.id),('value_payments','>',0),
+                                #     ('provision', '=', provision), ('contract_id', '=', contract.id)])
 
-                                if len(executing_provisions) > 0:
-                                    payable_value = sum([i.value_payments for i in obj_provisions.browse(executing_provisions.ids)])
-                                    current_payable_value = amount - (payable_value+value_payments)
-                                else:
-                                    current_payable_value = amount - value_payments
+                                #if len(executing_provisions) > 0:
+                                #    payable_value = sum([i.value_payments for i in obj_provisions.browse(executing_provisions.ids)])
+                                #    current_payable_value = amount - (payable_value+value_payments)
+                                #else:
+                                current_payable_value = amount - value_payments
 
                                 #Guardar valores
                                 values_details = {

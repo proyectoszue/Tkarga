@@ -18,7 +18,7 @@
 
         <report
             id="report_certificacion_laboral_action"
-            model="hr.contract"
+            model="hr.labor.certificate.history"
             string="Certificacion laboral"
             report_type="qweb-pdf"
             name="zue_hr_employee.report_certificacion_laboral"

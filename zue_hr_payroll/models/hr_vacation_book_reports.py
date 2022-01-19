@@ -3,6 +3,7 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+from pytz import timezone
 
 import base64
 import io
@@ -13,21 +14,7 @@ class hr_vacation_book(models.TransientModel):
     _name = "hr.vacation.book"
     _description = "Libro de vacaciones"
 
-    initial_year = fields.Integer('Año inicial', required=True)
-    initial_month = fields.Selection([('1', 'Enero'),
-                                      ('2', 'Febrero'),
-                                      ('3', 'Marzo'),
-                                      ('4', 'Abril'),
-                                      ('5', 'Mayo'),
-                                      ('6', 'Junio'),
-                                      ('7', 'Julio'),
-                                      ('8', 'Agosto'),
-                                      ('9', 'Septiembre'),
-                                      ('10', 'Octubre'),
-                                      ('11', 'Noviembre'),
-                                      ('12', 'Diciembre')
-                                      ], string='Mes inicial', required=True)
-    final_year = fields.Integer('Año final', required=True)
+    final_year = fields.Integer('Año', required=True)
     final_month = fields.Selection([('1', 'Enero'),
                                     ('2', 'Febrero'),
                                     ('3', 'Marzo'),
@@ -40,46 +27,37 @@ class hr_vacation_book(models.TransientModel):
                                     ('10', 'Octubre'),
                                     ('11', 'Noviembre'),
                                      ('12', 'Diciembre')
-                                    ], string='Mes final', required=True)
+                                    ], string='Mes', required=True)
     employee = fields.Many2many('hr.employee', string='Empleado')
     contract = fields.Many2many('hr.contract', string='Contrato')
-    salary_rule = fields.Many2many('hr.salary.rule', string='Reglas salariales')
     branch = fields.Many2many('zue.res.branch', string='Sucursal',
                               domain=lambda self: [('id', 'in', self.env.user.branch_ids.ids)])
     analytic_account = fields.Many2many('account.analytic.account', string='Cuenta Analítica')
-    entities = fields.Many2many('hr.employee.entities', string='Entidad')
 
-    excel_vacation_book = fields.Binary(string='Reporte libro de vacaciones')
-    excel_vacation_book_filename = fields.Char(string='Filename Reporte por fondos ')
+    excel_file = fields.Binary(string='Reporte libro de vacaciones')
+    excel_file_name = fields.Char(string='Filename Reporte libro de vacaciones')
 
     def generate_excel(self):
-        raise ValidationError("En desarrollo")
-        query_where = ''
-        query_where_accumulated = ''
-        # Filtro periodo
-        date_from = f'{str(self.initial_year)}-{str(self.initial_month)}-01'
+        # Periodo
         final_year = self.final_year if self.final_month != '12' else self.final_year + 1
         final_month = int(self.final_month) + 1 if self.final_month != '12' else 1
         date_to = f'{str(final_year)}-{str(final_month)}-01'
-        query_where = f"where a.date_from >= '{date_from}' and a.date_to < '{date_to}' "
-        query_where_accumulated = f"where a.date >= '{date_from}' and a.date < '{date_to}' "
+        date_end = (datetime.strptime(date_to,'%Y-%m-%d') - timedelta(days=1)).date()
+        date_to = str(date_end)
         # Filtro compañia
-        query_where = query_where + f"and b.id = {self.env.company.id} "
-        query_where_accumulated = query_where_accumulated + f"and c.id = {self.env.company.id} "
+        query_where = f"where b.id = {self.env.company.id} "
         # Filtro Empleado
         str_ids_employee = ''
         for i in self.employee:
             str_ids_employee = str(i.id) if str_ids_employee == '' else str_ids_employee + ',' + str(i.id)
         if str_ids_employee != '':
-            query_where = query_where + f"and c.id in ({str_ids_employee}) "
-            query_where_accumulated = query_where_accumulated + f"and b.id in ({str_ids_employee}) "
-        # Filtro Reglas Salariales
-        str_ids_rules = ''
-        for i in self.salary_rule:
-            str_ids_rules = str(i.id) if str_ids_rules == '' else str_ids_rules + ',' + str(i.id)
-        if str_ids_rules != '':
-            query_where = query_where + f"and f.id in ({str_ids_rules}) "
-            query_where_accumulated = query_where_accumulated + f"and f.id in ({str_ids_rules}) "
+            query_where = query_where + f"and a.id in ({str_ids_employee}) "
+        # Filtro Contratos
+        str_ids_contract = ''
+        for i in self.contract:
+            str_ids_contract = str(i.id) if str_ids_contract == '' else str_ids_contract + ',' + str(i.id)
+        if str_ids_contract != '':
+            query_where = query_where + f"and hc.id in ({str_ids_contract}) "
         # Filtro Sucursal
         str_ids_branch = ''
         for i in self.branch:
@@ -88,114 +66,67 @@ class hr_vacation_book(models.TransientModel):
             for i in self.env.user.branch_ids.ids:
                 str_ids_branch = str(i) if str_ids_branch == '' else str_ids_branch + ',' + str(i)
         if str_ids_branch != '':
-            query_where = query_where + f"and h.id in ({str_ids_branch}) "
-            query_where_accumulated = query_where_accumulated + f"and h.id in ({str_ids_branch}) "
+            query_where = query_where + f"and d.id in ({str_ids_branch}) "
         # Filtro Cuenta analitica
         str_ids_analytic = ''
         for i in self.analytic_account:
             str_ids_analytic = str(i.id) if str_ids_analytic == '' else str_ids_analytic + ',' + str(i.id)
         if str_ids_analytic != '':
-            query_where = query_where + f"and k.id in ({str_ids_analytic}) "
-            query_where_accumulated = query_where_accumulated + f"and k.id in ({str_ids_analytic}) "
-        # Filtro Entidad
-        str_ids_entities = ''
-        for i in self.entities:
-            str_ids_entities = str(i.id) if str_ids_entities == '' else str_ids_entities + ',' + str(i.id)
-        if str_ids_entities != '':
-            query_where = query_where + f"and l.id in ({str_ids_entities}) "
-            query_where_accumulated = query_where_accumulated + f"and 1 = 2 "
+            query_where = query_where + f"and f.id in ({str_ids_analytic}) "
     # ----------------------------------Ejecutar consulta
-        query_report = '''
-                Select liquidacion,descripcion,fecha_liquidacion,fecha_inicial,fecha_final,compania,sucursal,identificacion,empleado,ubicacion_laboral,
-                        cuenta_analitica,secuencia_contrato,categoria_regla,regla_salarial,entidad,unidades,valor_devengo,valor_deduccion,
-                         base_seguridad_social,base_parafiscales,base_prima,base_cesantias,base_intereses_cesantias,base_vacaciones,base_vacaciones_dinero
-                From (
-                Select a."number" as liquidacion,a."name" as descripcion,
-                        a.date_to as fecha_liquidacion,a.date_from as fecha_inicial,a.date_to as fecha_final,
-                        b."name" as compania,coalesce(h."name",'') as sucursal,
-                        c.identification_id as identificacion,c."name" as empleado,
-                        coalesce(i."name",'') as ubicacion_laboral, coalesce(k."name",'') as cuenta_analitica,
-                        e."sequence" as secuencia_contrato,
-                        g."name" as categoria_regla, f."name" as regla_salarial, f."sequence" as secuencia_regla,coalesce(m."name",'') as entidad,
-                        aa.quantity as unidades,
-                        case when aa.total > 0 then aa.total else 0 end as valor_devengo,
-                        case when aa.total <= 0 then aa.total else 0 end as valor_deduccion,
-                        f.base_seguridad_social,f.base_parafiscales,
-                        f.base_prima,f.base_cesantias,f.base_intereses_cesantias,f.base_vacaciones,f.base_vacaciones_dinero
-                From hr_payslip as a
-                inner join hr_payslip_line as aa on a.id = aa.slip_id
-                inner join res_company as b on a.company_id = b.id
-                inner join hr_employee as c on a.employee_id = c.id
-                inner join res_partner as d on c.address_home_id = d.id
-                inner join hr_contract as e on a.contract_id = e.id
-                inner join hr_salary_rule as f on aa.salary_rule_id = f.id
-                inner join hr_salary_rule_category as g on f.category_id = g.id
-                left join zue_res_branch as h on c.branch_id = h.id
-                left join res_partner as i on c.address_id = i.id
-                left join account_analytic_account as k on a.analytic_account_id  = k.id
-                left join hr_employee_entities as l on aa.entity_id = l.id
-                left join res_partner as m on l.partner_id = m.id
-                %s
-                UNION ALL
-                Select 'SLIP/00000' as liquidacion,'Tabla de acumulados' as descripcion,
-                        a."date" as fecha_liquidacion,a."date" as fecha_inicial,a."date" as fecha_final,
-                            c."name" as compania,coalesce(h."name",'') as sucursal,
-                        b.identification_id as identificacion,b."name" as empleado,
-                        coalesce(i."name",'') as ubicacion_laboral, coalesce(k."name",'') as cuenta_analitica,
-                        '' as secuencia_contrato,g."name" as categoria_regla, f."name" as regla_salarial, f."sequence" as secuencia_regla,'' as entidad,
-                        1 as unidades,
-                        case when a.amount > 0 then a.amount else 0 end as valor_devengo,
-                        case when a.amount <= 0 then a.amount else 0 end as valor_deduccion,
-                        f.base_seguridad_social,f.base_parafiscales,
-                        f.base_prima,f.base_cesantias,f.base_intereses_cesantias,f.base_vacaciones,f.base_vacaciones_dinero
-                from hr_accumulated_payroll as a
-                inner join hr_employee as b on a.employee_id = b.id
-                inner join res_company as c on b.company_id = c.id
-                inner join res_partner as d on b.address_home_id = d.id
-                inner join hr_salary_rule as f on a.salary_rule_id = f.id
-                inner join hr_salary_rule_category as g on f.category_id = g.id
-                left join zue_res_branch as h on b.branch_id = h.id
-                left join res_partner as i on b.address_id = i.id
-                left join account_analytic_account as k on b.analytic_account_id  = k.id
-                %s
-                ) as a
-                order by a.fecha_liquidacion,a.fecha_inicial,a.fecha_final,a.compania,a.sucursal, a.empleado, a.secuencia_regla
-                ''' % (query_where, query_where_accumulated)
+        query_report = f'''
+                        select distinct a.identification_id as cedula,a."name" as empleado,b."name" as compania, 
+                                coalesce(c."name",'') as ubicacion_laboral,coalesce(d."name",'') as sucursal, coalesce(e."name",'') as departamento,
+                                coalesce(f."name",'') as cuenta_analitica, hc.wage as salario,hc.date_start as fecha_ingreso,
+                                0 as dias_laborados,0 as dias_ausencias,0 as dias_laborados_reales,0 as dias_derecho,0 as dias_pagados, 0 as dias_adeudados
+                        from hr_employee as a 
+                        inner join res_company as b on a.company_id = b.id
+                        inner join hr_contract as hc on a.id = hc.employee_id and hc.state = 'open'
+                        left join res_partner as c on a.address_id = c.id
+                        left join zue_res_branch as d on a.branch_id = d.id
+                        left join hr_department as e on a.department_id = e.id 
+                        left join account_analytic_account as f on a.analytic_account_id = f.id   
+                        {query_where}
+                        order by a."name",b."name"
+                    '''
+
         self._cr.execute(query_report)
         result_query = self._cr.dictfetchall()
-
         # Generar EXCEL
         filename = 'Reporte libro de vacaciones'
         stream = io.BytesIO()
         book = xlsxwriter.Workbook(stream, {'in_memory': True})
-        # Columnas
-        columns = ['Cédula', 'Nombres', 'Compañía', 'Ubicación laboral', 'Seccional', 'Departamento', 'Cuenta analítica',
-                   'Salario Base', 'Fecha Ingreso', 'Días Laborados', 'Dias de vacaciones a los que tiene derecho',
-                   'Dias Totales Pagados', 'Dias de Vacaciones Adeudados']
-        sheet = book.add_worksheet('Libro de vacaciones')
         # Agregar textos al excel
         text_company = self.env.company.name
         text_title = 'Informe libro de vacaciones'
-        text_dates = 'Desde: %s a %s' % (date_from, date_to)
-        text_generate = 'Informe generado el %s' % (datetime.now())
+        text_dates = 'Fecha de corte %s' % (date_to)
+        text_generate = 'Informe generado el %s' % (datetime.now(timezone(self.env.user.tz)))
         cell_format_title = book.add_format({'bold': True, 'align': 'left'})
         cell_format_title.set_font_name('Calibri')
         cell_format_title.set_font_size(15)
         cell_format_title.set_bottom(5)
         cell_format_title.set_bottom_color('#1F497D')
         cell_format_title.set_font_color('#1F497D')
-        sheet.merge_range('A1:Y1', text_company, cell_format_title)
-        sheet.merge_range('A2:Y2', text_title, cell_format_title)
-        sheet.merge_range('A3:Y3', text_dates, cell_format_title)
         cell_format_text_generate = book.add_format({'bold': False, 'align': 'left'})
         cell_format_text_generate.set_font_name('Calibri')
         cell_format_text_generate.set_font_size(10)
         cell_format_text_generate.set_bottom(5)
         cell_format_text_generate.set_bottom_color('#1F497D')
         cell_format_text_generate.set_font_color('#1F497D')
-        sheet.merge_range('A4:Y4', text_generate, cell_format_text_generate)
         # Formato para fechas
         date_format = book.add_format({'num_format': 'dd/mm/yyyy'})
+
+        #----------------------------------Hoja 1 - Libro de vacaciones
+
+        # Columnas
+        columns = ['Cédula', 'Nombres y Apellidos', 'Compañía', 'Ubicación laboral', 'Seccional', 'Departamento',
+                   'Cuenta analítica','Salario Base', 'Fecha Ingreso', 'Días Laborados', 'Días Ausencias','Días Laborados Neto',
+                   'Días de vacaciones a los que tiene derecho','Días Totales Pagados', 'Días de Vacaciones Adeudados']
+        sheet = book.add_worksheet('Libro de vacaciones')
+        sheet.merge_range('A1:O1', text_company, cell_format_title)
+        sheet.merge_range('A2:O2', text_title, cell_format_title)
+        sheet.merge_range('A3:O3', text_dates, cell_format_title)
+        sheet.merge_range('A4:O4', text_generate, cell_format_text_generate)
         # Agregar columnas
         aument_columns = 0
         for column in columns:
@@ -205,12 +136,44 @@ class hr_vacation_book(models.TransientModel):
         aument_columns = 0
         aument_rows = 5
         for query in result_query:
+            date_start = ''
+            employee_id,identification_id = 0,0
+            days_labor,days_unpaid_absences,days_paid = 0,0,0
             for row in query.values():
                 width = len(str(row)) + 10
-                if str(type(row)).find('date') > -1:
-                    sheet.write_datetime(aument_rows, aument_columns, row, date_format)
+                # La columna 0 es Id Empleado por ende se guarda su valor en la variable employee_id
+                identification_id = row if aument_columns == 0 else identification_id
+                employee_id = self.env['hr.employee'].search([('identification_id','=',identification_id)],limit=1).id
+                # La columna 8 es Fecha Ingreso por ende se guarda su valor en la variable date_start
+                date_start = row if aument_columns == 8 else date_start
+                if aument_columns <= 8:
+                    if str(type(row)).find('date') > -1:
+                        sheet.write_datetime(aument_rows, aument_columns, row, date_format)
+                    else:
+                        sheet.write(aument_rows, aument_columns, row)
                 else:
-                    sheet.write(aument_rows, aument_columns, row)
+                    if aument_columns == 9: # Dias Laborados
+                        days_labor = self.dias360(date_start,date_end)
+                        sheet.write(aument_rows, aument_columns, days_labor)
+                    elif aument_columns == 10: # Dias Ausencia
+                        days_unpaid_absences = sum([i.number_of_days for i in self.env['hr.leave'].search(
+                            [('date_from', '>=', date_start), ('date_from', '<=', date_end),
+                             ('state', '=', 'validate'), ('employee_id', '=', employee_id),
+                             ('unpaid_absences', '=', True)])])
+                        days_unpaid_absences += sum([i.days for i in self.env['hr.absence.history'].search(
+                            [('star_date', '>=', date_start), ('star_date', '<=', date_end),
+                             ('employee_id', '=', employee_id), ('leave_type_id.unpaid_absences', '=', True)])])
+                        sheet.write(aument_rows, aument_columns, days_unpaid_absences)
+                    elif aument_columns == 11: # Días Laborados Neto
+                        sheet.write(aument_rows, aument_columns,(days_labor-days_unpaid_absences))
+                    elif aument_columns == 12: # Días de vacaciones a los que tiene derecho
+                        sheet.write(aument_rows, aument_columns,(((days_labor - days_unpaid_absences) * 15) / 360))
+                    elif aument_columns == 13: # Días Totales Pagados
+                        days_paid = sum([i.business_units + i.units_of_money for i in
+                                         self.env['hr.vacation'].search([('employee_id', '=', employee_id),('departure_date','<=',date_end)])])
+                        sheet.write(aument_rows, aument_columns,days_paid)
+                    elif aument_columns == 14: # Días de Vacaciones Adeudados
+                        sheet.write(aument_rows, aument_columns,((((days_labor - days_unpaid_absences) * 15) / 360)-days_paid))
                 # Ajustar tamaño columna
                 sheet.set_column(aument_columns, aument_columns, width)
                 aument_columns = aument_columns + 1
@@ -223,7 +186,67 @@ class hr_vacation_book(models.TransientModel):
             dict = {'header': i}
             array_header_table.append(dict)
 
-        sheet.add_table(4, 0, aument_rows, 12, {'style': 'Table Style Medium 2', 'columns': array_header_table})
+        sheet.add_table(4, 0, aument_rows, len(columns)-1, {'style': 'Table Style Medium 2', 'columns': array_header_table})
+
+        #----------------------------------Hoja 2 - Detalle del libro de vacaciones
+        query_report = f'''
+                        select distinct a.identification_id as cedula,a."name" as empleado,b."name" as compania, 
+                            hv.initial_accrual_date as causacion_inicial,hv.final_accrual_date as causacion_final,
+                            hv.departure_date as fecha_salida,hv.return_date as fecha_regreso,
+                            sum(coalesce(hv.business_units,0)) as dias_habiles,sum(coalesce(hv.value_business_days,0)) as valor_dias_habiles,
+                            sum(coalesce(hv.holiday_units,0)) as dias_festivas,sum(coalesce(hv.holiday_value,0)) as valor_dias_festivos,
+                            sum(coalesce(hv.units_of_money,0)) as dias_dinero,sum(coalesce(hv.money_value,0)) as valor_dias_dinero
+                        from hr_employee as a 
+                        inner join res_company as b on a.company_id = b.id
+                        inner join hr_contract as hc on a.id = hc.employee_id and hc.state = 'open'
+                        inner join hr_vacation as hv on a.id = hv.employee_id and hc.id = hv.contract_id and hv.departure_date <= '{date_to}' 
+                        left join res_partner as c on a.address_id = c.id
+                        left join zue_res_branch as d on a.branch_id = d.id
+                        left join hr_department as e on a.department_id = e.id 
+                        left join account_analytic_account as f on a.analytic_account_id = f.id
+                        {query_where} 
+                        group by a.identification_id,a."name",b."name",hv.initial_accrual_date,
+                        hv.final_accrual_date,hv.departure_date,hv.return_date
+                        order by a."name",b."name"
+                    '''
+        self._cr.execute(query_report)
+        result_query = self._cr.dictfetchall()
+        # Columnas
+        columns = ['Cédula', 'Nombres y Apellidos', 'Compañía',
+                   'Causación Inicial', 'Causación Final', 'Fecha Salida', 'Fecha Regreso', 'Días hábiles', 'Valor días hábiles',
+                   'Días festivos', 'Valor días festivos','Días en dinero', 'Valor días en dinero']
+        sheet_detail = book.add_worksheet('Detalle')
+        # Agregar columnas
+        aument_columns = 0
+        for column in columns:
+            sheet_detail.write(0, aument_columns, column)
+            aument_columns = aument_columns + 1
+        # Agregar query
+        aument_columns = 0
+        aument_rows = 1
+        for query in result_query:
+            for row in query.values():
+                width = len(str(row)) + 10
+                if str(type(row)).find('date') > -1:
+                    sheet_detail.write_datetime(aument_rows, aument_columns, row, date_format)
+                else:
+                    sheet_detail.write(aument_rows, aument_columns, row)
+                # Ajustar tamaño columna
+                sheet_detail.set_column(aument_columns, aument_columns, width)
+                aument_columns = aument_columns + 1
+            aument_rows = aument_rows + 1
+            aument_columns = 0
+
+        # Convertir en tabla
+        array_header_table = []
+        for i in columns:
+            dict = {'header': i}
+            array_header_table.append(dict)
+
+        sheet_detail.add_table(0, 0, aument_rows, len(columns) - 1,
+                        {'style': 'Table Style Medium 2', 'columns': array_header_table})
+
+
 
         # Guadar Excel
         book.close()

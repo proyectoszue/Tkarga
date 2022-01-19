@@ -10,25 +10,28 @@
             <field name="use_date_range">True</field>
             <field name="number_next_actual">1</field>
             <field name="implementation">standard</field>
-        </record> 
+        </record>
 
         <!-- Crear record rule para filtrar las sucursales - Contratos -->
         <record id="rule_employee_contract_zue_res_branch" model="ir.rule">
             <field name="name">Permisos sucursales contratos empleados</field>
             <field name="model_id" ref="model_hr_contract"/>
-            <field name="domain_force">['|',('employee_id.branch_id','in',user.branch_ids.ids),('employee_id.branch_id','=',False)]</field>
+            <field name="domain_force">
+                ['|',('employee_id.branch_id','in',user.branch_ids.ids),('employee_id.branch_id','=',False)]
+            </field>
         </record>
 
-        <!-- Formulario de contratos - ajustes -->    
+        <!-- Formulario de contratos - ajustes -->
         <record id="view_zue_hr_employee_form_contract" model="ir.ui.view">
             <field name="name">hr.contract.zue.hr.employee.form.inherit</field>
             <field name="model">hr.contract</field>
             <field name="priority">20</field>
             <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//form[1]/header[1]/field[@name='state']" position="before">                    
+                <xpath expr="//form[1]/header[1]/field[@name='state']" position="before">
                     <button string="Activar" name="action_state_open" states="draft" type="object"/>
-                    <button string="Cancelar" name="action_state_cancel" type="object"/> 
+                    <button string="Cancelar" name="action_state_cancel" type="object"/>
+                    <button string="Certificado Laboral" name="generate_labor_certificate" type="object"/>
                 </xpath>
                 <xpath expr="//form[1]/header[1]/field[@name='state']" position="attributes">
                     <attribute name="attrs">{}</attribute>
@@ -43,8 +46,8 @@
                     <attribute name="attrs">{"invisible": [["view_inherit_employee","=",True]]}</attribute>
                 </xpath>
                 <xpath expr="//field[@name='department_id']" position="after">
-                    <field name="sequence" force_save="1" readonly="1"/>                    
-                    <field name="contract_type"/>                    
+                    <field name="sequence" force_save="1" readonly="1"/>
+                    <field name="contract_type"/>
                     <field name="modality_salary"/>
                     <field name="code_sena"/>
                     <field name="type_employee" invisible="1"/>
@@ -53,19 +56,21 @@
                     <field name="risk_id" required="1"/>
                 </xpath>
                 <xpath expr="//field[@name='trial_date_end']" position="after">
-                    <field name="retirement_date"/>                                        
+                    <field name="retirement_date"/>
+                </xpath>
+                <xpath expr="//label[@for='wage']" position="before">
+                    <field name="change_wage_ids">
+                        <tree string="Cambios salario basico" editable="top">
+                            <field name="date_start" required="1"/>
+                            <field name="wage" required="1"/>
+                        </tree>
+                    </field>
+                </xpath>
+                <xpath expr="//div[@name='wage']/field[@name='wage']" position="attributes">
+                    <attribute name="readonly">True</attribute>
+                    <attribute name="force_save">True</attribute>
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">
-                    <page string="Cambios salario" name="cambio_salario">
-                        <group>
-                            <field name="change_wage_ids" nolabel="1" force_save="True" readonly="1">
-                                <tree string="Cambios salario basico">
-                                    <field name="date_final"/>
-                                    <field name="wage"/>
-                                </tree>
-                            </field>
-                        </group>
-                    </page>
                     <page string="Devengos &amp; Deducciones" name="dev_and_ded">
                         <group>
                             <field name="concepts_ids" nolabel="1" context="{'default_type_employee': type_employee}">
@@ -78,12 +83,14 @@
                                     <field name="date_start"/>
                                     <!-- <field name="date_end"/> -->
                                     <field name="partner_id"/>
-                                    <field name="state"/>                                    
+                                    <field name="state"/>
                                 </tree>
                                 <form>
                                     <header>
-                                        <button name="change_state_done" type="object" states="draft" string="Aprobar" class="oe_highlight"/>
-                                        <button name="change_state_cancel" type="object" states="done" string="Cancelar / Finalizar" class="oe_highlight"/>                                        
+                                        <button name="change_state_done" type="object" states="draft" string="Aprobar"
+                                                class="oe_highlight"/>
+                                        <button name="change_state_cancel" type="object" states="done"
+                                                string="Cancelar / Finalizar" class="oe_highlight"/>
                                         <field name="state" widget="statusbar"/>
                                     </header>
                                     <sheet string="Deducciones o Devengos, conceptos de nómina">
@@ -99,19 +106,19 @@
                                                 <field name="date_start"/>
                                                 <field name="date_end"/>
                                                 <field name="attached_name" invisible="1"/>
-                                                <field name="attached" widget="binary"/>                                                
+                                                <field name="attached" widget="binary"/>
                                             </group>
                                             <group string="Entidades">
-                                                <field name="partner_id"/>                                                   
+                                                <field name="partner_id"/>
                                                 <field name="embargo_judged"/>
                                                 <field name="embargo_process"/>
                                             </group>
-                                        </group>                                        
+                                        </group>
                                         <group col="4">
                                             <field name="detail" colspan="4"/>
                                         </group>
                                     </sheet>
-                                </form>                                
+                                </form>
                             </field>
                         </group>
                     </page>
@@ -163,8 +170,10 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="change_state_done" type="object" states="draft" string="Aprobar" class="oe_highlight"/>
-                        <button name="change_state_cancel" type="object" states="done" string="Cancelar / Finalizar" class="oe_highlight"/>
+                        <button name="change_state_done" type="object" states="draft" string="Aprobar"
+                                class="oe_highlight"/>
+                        <button name="change_state_cancel" type="object" states="done" string="Cancelar / Finalizar"
+                                class="oe_highlight"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>

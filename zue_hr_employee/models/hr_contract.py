@@ -2,24 +2,27 @@
 from odoo import models, fields, api, _
 from datetime import datetime, timedelta, date
 from odoo.exceptions import UserError, ValidationError
-import time
-
-from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+from pytz import timezone
+import time
+import base64
 
 class hr_contract_change_wage(models.Model):
     _name = 'hr.contract.change.wage'
     _description = 'Cambios salario basico'    
-    _order = 'date_final desc'
+    _order = 'date_start'
 
-    date_final = fields.Date('Fecha final')
-    wage = fields.Float('Salario basico', help='Seguimento de los cambios en el salario basico', required=True)
+    date_start = fields.Date('Fecha inicial')
+    wage = fields.Float('Salario basico', help='Seguimento de los cambios en el salario basico')
     contract_id = fields.Many2one('hr.contract', 'Contrato', required=True, ondelete='cascade')
-    
-    _defaults = {
-                 'date_final': lambda *a: time.strftime('%Y-%m-%d')
-                 }
-    _sql_constraints = [('change_wage_uniq', 'unique(contract_id, date_final, wage)', 'Ya existe un cambio de salario igual a este')]
+
+    _sql_constraints = [('change_wage_uniq', 'unique(contract_id, date_start, wage)', 'Ya existe un cambio de salario igual a este')]
+
+    @api.constrains('date_start')
+    def _check_date_start(self):
+        for record in self:
+            if record.date_start > datetime.now(timezone(self.env.user.tz)).date():
+                raise UserError(_('La fecha inicial del salario no puede ser mayor que la fecha actual, por favor verificar.'))
 
 #Conceptos de nomina
 class hr_contract_concepts(models.Model):
@@ -68,6 +71,7 @@ class hr_contract_concepts(models.Model):
         self.state = 'cancel'        
 
 #Deducciones para retención en la fuente
+
 class hr_contract_deductions_rtf(models.Model):
     _name = 'hr.contract.deductions.rtf'
     _description = 'Reglas salariales para retención en la fuente'
@@ -208,31 +212,35 @@ class hr_contract(models.Model):
     def action_state_cancel(self):
         self.write({'state':'cancel'})
 
+    @api.depends('change_wage_ids')
+    @api.onchange('change_wage_ids')
+    def change_wage(self):
+        for record in self:
+            for change in sorted(record.change_wage_ids, key=lambda x: x.date_start):
+                record.wage = change.wage
+
     @api.model
     def create(self, vals):
         vals['sequence'] = self.env['ir.sequence'].get('hr.contract.seq') or ' '
         obj_contract = super(hr_contract, self).create(vals)
-        #Registrar salario en el historico
-        if obj_contract.wage:
-            data = {'wage': obj_contract.wage,
-                    'contract_id': obj_contract.id}                            
-            self.env['hr.contract.change.wage'].create(data)
         return obj_contract
 
-    def write(self, vals):
-        #Registrar cambio de salario en el historico
-        wage_ant = self.wage
-        hr_contract_change_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', self.id),('wage', '=', self.wage),('date_final','=',False)])
-        obj_contract = super(hr_contract, self).write(vals)    
-        if hr_contract_change_wage and wage_ant!=self.wage:
-            hr_contract_change_wage.write({'date_final':date.today()})
-            data = {'wage': self.wage,
-                    'contract_id': self.id}                
-            self.env['hr.contract.change.wage'].create(data)
-        return obj_contract
-    
     #Metodos para el reporte de certificado laboral
-    
+
+    def generate_labor_certificate(self):
+        ctx = self.env.context.copy()
+        ctx.update({'default_contract_id': self.id, 'default_date_generation': fields.Date.today()})
+
+        return {
+            'type': 'ir.actions.act_window',
+            'name': 'Certificado laboral',
+            'res_model': 'hr.labor.certificate.history',
+            'domain': [],
+            'view_mode': 'form',
+            'target':'new',
+            'context': ctx
+        }
+
     def get_contract_type(self):
         if self.contract_type:
             model_type = dict(self._fields['contract_type'].selection).get(self.contract_type)
@@ -302,7 +310,53 @@ class hr_contract(models.Model):
 
         return res
         
-        
+#Historico generación de certificados laborales
+class hr_labor_certificate_history(models.Model):
+    _name = 'hr.labor.certificate.history'
+    _description = 'Historico de certificados laborales generados'
+    _order = 'contract_id,date_generation'
+
+    contract_id = fields.Many2one('hr.contract', 'Contrato', required=True, ondelete='cascade')
+    sequence = fields.Char(string="Secuencia", default="/", readonly=True)
+    date_generation = fields.Date('Fecha generación', required=True)
+    info_to = fields.Char(string='Dirigido a', required=True)
+    pdf = fields.Binary(string='Certificado')
+    pdf_name = fields.Char(string='Filename Certificado')
+
+    _sql_constraints = [
+        ('labor_certificate_history_uniq', 'unique(contract_id, sequence)', 'Ya existe un certificado con esta secuencia, por favor verificar.')]
+
+    def name_get(self):
+        result = []
+        for record in self:
+            result.append((record.id, "Certificado {} de {}".format(record.sequence,record.contract_id.name)))
+        return result
+
+    @api.model
+    def create(self, vals):
+        vals['sequence'] = self.env['ir.sequence'].get('hr.labor.certificate.history.seq') or ' '
+        obj_contract = super(hr_labor_certificate_history, self).create(vals)
+        return obj_contract
+
+    def generate_report(self):
+        datas = {
+            'ids': self.contract_id.ids,
+            'model': 'hr.labor.certificate.history'
+        }
+
+        report_name = 'zue_hr_employee.report_certificacion_laboral'
+        pdf = self.env.ref('zue_hr_employee.report_certificacion_laboral_action',False).render_qweb_pdf(self.id)[0]
+        pdf = base64.b64encode(pdf)
+        self.pdf = base64.encodestring(pdf)
+        self.pdf_name = f'Certificado - {self.contract_id.name} - {self.sequence}'
+
+        return {
+            'type': 'ir.actions.report',
+            'report_name': report_name,
+            'report_type': 'qweb-pdf',
+            'datas': datas,
+            # 'context': self._context
+        }
 
 
 

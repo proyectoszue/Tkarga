@@ -628,8 +628,9 @@ class Hr_payslip(models.Model):
                                     #Cant de quincenas involucradas en la liquidación de vacaciones que afecten mas de 5 días
                                     cant_fortnight = 0
                                     for vac_days in vac_months:
-                                        cant_fortnight += 1 if vac_days_for_month.get(vac_days).get('days_fifteen') > 5 else 0
-                                        cant_fortnight += 1 if vac_days_for_month.get(vac_days).get('days_thirty') > 5 else 0
+                                        if vac_days_for_month.get(vac_days) != None:
+                                            cant_fortnight += 1 if vac_days_for_month.get(vac_days).get('days_fifteen') > 5 else 0
+                                            cant_fortnight += 1 if vac_days_for_month.get(vac_days).get('days_thirty') > 5 else 0
 
                                     if cant_fortnight > 1:
                                         amount = amount * cant_fortnight if not rule.modality_value in ['diario','diario_efectivo'] and rule.type_concept != 'ley' else amount
@@ -713,7 +714,7 @@ class Hr_payslip(models.Model):
                         if (inherit_contrato_dev != 0 or inherit_contrato_ded != 0) and self.novelties_payroll_concepts == False and not rule.code in ['TOTALDEV','TOTALDED','NET']:
                             amount, qty, rate = 0,1.0,100
                     else:
-                        if (inherit_contrato_dev != 0 or inherit_contrato_ded != 0) and self.settle_payroll_concepts == False and not rule.code in ['TOTALDEV','TOTALDED','NET']:
+                        if (inherit_contrato_dev != 0 or inherit_contrato_ded != 0) and self.settle_payroll_concepts == False and rule.type_concept != 'ley' and not rule.code in ['TOTALDEV','TOTALDED','NET']:
                             amount, qty, rate = 0,1.0,100
 
                     # PRIMA SOLAMENTE DEDUCCIONES QUE ESTEN CONFIGURADAS

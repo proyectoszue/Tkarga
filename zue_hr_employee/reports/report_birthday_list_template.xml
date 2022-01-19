@@ -34,7 +34,8 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                <tr t-foreach="o.get_info_birthday(m)" t-as="info" style="font-style: normal; font-size: 16px;">
+                                <t t-set="total_employees" t-value="0"/>
+                                <tr t-foreach="sorted(o.get_info_birthday(m), key=lambda x: x.birthday.day)" t-as="info" style="font-style: normal; font-size: 16px;">
                                     <td>
                                         <span t-esc="info.company_id.name"/>
                                     </td>
@@ -45,7 +46,16 @@
                                         <span t-esc="info.name"/>
                                     </td>
                                     <td>
-                                        <span t-esc="o.get_date_text(info.birthday)"/>
+                                        <span t-esc="o.get_date_text(info.birthday,0,1)"/>
+                                        <t t-set="total_employees" t-value="total_employees + 1"/>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-right">
+                                        <b>TOTAL <span t-esc="o.get_name_month(m)"/></b>
+                                    </td>
+                                    <td>
+                                        <span t-esc="total_employees"/>
                                     </td>
                                 </tr>
                             </tbody>
