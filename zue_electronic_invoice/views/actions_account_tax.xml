@@ -7,7 +7,7 @@
 			<field name="view_mode">tree,form</field>
 		</record>
 
-        <record model="ir.ui.view" id="zue_account.list_account_tax_type_action">
+        <record model="ir.ui.view" id="zue_electronic_invoice.list_account_tax_type_action">
 			<field name="name">zue list account tax type</field>
 			<field name="model">account.tax.type</field>
 			<field name="arch" type="xml">
@@ -19,7 +19,7 @@
 			</field>
 		</record>
 
-        <record model="ir.ui.view" id="zue_account.form_account_tax_type_action">
+        <record model="ir.ui.view" id="zue_electronic_invoice.form_account_tax_type_action">
 			<field name="name">zue form account tax type</field>
 			<field name="model">account.tax.type</field>
 			<field name="arch" type="xml">
@@ -37,8 +37,8 @@
 			</field>
 		</record>
 
-		<record id="view_zue_account_form_account_tax" model="ir.ui.view">
-			<field name="name">zue_account.account_tax_inherit</field>
+		<record id="view_zue_electronic_invoice_form_account_tax" model="ir.ui.view">
+			<field name="name">zue_electronic_invoice.account_tax_inherit</field>
 			<field name="model">account.tax</field>
 			<field name="priority">20</field>
 			<field name="inherit_id" ref="account.view_tax_form"/>

@@ -1,0 +1,26 @@
+<odoo>
+    <data>
+		<record id="view_zue_electronic_invoice_form_account_move" model="ir.ui.view">
+			<field name="name">zue_electronic_invoice.account_move_inherit</field>
+			<field name="model">account.move</field>
+			<field name="priority">20</field>
+			<field name="inherit_id" ref="account.view_move_form"/>
+			<field name="arch" type="xml">
+                <xpath expr="//button[@name='preview_invoice']" position="replace">
+                    <button name="get_xml" type="object" string="Generar Archivo"/>
+                    <button name="send_xml_FE" type="object" string="Enviar Archivo FE"/>
+                    <button name="check_status_FE" type="object" string="Comprobar Estado FE"/>
+                    <button name="download_pdf_file_FE" type="object" string="Descargar PDF FE"/>
+                    <button name="get_cufe_FE" type="object" string="Obtener CUFE"/>
+                </xpath>
+                <xpath expr="//group[@id='header_right_group']" position="after">
+                    <group id="FE_ZUE" attrs="{'invisible': [('type', 'not in', ['out_invoice', 'out_refund'])]}">
+                        <field name="cufe_cude_ref"/>
+                        <field name="fe_sent_name"/>
+                        <field name="fe_status"/>
+                    </group>
+                </xpath>
+			</field>
+		</record>
+    </data>
+</odoo>
