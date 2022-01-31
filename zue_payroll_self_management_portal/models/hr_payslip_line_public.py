@@ -33,3 +33,8 @@ class HrPayslipWorkedDaysPublic(models.Model):
                     %s
                 FROM hr_payslip_line payslip_line
             )""" % (self._table, self._get_fields()))
+
+    def count_category_ids(self):
+        count_category_ids = self.sudo().env['hr.payslip.line.public'].search_count([('slip_id','=',int(self.slip_id)),('category_id','=',int(self.category_id))])            
+        return count_category_ids
+        

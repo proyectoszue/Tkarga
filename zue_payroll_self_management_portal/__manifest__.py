@@ -34,6 +34,7 @@
         'reports/payroll_vouchers.xml',
         'reports/portal_payslip.xml',
         'security/ir.model.access.csv',
+        'data/hr_permissions_portal.xml'
     ],
     'bootstrap': True,
 }
