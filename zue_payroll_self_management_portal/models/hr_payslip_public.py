@@ -40,7 +40,7 @@ class HrPayslipPublic(models.Model):
 
     #Detalle nomina
     def line_ids(self):
-        obj_line_ids = self.sudo().env['hr.payslip.line.public'].search([('slip_id','=',self.id)])
+        obj_line_ids = self.sudo().env['hr.payslip.line.public'].search([('slip_id','=',self.id)])            
         return obj_line_ids
         
         

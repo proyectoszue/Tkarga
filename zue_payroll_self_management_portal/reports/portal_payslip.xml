@@ -123,9 +123,9 @@
                                     <table class="table table-sm table-bordered">
                                         <thead>
                                             <tr class="highlight">
+                                                <th>TIPO</th>
                                                 <th>CONCEPTO</th>
                                                 <th>ENTIDAD</th>
-                                                <th>TIPO</th>
                                                 <th>CANT.</th>
                                                 <th>DEVENGADOS</th>
                                                 <th>DEDUCIDOS</th>
@@ -136,6 +136,8 @@
                                             <t t-set="category_name" t-value=""></t>
                                             <t t-set="qty_category" t-value="0"></t>
                                             <t t-set="value_category" t-value="0"></t>
+                                            <t t-set="count_category" t-value="0"></t>
+                                            <t t-set="recno_category" t-value="0"></t>
 
                                             <tr t-foreach="o.line_ids()" t-as="line">
                                                 <span t-if="not line.category_id.name in ['Neto','Bruto']">
@@ -176,6 +178,20 @@
                                                     </t>
                                                     <t t-if="line.category_id.group_payroll_voucher != True">
                                                         <t t-if="line.code != 'NET'">
+                                                            <t t-set="count_category" t-value="line.count_category_ids()"></t>
+                                                            <t t-if="recno_category == 0">
+                                                                <t t-set="recno_category" t-value="count_category"></t>
+                                                            </t>
+                                                            <t t-if="count_category == recno_category">
+                                                                <td style="width: 20%" t-att-rowspan="count_category">
+                                                                    <span t-field="line.category_id.name"/>
+                                                                </td>
+                                                                <t t-set="recno_category" t-value="recno_category - 1"></t>
+                                                                
+                                                            </t>
+                                                            <t t-else="">
+                                                                <t t-set="recno_category" t-value="recno_category - 1"></t>
+                                                            </t>
                                                             <td style="width: 20%">
                                                                 <span t-field="line.name"/>
                                                             </td>
@@ -189,9 +205,6 @@
                                                                     <span t-field="line.entity_id.name"/>
                                                                 </td>
                                                             </t>
-                                                            <td style="width: 20%">
-                                                                <span t-field="line.category_id.name"/>
-                                                            </td>
                                                             <td style="width: 7%">
                                                                 <span t-field="line.quantity"/>
                                                             </td>
