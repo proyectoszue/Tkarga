@@ -259,9 +259,12 @@ class hr_employee(models.Model):
                 obj_contract += self.env['hr.contract'].search([('employee_id', '=', record.id), ('state', '=', 'close')],limit=1)
             return obj_contract
 
-    def get_age_for_date(self,o_date):
-        today = date.today()
-        return today.year - o_date.year - ((today.month, today.day) < (o_date.month, o_date.day))
+    def get_age_for_date(self, o_date):
+        if o_date:
+            today = date.today()
+            return today.year - o_date.year - ((today.month, today.day) < (o_date.month, o_date.day))
+        else:
+            return 0
 
 
             
