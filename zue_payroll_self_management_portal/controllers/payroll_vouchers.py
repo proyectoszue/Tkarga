@@ -55,7 +55,7 @@ class ZuePayrollVouchersPortal(Controller):
         report_name = 'Nómina'
 
         obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)], limit=1)
-        payslips = request.env['hr.payslip.public'].search([('state','=','verify'),('employee_id','=',obj_employee.id),('date_from','>=',date_start),('date_to','<=',date_end)])
+        payslips = request.env['hr.payslip.public'].search([('state','=','done'),('employee_id','=',obj_employee.id),('date_from','>=',date_start),('date_to','<=',date_end)])
         
         pdf_writer = PdfFileWriter()
 
