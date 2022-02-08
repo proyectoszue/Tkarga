@@ -4,8 +4,9 @@
         <menuitem name="Actualizar entradas de trabajo" id="zue_hr_payroll.menu_payroll_refresh_work_entry" parent="hr_payroll.menu_hr_payroll_work_entries_root" action="action_hr_work_entry_refresh" sequence="60"/> 
         <!-- Menu TIPOS HORAS EXTRA -->
         <menuitem name="Tipos horas extra" id="zue_hr_employee.menu_type_overtime" parent="hr_payroll.menu_hr_payroll_configuration" action="hr_type_overtime_action"/>                        
-        <!-- Menu Auxilio de vacaciones -->
-        <menuitem name="Auxilio de vacaciones" id="zue_hr_employee.menu_assistance_vacation_alliancet" parent="hr_payroll.menu_hr_payroll_configuration" action="action_hr_assistance_vacation_alliancet"/>                        
+        <!-- Menu Auxilio de vacaciones AlianzaT
+        <menuitem name="Auxilio de vacaciones" id="zue_hr_employee.menu_assistance_vacation_alliancet" parent="hr_payroll.menu_hr_payroll_configuration" action="action_hr_assistance_vacation_alliancet"/>
+        -->
         <!-- Menu NOVEDADES -->
         <menuitem name="Novedades" id="zue_hr_payroll.menu_payroll_zue_novelties" parent="hr_payroll.menu_hr_payroll_root" sequence="60"/>
             <!-- Menu POR CONCEPTOS DIFERENTES -->
