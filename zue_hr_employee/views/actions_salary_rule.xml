@@ -14,7 +14,7 @@
                 </xpath>
                 <xpath expr="//field[@name='sequence']" position="after">
                     <field name="type_concept"/>
-                    <field name="aplicar_cobro" attrs="{'invisible': [('type_concept', '!=', 'ley')]}"/>                                        
+                    <field name="aplicar_cobro" attrs="{'invisible': [('type_concept', 'not in', ['ley','novedad'])]}"/>
                 </xpath>
                 <xpath expr="//field[@name='appears_on_payslip']" position="after">
                     <field name="types_employee" widget="many2many_tags"/>

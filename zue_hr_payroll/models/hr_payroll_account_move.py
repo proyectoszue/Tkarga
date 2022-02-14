@@ -76,7 +76,10 @@ class Hr_payslip(models.Model):
                 line_ids = []
                 debit_sum = 0.0
                 credit_sum = 0.0
-                date = slip.date_to  # slip_date
+                if slip.struct_id.process in ['vacaciones','contrato']:
+                    date = slip.date_from  # slip_date
+                else:
+                    date = slip.date_to  # slip_date
                 move_dict = {
                     'narration': '',
                     'ref': date.strftime('%B %Y'),

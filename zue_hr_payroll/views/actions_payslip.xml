@@ -46,6 +46,9 @@
                             <field name="date_vacaciones" attrs="{'invisible':[('struct_process', '!=', 'contrato')], 'required':[('struct_process', '=', 'contrato')], 'readonly':[('state', '=', 'done')]}"/>
                         </group>
                     </group>
+                    <group attrs="{'invisible':[('struct_process', 'not in', ['cesantias','intereses_cesantias','contrato'])]}">
+                        <field name="severance_payments_reverse" attrs="{'invisible':[('struct_process', 'not in', ['cesantias','intereses_cesantias','contrato'])]}" widget="many2many_tags"/>
+                    </group>
                     <group attrs="{'invisible':[('struct_process', '!=', 'vacaciones')]}" style="border-style:solid; padding:10px">
                         <group colspan="4">
                             <field name="paid_vacation_ids" attrs="{'invisible':[('struct_process', '!=', 'vacaciones')], 'readonly':[('state', '=', 'done')]}">
@@ -141,7 +144,7 @@
             <field name="inherit_id" ref="hr_payroll.hr_payslip_run_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//form[1]/header[1]/button[2]" position="after">
-                    <button name="restart_payroll_batch" type="object" string="Reiniciar" states="verify"/>
+                    <button name="restart_payroll_batch" type="object" string="Reiniciar" states="verify,draft"/>
                     <button name="restart_payroll_account_batch" type="object" string="Reversar contabilización" states="close"/>
                     <button name="restart_full_payroll_batch" type="object" string="Reversar totalmente" states="close"/>
                     <button name="generate_settlement_report_entity" type="object" string="Reporte por entidad" states="verify,close"/>

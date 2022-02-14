@@ -44,7 +44,9 @@ class AccountBalancePartnerFilter(models.TransientModel):
                                         ('11', 'Noviembre'),
                                         ('12', 'Diciembre')        
                                     ], string='Mes 2')
+    excluded_diaries_ids = fields.Many2many('account.journal', string="Diarios Excluidos")
     company_id = fields.Many2one('res.company', string='Compañia')
+
     
     def name_get(self):
         result = []
@@ -69,9 +71,13 @@ class AccountBalancePartnerFilter(models.TransientModel):
             company_id = 0
         else:
             company_id = self.company_id.id
-        
+
+        excluded_diaries = ''
+        excluded_diaries = ",".join(map(str,self.excluded_diaries_ids.ids))
+
         ctx = self.env.context.copy()
-        ctx.update({'x_type':self.x_type_filter,'x_ano':self.x_ano_filter,'x_month':self.x_month_filter,'x_ano_two':self.x_ano_filter_two,'x_month_two':self.x_month_filter_two,'company_id':company_id})
+        ctx.update({'x_type':self.x_type_filter,'x_ano':self.x_ano_filter,'x_month':self.x_month_filter,'x_ano_two':self.x_ano_filter_two,'x_month_two':self.x_month_filter_two,'company_id':company_id,'excluded_diaries_ids':excluded_diaries})
+        # ctx.update({'x_type':self.x_type_filter,'x_ano':self.x_ano_filter,'x_month':self.x_month_filter,'x_ano_two':self.x_ano_filter_two,'x_month_two':self.x_month_filter_two,'company_id':company_id,})
         self.env['account.balance.partner.report'].with_context(ctx).init()
         return {
             'type': 'ir.actions.act_window',
@@ -134,7 +140,9 @@ class AccountBalancePartnerReport(models.Model):
     def _from(self,date_filter):
         return '''
             FROM account_move_line B
-            LEFT JOIN res_partner C on B.partner_id = C.id            
+            LEFT JOIN res_partner C on B.partner_id = C.id 
+            LEFT JOIN account_move AM on AM.id = b.move_id
+            LEFT JOIN account_journal AJ on AJ.id = AM.journal_id            
             LEFT JOIN (
                             SELECT Cuenta_Nivel_1,Cuenta_Nivel_2,
                                     case when Cuenta_Nivel_2 = Cuenta_Nivel_3 then Cuenta_Nivel_4 else Cuenta_Nivel_3 end as Cuenta_Nivel_3,
@@ -164,11 +172,18 @@ class AccountBalancePartnerReport(models.Model):
         ''' % (date_filter,)
 
     @api.model
-    def _where(self,date_filter,company_id):
+    def _where(self,date_filter,company_id,excluded_diaries_ids):
+    # def _where(self,date_filter,company_id):
+        filter_diaries = ''
+        if excluded_diaries_ids:
+            filter_diaries = 'and COALESCE(AJ.id,0) not in ('+ excluded_diaries_ids +')'
+
         return '''
             WHERE  B.parent_state = 'posted' and B."date" < '%s'
-            and COALESCE(B.company_id,0) = case when %s = 0 then COALESCE(B.company_id,0) else %s end                                
-        '''  % (date_filter,company_id,company_id)
+            and COALESCE(B.company_id,0) = case when %s = 0 then COALESCE(B.company_id,0) else %s end  
+            %s
+        '''  % (date_filter,company_id,company_id,filter_diaries)
+        #'''  % (date_filter,company_id,company_id)
 
     @api.model
     def _group_by(self):
@@ -188,6 +203,7 @@ class AccountBalancePartnerReport(models.Model):
     def init(self):
         
         #Obtener filtro
+        # if self.env.context.get('x_type', False) and self.env.context.get('x_ano', False) and self.env.context.get('x_month', False):
         if self.env.context.get('x_type', False) and self.env.context.get('x_ano', False) and self.env.context.get('x_month', False):
             x_type = self.env.context.get('x_type') 
             x_ano = self.env.context.get('x_ano')
@@ -195,6 +211,7 @@ class AccountBalancePartnerReport(models.Model):
             x_ano_two = self.env.context.get('x_ano_two')
             x_month_two = int(self.env.context.get('x_month_two'))
             company_id = self.env.context.get('company_id')
+            excluded_diaries_ids = self.env.context.get('excluded_diaries_ids')
         else:
             x_type = '1'
             x_ano = 2020
@@ -202,6 +219,8 @@ class AccountBalancePartnerReport(models.Model):
             x_ano_two = 2020
             x_month_two = 1
             company_id = 0
+            excluded_diaries_ids = False
+
         
         #Armar fecha dependiendo el tipo seleccionado
         date_filter = ''
@@ -257,7 +276,8 @@ class AccountBalancePartnerReport(models.Model):
                 %s %s %s %s
             )
         ''' % (
-            self._table, self._select(date_filter), self._from(date_filter), self._where(date_filter_next,company_id), self._group_by()
+            # self._table, self._select(date_filter), self._from(date_filter), self._where(date_filter_next,company_id), self._group_by()
+            self._table, self._select(date_filter), self._from(date_filter), self._where(date_filter_next,company_id,excluded_diaries_ids), self._group_by()
         ))
 
     

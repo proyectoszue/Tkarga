@@ -121,7 +121,7 @@ class Hr_payslip(models.Model):
                         dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_prima), ('end_date', '<=', self.date_liquidacion),('employee_id', '=', self.employee_id.id),('leave_type_id.unpaid_absences', '=', True)])])
                     dias_liquidacion = dias_trabajados - dias_ausencias
 
-                    acumulados_promedio = (amount/dias_liquidacion) * 30 # dias_trabajados
+                    acumulados_promedio = (amount/dias_trabajados) * 30 # dias_liquidacion
                     wage = contract.wage
                     auxtransporte = annual_parameters.transportation_assistance_monthly
                     auxtransporte_tope = annual_parameters.top_max_transportation_assistance

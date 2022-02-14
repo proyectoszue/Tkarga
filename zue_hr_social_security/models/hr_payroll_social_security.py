@@ -216,7 +216,7 @@ class hr_payroll_social_security(models.Model):
                                             dict_social_security['BaseSeguridadSocial'].dict['DIAS_'+line.salary_rule_id.category_id.code] = dict_social_security['BaseSeguridadSocial'].dict.get('DIAS_'+line.salary_rule_id.category_id.code, 0) + line.quantity
                                         else:
                                             if payslip.date_from >= date_start and payslip.date_from <= date_end:
-                                                if line.code == 'BASIC002' and contract_id.modality_salary == 'integral':
+                                                if line.salary_rule_id.category_id.code == 'BASIC' and contract_id.modality_salary == 'integral':
                                                     value = (line.total*annual_parameters.porc_integral_salary)/100
                                                     dict_social_security['BaseSeguridadSocial'].dict['BASE'] = dict_social_security['BaseSeguridadSocial'].dict.get('BASE', 0) + value
                                                 else:
@@ -229,7 +229,7 @@ class hr_payroll_social_security(models.Model):
                                             dict_social_security['BaseParafiscales'].dict['DIAS_'+line.salary_rule_id.category_id.code] = dict_social_security['BaseParafiscales'].dict.get('DIAS_'+line.salary_rule_id.category_id.code, 0) + line.quantity
                                         else:
                                             if payslip.date_from >= date_start and payslip.date_from <= date_end:
-                                                if line.code == 'BASIC002' and contract_id.modality_salary == 'integral':
+                                                if line.salary_rule_id.category_id.code == 'BASIC' and contract_id.modality_salary == 'integral':
                                                     value = (line.total*annual_parameters.porc_integral_salary)/100
                                                     dict_social_security['BaseParafiscales'].dict['BASE'] = dict_social_security['BaseParafiscales'].dict.get('BASE', 0) + value
                                                 else:

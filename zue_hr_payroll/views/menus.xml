@@ -4,7 +4,7 @@
         <menuitem name="Actualizar entradas de trabajo" id="zue_hr_payroll.menu_payroll_refresh_work_entry" parent="hr_payroll.menu_hr_payroll_work_entries_root" action="action_hr_work_entry_refresh" sequence="60"/> 
         <!-- Menu TIPOS HORAS EXTRA -->
         <menuitem name="Tipos horas extra" id="zue_hr_employee.menu_type_overtime" parent="hr_payroll.menu_hr_payroll_configuration" action="hr_type_overtime_action"/>                        
-        <!-- Menu Auxilio de vacaciones AlianzaT
+        <!-- Menu Auxilio de vacaciones
         <menuitem name="Auxilio de vacaciones" id="zue_hr_employee.menu_assistance_vacation_alliancet" parent="hr_payroll.menu_hr_payroll_configuration" action="action_hr_assistance_vacation_alliancet"/>
         -->
         <!-- Menu NOVEDADES -->
@@ -53,5 +53,7 @@
         <menuitem name="Comprobantes de nómina" id="zue_hr_payroll.menu_payroll_voucher_sending" parent="hr_payroll.menu_hr_payroll_payslips" action="action_hr_voucher_sending" sequence="3"/>
         <!-- Menu Acumulados de nómina -->
         <menuitem name="Acumulados" id="zue_hr_payroll.menu_payroll_accumulated" parent="hr_payroll.menu_hr_payroll_payslips" action="action_hr_accumulated_payroll" sequence="4"/>
+        <!-- Menu diagnosticos Ausencias -->
+        <menuitem name="Diagnosticos Ausencias" id="zue_hr_payroll.menu_hr_leave_diagnostic" parent="hr_payroll.menu_hr_payroll_configuration" action="action_hr_leave_diagnostic"/>
     </data>
 </odoo>

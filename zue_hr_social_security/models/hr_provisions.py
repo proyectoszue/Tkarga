@@ -112,9 +112,9 @@ class hr_executing_provisions(models.Model):
                         #Obtener fecha vacaciones
                         date_vacation = contract.date_start
                         if retirement_date == False:
-                            obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<',date_end)])
+                            obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<',date_end),('departure_date','<=',date_end)])
                         else:
-                            obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date)])
+                            obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date),('departure_date','<=',retirement_date)])
                         if obj_vacation:
                             for history in sorted(obj_vacation, key=lambda x: x.final_accrual_date):
                                 date_vacation = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_vacation else date_vacation             
@@ -183,7 +183,7 @@ class hr_executing_provisions(models.Model):
                                      ('executing_provisions_id.date_end', '=', date_month_ant),
                                      ('provision', '=', provision), ('contract_id', '=', contract.id)])
                                 value_balance = sum([i.current_payable_value for i in obj_provisions.browse(executing_provisions.ids)])
-
+                                amount_ant = sum([i.amount for i in obj_provisions.browse(executing_provisions.ids)])
                                 #Obtener pagos realizados en el mes
                                 code_filter = [provision.upper()] if provision != 'vacaciones' else ['VACCONTRATO','VACDISFRUTADAS','VACREMUNERADAS']
 
@@ -219,7 +219,18 @@ class hr_executing_provisions(models.Model):
                                 #    payable_value = sum([i.value_payments for i in obj_provisions.browse(executing_provisions.ids)])
                                 #    current_payable_value = amount - (payable_value+value_payments)
                                 #else:
-                                current_payable_value = amount - value_payments
+                                if value_payments > 0 and provision == 'vacaciones':
+                                    current_payable_value = value_balance - value_payments
+                                else:
+                                    current_payable_value = amount - value_payments
+
+                                #Valor provision Mes
+                                if value_payments > 0 and provision == 'vacaciones':
+                                    value_provision = amount - current_payable_value
+                                elif value_payments == 0 and provision == 'vacaciones':
+                                    value_provision = amount - amount_ant
+                                else:
+                                    value_provision = amount - value_balance
 
                                 #Guardar valores
                                 values_details = {
@@ -230,7 +241,7 @@ class hr_executing_provisions(models.Model):
                                     'value_wage': contract.wage,
                                     'value_base': line['amount_base'],
                                     'time': line['quantity'],
-                                    'value_balance': amount - value_balance,
+                                    'value_balance': value_provision,
                                     'value_payments': value_payments,
                                     'current_payable_value': current_payable_value,
                                     'amount': amount

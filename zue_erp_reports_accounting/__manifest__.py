@@ -26,11 +26,12 @@
     'version': '0.1',    
 
     # any module necessary for this one to work correctly
-    'depends': ['base','contacts','account','zue_account'],
+    'depends': ['base','contacts','account','zue_account','zue_fleet_maintenance'],
 
     # always loaded
     'data': [
         'security/ir.model.access.csv',       
-        'views/reports_views.xml' 
+        'views/report_costs_maintenance.xml' ,
+        'views/reports_views.xml' ,
     ]    
 }
