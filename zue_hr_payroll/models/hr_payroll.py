@@ -146,6 +146,16 @@ class HrPayslipEmployees(models.TransientModel):
             raise UserError(_("You must select employee(s) to generate payslip(s)."))
 
         if self.structure_id.use_worked_day_lines:
+            work_entries_conflict = self.env['hr.work.entry'].search([
+                ('date_start', '<=', payslip_run.date_end),
+                ('date_stop', '>=', payslip_run.date_start),
+                ('employee_id', 'in', employees.ids),
+                ('state', '=', 'conflict'),
+            ])
+
+            if len(work_entries_conflict) > 0:
+                raise ValidationError(_("Existen entradas de trabajo con conflicto, por favor verificar."))
+
             work_entries = self.env['hr.work.entry'].search([
                 ('date_start', '<=', payslip_run.date_end),
                 ('date_stop', '>=', payslip_run.date_start),
@@ -237,6 +247,7 @@ class Hr_payslip_line(models.Model):
     loan_id = fields.Many2one('hr.loans', 'Prestamo', readonly=True)
     days_unpaid_absences = fields.Integer(string='Días de ausencias no pagadas',readonly=True)
     amount_base = fields.Float('Base')
+    is_history_reverse = fields.Boolean(string='Es historico para reversar')
 
     @api.depends('quantity', 'amount', 'rate')
     def _compute_total(self):
@@ -898,7 +909,7 @@ class Hr_payslip(models.Model):
 
                 for line in record.line_ids:                
                     #Historico cesantias                
-                    if line.code == 'CESANTIAS':
+                    if line.code == 'CESANTIAS' and line.is_history_reverse == False:
                         his_cesantias = {
                             'employee_id': record.employee_id.id,
                             'contract_id': record.contract_id.id,
@@ -912,7 +923,7 @@ class Hr_payslip(models.Model):
                             'payslip': record.id
                         }             
 
-                    if line.code == 'INTCESANTIAS':
+                    if line.code == 'INTCESANTIAS' and line.is_history_reverse == False:
                         his_intcesantias = {
                             'employee_id': record.employee_id.id,
                             'contract_id': record.contract_id.id,
@@ -984,7 +995,7 @@ class Hr_payslip(models.Model):
                         self.env['hr.history.prima'].create(his_prima) 
 
                     #Historico cesantias                
-                    if line.code == 'CESANTIAS':
+                    if line.code == 'CESANTIAS' and line.is_history_reverse == False:
                         his_cesantias = {
                             'employee_id': record.employee_id.id,
                             'contract_id': record.contract_id.id,
@@ -997,7 +1008,7 @@ class Hr_payslip(models.Model):
                             'payslip': record.id
                         }               
 
-                    if line.code == 'INTCESANTIAS':
+                    if line.code == 'INTCESANTIAS' and line.is_history_reverse == False:
                         his_intcesantias = {
                             'severance_interest_value': line.total,
                         }
@@ -1011,3 +1022,26 @@ class Hr_payslip(models.Model):
                                 'state':'close'}
                 obj_contrato.write(values_update)           
         #return res
+
+            #Validar Historico de cesantias/int.cesantias a tener encuenta
+            #Una vez confirmado va a la liquidacion asociado y deja en 0 el valor de CESANTIAS y INT CESANTIAS
+            #Para evitar la duplicidad de los valores ya que fueron heredados a esta liquidación
+            for payments in self.severance_payments_reverse:
+                if payments.payslip:
+                    value_cesantias = 0
+                    value_intcesantias = 0
+                    for line in payments.payslip.line_ids:
+                        if line.code == 'CESANTIAS':
+                            value_cesantias = line.total
+                            line.write({'amount':0})
+                        if line.code == 'INTCESANTIAS':
+                            value_intcesantias = line.total
+                            line.write({'amount':0})
+                        if line.code == 'NET':
+                            amount = line.total - (value_cesantias+value_intcesantias)
+                            line.write({'amount':amount})
+
+                    if payments.payslip.observation:
+                        payments.payslip.write({'observation':payments.payslip.observation+ '\n El valor se trasladó a la liquidación '+self.number+' de '+self.struct_id.name })
+                    else:
+                        payments.payslip.write({'observation': 'El valor se trasladó a la liquidación ' + self.number + ' de ' + self.struct_id.name})

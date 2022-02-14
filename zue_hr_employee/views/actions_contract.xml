@@ -16,8 +16,7 @@
         <record id="rule_employee_contract_zue_res_branch" model="ir.rule">
             <field name="name">Permisos sucursales contratos empleados</field>
             <field name="model_id" ref="model_hr_contract"/>
-            <field name="domain_force">
-                ['|',('employee_id.branch_id','in',user.branch_ids.ids),('employee_id.branch_id','=',False)]
+            <field name="domain_force"> ['|',('employee_id.branch_id','in',user.branch_ids.ids),('employee_id.branch_id','=',False)]
             </field>
         </record>
 
@@ -87,10 +86,8 @@
                                 </tree>
                                 <form>
                                     <header>
-                                        <button name="change_state_done" type="object" states="draft" string="Aprobar"
-                                                class="oe_highlight"/>
-                                        <button name="change_state_cancel" type="object" states="done"
-                                                string="Cancelar / Finalizar" class="oe_highlight"/>
+                                        <button name="change_state_done" type="object" states="draft" string="Aprobar" class="oe_highlight"/>
+                                        <button name="change_state_cancel" type="object" states="done" string="Cancelar / Finalizar" class="oe_highlight"/>
                                         <field name="state" widget="statusbar"/>
                                     </header>
                                     <sheet string="Deducciones o Devengos, conceptos de nómina">
@@ -125,6 +122,7 @@
                     <page string="Tributaria" name="tributaria">
                         <group>
                             <field name="retention_procedure" widget="radio"/>
+                            <field name="fixed_value_retention_procedure" attrs="{'invisible': [['retention_procedure','!=','fixed']]}"/>
                             <field name="deductions_rtf_ids">
                                 <tree string="hr.contract.deductions.rtf" editable="bottom">
                                     <field name="input_id"/>
@@ -135,6 +133,21 @@
                                     <field name="value_monthly"/>
                                 </tree>
                             </field>
+                        </group>
+                    </page>
+                    <page string="Fuero o Reubicados" name="fuero o reubicados">
+                        <group>
+                            <group>
+                                <field name="type_of_jurisdiction"/>
+                                <field name="relocated"/>
+                                <field name="date_i"/>
+                                <field name="date_f"/>
+                            </group>
+                            <group>
+                                <field name="previous_positions"/>
+                                <field name="new_positions"/>
+                                <field name="time_with_the_state"/>
+                            </group>
                         </group>
                     </page>
                 </xpath>
@@ -170,10 +183,8 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="change_state_done" type="object" states="draft" string="Aprobar"
-                                class="oe_highlight"/>
-                        <button name="change_state_cancel" type="object" states="done" string="Cancelar / Finalizar"
-                                class="oe_highlight"/>
+                        <button name="change_state_done" type="object" states="draft" string="Aprobar" class="oe_highlight"/>
+                        <button name="change_state_cancel" type="object" states="done" string="Cancelar / Finalizar" class="oe_highlight"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>
@@ -207,8 +218,7 @@
         </record>
 
         <!--
-        Domain:
-        ['&','|',('contract_id.employee_id.branch_id','in',user.branch_ids.ids),('contract_id.employee_id.branch_id','=',False),'|',('contract_id.employee_id.company_id','=',False),('contract_id.employee_id.company_id', 'in', company_ids)]
+        Domain: ['&','|',('contract_id.employee_id.branch_id','in',user.branch_ids.ids),('contract_id.employee_id.branch_id','=',False),'|',('contract_id.employee_id.company_id','=',False),('contract_id.employee_id.company_id', 'in', company_ids)]
 
         <record id="rule_contract_concepts_zue_res_branch" model="ir.rule">
             <field name="name">Permisos sucursales conceptos por contrato empleado</field>

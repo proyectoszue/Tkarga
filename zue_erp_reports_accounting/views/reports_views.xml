@@ -15,6 +15,7 @@
                                 <field name="x_month_filter" string="Mes"/>
                                 <field name="x_ano_filter_two" string="Año Final" attrs="{'invisible':[('x_type_filter', '!=', '2')], 'required': [('x_type_filter', '=', '2')]}"/>
                                 <field name="x_month_filter_two" string="Mes Final" attrs="{'invisible':[('x_type_filter', '!=', '2')], 'required': [('x_type_filter', '=', '2')]}"/>
+                                <field name="excluded_diaries_ids" string="Diarios excluidos" widget="many2many_tags"/>
                                 <field name="company_id" string="Compañia"/> 
                             </group>
                             <div class="oe_grey" colspan="4">

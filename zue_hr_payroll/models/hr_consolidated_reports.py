@@ -49,6 +49,11 @@ class hr_consolidated_reports(models.TransientModel):
 
         return date_to.date()
 
+    def create_date_initial_process(self):
+        date_from = f'{str(self.year)}-01-01'
+        date_from = datetime.strptime(date_from, '%Y-%m-%d')
+        return date_from.date()
+
     def query_filter_period(self,and_or_where,field):
         filter_period = ''
         date_filter = str(self.create_closing_date())
@@ -89,11 +94,14 @@ class hr_consolidated_reports(models.TransientModel):
         query_report = f'''
                 select distinct a."name",a.identification_id, b.date_start, 0 as days_service, coalesce(c.days_unpaid_absences,0)+coalesce(d.days_unpaid_absences,0) as days_unpaid_absences,
                             0 as days_service_real,0 as vacation_days_right,coalesce(e.days_vacations,0) as vacation_days_paid,0 as vacations_days_pending,
-                            coalesce(g.amount,0) as total_provision, coalesce(h.final_accrual_date,'1900-01-01') as final_accrual_date,
+                            coalesce(f.amount,0) as total_provision,coalesce(f.value_payments,0) as pagos_realizados,coalesce(f.current_payable_value,0) as valor_pagar_actual,
+                            coalesce(g.amount,0) as valor_provision_acumulada,coalesce(f.value_balance,0) as valor_provision_mes,            
+                            coalesce(h.final_accrual_date,'1900-01-01') as final_accrual_date,
                             coalesce(i.total,0) as total_vacations_last,coalesce(i.departure_date,'1900-01-01') as departure_date_last,
                             coalesce(i.return_date,'1900-01-01') as return_date_last,coalesce(i.days,0) as days_last
                 from hr_employee as a
-                inner join hr_contract as b on a.id = b.employee_id
+                inner join hr_contract as b on a.id = b.employee_id and b.active = true {self.query_filter_period('and','b.date_start')}
+                                                and (b.state = 'open' {self.query_filter_period('or','b.retirement_date')})
                 left join zue_res_branch as rb on a.branch_id = rb.id
                 left join account_analytic_account as aaa on a.analytic_account_id = aaa.id 
                 left join (select a.employee_id,sum(a.days) as days_unpaid_absences 
@@ -110,12 +118,19 @@ class hr_consolidated_reports(models.TransientModel):
                             from hr_vacation as a		
                             {self.query_filter_period('where','a.return_date')}	
                             group by a.employee_id,a.contract_id) as e on a.id = e.employee_id and b.id = e.contract_id
-                left join (select a.employee_id,max(a.id) as max_id 
+                left join (select a.*
                             from hr_executing_provisions_details as a 
-                            inner join hr_executing_provisions as b on a.executing_provisions_id = b.id {self.query_filter_period('and','b.date_end')}	
-                            where a.provision = 'vacaciones' group by a.employee_id
+                            inner join hr_executing_provisions as b on a.executing_provisions_id = b.id 
+                                        and b."year" = '{str(self.year)}' and b."month" = '{str(self.month)}'
+                            where a.provision = 'vacaciones'
                             ) as f on a.id = f.employee_id
-                left join hr_executing_provisions_details as g on f.max_id = g.id
+                left join (select a.*
+                            from hr_executing_provisions_details as a 
+                            inner join hr_executing_provisions as b on a.executing_provisions_id = b.id 
+                                        and b."year" = '{str(self.year) if str(self.month) != '1' else str(self.year-1)}' 
+                                        and b."month" = '{str(int(self.month)-1) if str(self.month) != '1' else '12'}'
+                            where a.provision = 'vacaciones'
+                            ) as g on a.id = g.employee_id
                 left join (select employee_id,contract_id,max(final_accrual_date) as final_accrual_date 
                             from hr_vacation as a 
                             {self.query_filter_period('where','a.return_date')}
@@ -140,9 +155,9 @@ class hr_consolidated_reports(models.TransientModel):
 
         # Columnas
         columns = ['Nombres', 'Identificación', 'Fecha Ingreso', 'Días Servicio', 'Ausencias no Remunerdas',
-                   'Días Servicio Neto',
-                   'Días Vacaciones Derecho', 'Días Vacaciones Pagados', 'Días Vacaciones Pendientes',
-                   'Total Provisión', 'Fecha Vacaciones Pagados Hasta', 'Valor Liquidado', 'Fecha Inicio Vacaciones',
+                   'Días Servicio Neto','Días Vacaciones Derecho', 'Días Vacaciones Pagados', 'Días Vacaciones Pendientes',
+                   'Total Provisión','Pagos del Mes','Valor a Pagar Actual','Valor Provisión Acumulada','Valor Provisión Mes',
+                   'Fecha Vacaciones Pagados Hasta', 'Valor Liquidado', 'Fecha Inicio Vacaciones',
                    'Fecha Fin Vacaciones', 'Días de Vacaciones']
         sheet = book.add_worksheet('Consolidados de Vacaciones')
 
@@ -156,9 +171,9 @@ class hr_consolidated_reports(models.TransientModel):
         cell_format_title.set_bottom(5)
         cell_format_title.set_bottom_color('#1F497D')
         cell_format_title.set_font_color('#1F497D')
-        sheet.merge_range('A1:O1', text_company, cell_format_title)
-        sheet.merge_range('A2:O2', text_title, cell_format_title)
-        sheet.merge_range('A3:O3', text_dates, cell_format_title)
+        sheet.merge_range('A1:S1', text_company, cell_format_title)
+        sheet.merge_range('A2:S2', text_title, cell_format_title)
+        sheet.merge_range('A3:S3', text_dates, cell_format_title)
         #Formato para fechas
         date_format = book.add_format({'num_format': 'dd/mm/yyyy'})
         # Agregar columnas
@@ -214,7 +229,7 @@ class hr_consolidated_reports(models.TransientModel):
             dict = {'header': i}
             array_header_table.append(dict)
 
-        sheet.add_table(3, 0, aument_rows, 14, {'style': 'Table Style Medium 2', 'columns': array_header_table})
+        sheet.add_table(3, 0, aument_rows-1, len(columns)-1, {'style': 'Table Style Medium 2', 'columns': array_header_table})
         # Guadar Excel
         book.close()
 
@@ -237,24 +252,26 @@ class hr_consolidated_reports(models.TransientModel):
 
         # ----------------------------------Ejecutar consulta
         query_report = f'''
-                select distinct a."name",a.identification_id, b.date_start, 0 as days_service,
-                    coalesce(c.days_unpaid_absences,0)+coalesce(d.days_unpaid_absences,0) as days_unpaid_absences,0 as days_real,
+                select distinct a."name",a.identification_id,b.date_start,
+                    case when b.date_start >= '{str(self.create_date_initial_process())}' then b.date_start else '{str(self.create_date_initial_process())}' end as date_initial_process,
+                    0 as days_service,coalesce(c.days_unpaid_absences,0)+coalesce(d.days_unpaid_absences,0) as days_unpaid_absences,0 as days_real,
                     coalesce(f.value_wage,0) as value_wage,coalesce(f.value_base,0) as value_base,coalesce(f.amount,0) as amount,
                     coalesce(h.amount,0) as intamount,coalesce(pf.value_payments,0) as value_payments,coalesce(ph.value_payments,0) as intvalue_payments,
                     coalesce(f.current_payable_value,0) as current_payable_value,coalesce(h.current_payable_value,0) as intcurrent_payable_value
                 from hr_employee as a
-                inner join hr_contract as b on a.id = b.employee_id
+                inner join hr_contract as b on a.id = b.employee_id and b.active = true {self.query_filter_period('and','b.date_start')}
+                                                and (b.state = 'open' {self.query_filter_period('or','b.retirement_date')})
                 left join zue_res_branch as rb on a.branch_id = rb.id
                 left join account_analytic_account as aaa on a.analytic_account_id = aaa.id 
                 left join (select a.employee_id,sum(a.days) as days_unpaid_absences 
                             from hr_absence_history as a
                             inner join hr_leave_type as b on a.leave_type_id = b.id and b.unpaid_absences = true
-                            {self.query_filter_period('where','a.end_date')}
+                            where a.star_date <= '{str(self.create_closing_date())}' and a.end_date >= '{str(self.create_date_initial_process())}'
                             group by a.employee_id) as c on a.id = c.employee_id
                 left join (select a.employee_id,sum(a.number_of_days) as days_unpaid_absences 
                             from hr_leave as a
                             inner join hr_leave_type as b on a.holiday_status_id = b.id and b.unpaid_absences = true
-                            where a.state = 'validate' {self.query_filter_period('and','a.request_date_to')}
+                            where a.state = 'validate' and a.request_date_from <= '{str(self.create_closing_date())}' and a.request_date_to >= '{str(self.create_date_initial_process())}' 
                             group by a.employee_id) as d on a.id = d.employee_id
                 left join (select a.employee_id,a.contract_id,max(a.id) as max_id 
                             from hr_executing_provisions_details as a
@@ -290,7 +307,7 @@ class hr_consolidated_reports(models.TransientModel):
         book = xlsxwriter.Workbook(stream, {'in_memory': True})
 
         # Columnas
-        columns = ['Nombres', 'Identificación', 'Fecha Ingreso', 'Días Servicio', 'Ausencias no Remunerdas',
+        columns = ['Nombres', 'Identificación', 'Fecha Ingreso', 'Fecha inicial de causación','Días Servicio', 'Ausencias no Remunerdas',
                    'Días Servicio Neto', 'Salario Básico', 'Base de Cesantías', 'Valor Cesantías Acumulado',
                    'Valor Intereses Cesantías Acumulados', 'Pagos Acumulados Cesantías', 'Pagos Acumulados Intereses',
                    'Neto a Pagar Cesantias Año Actual', 'Neto a Pagar Intereses  las Cesantias Año Actual']
@@ -306,9 +323,9 @@ class hr_consolidated_reports(models.TransientModel):
         cell_format_title.set_bottom(5)
         cell_format_title.set_bottom_color('#1F497D')
         cell_format_title.set_font_color('#1F497D')
-        sheet.merge_range('A1:N1', text_company, cell_format_title)
-        sheet.merge_range('A2:N2', text_title, cell_format_title)
-        sheet.merge_range('A3:N3', text_dates, cell_format_title)
+        sheet.merge_range('A1:O1', text_company, cell_format_title)
+        sheet.merge_range('A2:O2', text_title, cell_format_title)
+        sheet.merge_range('A3:O3', text_dates, cell_format_title)
         # Formato para fechas
         date_format = book.add_format({'num_format': 'dd/mm/yyyy'})
         # Agregar columnas
@@ -322,25 +339,27 @@ class hr_consolidated_reports(models.TransientModel):
         aument_rows = 4
         for query in result_query:
             date_start = ''
+            date_initial_process = ''
             days_unpaid_absences = 0
             days_service = 0
             for row in query.values():
                 width = len(str(row)) + 10
                 # La columna 2 es Fecha Ingreso por ende se guarda su valor en la variable date_start
                 date_start = row if aument_columns == 2 else date_start
-                # La columna 4 es días ausencias no remunedaras por ende se guarda su valor en la variable days_unpaid_absences
-                days_unpaid_absences = row if aument_columns == 4 else days_unpaid_absences
-                # La columna 3 y 5 se debe realizar un calculo y no tomarlo directamente de la consulta
-                if aument_columns not in [3, 5]:
+                date_initial_process = row if aument_columns == 3 else date_initial_process
+                # La columna 5 es días ausencias no remunedaras por ende se guarda su valor en la variable days_unpaid_absences
+                days_unpaid_absences = row if aument_columns == 5 else days_unpaid_absences
+                # La columna 4 y 6 se debe realizar un calculo y no tomarlo directamente de la consulta
+                if aument_columns not in [4, 6]:
                     if str(type(row)).find('date') > -1:
                         sheet.write_datetime(aument_rows, aument_columns, row, date_format)
                     else:
                         sheet.write(aument_rows, aument_columns, row)
                 else:
-                    if aument_columns == 3:  # Dias Servicio
-                        days_service = self.dias360(date_start, self.create_closing_date())
+                    if aument_columns == 4:  # Dias Servicio
+                        days_service = self.dias360(date_initial_process, self.create_closing_date())
                         sheet.write(aument_rows, aument_columns, days_service)
-                    elif aument_columns == 5:  # Dias Servicio Neto
+                    elif aument_columns == 6:  # Dias Servicio Neto
                         sheet.write(aument_rows, aument_columns, (days_service - days_unpaid_absences))
                 # Ajustar tamaño columna
                 sheet.set_column(aument_columns, aument_columns, width)
@@ -354,7 +373,7 @@ class hr_consolidated_reports(models.TransientModel):
             dict = {'header': i}
             array_header_table.append(dict)
 
-        sheet.add_table(3,0,aument_rows,13,{'style': 'Table Style Medium 2','columns': array_header_table})
+        sheet.add_table(3,0,aument_rows-1,len(columns)-1,{'style': 'Table Style Medium 2','columns': array_header_table})
         # Guadar Excel
         book.close()
 
@@ -377,23 +396,25 @@ class hr_consolidated_reports(models.TransientModel):
 
         # ----------------------------------Ejecutar consulta
         query_report = f'''
-                select distinct a."name",a.identification_id, b.date_start, 0 as days_service,
-                coalesce(c.days_unpaid_absences,0)+coalesce(d.days_unpaid_absences,0) as days_unpaid_absences,0 as days_real,
+                select distinct a."name",a.identification_id,b.date_start,
+                case when b.date_start >= '{str(self.create_date_initial_process())}' then b.date_start else '{str(self.create_date_initial_process())}' end as date_initial_process,
+                0 as days_service,coalesce(c.days_unpaid_absences,0)+coalesce(d.days_unpaid_absences,0) as days_unpaid_absences,0 as days_real,
                 coalesce(f.value_wage,0) as value_wage,coalesce(f.value_base,0) as value_base,coalesce(f.amount,0) as amount,
                 coalesce(pf.value_payments,0) as value_payments,coalesce(f.current_payable_value,0) as current_payable_value
                 from hr_employee as a
-                inner join hr_contract as b on a.id = b.employee_id
+                inner join hr_contract as b on a.id = b.employee_id and b.active = true {self.query_filter_period('and','b.date_start')}
+                                                and (b.state = 'open' {self.query_filter_period('or','b.retirement_date')})
                 left join zue_res_branch as rb on a.branch_id = rb.id
                 left join account_analytic_account as aaa on a.analytic_account_id = aaa.id 
                 left join (select a.employee_id,sum(a.days) as days_unpaid_absences 
                             from hr_absence_history as a
                             inner join hr_leave_type as b on a.leave_type_id = b.id and b.unpaid_absences = true
-                            {self.query_filter_period('where','a.end_date')}
+                            where a.star_date <= '{str(self.create_closing_date())}' and a.end_date >= '{str(self.create_date_initial_process())}'
                             group by a.employee_id) as c on a.id = c.employee_id
                 left join (select a.employee_id,sum(a.number_of_days) as days_unpaid_absences 
                             from hr_leave as a
                             inner join hr_leave_type as b on a.holiday_status_id = b.id and b.unpaid_absences = true
-                            where a.state = 'validate' {self.query_filter_period('and','a.request_date_to')}
+                            where a.state = 'validate' and a.request_date_from <= '{str(self.create_closing_date())}' and a.request_date_to >= '{str(self.create_date_initial_process())}'
                             group by a.employee_id) as d on a.id = d.employee_id
                 left join (select a.employee_id,a.contract_id,max(a.id) as max_id 
                             from hr_executing_provisions_details as a
@@ -418,7 +439,7 @@ class hr_consolidated_reports(models.TransientModel):
         book = xlsxwriter.Workbook(stream, {'in_memory': True})
 
         # Columnas
-        columns = ['Nombres', 'Identificación', 'Fecha Ingreso', 'Días Servicio', 'Ausencias no Remunerdas',
+        columns = ['Nombres', 'Identificación', 'Fecha Ingreso', 'Fecha inicial de causación','Días Servicio', 'Ausencias no Remunerdas',
                    'Días Servicio Neto', 'Salario Básico', 'Base de Prima', 'Valor Prima Acumulado',
                    'Pagos Acumulados Prima', 'Neto a Pagar Prima Actual']
         sheet = book.add_worksheet('Consolidados de prima')
@@ -433,9 +454,9 @@ class hr_consolidated_reports(models.TransientModel):
         cell_format_title.set_bottom(5)
         cell_format_title.set_bottom_color('#1F497D')
         cell_format_title.set_font_color('#1F497D')
-        sheet.merge_range('A1:K1', text_company, cell_format_title)
-        sheet.merge_range('A2:K2', text_title, cell_format_title)
-        sheet.merge_range('A3:K3', text_dates, cell_format_title)
+        sheet.merge_range('A1:L1', text_company, cell_format_title)
+        sheet.merge_range('A2:L2', text_title, cell_format_title)
+        sheet.merge_range('A3:L3', text_dates, cell_format_title)
         # Formato para fechas
         date_format = book.add_format({'num_format': 'dd/mm/yyyy'})
         # Agregar columnas
@@ -449,25 +470,27 @@ class hr_consolidated_reports(models.TransientModel):
         aument_rows = 4
         for query in result_query:
             date_start = ''
+            date_initial_process = ''
             days_unpaid_absences = 0
             days_service = 0
             for row in query.values():
                 width = len(str(row)) + 10
                 # La columna 2 es Fecha Ingreso por ende se guarda su valor en la variable date_start
                 date_start = row if aument_columns == 2 else date_start
-                # La columna 4 es días ausencias no remunedaras por ende se guarda su valor en la variable days_unpaid_absences
-                days_unpaid_absences = row if aument_columns == 4 else days_unpaid_absences
-                # La columna 3 y 5 se debe realizar un calculo y no tomarlo directamente de la consulta
-                if aument_columns not in [3, 5]:
+                date_initial_process = row if aument_columns == 3 else date_initial_process
+                # La columna 5 es días ausencias no remunedaras por ende se guarda su valor en la variable days_unpaid_absences
+                days_unpaid_absences = row if aument_columns == 5 else days_unpaid_absences
+                # La columna 4 y 6 se debe realizar un calculo y no tomarlo directamente de la consulta
+                if aument_columns not in [4, 6]:
                     if str(type(row)).find('date') > -1:
                         sheet.write_datetime(aument_rows, aument_columns, row, date_format)
                     else:
                         sheet.write(aument_rows, aument_columns, row)
                 else:
-                    if aument_columns == 3:  # Dias Servicio
-                        days_service = self.dias360(date_start, self.create_closing_date())
+                    if aument_columns == 4:  # Dias Servicio
+                        days_service = self.dias360(date_initial_process, self.create_closing_date())
                         sheet.write(aument_rows, aument_columns, days_service)
-                    elif aument_columns == 5:  # Dias Servicio Neto
+                    elif aument_columns == 6:  # Dias Servicio Neto
                         sheet.write(aument_rows, aument_columns, (days_service - days_unpaid_absences))
                 # Ajustar tamaño columna
                 sheet.set_column(aument_columns, aument_columns, width)
@@ -482,7 +505,7 @@ class hr_consolidated_reports(models.TransientModel):
             dict = {'header': i}
             array_header_table.append(dict)
 
-        sheet.add_table(3, 0, aument_rows, 10, {'style': 'Table Style Medium 2', 'columns': array_header_table})
+        sheet.add_table(3, 0, aument_rows-1, len(columns)-1, {'style': 'Table Style Medium 2', 'columns': array_header_table})
         # Guadar Excel
         book.close()
 

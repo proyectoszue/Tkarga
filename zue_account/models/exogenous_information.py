@@ -1,4 +1,5 @@
-from datetime import date
+from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 from odoo import models, fields, api, _
 
 import base64
@@ -64,10 +65,11 @@ class fiscal_accounting_group(models.Model):
                               ], 'Operador')
     amount = fields.Float(string="Monto")
     tax_type = fields.Selection([('dian', "DIAN Art 631"),
-                              ('treasury', "Tesoreria Distrital"), 
+                              ('treasury', "Tesoreria Distrital"),
                               ], "Tipo de impuesto")
     concept_dian_ids = fields.Many2many('fiscal.accounting.code', string="Códigos Fiscales")
     excluded_thirdparty_ids = fields.Many2many('res.partner', string="Tercero Excluido")
+    partner_minor_amounts = fields.Many2one('res.partner', string="Tercero Cuantías menores")
 
     _sql_constraints = [('fiscal_group_uniq', 'unique(company_id,fiscal_group)',
                          'El grupo fiscal digitado ya esta registrado para esta compañía, por favor verificar.')]
@@ -128,7 +130,7 @@ class format_detail(models.Model):
                               ('email', 'Email'),
                               ('higher_value_iva', 'Mayor Valor Iva'),
                               ], 'Campos Seleccionados', required=True)
-    
+
 class generate_media_magnetic(models.TransientModel):
     _name = 'generate.media.magnetic'
     _description = 'Generar Medios Magneticos'
@@ -149,53 +151,87 @@ class generate_media_magnetic(models.TransientModel):
         #Variables proceso
         date_start = str(self.year) +'-01-01'
         date_end = str(self.year) +'-12-31'
-        obj_account_fiscal = self.env['fiscal.accounting.code'].search([('format_id','!=',False)])
+        date_start = datetime.strptime(date_start, '%Y-%m-%d').date()
+        date_end = datetime.strptime(date_end, '%Y-%m-%d').date()
 
-        for fiscal in obj_account_fiscal:
+        #Traer todos los formatos
+        obj_formats = self.env['format.encab'].search([('id','!=',False)])
+
+        for format in obj_formats:
+            obj_account_fiscal = self.env['fiscal.accounting.code'].search([('format_id','=',format.id)])
             lst_Mvto = []
-            obj_move_line = self.env['account.move.line'].search([('date', '>=', date_start), ('date', '<=', date_end),
-                                                                  ('account_id', 'in',
-                                                                   fiscal.accounting_details_ids.ids)])
-            obj_group_fiscal = self.env['fiscal.accounting.group'].search([('concept_dian_ids','in',fiscal.ids)],limit=1)
-            format_fields = fiscal.format_id.details_ids
+            for fiscal in obj_account_fiscal:
+                obj_group_fiscal = self.env['fiscal.accounting.group'].search([('concept_dian_ids', 'in', fiscal.ids)],
+                                                                              limit=1)
+                format_fields = fiscal.format_id.details_ids
 
-            for line in obj_move_line:
-                dict_documents = dict(self.env['res.partner']._fields['x_document_type'].selection)
-                document_type = dict_documents.get(line.move_id.partner_id.x_document_type) if line.move_id.partner_id.x_document_type else ''
-                info = {'fiscal_accounting_id': fiscal.concept_dian,
-                         'concept_dian': fiscal.code_description,
-                         'format':fiscal.format_id.format_id,
-                         'x_document_type': document_type,
-                         'vat': line.move_id.partner_id.vat,
-                         'x_first_name': line.move_id.partner_id.x_first_name,
-                         'x_second_name': line.move_id.partner_id.x_second_name,
-                         'x_first_lastname': line.move_id.partner_id.x_first_lastname,
-                         'x_second_lastname': line.move_id.partner_id.x_second_lastname,
-                         'commercial_company_name': line.move_id.partner_id.name,
-                         'x_digit_verification': line.move_id.partner_id.x_digit_verification,
-                         'street': line.move_id.partner_id.street,
-                         'state_id': line.move_id.partner_id.state_id.name,
-                         'x_city': line.move_id.partner_id.x_city.name,
-                         'amount': line.balance,
-                         'operator':obj_group_fiscal.operator,
-                         'tax': line.tax_base_amount,
-                         'x_code_dian':line.move_id.partner_id.x_city.code,
-                         'phone': line.move_id.partner_id.phone or line.move_id.partner_id.mobile,
-                         'unit_rate': 0,
-                         'email': line.move_id.partner_id.email,
-                         'higher_value_iva': 0,
-                      }
-                media_magnetic = {}
-                for field in sorted(format_fields, key=lambda x: x.sequence):
-                    if field.available_fields in info:
-                        media_magnetic[field.available_fields] = info.get(field.available_fields)
+                partner_ids = self.env['account.move.line'].search([('date', '>=', date_start), ('date', '<=', date_end),
+                                                                      ('account_id', 'in', fiscal.accounting_details_ids.ids)]).partner_id.ids
+                obj_partner_ids = self.env['res.partner'].search([('id','in',partner_ids)])
 
-                lst_Mvto.append(media_magnetic)
+                for partner in obj_partner_ids:
+                    moves = self.env['account.move.line'].search(
+                        [('date', '>=', date_start), ('date', '<=', date_end),
+                         ('account_id', 'in', fiscal.accounting_details_ids.ids),('partner_id', '=', partner.id)])
+
+                    amount = 0
+                    tax_base_amount = 0
+                    for i in moves:
+                        if fiscal.move_type == 'debit':
+                            amount += i.debit
+                        elif fiscal.move_type == 'credit':
+                            amount += i.credit
+                        else:
+                            amount += i.balance
+                        tax_base_amount += i.tax_base_amount
+
+                    #Armamos el dict con la información
+                    dict_documents = dict(self.env['res.partner']._fields['x_document_type'].selection)
+                    document_type = dict_documents.get(partner.x_document_type) if partner.x_document_type else ''
+                    info = {'fiscal_accounting_id': fiscal.concept_dian,
+                             'concept_dian': fiscal.code_description,
+                             'format':fiscal.format_id.format_id,
+                             'x_document_type': document_type,
+                             'vat': partner.vat,
+                             'x_first_name': partner.x_first_name,
+                             'x_second_name': partner.x_second_name,
+                             'x_first_lastname': partner.x_first_lastname,
+                             'x_second_lastname': partner.x_second_lastname,
+                             'commercial_company_name': partner.name,
+                             'x_digit_verification': partner.x_digit_verification,
+                             'street': partner.street,
+                             'state_id': partner.state_id.name,
+                             'x_city': partner.x_city.name,
+                             'amount': amount,
+                             'operator':obj_group_fiscal.operator,
+                             'tax': tax_base_amount,
+                             'x_code_dian':partner.x_city.code,
+                             'phone': partner.phone or partner.mobile,
+                             'unit_rate': 0,
+                             'email': partner.email,
+                             'higher_value_iva': 0,
+                          }
+                    #Formatos asociados
+                    info_associated = {}
+                    obj_account_fiscal_associated = self.env['fiscal.accounting.code'].search([('format_id', '=', format.format_associated_id.id)])
+                    for fiscal_associated in obj_account_fiscal_associated:
+                        moves_associated = self.env['account.move.line'].search(
+                            [('date', '>=', date_start), ('date', '<=', date_end),
+                             ('account_id', 'in', fiscal_associated.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
+                        amount_associated = sum([i.balance for i in moves_associated])
+                        name_associated = fiscal_associated.code_description.replace(' ','_')
+                        info_associated[name_associated] = amount_associated
+                    #Guardado final
+                    media_magnetic = {}
+                    for field in sorted(format_fields, key=lambda x: x.sequence):
+                        if field.available_fields in info:
+                            media_magnetic[field.available_fields] = info.get(field.available_fields)
+                    lst_Mvto.append({**media_magnetic, **info_associated})
             #Generar hoja de excel
             sheet = book.add_worksheet(fiscal.format_id.format_id)
             columns = []
-            for field in sorted(format_fields, key=lambda x: x.sequence):
-                field_name = dict(self.env['format.detail']._fields['available_fields'].selection).get(field.available_fields)
+            for field in lst_Mvto[0].keys():
+                field_name = dict(self.env['format.detail']._fields['available_fields'].selection).get(field,field.replace('_',' '))
                 columns.append(field_name)
             # Agregar columnas
             aument_columns = 0
@@ -220,7 +256,7 @@ class generate_media_magnetic(models.TransientModel):
             for i in columns:
                 dict_h = {'header': i}
                 array_header_table.append(dict_h)
-            sheet.add_table(0, 0, aument_rows, len(columns)-1, {'style': 'Table Style Medium 2', 'columns': array_header_table})
+            sheet.add_table(0, 0, aument_rows-1, len(columns)-1, {'style': 'Table Style Medium 2', 'columns': array_header_table})
 
         book.close()
         self.write({

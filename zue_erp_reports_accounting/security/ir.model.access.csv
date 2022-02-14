@@ -5,3 +5,5 @@ access_zue_reports_account,zue.reports.account,model_zue_reports_account,,1,1,1,
 access_account_auxiliar_schemefavorite,account.auxiliar.schemefavorite,model_account_auxiliar_schemefavorite,,1,1,1,1
 access_balance_analytic_partner_report,balance.analytic.partner.report,model_balance_analytic_partner_report,,1,0,0,0
 access_costo_analytic_partner_report,costo.analytic.partner.report,model_costo_analytic_partner_report,,1,0,0,0 
+
+

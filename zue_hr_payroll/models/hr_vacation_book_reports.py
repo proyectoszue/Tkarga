@@ -77,15 +77,33 @@ class hr_vacation_book(models.TransientModel):
         query_report = f'''
                         select distinct a.identification_id as cedula,a."name" as empleado,b."name" as compania, 
                                 coalesce(c."name",'') as ubicacion_laboral,coalesce(d."name",'') as sucursal, coalesce(e."name",'') as departamento,
-                                coalesce(f."name",'') as cuenta_analitica, hc.wage as salario,hc.date_start as fecha_ingreso,
-                                0 as dias_laborados,0 as dias_ausencias,0 as dias_laborados_reales,0 as dias_derecho,0 as dias_pagados, 0 as dias_adeudados
+                                coalesce(f."name",'') as cuenta_analitica, coalesce(p.value_wage,hc.wage) as salario,hc.date_start as fecha_ingreso,
+                                0 as dias_laborados,
+                                -- Se toman los días de la provision para restarlos con el calculo del reporte
+                                coalesce(p."time",0) as dias_pagados, 
+                                0 as dias_disfrutados,0 as dias_remunerados,
+                                0 as valor_dias_disfrutados, 0 as valor_dias_remunerados,                       
+                                0 as dias_adeudados, 0 dias_vac_pendientes, coalesce(p.amount,0) as valor_a_pagar
                         from hr_employee as a 
                         inner join res_company as b on a.company_id = b.id
-                        inner join hr_contract as hc on a.id = hc.employee_id and hc.state = 'open'
+                        inner join hr_contract as hc on a.id = hc.employee_id and hc.active = true and hc.date_start <= '{date_to}'
+                                                and (hc.state = 'open' or hc.retirement_date <= '{date_to}')
                         left join res_partner as c on a.address_id = c.id
                         left join zue_res_branch as d on a.branch_id = d.id
                         left join hr_department as e on a.department_id = e.id 
                         left join account_analytic_account as f on a.analytic_account_id = f.id   
+                        --Provision
+                        left join ( 
+                                    select c.employee_id,c.contract_id,c.value_wage,c.value_base,c."time",c.value_balance,c.value_payments,c.amount,c.current_payable_value 
+                                    from 
+                                    (
+                                        select max(date_end) as max_date_provision,company_id
+                                        from hr_executing_provisions where date_end <= '{date_to}' and company_id  = {self.env.company.id}
+                                        group by company_id
+                                    ) as a
+                                    inner join hr_executing_provisions as b on a.max_date_provision = b.date_end and a.company_id = b.company_id
+                                    inner join hr_executing_provisions_details as c on b.id = c.executing_provisions_id and c.provision = 'vacaciones'
+                        ) as p on a.id = p.employee_id and hc.id = p.contract_id
                         {query_where}
                         order by a."name",b."name"
                     '''
@@ -120,13 +138,15 @@ class hr_vacation_book(models.TransientModel):
 
         # Columnas
         columns = ['Cédula', 'Nombres y Apellidos', 'Compañía', 'Ubicación laboral', 'Seccional', 'Departamento',
-                   'Cuenta analítica','Salario Base', 'Fecha Ingreso', 'Días Laborados', 'Días Ausencias','Días Laborados Neto',
-                   'Días de vacaciones a los que tiene derecho','Días Totales Pagados', 'Días de Vacaciones Adeudados']
+                   'Cuenta analítica','Salario Base', 'Fecha Ingreso', 'Días Laborados','Días Pagados',
+                   'Dias de vacaciones disfrutados','Días de vacaciones remunerados',
+                   'Valor días de vacaciones Disfrutados','Valor días de vacaciones remunerados',
+                   'Dias laborados que se adeudan','Dias de vacaciones pendientes','Valor a Pagar']
         sheet = book.add_worksheet('Libro de vacaciones')
-        sheet.merge_range('A1:O1', text_company, cell_format_title)
-        sheet.merge_range('A2:O2', text_title, cell_format_title)
-        sheet.merge_range('A3:O3', text_dates, cell_format_title)
-        sheet.merge_range('A4:O4', text_generate, cell_format_text_generate)
+        sheet.merge_range('A1:R1', text_company, cell_format_title)
+        sheet.merge_range('A2:R2', text_title, cell_format_title)
+        sheet.merge_range('A3:R3', text_dates, cell_format_title)
+        sheet.merge_range('A4:R4', text_generate, cell_format_text_generate)
         # Agregar columnas
         aument_columns = 0
         for column in columns:
@@ -138,7 +158,8 @@ class hr_vacation_book(models.TransientModel):
         for query in result_query:
             date_start = ''
             employee_id,identification_id = 0,0
-            days_labor,days_unpaid_absences,days_paid = 0,0,0
+            days_labor,days_unpaid_absences,days_paid,days_paid_money = 0,0,0,0
+            value_business_days,money_value = 0,0
             for row in query.values():
                 width = len(str(row)) + 10
                 # La columna 0 es Id Empleado por ende se guarda su valor en la variable employee_id
@@ -155,25 +176,31 @@ class hr_vacation_book(models.TransientModel):
                     if aument_columns == 9: # Dias Laborados
                         days_labor = self.dias360(date_start,date_end)
                         sheet.write(aument_rows, aument_columns, days_labor)
-                    elif aument_columns == 10: # Dias Ausencia
-                        days_unpaid_absences = sum([i.number_of_days for i in self.env['hr.leave'].search(
-                            [('date_from', '>=', date_start), ('date_from', '<=', date_end),
-                             ('state', '=', 'validate'), ('employee_id', '=', employee_id),
-                             ('unpaid_absences', '=', True)])])
-                        days_unpaid_absences += sum([i.days for i in self.env['hr.absence.history'].search(
-                            [('star_date', '>=', date_start), ('star_date', '<=', date_end),
-                             ('employee_id', '=', employee_id), ('leave_type_id.unpaid_absences', '=', True)])])
-                        sheet.write(aument_rows, aument_columns, days_unpaid_absences)
-                    elif aument_columns == 11: # Días Laborados Neto
-                        sheet.write(aument_rows, aument_columns,(days_labor-days_unpaid_absences))
-                    elif aument_columns == 12: # Días de vacaciones a los que tiene derecho
-                        sheet.write(aument_rows, aument_columns,(((days_labor - days_unpaid_absences) * 15) / 360))
-                    elif aument_columns == 13: # Días Totales Pagados
-                        days_paid = sum([i.business_units + i.units_of_money for i in
+                    elif aument_columns == 10: # Días Totales Pagados
+                        days_paid_money = sum([i.units_of_money for i in
                                          self.env['hr.vacation'].search([('employee_id', '=', employee_id),('departure_date','<=',date_end)])])
+                        days_paid = days_labor - row
                         sheet.write(aument_rows, aument_columns,days_paid)
-                    elif aument_columns == 14: # Días de Vacaciones Adeudados
-                        sheet.write(aument_rows, aument_columns,((((days_labor - days_unpaid_absences) * 15) / 360)-days_paid))
+                    elif aument_columns == 11: # Días Disfrutados
+                        sheet.write(aument_rows, aument_columns,((days_paid * 15) / 360)-days_paid_money)
+                    elif aument_columns == 12: # Dias remunerados
+                        sheet.write(aument_rows, aument_columns,days_paid_money)
+                    elif aument_columns == 13: # Valor Dias disfrutados
+                        value_business_days = sum([i.value_business_days for i in
+                                               self.env['hr.vacation'].search([('employee_id', '=', employee_id),
+                                                                               ('departure_date', '<=', date_end)])])
+                        sheet.write(aument_rows, aument_columns,value_business_days)
+                    elif aument_columns == 14: # Valor Dias remunerados
+                        money_value = sum([i.money_value for i in
+                                                   self.env['hr.vacation'].search([('employee_id', '=', employee_id),
+                                                                                   ('departure_date', '<=', date_end)])])
+                        sheet.write(aument_rows, aument_columns,money_value)
+                    elif aument_columns == 15: # Días de Vacaciones Adeudados
+                        sheet.write(aument_rows, aument_columns,(days_labor-days_paid))
+                    elif aument_columns == 16: # Dias de vacaciones pendientes
+                        sheet.write(aument_rows, aument_columns,(((days_labor-days_paid)*15)/360))
+                    elif aument_columns == 17: # Valor a pagar
+                        sheet.write(aument_rows, aument_columns,row)
                 # Ajustar tamaño columna
                 sheet.set_column(aument_columns, aument_columns, width)
                 aument_columns = aument_columns + 1
@@ -186,7 +213,7 @@ class hr_vacation_book(models.TransientModel):
             dict = {'header': i}
             array_header_table.append(dict)
 
-        sheet.add_table(4, 0, aument_rows, len(columns)-1, {'style': 'Table Style Medium 2', 'columns': array_header_table})
+        sheet.add_table(4, 0, aument_rows-1, len(columns)-1, {'style': 'Table Style Medium 2', 'columns': array_header_table})
 
         #----------------------------------Hoja 2 - Detalle del libro de vacaciones
         query_report = f'''
@@ -198,7 +225,8 @@ class hr_vacation_book(models.TransientModel):
                             sum(coalesce(hv.units_of_money,0)) as dias_dinero,sum(coalesce(hv.money_value,0)) as valor_dias_dinero
                         from hr_employee as a 
                         inner join res_company as b on a.company_id = b.id
-                        inner join hr_contract as hc on a.id = hc.employee_id and hc.state = 'open'
+                        inner join hr_contract as hc on a.id = hc.employee_id and hc.active = true and hc.date_start <= '{date_to}'
+                                                and (hc.state = 'open' or hc.retirement_date <= '{date_to}')
                         inner join hr_vacation as hv on a.id = hv.employee_id and hc.id = hv.contract_id and hv.departure_date <= '{date_to}' 
                         left join res_partner as c on a.address_id = c.id
                         left join zue_res_branch as d on a.branch_id = d.id

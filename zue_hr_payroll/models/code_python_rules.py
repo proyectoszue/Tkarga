@@ -26,7 +26,7 @@ if obj_salary_rule and contract.modality_salary == 'sostenimiento':
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('AUX000',employee.type_employee.id)
 dias = payslip.sum_days_works('WORK100', payslip.date_from, payslip.date_to) + payslip.sum_days_works('COMPENSATORIO', payslip.date_from, payslip.date_to)
-dias += worked_days.WORK100.number_of_days
+dias += worked_days.WORK100.number_of_days if worked_days.WORK100 else 0
 if worked_days.COMPENSATORIO != 0.0:
     dias += worked_days.COMPENSATORIO.number_of_days
 if obj_salary_rule and dias != 0.0 and contract.contract_type != 'aprendizaje':
@@ -64,7 +64,11 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje':
             if total_statute > 0:
                 total += total_statute
         # Fin Ley 1393
-        total = annual_parameters.top_twenty_five_smmlv if total >= annual_parameters.top_twenty_five_smmlv else total             
+        dias_work = payslip.sum_days_works('WORK100', payslip.date_from, payslip.date_to)
+        dias_work_act = worked_days.WORK100.number_of_days if worked_days.WORK100 else 0
+        dias_work = dias_work_act if (aplicar == 0) else dias_work + dias_work_act
+        top_twenty_five_smmlv = (annual_parameters.top_twenty_five_smmlv / 30) * dias_work
+        total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
         if contract.modality_salary == 'integral':
             porc_integral_salary = annual_parameters.porc_integral_salary/100
             total = total*porc_integral_salary
@@ -93,7 +97,11 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje' and employee.subt
             if total_statute > 0:
                 total += total_statute
         # Fin Ley 1393
-        total = annual_parameters.top_twenty_five_smmlv if total >= annual_parameters.top_twenty_five_smmlv else total             
+        dias_work = payslip.sum_days_works('WORK100', payslip.date_from, payslip.date_to)
+        dias_work_act = worked_days.WORK100.number_of_days if worked_days.WORK100 else 0
+        dias_work = dias_work_act if (aplicar == 0) else dias_work + dias_work_act
+        top_twenty_five_smmlv = (annual_parameters.top_twenty_five_smmlv / 30) * dias_work
+        total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
         if contract.modality_salary == 'integral':
             porc_integral_salary = annual_parameters.porc_integral_salary/100
             total = total*porc_integral_salary
@@ -122,6 +130,11 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje':
             if total_statute > 0:
                 total += total_statute
         # Fin Ley 1393
+        dias_work = payslip.sum_days_works('WORK100', payslip.date_from, payslip.date_to)
+        dias_work_act = worked_days.WORK100.number_of_days if worked_days.WORK100 else 0
+        dias_work = dias_work_act if (aplicar == 0) else dias_work + dias_work_act
+        top_twenty_five_smmlv = (annual_parameters.top_twenty_five_smmlv / 30) * dias_work
+        total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
         if contract.modality_salary == 'integral':
             porc_integral_salary = annual_parameters.porc_integral_salary/100
             total = total*porc_integral_salary
@@ -199,19 +212,25 @@ if obj_salary_rule:
             result_qty = obj_concept.amount if obj_concept.amount != 0 else 0      
 #---------------------------------------Horas Extra Diurnas (125%)--------------------------------------------------------
 result = 0.0
-if payslip.date_from.day > 15 or (inherit_contrato!=0):
-    obj_salary_rule = payslip.get_salary_rule('HEYREC001',employee.type_employee.id) 
+obj_salary_rule = payslip.get_salary_rule('HEYREC001',employee.type_employee.id)
+aplicar = int(obj_salary_rule.aplicar_cobro)
+day_initial_payrroll = payslip.date_from.day
+day_end_payrroll = payslip.date_to.day
+if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
         obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato)
         if obj_overtime:
             if obj_type_overtime.type_overtime == 'overtime_ext_d' and obj_overtime.overtime_ext_d > 0:
                 result = round((contract.wage /240)*1.25)
-                result_qty = obj_overtime.overtime_ext_dp
+                result_qty = obj_overtime.overtime_ext_d
 #---------------------------------------Horas extra diurnas dominical / festiva (200%)--------------------------------------------------------
 result = 0.0
-if payslip.date_from.day > 15 or (inherit_contrato!=0):
-    obj_salary_rule = payslip.get_salary_rule('HEYREC002',employee.type_employee.id) 
+obj_salary_rule = payslip.get_salary_rule('HEYREC002',employee.type_employee.id)
+aplicar = int(obj_salary_rule.aplicar_cobro)
+day_initial_payrroll = payslip.date_from.day
+day_end_payrroll = payslip.date_to.day
+if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
         obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato)
@@ -221,8 +240,11 @@ if payslip.date_from.day > 15 or (inherit_contrato!=0):
                 result_qty = obj_overtime.overtime_eddf
 #---------------------------------------Horas extra nocturna (175%)--------------------------------------------------------
 result = 0.0
-if payslip.date_from.day > 15 or (inherit_contrato!=0):
-    obj_salary_rule = payslip.get_salary_rule('HEYREC003',employee.type_employee.id) 
+obj_salary_rule = payslip.get_salary_rule('HEYREC003',employee.type_employee.id)
+aplicar = int(obj_salary_rule.aplicar_cobro)
+day_initial_payrroll = payslip.date_from.day
+day_end_payrroll = payslip.date_to.day
+if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
         obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato)
@@ -232,8 +254,11 @@ if payslip.date_from.day > 15 or (inherit_contrato!=0):
                 result_qty = obj_overtime.overtime_ext_n
 #---------------------------------------Horas recargo festivo (110%)--------------------------------------------------------
 result = 0.0
-if payslip.date_from.day > 15 or (inherit_contrato!=0):
-    obj_salary_rule = payslip.get_salary_rule('HEYREC004',employee.type_employee.id) 
+obj_salary_rule = payslip.get_salary_rule('HEYREC004',employee.type_employee.id)
+aplicar = int(obj_salary_rule.aplicar_cobro)
+day_initial_payrroll = payslip.date_from.day
+day_end_payrroll = payslip.date_to.day
+if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
         obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato)
@@ -243,8 +268,11 @@ if payslip.date_from.day > 15 or (inherit_contrato!=0):
                 result_qty = obj_overtime.overtime_rndf
 #---------------------------------------Horas Recargo Nocturno (35%)--------------------------------------------------------
 result = 0.0
-if payslip.date_from.day > 15 or (inherit_contrato!=0):
-    obj_salary_rule = payslip.get_salary_rule('HEYREC005',employee.type_employee.id) 
+obj_salary_rule = payslip.get_salary_rule('HEYREC005',employee.type_employee.id)
+aplicar = int(obj_salary_rule.aplicar_cobro)
+day_initial_payrroll = payslip.date_from.day
+day_end_payrroll = payslip.date_to.day
+if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
         obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato)
@@ -254,8 +282,11 @@ if payslip.date_from.day > 15 or (inherit_contrato!=0):
                 result_qty = obj_overtime.overtime_rn
 #---------------------------------------Horas extra nocturna dominical / festiva (250%)--------------------------------------------------------
 result = 0.0
-if payslip.date_from.day > 15 or (inherit_contrato!=0):
-    obj_salary_rule = payslip.get_salary_rule('HEYREC006',employee.type_employee.id) 
+obj_salary_rule = payslip.get_salary_rule('HEYREC006',employee.type_employee.id)
+aplicar = int(obj_salary_rule.aplicar_cobro)
+day_initial_payrroll = payslip.date_from.day
+day_end_payrroll = payslip.date_to.day
+if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
         obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato)
@@ -265,8 +296,11 @@ if payslip.date_from.day > 15 or (inherit_contrato!=0):
                 result_qty = obj_overtime.overtime_endf
 #---------------------------------------Horas dominicales--------------------------------------------------------
 result = 0.0
-if payslip.date_from.day > 15 or (inherit_contrato!=0):
-    obj_salary_rule = payslip.get_salary_rule('HEYREC007',employee.type_employee.id) 
+obj_salary_rule = payslip.get_salary_rule('HEYREC007',employee.type_employee.id)
+aplicar = int(obj_salary_rule.aplicar_cobro)
+day_initial_payrroll = payslip.date_from.day
+day_end_payrroll = payslip.date_to.day
+if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
         obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato)
@@ -276,8 +310,11 @@ if payslip.date_from.day > 15 or (inherit_contrato!=0):
                 result_qty = obj_overtime.overtime_dof
 #---------------------------------------Dias efectivamente laborados--------------------------------------------------------
 result = 0.0
-if payslip.date_from.day > 15 or (inherit_contrato!=0):
-    obj_salary_rule = payslip.get_salary_rule('AUX005',employee.type_employee.id) 
+obj_salary_rule = payslip.get_salary_rule('AUX005',employee.type_employee.id)
+aplicar = int(obj_salary_rule.aplicar_cobro)
+day_initial_payrroll = payslip.date_from.day
+day_end_payrroll = payslip.date_to.day
+if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         if obj_salary_rule.modality_value == 'diario_efectivo':
             obj_concept = payslip.get_concepts(contract.id,obj_salary_rule.id,id_contract_concepts)
@@ -363,17 +400,22 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje':
     day_end_payrroll = payslip.date_to.day
     aplicar = 0 if obj_salary_rule.aplicar_cobro=='30' and inherit_contrato!=0 else int(obj_salary_rule.aplicar_cobro)
     if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
-        if contract.wage >= annual_parameters.value_top_source_retention:
-            localdict = {
-                        'categories': categories,
-                        'rules_computed': rules_computed,
-                        'payslip': payslip,
-                        'employee': employee,
-                        'contract': contract,
-                        'annual_parameters':annual_parameters
-                    }
-            obj_retention = payslip.get_deduction_retention(employee.id,payslip.date_to,contract.retention_procedure,localdict)
-            result = (obj_retention.result_calculation)*-1
+        if contract.retention_procedure != 'fixed':
+            if contract.wage >= annual_parameters.value_top_source_retention:
+                localdict = {
+                            'categories': categories,
+                            'rules_computed': rules_computed,
+                            'payslip': payslip,
+                            'employee': employee,
+                            'contract': contract,
+                            'annual_parameters':annual_parameters
+                        }
+                obj_retention = payslip.get_deduction_retention(employee.id,payslip.date_to,contract.retention_procedure,localdict)
+                retention_ant = payslip.sum_mount_x_rule('RETFTE001', payslip.date_from, payslip.date_to)
+                retention = obj_retention.result_calculation - retention_ant
+                result = (obj_retention.result_calculation)*-1
+        else:
+            result = (contract.fixed_value_retention_procedure) * -1
 #---------------------------------------Cuota Sindical--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('CUOTA001',employee.type_employee.id) 

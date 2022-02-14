@@ -46,8 +46,12 @@ class hr_history_cesantias(models.Model):
         return res
 
 class Hr_payslip(models.Model):
-    _inherit = 'hr.payslip'    
-    
+    _inherit = 'hr.payslip'
+
+    severance_payments_reverse = fields.Many2many('hr.history.cesantias',
+                                                  string='Historico de cesantias/int.cesantias a tener encuenta',
+                                                  domain="[('employee_id', '=', employee_id)]")
+
     #--------------------------------------------------LIQUIDACIÓN DE CESANTIAS---------------------------------------------------------#
 
     def _get_payslip_lines_cesantias(self,inherit_contrato=0,localdict=None):
@@ -87,6 +91,10 @@ class Hr_payslip(models.Model):
         
         employee = self.employee_id
         contract = self.contract_id
+
+        if contract.modality_salary == 'integral' or contract.contract_type == 'aprendizaje':
+            return result.values()
+
         year = self.date_from.year
         annual_parameters = self.env['hr.annual.parameters'].search([('year', '=', year)])
         
@@ -135,7 +143,7 @@ class Hr_payslip(models.Model):
                     dias_liquidacion = dias_trabajados - dias_ausencias
 
                     #Acumulados
-                    acumulados_promedio = (amount/dias_liquidacion) * 30
+                    acumulados_promedio = (amount / dias_trabajados) * 30  # dias_liquidacion
                     #Salario - Se toma el salario correspondiente a la fecha de liquidación
                     wage = 0
                     obj_wage = self.env['hr.contract.change.wage'].search([('contract_id','=',contract.id),('date_start','<',self.date_to)])
@@ -195,6 +203,64 @@ class Hr_payslip(models.Model):
                         'days_unpaid_absences':dias_ausencias,
                         'slip_id': self.id,
                     }
+
+                # Historico de cesantias/int.cesantias a tener encuenta
+                for payments in self.severance_payments_reverse:
+                    if rule.code == 'CESANTIAS' and payments.type_history in ('cesantias','all'):
+                        previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
+                        # set/overwrite the amount computed for this rule in the localdict
+                        tot_rule = payments.severance_value + previous_amount
+                        localdict[rule.code] = tot_rule
+                        rules_dict[rule.code] = rule
+                        # sum the amount for its salary category
+                        localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount)
+                        localdict = _sum_salary_rule(localdict, rule, tot_rule)
+                        # create/overwrite the rule in the temporary results
+                        if amount != 0:
+                            result['His_'+str(payments.id)+'_'+rule.code] = {
+                                'sequence': rule.sequence,
+                                'code': rule.code,
+                                'name': rule.name + ' ' + str(payments.final_accrual_date.year),
+                                'note': rule.note,
+                                'salary_rule_id': rule.id,
+                                'contract_id': contract.id,
+                                'employee_id': employee.id,
+                                'amount_base': payments.base_value,
+                                'amount': payments.severance_value / payments.time,
+                                'quantity': payments.time,
+                                'rate': rate,
+                                'entity_id': entity_cesantias.id if entity_cesantias != False else entity_cesantias,
+                                'slip_id': self.id,
+                                'is_history_reverse': True,
+                            }
+                    if rule.code == 'INTCESANTIAS' and payments.type_history in ('intcesantias','all'):
+                        previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
+                        # set/overwrite the amount computed for this rule in the localdict
+                        tot_rule = payments.severance_interest_value + previous_amount
+                        localdict[rule.code] = tot_rule
+                        rules_dict[rule.code] = rule
+                        # sum the amount for its salary category
+                        localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount)
+                        localdict = _sum_salary_rule(localdict, rule, tot_rule)
+                        # create/overwrite the rule in the temporary results
+                        if amount != 0:
+                            result['His_' + str(payments.id) + '_' + rule.code] = {
+                                'sequence': rule.sequence,
+                                'code': rule.code,
+                                'name': rule.name + ' ' + str(payments.final_accrual_date.year),
+                                'note': rule.note,
+                                'salary_rule_id': rule.id,
+                                'contract_id': contract.id,
+                                'employee_id': employee.id,
+                                'amount_base': payments.base_value if payments.type_history == 'intcesantias' else payments.severance_value,
+                                'amount': payments.severance_interest_value / payments.time / 0.12,
+                                'quantity': payments.time,
+                                'rate': 12,
+                                'entity_id': entity_cesantias.id if entity_cesantias != False else entity_cesantias,
+                                'slip_id': self.id,
+                                'is_history_reverse': True,
+                            }
+
         
         if inherit_contrato == 0:
             return result.values()  
