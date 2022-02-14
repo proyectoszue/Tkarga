@@ -8,8 +8,7 @@
 			<field name="arch" type="xml">                
 				<xpath expr="//field[@name='currency_id']" position="after">					
 					<field name="accounting_class"/>	
-                    <field name="required_analytic_account"/>
-					<field name="is_account_maintenance"/>					
+                    <field name="required_analytic_account"/>			
                     <field name="required_partner"/>	
                 </xpath>
 			</field>

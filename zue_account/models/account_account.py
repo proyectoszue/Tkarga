@@ -8,7 +8,6 @@ class account_account(models.Model):
     _inherit = ['account.account','mail.thread', 'mail.activity.mixin']
 
     required_analytic_account = fields.Boolean('Obliga cuenta analítica', track_visibility='onchange')
-    is_account_maintenance = fields.Boolean('Cuenta de Mantenimiento', track_visibility='onchange')
     required_partner = fields.Boolean('Obliga tercero', track_visibility='onchange')
     accounting_class = fields.Char('Clase', track_visibility='onchange')
     code = fields.Char(track_visibility='onchange')

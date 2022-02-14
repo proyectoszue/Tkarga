@@ -96,6 +96,7 @@
                                 <field name="fiscal_group"/>
                                 <field name="operator"/>
                                 <field name="tax_type"/>
+                                <field name="partner_minor_amounts" widget="many2one_tags"/>
                             </group>
                             <group>
                                 <field name="group_description"/>
