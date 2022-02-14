@@ -69,6 +69,7 @@ class fiscal_accounting_group(models.Model):
                               ], "Tipo de impuesto")
     concept_dian_ids = fields.Many2many('fiscal.accounting.code', string="Códigos Fiscales")
     excluded_thirdparty_ids = fields.Many2many('res.partner', string="Tercero Excluido")
+    partner_minor_amounts = fields.Many2one('res.partner', string="Tercero Cuantías menores")
 
     _sql_constraints = [('fiscal_group_uniq', 'unique(company_id,fiscal_group)',
                          'El grupo fiscal digitado ya esta registrado para esta compañía, por favor verificar.')]

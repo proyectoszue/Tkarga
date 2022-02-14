@@ -400,17 +400,22 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje':
     day_end_payrroll = payslip.date_to.day
     aplicar = 0 if obj_salary_rule.aplicar_cobro=='30' and inherit_contrato!=0 else int(obj_salary_rule.aplicar_cobro)
     if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
-        if contract.wage >= annual_parameters.value_top_source_retention:
-            localdict = {
-                        'categories': categories,
-                        'rules_computed': rules_computed,
-                        'payslip': payslip,
-                        'employee': employee,
-                        'contract': contract,
-                        'annual_parameters':annual_parameters
-                    }
-            obj_retention = payslip.get_deduction_retention(employee.id,payslip.date_to,contract.retention_procedure,localdict)
-            result = (obj_retention.result_calculation)*-1
+        if contract.retention_procedure != 'fixed':
+            if contract.wage >= annual_parameters.value_top_source_retention:
+                localdict = {
+                            'categories': categories,
+                            'rules_computed': rules_computed,
+                            'payslip': payslip,
+                            'employee': employee,
+                            'contract': contract,
+                            'annual_parameters':annual_parameters
+                        }
+                obj_retention = payslip.get_deduction_retention(employee.id,payslip.date_to,contract.retention_procedure,localdict)
+                retention_ant = payslip.sum_mount_x_rule('RETFTE001', payslip.date_from, payslip.date_to)
+                retention = obj_retention.result_calculation - retention_ant
+                result = (obj_retention.result_calculation)*-1
+        else:
+            result = (contract.fixed_value_retention_procedure) * -1
 #---------------------------------------Cuota Sindical--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('CUOTA001',employee.type_employee.id) 
