@@ -6,7 +6,7 @@ from odoo import models, fields, api, _
 class account_move(models.Model):
     _inherit = 'account.move'
 
-    supplier_invoice_number = fields.Char(string='Nº de factura del proveedor',help="La referencia de esta factura proporcionada por el proveedor.")
+    supplier_invoice_number = fields.Char(string='Nº de factura del proveedor',help="La referencia de esta factura proporcionada por el proveedor.", copy=False)
     supplier_invoice_attachment = fields.Many2one('documents.document',string="Soporte") #fields.Binary(string="Soporte")
     iva_amount = fields.Float('Valor IVA', compute='_compute_amount_iva', store=True)
     l10n_co_edi_type = fields.Selection([('1', 'Factura de venta'),
@@ -48,3 +48,11 @@ class account_move(models.Model):
 
                 if lines.required_analytic_account and not lines.analytic_account_id and not record.stock_move_id.picking_id:
                     raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
+
+    @api.constrains('supplier_invoice_number')
+    def _check_supplier_invoice(self):
+        for record in self:
+            if record.type == 'in_invoice':
+                obj_move = self.env['account.move'].search([('supplier_invoice_number','=',record.supplier_invoice_number),('id','!=',record.id)])
+                if len(obj_move) > 0:
+                    raise ValidationError('El número de factura digitado ya existe, por favor verificar.')

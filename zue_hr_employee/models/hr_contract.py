@@ -18,11 +18,11 @@ class hr_contract_change_wage(models.Model):
 
     _sql_constraints = [('change_wage_uniq', 'unique(contract_id, date_start, wage)', 'Ya existe un cambio de salario igual a este')]
 
-    @api.constrains('date_start')
-    def _check_date_start(self):
-        for record in self:
-            if record.date_start > datetime.now(timezone(self.env.user.tz)).date():
-                raise UserError(_('La fecha inicial del salario no puede ser mayor que la fecha actual, por favor verificar.'))
+    #@api.constrains('date_start')
+    #def _check_date_start(self):
+    #    for record in self:
+    #        if record.date_start > datetime.now(timezone(self.env.user.tz)).date():
+    #            raise UserError(_('La fecha inicial del salario no puede ser mayor que la fecha actual, por favor verificar.'))
 
 #Conceptos de nomina
 class hr_contract_concepts(models.Model):
@@ -133,6 +133,16 @@ class hr_contract_deductions_rtf(models.Model):
 
     _sql_constraints = [('change_deductionsrtf_uniq', 'unique(input_id, contract_id)', 'Ya existe esta deducción para este contrato, por favor verficar.')]
 
+
+class hr_type_of_jurisdiction(models.Model):
+    _name = 'hr.type.of.jurisdiction'
+    _description = 'Tipo de Fuero'
+
+    name = fields.Char('Tipo de Fuero')
+
+    _sql_constraints = [('type_of_jurisdiction_uniq', 'unique(name)',
+                         'Ya existe este tipo de fuero, por favor verificar.')]
+
 #Contratos
 class hr_contract(models.Model):
     _inherit = 'hr.contract'
@@ -157,7 +167,8 @@ class hr_contract(models.Model):
     deductions_rtf_ids = fields.One2many('hr.contract.deductions.rtf', 'contract_id', 'Deducciones retención en la fuente', default=_get_default_deductions_rtf_ids, track_visibility='onchange')
     risk_id = fields.Many2one('hr.contract.risk', string='Riesgo profesional', track_visibility='onchange')
     contract_type = fields.Selection([('obra', 'Contrato por Obra o Labor'), 
-                                      ('fijo', 'Contrato de Trabajo a Término Fijo'), 
+                                      ('fijo', 'Contrato de Trabajo a Término Fijo'),
+                                      ('fijo_parcial', 'Contrato de Trabajo a Término Fijo Tiempo Parcial'),
                                       ('indefinido', 'Contrato de Trabajo a Término Indefinido'),
                                       ('aprendizaje', 'Contrato de Aprendizaje'), 
                                       ('temporal', 'Contrato Temporal, ocasional o accidental')], 'Tipo de Contrato',required=True, default='obra', track_visibility='onchange')
@@ -184,8 +195,19 @@ class hr_contract(models.Model):
     sena_code = fields.Char('SENA code')
     #branch_id = fields.Many2one('zue.res.branch', string='Sucursal', related='analytic_account_id.branch_id', readonly=True)
     retention_procedure = fields.Selection([('100', 'Procedimiento 1'),
-                                            ('102', 'Procedimiento 2')], 'Procedimiento retención', default='100', track_visibility='onchange')
+                                            ('102', 'Procedimiento 2'),
+                                            ('fixed', 'Valor fijo')], 'Procedimiento retención', default='100', track_visibility='onchange')
+    fixed_value_retention_procedure = fields.Float('Valor fijo retención')
+    #Pestaña Fuero
+    type_of_jurisdiction = fields.Many2one('hr.type.of.jurisdiction', string ='Tipo de Fuero')                             
+    date_i = fields.Date('Fecha Inicial')
+    date_f = fields.Date('Fecha Final')
+    relocated = fields.Char('Reubicados')
+    previous_positions = fields.Char('Cargo anterior')
+    new_positions = fields.Char('Cargo nuevo')
+    time_with_the_state = fields.Char('Tiempo que lleva con el estado')
     
+
 
     # @api.constrains('state')
     # def _check_states_contract(self):  

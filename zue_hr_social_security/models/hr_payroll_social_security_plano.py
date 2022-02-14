@@ -264,7 +264,7 @@ class hr_payroll_social_security(models.Model):
             cTDP = ' ' 
             cTAP = 'X' if entity_pension_history else ' '
             obj_change_wage = self.env['hr.contract.change.wage'].search([('contract_id','=',item.contract_id.id),('date_start','!=',False),('date_start','>=',date_start),('date_start','<=',date_end)],limit=1)
-            cVSP = 'X' if len(obj_change_wage) > 0 else ' '
+            cVSP = 'X' if len(obj_change_wage) > 0 and item.nDiasLiquidados > 0 else ' '
             cCorrecciones = ' '
             cVST = 'X' if item.nSueldo != item.nValorBaseSalud and item.nDiasLiquidados > 0 and cTipoCotizante not in ('12','19') and cVSP != 'X' else ' '
             
@@ -356,7 +356,7 @@ class hr_payroll_social_security(models.Model):
             #------Fechas
             cFechaIngreso = item.contract_id.date_start.strftime('%Y-%m-%d') if item.nIngreso else ' '*10
             cFechaRetiro = item.contract_id.retirement_date.strftime('%Y-%m-%d') if item.nRetiro else ' '*10
-            cFechaInicioVSP = obj_change_wage.date_final.strftime('%Y-%m-%d') if len(obj_change_wage) > 0 else ' '*10 
+            cFechaInicioVSP = obj_change_wage.date_start.strftime('%Y-%m-%d') if len(obj_change_wage) > 0 and item.nDiasLiquidados > 0 else ' '*10
             cFechaInicioSLN = item.dFechaInicioSLN.strftime('%Y-%m-%d') if item.dFechaInicioSLN else ' '*10
             cFechaFinSLN = item.dFechaFinSLN.strftime('%Y-%m-%d') if item.dFechaFinSLN else ' '*10
             cFechaInicioIGE = item.dFechaInicioIGE.strftime('%Y-%m-%d') if item.dFechaInicioIGE else ' '*10

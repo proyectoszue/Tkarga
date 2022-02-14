@@ -25,3 +25,4 @@ access_hr_history_prima,hr.history.prima,model_hr_history_prima,,1,1,1,1
 access_hr_electronic_payroll,hr.electronic.payroll,model_hr_electronic_payroll,,1,1,1,1
 access_hr_electronic_payroll_detail,hr.electronic.payroll.detail,model_hr_electronic_payroll_detail,,1,1,1,1
 access_hr_absence_history,hr.absence.history,model_hr_absence_history,,1,1,1,1
+access_hr_leave_diagnostic,hr.leave.diagnostic,model_hr_leave_diagnostic,,1,1,1,1

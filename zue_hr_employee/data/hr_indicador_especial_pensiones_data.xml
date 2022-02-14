@@ -21,7 +21,7 @@
         </record>
         <record model="hr.indicador.especial.pila" id="zue_hr_employee.hr_indicador_actividad_sin_riesgo">
             <field name="name">5: Sin riesgo</field>
-            <field name="code"></field>
+            <field name="code">5</field>
         </record>
     </data>
 

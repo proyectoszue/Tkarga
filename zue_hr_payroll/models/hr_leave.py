@@ -24,6 +24,10 @@ class HolidaysRequest(models.Model):
     days_31_holidays = fields.Integer(string='Días 31 festivos', help='Este día no se tiene encuenta para el calculo del pago ni afecta su historico de vacaciones.')
     alert_days_vacation = fields.Boolean(string='Alerta días vacaciones')
     accumulated_vacation_days = fields.Float(string='Días acumulados de vacaciones')
+    #Creación de ausencia
+    type_of_entity = fields.Many2one('hr.contribution.register', 'Tipo de Entidad')
+    entity = fields.Many2one('hr.employee.entities', 'Entidad')
+    diagnostic = fields.Many2one('hr.leave.diagnostic', 'Diagnóstico')
     
     @api.onchange('date_from', 'date_to', 'employee_id')
     def _onchange_leave_dates(self):
@@ -32,6 +36,18 @@ class HolidaysRequest(models.Model):
                 self.number_of_days = self._get_number_of_days(self.date_from, self.date_to, self.employee_id.id)['days']
             else:
                 self.number_of_days = 0
+
+    @api.onchange('employee_id')
+    def _onchange_info_entity(self):
+        for record in self:
+            if record.employee_id:
+                for entities in record.employee_id.social_security_entities:
+                    if entities.contrib_id.type_entities == 'eps':
+                        record.type_of_entity = entities.contrib_id.id
+                        record.entity = entities.partner_id.id
+            else:
+                record.type_of_entity = False
+                record.entity = False
 
     @api.onchange('number_of_days','request_date_from')
     def onchange_number_of_days_vacations(self):   
@@ -155,3 +171,13 @@ class HolidaysRequest(models.Model):
         
         res = super(HolidaysRequest, self).create(vals)
         return res
+
+class hr_leave_diagnostic(models.Model):
+    _name = "hr.leave.diagnostic"
+    _description = "Diagnosticos Ausencias"
+
+    name = fields.Char('Nombre', required=True)
+    code = fields.Char('Código', required=True)
+
+    _sql_constraints = [('leave_diagnostic_code_uniq', 'unique(code)',
+                         'Ya existe un diagnóstico con este código, por favor verificar.')]
