@@ -163,7 +163,7 @@ else:
     porc = obj_calculo.porc / 100
     result = round((((IBR_EN_UVTS_AVP_O - obj_calculo.subtract_uvt) * porc) + obj_calculo.addition_uvt) * annual_parameters.value_uvt,0)
 #RTEFTE_ANTERIOR_O
-result = payslip.sum_mount_x_rule('RETFTE001', payslip.date_from, payslip.date_to) + rules_computed.RETFTE001
+result = abs(payslip.sum_mount_x_rule('RETFTE001', payslip.date_from, payslip.date_to) + rules_computed.RETFTE001)
 #RETENCION_DEF_AFC_O
 RETENCION_AFC_O = payslip.get_deduction_retention_value(employee.id,payslip.date_to,'RETENCION_AFC_O').result_calculation 
 RTEFTE_ANTERIOR_O = payslip.get_deduction_retention_value(employee.id,payslip.date_to,'RTEFTE_ANTERIOR_O').result_calculation 

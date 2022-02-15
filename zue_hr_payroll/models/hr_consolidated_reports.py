@@ -49,15 +49,22 @@ class hr_consolidated_reports(models.TransientModel):
 
         return date_to.date()
 
+    def create_initial_month_date(self):
+        date_from = f'{str(self.year)}-{str(self.month)}-01'
+        date_from = datetime.strptime(date_from, '%Y-%m-%d')
+
+        return date_from.date()
+
     def create_date_initial_process(self):
         date_from = f'{str(self.year)}-01-01'
         date_from = datetime.strptime(date_from, '%Y-%m-%d')
         return date_from.date()
 
-    def query_filter_period(self,and_or_where,field):
+    def query_filter_period(self,and_or_where,field,initial_month=0):
         filter_period = ''
-        date_filter = str(self.create_closing_date())
-        filter_period = f" {and_or_where} {field} <= '{date_filter}' "
+        date_filter = str(self.create_closing_date()) if initial_month == 0 else str(self.create_initial_month_date())
+        comparation_symbol = '<=' if initial_month == 0 else '>='
+        filter_period = f" {and_or_where} {field} {comparation_symbol} '{date_filter}' "
         return filter_period
 
     def query_where_filters(self):
@@ -101,7 +108,7 @@ class hr_consolidated_reports(models.TransientModel):
                             coalesce(i.return_date,'1900-01-01') as return_date_last,coalesce(i.days,0) as days_last
                 from hr_employee as a
                 inner join hr_contract as b on a.id = b.employee_id and b.active = true {self.query_filter_period('and','b.date_start')}
-                                                and (b.state = 'open' {self.query_filter_period('or','b.retirement_date')})
+                                                and (b.state = 'open' or ({self.query_filter_period('','b.retirement_date',1)} {self.query_filter_period('and','b.retirement_date')}))
                 left join zue_res_branch as rb on a.branch_id = rb.id
                 left join account_analytic_account as aaa on a.analytic_account_id = aaa.id 
                 left join (select a.employee_id,sum(a.days) as days_unpaid_absences 
@@ -260,7 +267,7 @@ class hr_consolidated_reports(models.TransientModel):
                     coalesce(f.current_payable_value,0) as current_payable_value,coalesce(h.current_payable_value,0) as intcurrent_payable_value
                 from hr_employee as a
                 inner join hr_contract as b on a.id = b.employee_id and b.active = true {self.query_filter_period('and','b.date_start')}
-                                                and (b.state = 'open' {self.query_filter_period('or','b.retirement_date')})
+                                                and (b.state = 'open' or ({self.query_filter_period('','b.retirement_date',1)} {self.query_filter_period('and','b.retirement_date')}))
                 left join zue_res_branch as rb on a.branch_id = rb.id
                 left join account_analytic_account as aaa on a.analytic_account_id = aaa.id 
                 left join (select a.employee_id,sum(a.days) as days_unpaid_absences 
@@ -403,7 +410,7 @@ class hr_consolidated_reports(models.TransientModel):
                 coalesce(pf.value_payments,0) as value_payments,coalesce(f.current_payable_value,0) as current_payable_value
                 from hr_employee as a
                 inner join hr_contract as b on a.id = b.employee_id and b.active = true {self.query_filter_period('and','b.date_start')}
-                                                and (b.state = 'open' {self.query_filter_period('or','b.retirement_date')})
+                                                and (b.state = 'open' or ({self.query_filter_period('','b.retirement_date',1)} {self.query_filter_period('and','b.retirement_date')}))
                 left join zue_res_branch as rb on a.branch_id = rb.id
                 left join account_analytic_account as aaa on a.analytic_account_id = aaa.id 
                 left join (select a.employee_id,sum(a.days) as days_unpaid_absences 
