@@ -40,7 +40,6 @@
         'views/actions_novelties_different_concepts.xml',
         'views/actions_hr_novelties_independents.xml',
         'views/actions_hr_accumulated_payroll.xml',
-        'views/actions_hr_assistance_vacation_alliancet.xml',
         'views/actions_hr_history_cesantias.xml',
         'views/actions_hr_history_prima.xml',
         'views/actions_hr_work_entry.xml',

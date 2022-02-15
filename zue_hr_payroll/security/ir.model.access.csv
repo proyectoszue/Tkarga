@@ -17,7 +17,6 @@ access_hr_payroll_posting_distribution,hr.payroll.posting.distribution,model_hr_
 access_hr_payslip_not_line,hr.payslip.not.line,model_hr_payslip_not_line,,1,1,1,1
 access_hr_payslip_paid_vacation,hr.payslip.paid.vacation,model_hr_payslip_paid_vacation,,1,1,1,1
 access_hr_accumulated_payroll,hr.accumulated.payroll,model_hr_accumulated_payroll,,1,1,1,1
-access_hr_assistance_vacation_alliancet,hr.assistance.vacation.alliancet,model_hr_assistance_vacation_alliancet,,1,1,1,1
 access_hr_history_cesantias,hr.history.cesantias,model_hr_history_cesantias,,1,1,1,1
 access_hr_voucher_sending,hr.voucher.sending,model_hr_voucher_sending,,1,1,1,1
 access_hr_voucher_sending_failed,hr.voucher.sending.failed,model_hr_voucher_sending_failed,,1,1,1,1
