@@ -39,6 +39,9 @@ class hr_vacation_book(models.TransientModel):
 
     def generate_excel(self):
         # Periodo
+        date_from = f'{str(self.final_year)}-{str(self.final_month)}-01'
+        date_initial = datetime.strptime(date_from, '%Y-%m-%d').date()
+        date_from = str(date_initial)
         final_year = self.final_year if self.final_month != '12' else self.final_year + 1
         final_month = int(self.final_month) + 1 if self.final_month != '12' else 1
         date_to = f'{str(final_year)}-{str(final_month)}-01'
@@ -87,7 +90,7 @@ class hr_vacation_book(models.TransientModel):
                         from hr_employee as a 
                         inner join res_company as b on a.company_id = b.id
                         inner join hr_contract as hc on a.id = hc.employee_id and hc.active = true and hc.date_start <= '{date_to}'
-                                                and (hc.state = 'open' or hc.retirement_date <= '{date_to}')
+                                                and (hc.state = 'open' or (hc.retirement_date >= '{date_from}' and hc.retirement_date <= '{date_to}'))
                         left join res_partner as c on a.address_id = c.id
                         left join zue_res_branch as d on a.branch_id = d.id
                         left join hr_department as e on a.department_id = e.id 
@@ -226,7 +229,7 @@ class hr_vacation_book(models.TransientModel):
                         from hr_employee as a 
                         inner join res_company as b on a.company_id = b.id
                         inner join hr_contract as hc on a.id = hc.employee_id and hc.active = true and hc.date_start <= '{date_to}'
-                                                and (hc.state = 'open' or hc.retirement_date <= '{date_to}')
+                                                and (hc.state = 'open' or (hc.retirement_date >= '{date_from}' and hc.retirement_date <= '{date_to}'))
                         inner join hr_vacation as hv on a.id = hv.employee_id and hc.id = hv.contract_id and hv.departure_date <= '{date_to}' 
                         left join res_partner as c on a.address_id = c.id
                         left join zue_res_branch as d on a.branch_id = d.id
