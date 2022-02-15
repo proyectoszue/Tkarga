@@ -410,10 +410,8 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje':
                             'contract': contract,
                             'annual_parameters':annual_parameters
                         }
-                obj_retention = payslip.get_deduction_retention(employee.id,payslip.date_to,contract.retention_procedure,localdict)
-                retention_ant = payslip.sum_mount_x_rule('RETFTE001', payslip.date_from, payslip.date_to)
-                retention = obj_retention.result_calculation - retention_ant
-                result = (obj_retention.result_calculation)*-1
+                obj_retention = payslip.get_deduction_retention(employee.id, payslip.date_to,contract.retention_procedure, localdict)
+                result = (obj_retention.result_calculation) * -1
         else:
             result = (contract.fixed_value_retention_procedure) * -1
 #---------------------------------------Cuota Sindical--------------------------------------------------------
