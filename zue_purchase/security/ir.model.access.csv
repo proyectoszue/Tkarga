@@ -1,4 +1,0 @@
-id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_sre_order,sre.order,model_sre_order,,1,1,1,1
-access_sre_order_line,sre.order.line,model_sre_order_line,,1,1,1,1
-access_payment_type,payment.type,model_payment_type,,1,1,1,1
