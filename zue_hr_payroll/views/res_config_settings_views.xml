@@ -10,21 +10,47 @@
                 <div class="row mt16 o_settings_container" id="hr_payroll_accountant_zue">
                     <div class="col-12 col-lg-6 o_setting_box">
                         <div class="o_setting_left_pane"/>
-                        <div class="o_setting_right_pane">                       
+                        <div class="o_setting_right_pane">
                             <label for="module_hr_payroll_batch_account"/>
                             <div class="text-muted">
-                                Elige la modalidad para contabilizar en lote 
+                                Elige la modalidad para contabilizar en lote
                             </div>
                             <div class="content-group">
                                 <div class="mt16">
-                                    <field name="module_hr_payroll_batch_account" class="o_light_label" widget="radio"/>                                    
+                                    <field name="module_hr_payroll_batch_account" class="o_light_label" widget="radio"/>
                                 </div>
-                            </div>                            
-                        </div>                    
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </xpath>
+            <xpath expr="//div[@id='hr_payroll_localization']" position="after">
+                <h2>Vacaciones</h2>
+                <div class="row mt16 o_settings_container" id="attributes_vacations">
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane">
+                            <field name="pay_vacations_in_payroll"/>
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <span class="o_form_label">¿Liquidar vacaciones en nómina?</span>
+                        </div>
+                    </div>
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane"/>
+                        <div class="o_setting_right_pane">
+                            <div class="content-group">
+                                <span class="o_form_label">Días de vacaciones para calcular ausencias</span>
+                                <field name="vacation_days_calculate_absences" class="o_light_label mt16"/>
+                            </div>
+                            <div class="text-muted">
+                                Calcular deducciones en liquidación de vacaciones cuando estas superen la cantidad de
+                                días indicados
+                            </div>
+                        </div>
                     </div>
                 </div>
             </xpath>
         </field>
     </record>
 
-</odoo>        
+</odoo>
