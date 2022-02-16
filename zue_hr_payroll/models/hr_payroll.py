@@ -394,6 +394,10 @@ class Hr_payslip(models.Model):
         rules_dict = {}
         worked_days_dict = {line.code: line for line in self.worked_days_line_ids if line.code}
         inputs_dict = {line.code: line for line in self.input_line_ids if line.code}
+        pay_vacations_in_payroll = self.env['ir.config_parameter'].sudo().get_param(
+            'zue_hr_payroll.pay_vacations_in_payroll') or False
+        vacation_days_calculate_absences = int(self.env['ir.config_parameter'].sudo().get_param(
+            'zue_hr_payroll.vacation_days_calculate_absences')) or 5
         
         worked_days_entry = 0
         leaves_days_law = 0
@@ -606,7 +610,7 @@ class Hr_payslip(models.Model):
                                     or (inherit_vacation != 0 and rule.dev_or_ded != 'deduccion' and not rule.code in ['TOTALDEV','NET']):
                                 amount, qty, rate = 0,1.0,100
 
-                            if days_vac > 5 and rule.dev_or_ded == 'deduccion' and not rule.code in ['TOTALDED']:
+                            if days_vac > vacation_days_calculate_absences and rule.dev_or_ded == 'deduccion' and not rule.code in ['TOTALDED']:
                                 if inherit_vacation != 0:
                                     month_from = self.date_from.month
                                     year_from = self.date_from.year
@@ -636,12 +640,12 @@ class Hr_payslip(models.Model):
                                             days_fifteen = 0
                                             days_thirty = 0
 
-                                    #Cant de quincenas involucradas en la liquidación de vacaciones que afecten mas de 5 días
+                                    #Cant de quincenas involucradas en la liquidación de vacaciones que afecten mas de vacation_days_calculate_absences
                                     cant_fortnight = 0
                                     for vac_days in vac_months:
                                         if vac_days_for_month.get(vac_days) != None:
-                                            cant_fortnight += 1 if vac_days_for_month.get(vac_days).get('days_fifteen') > 5 else 0
-                                            cant_fortnight += 1 if vac_days_for_month.get(vac_days).get('days_thirty') > 5 else 0
+                                            cant_fortnight += 1 if vac_days_for_month.get(vac_days).get('days_fifteen') > vacation_days_calculate_absences else 0
+                                            cant_fortnight += 1 if vac_days_for_month.get(vac_days).get('days_thirty') > vacation_days_calculate_absences else 0
 
                                     if cant_fortnight > 1:
                                         amount = amount * cant_fortnight if not rule.modality_value in ['diario','diario_efectivo'] and rule.type_concept != 'ley' else amount
@@ -649,7 +653,7 @@ class Hr_payslip(models.Model):
                                     if cant_fortnight == 0:
                                         amount, qty, rate = 0, 1.0, 100
                                 else:
-                                    if worked_days_vac > 5:
+                                    if worked_days_vac > vacation_days_calculate_absences:
                                         amount, qty, rate = 0,1.0,100
 
                             #Continuar con el proceso normal
