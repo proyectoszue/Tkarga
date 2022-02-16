@@ -80,6 +80,9 @@ class Hr_payslip_line(models.Model):
 
     initial_accrual_date = fields.Date('C. Inicio')
     final_accrual_date = fields.Date('C. Fin')
+    vacation_departure_date = fields.Date('Fechas salida vacaciones')
+    vacation_return_date = fields.Date('Fechas regreso vacaciones')
+    vacation_leave_id = fields.Many2one('hr.leave', 'Ausencia')
     business_units = fields.Integer('Unidades hábiles')
     business_31_units = fields.Integer('Unidades hábiles - Días 31')
     holiday_units = fields.Integer('Unidades festivos')
@@ -93,7 +96,7 @@ class Hr_payslip(models.Model):
 
     #--------------------------------------------------LIQUIDACIÓN DE VACACIONES---------------------------------------------------------#
 
-    def _get_payslip_lines_vacation(self,inherit_contrato=0,localdict=None):
+    def _get_payslip_lines_vacation(self,inherit_contrato=0,localdict=None,inherit_nomina=0):
         def _sum_salary_rule_category(localdict, category, amount):
             if category.parent_id:
                 localdict = _sum_salary_rule_category(localdict, category.parent_id, amount)
@@ -168,6 +171,18 @@ class Hr_payslip(models.Model):
                 leaves[leave.work_entry_type_id.code] = leave_number_of_days
                 leaves['HOLIDAYS'+leave.work_entry_type_id.code] = leave_holidays          
                 leaves['BUSINESS'+leave.work_entry_type_id.code] = leave_business_days     
+
+                #Días pertenecientes a la liquidación de nómina
+                if inherit_nomina != 0:
+                    vac_days_in_payslip = 0
+                    initial_date = leave.leave_id.request_date_from if leave.leave_id.request_date_from >= self.date_from else self.date_from
+                    end_date = leave.leave_id.request_date_to if leave.leave_id.request_date_to <= self.date_to else self.date_to
+                    while initial_date <= end_date:
+                        vac_days_in_payslip += 1
+                        initial_date = initial_date + timedelta(days=1)
+
+                    leaves['ORIGINAL_'+leave.work_entry_type_id.code] = leave_number_of_days
+                    leaves[leave.work_entry_type_id.code] = vac_days_in_payslip
 
                 leaves_time.append(leaves)
 
@@ -303,6 +318,10 @@ class Hr_payslip(models.Model):
                                 'quantity': qty,
                                 'rate': rate,
                                 'slip_id': self.id,
+                                #Info vacaciones
+                                'vacation_departure_date': obj_leave.request_date_from,
+                                'vacation_return_date': obj_leave.request_date_to,
+                                'vacation_leave_id': obj_leave.id,
                             }
                 elif rule.code == 'VACREMUNERADAS':
                     initial_accrual_date = False
@@ -426,7 +445,7 @@ class Hr_payslip(models.Model):
                         }
         
         #Ejecutar reglas salariales de la nómina de pago regular
-        if inherit_contrato == 0:
+        if inherit_contrato == 0 and inherit_nomina == 0:
             obj_struct_payroll = self.env['hr.payroll.structure'].search([('regular_pay','=',True),('process','=','nomina')])
             struct_original = self.struct_id.id
             self.struct_id = obj_struct_payroll.id
