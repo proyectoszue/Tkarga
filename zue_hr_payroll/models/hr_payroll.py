@@ -892,8 +892,8 @@ class Hr_payslip(models.Model):
                             'contract_id': record.contract_id.id,
                             'initial_accrual_date': line.initial_accrual_date,
                             'final_accrual_date': line.final_accrual_date,
-                            'departure_date': record.date_from if not record.vacation_departure_date else record.vacation_departure_date,
-                            'return_date': record.date_to if not record.vacation_return_date else record.vacation_return_date,
+                            'departure_date': record.date_from if not line.vacation_departure_date else line.vacation_departure_date,
+                            'return_date': record.date_to if not line.vacation_return_date else line.vacation_return_date,
                             'business_units': line.business_units + line.business_31_units,
                             'value_business_days': line.business_units * line.amount,
                             'holiday_units': line.holiday_units + line.holiday_31_units,
@@ -901,7 +901,7 @@ class Hr_payslip(models.Model):
                             'base_value': line.amount_base,
                             'total': (line.business_units * line.amount)+(line.holiday_units * line.amount),
                             'payslip': record.id,
-                            'leave_id': record.vacation_leave_id.id
+                            'leave_id': False if not line.vacation_leave_id else line.vacation_leave_id.id
                         }
                     if line.code == 'VACREMUNERADAS':
                         info_vacation = {
@@ -924,7 +924,7 @@ class Hr_payslip(models.Model):
                                                                                       ('contract_id','=',record.contract_id.id),
                                                                                       ('initial_accrual_date','=',line.initial_accrual_date),
                                                                                       ('final_accrual_date','=',line.final_accrual_date),
-                                                                                      ('leave_id','=',record.vacation_leave_id.id)])
+                                                                                      ('leave_id','=',line.vacation_leave_id.id)])
                         if len(obj_history_vacation_exists) == 0:
                             history_vacation.append(info_vacation)
                     else:
