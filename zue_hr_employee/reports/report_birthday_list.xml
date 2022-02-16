@@ -17,7 +17,8 @@
                             <field name="month"/>
                         </group>
                         <footer>
-                            <button name="generate_report" string="Generar" type="object" class="oe_highlight"/>
+                            <button name="generate_report" string="Generar PDF" type="object" class="oe_highlight"/>
+                            <button name="generate_birthday_excel" string="Generar EXCEL" type="object" class="oe_highlight"/>
                         </footer>
                     </form>
                 </field>
