@@ -219,7 +219,7 @@ day_end_payrroll = payslip.date_to.day
 if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
-        obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato)
+        obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
         if obj_overtime:
             if obj_type_overtime.type_overtime == 'overtime_ext_d' and obj_overtime.overtime_ext_d > 0:
                 result = round((contract.wage /240)*1.25)
@@ -233,7 +233,7 @@ day_end_payrroll = payslip.date_to.day
 if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
-        obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato)
+        obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
         if obj_overtime:
             if obj_type_overtime.type_overtime == 'overtime_eddf' and obj_overtime.overtime_eddf > 0:
                 result = round((contract.wage /240)*2)
@@ -247,7 +247,7 @@ day_end_payrroll = payslip.date_to.day
 if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
-        obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato)
+        obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
         if obj_overtime:
             if obj_type_overtime.type_overtime == 'overtime_ext_n' and obj_overtime.overtime_ext_n > 0:
                 result = round((contract.wage /240)*1.75)
@@ -261,7 +261,7 @@ day_end_payrroll = payslip.date_to.day
 if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
-        obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato)
+        obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
         if obj_overtime:
             if obj_type_overtime.type_overtime == 'overtime_rndf' and obj_overtime.overtime_rndf > 0:
                 result = round((contract.wage /240)*1.1)
@@ -275,7 +275,7 @@ day_end_payrroll = payslip.date_to.day
 if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
-        obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato)
+        obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
         if obj_overtime:
             if obj_type_overtime.type_overtime == 'overtime_rn' and obj_overtime.overtime_rn > 0:
                 result = round((contract.wage /240)*0.35)
@@ -289,7 +289,7 @@ day_end_payrroll = payslip.date_to.day
 if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
-        obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato)
+        obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
         if obj_overtime:
             if obj_type_overtime.type_overtime == 'overtime_endf' and obj_overtime.overtime_endf > 0:
                 result = round((contract.wage /240)*2.5)
@@ -303,7 +303,7 @@ day_end_payrroll = payslip.date_to.day
 if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
-        obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato)
+        obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
         if obj_overtime:
             if obj_type_overtime.type_overtime == 'overtime_dof' and obj_overtime.overtime_dof > 0:
                 result = round((contract.wage /240)*0.75)
@@ -318,7 +318,7 @@ if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_pa
     if obj_salary_rule:
         if obj_salary_rule.modality_value == 'diario_efectivo':
             obj_concept = payslip.get_concepts(contract.id,obj_salary_rule.id,id_contract_concepts)
-            obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato)
+            obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
             if obj_overtime and obj_concept:
                 if obj_overtime.days_actually_worked > 0:
                     result = obj_concept.amount#contract.wage / 30

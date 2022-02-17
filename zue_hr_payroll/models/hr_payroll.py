@@ -394,6 +394,10 @@ class Hr_payslip(models.Model):
         rules_dict = {}
         worked_days_dict = {line.code: line for line in self.worked_days_line_ids if line.code}
         inputs_dict = {line.code: line for line in self.input_line_ids if line.code}
+        pay_vacations_in_payroll = bool(self.env['ir.config_parameter'].sudo().get_param(
+            'zue_hr_payroll.pay_vacations_in_payroll')) or False
+        vacation_days_calculate_absences = int(self.env['ir.config_parameter'].sudo().get_param(
+            'zue_hr_payroll.vacation_days_calculate_absences')) or 5
         
         worked_days_entry = 0
         leaves_days_law = 0
@@ -511,6 +515,19 @@ class Hr_payslip(models.Model):
         worked_days_vac += worked_days_dict.get('VACDISFRUTADAS').number_of_days  if worked_days_dict.get('VACDISFRUTADAS') != None else 0
         #worked_days_vac += worked_days_dict.get('VACREMUNERADAS').number_of_days  if worked_days_dict.get('VACREMUNERADAS') != None else 0
 
+        #Ejecutar vacaciones dentro de la nómina - 16/02/2022
+        if pay_vacations_in_payroll == True and inherit_vacation == 0:
+            struct_original = self.struct_id.id
+            #Vacaciones
+            obj_struct_vacation = self.env['hr.payroll.structure'].search([('process', '=', 'vacaciones')])
+            self.struct_id = obj_struct_vacation.id
+            localdict, result_vac = self._get_payslip_lines_vacation(inherit_contrato=0, localdict=localdict, inherit_nomina=1)
+            localdict.update({'leaves': BrowsableObject(employee.id, leaves, self.env)})
+            #Continuar con la nómina
+            self.struct_id = struct_original
+        else:
+            result_vac = {}
+
         #Cargar novedades por conceptos diferentes
         obj_novelties = self.env['hr.novelties.different.concepts'].search([('employee_id', '=', employee.id),
                                                             ('date', '>=', self.date_from),('date', '<=', self.date_to)])
@@ -606,7 +623,7 @@ class Hr_payslip(models.Model):
                                     or (inherit_vacation != 0 and rule.dev_or_ded != 'deduccion' and not rule.code in ['TOTALDEV','NET']):
                                 amount, qty, rate = 0,1.0,100
 
-                            if days_vac > 5 and rule.dev_or_ded == 'deduccion' and not rule.code in ['TOTALDED']:
+                            if days_vac > vacation_days_calculate_absences and rule.dev_or_ded == 'deduccion' and not rule.code in ['TOTALDED']:
                                 if inherit_vacation != 0:
                                     month_from = self.date_from.month
                                     year_from = self.date_from.year
@@ -636,12 +653,12 @@ class Hr_payslip(models.Model):
                                             days_fifteen = 0
                                             days_thirty = 0
 
-                                    #Cant de quincenas involucradas en la liquidación de vacaciones que afecten mas de 5 días
+                                    #Cant de quincenas involucradas en la liquidación de vacaciones que afecten mas de vacation_days_calculate_absences
                                     cant_fortnight = 0
                                     for vac_days in vac_months:
                                         if vac_days_for_month.get(vac_days) != None:
-                                            cant_fortnight += 1 if vac_days_for_month.get(vac_days).get('days_fifteen') > 5 else 0
-                                            cant_fortnight += 1 if vac_days_for_month.get(vac_days).get('days_thirty') > 5 else 0
+                                            cant_fortnight += 1 if vac_days_for_month.get(vac_days).get('days_fifteen') > vacation_days_calculate_absences else 0
+                                            cant_fortnight += 1 if vac_days_for_month.get(vac_days).get('days_thirty') > vacation_days_calculate_absences else 0
 
                                     if cant_fortnight > 1:
                                         amount = amount * cant_fortnight if not rule.modality_value in ['diario','diario_efectivo'] and rule.type_concept != 'ley' else amount
@@ -649,7 +666,7 @@ class Hr_payslip(models.Model):
                                     if cant_fortnight == 0:
                                         amount, qty, rate = 0, 1.0, 100
                                 else:
-                                    if worked_days_vac > 5:
+                                    if worked_days_vac > vacation_days_calculate_absences:
                                         amount, qty, rate = 0,1.0,100
 
                             #Continuar con el proceso normal
@@ -813,9 +830,10 @@ class Hr_payslip(models.Model):
         if inherit_vacation != 0 or inherit_prima != 0:
             return result            
         elif inherit_contrato_dev != 0 or inherit_contrato_ded != 0:  
-            return localdict,result           
+            return localdict,result
         else:
-            return result.values()  
+            result_finally = {**result, **result_vac}
+            return result_finally.values()
             
     def action_payslip_done(self):
         #res = super(Hr_payslip, self).action_payslip_done()
@@ -823,6 +841,8 @@ class Hr_payslip(models.Model):
             raise ValidationError(_("You can't validate a cancelled payslip."))
         self.write({'state' : 'done'})
         self.mapped('payslip_run_id').action_close()
+        pay_vacations_in_payroll = bool(self.env['ir.config_parameter'].sudo().get_param(
+            'zue_hr_payroll.pay_vacations_in_payroll')) or False
         
         ''' Se comenta la generación del PDF al momento del cierre de nómina
         if self.env.context.get('payslip_generate_pdf'):
@@ -863,7 +883,7 @@ class Hr_payslip(models.Model):
                 if obj_loan.balance_amount <= 0:
                     self.env['hr.contract.concepts'].search([('loan_id', '=', payslip_line.loan_id.id)]).unlink()
 
-            if record.struct_id.process == 'vacaciones':
+            if record.struct_id.process == 'vacaciones' or pay_vacations_in_payroll == True:
                 history_vacation = []
                 for line in sorted(record.line_ids.filtered(lambda filter: filter.initial_accrual_date), key=lambda x: x.initial_accrual_date):                
                     if line.code == 'VACDISFRUTADAS':
@@ -872,15 +892,16 @@ class Hr_payslip(models.Model):
                             'contract_id': record.contract_id.id,
                             'initial_accrual_date': line.initial_accrual_date,
                             'final_accrual_date': line.final_accrual_date,
-                            'departure_date': record.date_from,
-                            'return_date': record.date_to,
+                            'departure_date': record.date_from if not line.vacation_departure_date else line.vacation_departure_date,
+                            'return_date': record.date_to if not line.vacation_return_date else line.vacation_return_date,
                             'business_units': line.business_units + line.business_31_units,
                             'value_business_days': line.business_units * line.amount,
                             'holiday_units': line.holiday_units + line.holiday_31_units,
                             'holiday_value': line.holiday_units * line.amount,                            
                             'base_value': line.amount_base,
                             'total': (line.business_units * line.amount)+(line.holiday_units * line.amount),
-                            'payslip': record.id
+                            'payslip': record.id,
+                            'leave_id': False if not line.vacation_leave_id else line.vacation_leave_id.id
                         }
                     if line.code == 'VACREMUNERADAS':
                         info_vacation = {
@@ -897,7 +918,17 @@ class Hr_payslip(models.Model):
                             'payslip': record.id
                         }
 
-                    history_vacation.append(info_vacation)               
+                    if pay_vacations_in_payroll == True:
+                        #Si el historico ya existe no vuelva a crearlo
+                        obj_history_vacation_exists = self.env['hr.vacation'].search([('employee_id','=',record.employee_id.id),
+                                                                                      ('contract_id','=',record.contract_id.id),
+                                                                                      ('initial_accrual_date','=',line.initial_accrual_date),
+                                                                                      ('final_accrual_date','=',line.final_accrual_date),
+                                                                                      ('leave_id','=',line.vacation_leave_id.id)])
+                        if len(obj_history_vacation_exists) == 0:
+                            history_vacation.append(info_vacation)
+                    else:
+                        history_vacation.append(info_vacation)
 
                 if history_vacation: 
                     for history in history_vacation:
