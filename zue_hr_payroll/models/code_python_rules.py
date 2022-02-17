@@ -25,7 +25,8 @@ if obj_salary_rule and contract.modality_salary == 'sostenimiento':
 #---------------------------------------Auxilio de transporte--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('AUX000',employee.type_employee.id)
-dias = payslip.sum_days_works('WORK100', payslip.date_from, payslip.date_to) + payslip.sum_days_works('COMPENSATORIO', payslip.date_from, payslip.date_to)
+aplicar = 0 if obj_salary_rule.aplicar_cobro=='30' and inherit_contrato!=0 else int(obj_salary_rule.aplicar_cobro)
+dias = 0 if aplicar == 0 else payslip.sum_days_works('WORK100', payslip.date_from, payslip.date_to) + payslip.sum_days_works('COMPENSATORIO', payslip.date_from, payslip.date_to)
 dias += worked_days.WORK100.number_of_days if worked_days.WORK100 else 0
 if worked_days.COMPENSATORIO != 0.0:
     dias += worked_days.COMPENSATORIO.number_of_days
@@ -34,7 +35,6 @@ if obj_salary_rule and dias != 0.0 and contract.contract_type != 'aprendizaje':
     auxtransporte_tope = annual_parameters.top_max_transportation_assistance
     day_initial_payrroll = payslip.date_from.day
     day_end_payrroll = payslip.date_to.day
-    aplicar = 0 if obj_salary_rule.aplicar_cobro=='30' and inherit_contrato!=0 else int(obj_salary_rule.aplicar_cobro)
     if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
         total = categories.DEV_SALARIAL if aplicar == 0 else categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from, payslip.date_to)
         if dias != 0.0:
