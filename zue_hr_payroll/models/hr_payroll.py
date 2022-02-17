@@ -14,11 +14,6 @@ import threading
 
 #---------------------------LIQUIDACIÓN DE NÓMINA-------------------------------#
 
-class Account_journal(models.Model):
-    _inherit = 'account.journal'
-
-    is_payroll_spreader = fields.Boolean('Es dispersor de nómina')
-
 class HrPayslipRun(models.Model):
     _inherit = 'hr.payslip.run'
 
