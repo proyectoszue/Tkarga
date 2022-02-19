@@ -28,7 +28,7 @@ class HolidaysRequest(models.Model):
     type_of_entity = fields.Many2one('hr.contribution.register', 'Tipo de Entidad')
     entity = fields.Many2one('hr.employee.entities', 'Entidad')
     diagnostic = fields.Many2one('hr.leave.diagnostic', 'Diagnóstico')
-    
+
     @api.onchange('date_from', 'date_to', 'employee_id')
     def _onchange_leave_dates(self):
         if self.holiday_status_id.is_vacation == False:            
@@ -37,17 +37,18 @@ class HolidaysRequest(models.Model):
             else:
                 self.number_of_days = 0
 
-    @api.onchange('employee_id')
+    @api.onchange('employee_id','holiday_status_id')
     def _onchange_info_entity(self):
         for record in self:
-            if record.employee_id:
+            if record.employee_id and record.holiday_status_id:
+                record.type_of_entity = record.holiday_status_id.type_of_entity_association.id
                 for entities in record.employee_id.social_security_entities:
-                    if entities.contrib_id.type_entities == 'eps':
-                        record.type_of_entity = entities.contrib_id.id
+                    if entities.contrib_id.id == record.holiday_status_id.type_of_entity_association.id:                        
                         record.entity = entities.partner_id.id
             else:
                 record.type_of_entity = False
                 record.entity = False
+                record.diagnostic = False
 
     @api.onchange('number_of_days','request_date_from')
     def onchange_number_of_days_vacations(self):   
@@ -181,3 +182,18 @@ class hr_leave_diagnostic(models.Model):
 
     _sql_constraints = [('leave_diagnostic_code_uniq', 'unique(code)',
                          'Ya existe un diagnóstico con este código, por favor verificar.')]
+
+    def name_get(self):
+        result = []
+        for record in self:
+            result.append((record.id, "{} | {}".format(record.code,record.name)))
+        return result
+
+    @api.model
+    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+        args = args or []
+        domain = []
+        if name:
+            domain = ['|', ('name', operator, name), ('code', operator, name)]
+        diagnostic_interface = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
+        return diagnostic_interface#self.browse(contract_interface_id).name_get()

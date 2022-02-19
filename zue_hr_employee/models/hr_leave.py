@@ -17,6 +17,10 @@ class hr_leave_type(models.Model):
     periods_calculations_ibl_company = fields.Integer('Periodos para cálculo de IBL Empresa')
     company_input_id = fields.Many2one('hr.salary.rule', 'Regla de la incapacidad empresa')
     unpaid_absences = fields.Boolean('Ausencia no remunerada')
+    type_of_entity_association = fields.Many2one('hr.contribution.register', 'Tipo de entidad asociada')
 
+    _sql_constraints = [('hr_leave_type_code_uniq', 'unique(code)',
+                         'Ya existe este código de nómina, por favor verficar.')]
+    
 
     

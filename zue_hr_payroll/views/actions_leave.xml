@@ -8,7 +8,7 @@
             <field name="inherit_id" ref="hr_holidays.hr_leave_view_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//group[@name='col_right']" position="before">
-                    <group name="entities">
+                    <group name="entities" attrs="{'invisible': [('type_of_entity', '=', False)]}">
                         <field name="type_of_entity"/>
                         <field name="entity"/>
                         <field name="diagnostic"/>
@@ -78,6 +78,16 @@
                         </group>
                     </sheet>
                 </form>
+            </field>
+        </record>
+
+        <record id="hr_leave_diagnostic_search" model="ir.ui.view">
+            <field name="name">hr leave diagnostic search</field>
+            <field name="model">hr.leave.diagnostic</field>
+            <field name="arch" type="xml">
+                <search string="Diagnosticos Ausencias">
+                    <field name="name" string="Nombre o Código" filter_domain="['|',('name', 'ilike', self), ('code', 'ilike', self)]"/>
+                </search>
             </field>
         </record>
     </data>
