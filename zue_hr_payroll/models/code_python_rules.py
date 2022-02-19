@@ -25,7 +25,8 @@ if obj_salary_rule and contract.modality_salary == 'sostenimiento':
 #---------------------------------------Auxilio de transporte--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('AUX000',employee.type_employee.id)
-dias = payslip.sum_days_works('WORK100', payslip.date_from, payslip.date_to) + payslip.sum_days_works('COMPENSATORIO', payslip.date_from, payslip.date_to)
+aplicar = 0 if obj_salary_rule.aplicar_cobro=='30' and inherit_contrato!=0 else int(obj_salary_rule.aplicar_cobro)
+dias = 0 if aplicar == 0 else payslip.sum_days_works('WORK100', payslip.date_from, payslip.date_to) + payslip.sum_days_works('COMPENSATORIO', payslip.date_from, payslip.date_to)
 dias += worked_days.WORK100.number_of_days if worked_days.WORK100 else 0
 if worked_days.COMPENSATORIO != 0.0:
     dias += worked_days.COMPENSATORIO.number_of_days
@@ -33,8 +34,7 @@ if obj_salary_rule and dias != 0.0 and contract.contract_type != 'aprendizaje':
     auxtransporte = annual_parameters.transportation_assistance_monthly
     auxtransporte_tope = annual_parameters.top_max_transportation_assistance
     day_initial_payrroll = payslip.date_from.day
-    day_end_payrroll = payslip.date_to.day
-    aplicar = 0 if obj_salary_rule.aplicar_cobro=='30' and inherit_contrato!=0 else int(obj_salary_rule.aplicar_cobro)
+    day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
     if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
         total = categories.DEV_SALARIAL if aplicar == 0 else categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from, payslip.date_to)
         if dias != 0.0:
@@ -45,7 +45,7 @@ result = 0.0
 obj_salary_rule = payslip.get_salary_rule('SSOCIAL001',employee.type_employee.id)
 if obj_salary_rule and contract.contract_type != 'aprendizaje':
     day_initial_payrroll = payslip.date_from.day
-    day_end_payrroll = payslip.date_to.day
+    day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
     aplicar = 0 if obj_salary_rule.aplicar_cobro=='30' and inherit_contrato!=0 else int(obj_salary_rule.aplicar_cobro)
     if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
         porc = annual_parameters.value_porc_health_employee/100
@@ -78,7 +78,7 @@ result = 0.0
 obj_salary_rule = payslip.get_salary_rule('SSOCIAL002',employee.type_employee.id)
 if obj_salary_rule and contract.contract_type != 'aprendizaje' and employee.subtipo_coti_id.not_contribute_pension == False:
     day_initial_payrroll = payslip.date_from.day
-    day_end_payrroll = payslip.date_to.day
+    day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
     aplicar = 0 if obj_salary_rule.aplicar_cobro=='30' and inherit_contrato!=0 else int(obj_salary_rule.aplicar_cobro)
     if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
         porc = annual_parameters.value_porc_pension_employee/100
@@ -111,7 +111,7 @@ result = 0.0
 obj_salary_rule = payslip.get_salary_rule('SSOCIAL004',employee.type_employee.id)
 if obj_salary_rule and contract.contract_type != 'aprendizaje':
     day_initial_payrroll = payslip.date_from.day
-    day_end_payrroll = payslip.date_to.day
+    day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
     aplicar = 0 if obj_salary_rule.aplicar_cobro=='30' and inherit_contrato!=0 else int(obj_salary_rule.aplicar_cobro)
     if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
         salario_minimo = annual_parameters.smmlv_monthly
@@ -158,7 +158,7 @@ obj_salary_rule = payslip.get_salary_rule('AUX001',employee.type_employee.id)
 if obj_salary_rule and worked_days.WORK100 != 0.0:
     obj_concept = payslip.get_concepts(contract.id,obj_salary_rule.id,id_contract_concepts)
     day_initial_payrroll = payslip.date_from.day
-    day_end_payrroll = payslip.date_to.day
+    day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
     if obj_concept:
         aplicar = 0 if obj_concept.aplicar=='30' and inherit_contrato!=0 else int(obj_concept.aplicar)        
         if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll): # Cambiar por (aplicar >= day_initial_payrroll and day_end_payrroll <= aplicar)
@@ -173,7 +173,7 @@ obj_salary_rule = payslip.get_salary_rule('EMBARGO002',employee.type_employee.id
 if obj_salary_rule:
     obj_concept = payslip.get_concepts(contract.id,obj_salary_rule.id,id_contract_concepts)
     day_initial_payrroll = payslip.date_from.day
-    day_end_payrroll = payslip.date_to.day
+    day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
     if obj_concept:
         aplicar = 0 if obj_concept.aplicar=='30' and inherit_contrato!=0 else int(obj_concept.aplicar)        
         if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
@@ -188,7 +188,7 @@ obj_salary_rule = payslip.get_salary_rule('EMBARGO007',employee.type_employee.id
 if obj_salary_rule:
     obj_concept = payslip.get_concepts(contract.id,obj_salary_rule.id,id_contract_concepts)
     day_initial_payrroll = payslip.date_from.day
-    day_end_payrroll = payslip.date_to.day
+    day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
     if obj_concept:
         aplicar = 0 if obj_concept.aplicar=='30' and inherit_contrato!=0 else int(obj_concept.aplicar)        
         if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
@@ -202,7 +202,7 @@ obj_salary_rule = payslip.get_salary_rule('EMBARGO008',employee.type_employee.id
 if obj_salary_rule:
     obj_concept = payslip.get_concepts(contract.id,obj_salary_rule.id,id_contract_concepts)
     day_initial_payrroll = payslip.date_from.day
-    day_end_payrroll = payslip.date_to.day
+    day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
     if obj_concept:
         aplicar = 0 if obj_concept.aplicar=='30' and inherit_contrato!=0 else int(obj_concept.aplicar)        
         if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
@@ -215,7 +215,7 @@ result = 0.0
 obj_salary_rule = payslip.get_salary_rule('HEYREC001',employee.type_employee.id)
 aplicar = int(obj_salary_rule.aplicar_cobro)
 day_initial_payrroll = payslip.date_from.day
-day_end_payrroll = payslip.date_to.day
+day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
 if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
@@ -229,7 +229,7 @@ result = 0.0
 obj_salary_rule = payslip.get_salary_rule('HEYREC002',employee.type_employee.id)
 aplicar = int(obj_salary_rule.aplicar_cobro)
 day_initial_payrroll = payslip.date_from.day
-day_end_payrroll = payslip.date_to.day
+day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
 if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
@@ -243,7 +243,7 @@ result = 0.0
 obj_salary_rule = payslip.get_salary_rule('HEYREC003',employee.type_employee.id)
 aplicar = int(obj_salary_rule.aplicar_cobro)
 day_initial_payrroll = payslip.date_from.day
-day_end_payrroll = payslip.date_to.day
+day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
 if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
@@ -257,7 +257,7 @@ result = 0.0
 obj_salary_rule = payslip.get_salary_rule('HEYREC004',employee.type_employee.id)
 aplicar = int(obj_salary_rule.aplicar_cobro)
 day_initial_payrroll = payslip.date_from.day
-day_end_payrroll = payslip.date_to.day
+day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
 if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
@@ -271,7 +271,7 @@ result = 0.0
 obj_salary_rule = payslip.get_salary_rule('HEYREC005',employee.type_employee.id)
 aplicar = int(obj_salary_rule.aplicar_cobro)
 day_initial_payrroll = payslip.date_from.day
-day_end_payrroll = payslip.date_to.day
+day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
 if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
@@ -285,7 +285,7 @@ result = 0.0
 obj_salary_rule = payslip.get_salary_rule('HEYREC006',employee.type_employee.id)
 aplicar = int(obj_salary_rule.aplicar_cobro)
 day_initial_payrroll = payslip.date_from.day
-day_end_payrroll = payslip.date_to.day
+day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
 if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
@@ -299,7 +299,7 @@ result = 0.0
 obj_salary_rule = payslip.get_salary_rule('HEYREC007',employee.type_employee.id)
 aplicar = int(obj_salary_rule.aplicar_cobro)
 day_initial_payrroll = payslip.date_from.day
-day_end_payrroll = payslip.date_to.day
+day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
 if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
@@ -313,7 +313,7 @@ result = 0.0
 obj_salary_rule = payslip.get_salary_rule('AUX005',employee.type_employee.id)
 aplicar = int(obj_salary_rule.aplicar_cobro)
 day_initial_payrroll = payslip.date_from.day
-day_end_payrroll = payslip.date_to.day
+day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
 if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
     if obj_salary_rule:
         if obj_salary_rule.modality_value == 'diario_efectivo':
@@ -397,7 +397,7 @@ result = 0.0
 obj_salary_rule = payslip.get_salary_rule('RETFTE001',employee.type_employee.id)
 if obj_salary_rule and contract.contract_type != 'aprendizaje':
     day_initial_payrroll = payslip.date_from.day
-    day_end_payrroll = payslip.date_to.day
+    day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
     aplicar = 0 if obj_salary_rule.aplicar_cobro=='30' and inherit_contrato!=0 else int(obj_salary_rule.aplicar_cobro)
     if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
         if contract.retention_procedure != 'fixed':
@@ -420,7 +420,7 @@ obj_salary_rule = payslip.get_salary_rule('CUOTA001',employee.type_employee.id)
 if obj_salary_rule:
     obj_concept = payslip.get_concepts(contract.id,obj_salary_rule.id,id_contract_concepts)
     day_initial_payrroll = payslip.date_from.day
-    day_end_payrroll = payslip.date_to.day
+    day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
     if obj_concept:
         aplicar = 0 if obj_concept.aplicar=='30' and inherit_contrato!=0 else int(obj_concept.aplicar)         
         if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll): 

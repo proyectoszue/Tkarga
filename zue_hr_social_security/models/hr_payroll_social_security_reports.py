@@ -188,10 +188,10 @@ class hr_payroll_social_security(models.Model):
             obj_entities = self.env['hr.employee.entities'].search([('types_entities','in',obj_type_eps.ids)])
 
             for entity in sorted(obj_entities,key=lambda x: x.partner_id.name):
-                info = record.executing_social_security_ids.filtered(lambda x: x.TerceroEPS.id == entity.id and x.nValorSaludEmpleado+x.nValorSaludEmpresa+x.nDiferenciaSalud != 0)
+                info = record.executing_social_security_ids.filtered(lambda x: x.TerceroEPS.id == entity.id and x.nValorSaludEmpleadoNomina+x.nValorSaludEmpresa+x.nDiferenciaSalud != 0)
                 nValorSaludEmpleadoTotal,nValorSaludEmpresaTotal,nDiferenciaSaludTotal = 0,0,0
                 for i in info:
-                    nValorSaludEmpleadoTotal += i.nValorSaludEmpleado
+                    nValorSaludEmpleadoTotal += i.nValorSaludEmpleadoNomina
                     nValorSaludEmpresaTotal += i.nValorSaludEmpresa
                     nDiferenciaSaludTotal += i.nDiferenciaSalud
 
@@ -215,10 +215,10 @@ class hr_payroll_social_security(models.Model):
             obj_entities = self.env['hr.employee.entities'].search([('types_entities','in',obj_type_eps.ids)])
 
             for entity in sorted(obj_entities,key=lambda x: x.partner_id.name):
-                info = record.executing_social_security_ids.filtered(lambda x: x.TerceroPension.id == entity.id and x.nValorPensionEmpleado+x.nValorPensionEmpresa+x.nDiferenciaPension != 0)
+                info = record.executing_social_security_ids.filtered(lambda x: x.TerceroPension.id == entity.id and x.nValorPensionEmpleadoNomina+x.nValorPensionEmpresa+x.nDiferenciaPension != 0)
                 nValorPensionEmpleadoTotal,nValorPensionEmpresaTotal,nDiferenciaPensionTotal = 0,0,0
                 for i in info:
-                    nValorPensionEmpleadoTotal += i.nValorPensionEmpleado
+                    nValorPensionEmpleadoTotal += i.nValorPensionEmpleadoNomina
                     nValorPensionEmpresaTotal += i.nValorPensionEmpresa
                     nDiferenciaPensionTotal += i.nDiferenciaPension
 

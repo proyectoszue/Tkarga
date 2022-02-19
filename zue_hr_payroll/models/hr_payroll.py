@@ -13,12 +13,6 @@ import odoo
 import threading
 
 #---------------------------LIQUIDACIÓN DE NÓMINA-------------------------------#
-
-class Account_journal(models.Model):
-    _inherit = 'account.journal'
-
-    is_payroll_spreader = fields.Boolean('Es dispersor de nómina')
-
 class HrPayslipRun(models.Model):
     _inherit = 'hr.payslip.run'
 
@@ -368,6 +362,27 @@ class Hr_payslip(models.Model):
             payslip.action_payslip_draft()            
 
     #--------------------------------------------------LIQUIDACIÓN DE LA NÓMINA PERIÓDICA---------------------------------------------------------#
+
+    def _get_new_worked_days_lines(self):
+        if self.struct_id.use_worked_day_lines:
+            # computation of the salary worked days
+            worked_days_line_values = self._get_worked_day_lines()
+            worked_days_lines = self.worked_days_line_ids.browse([])
+            for r in worked_days_line_values:
+                worked_days_lines |= worked_days_lines.new(r)
+            # Validar que al ser el mes de febrero modifique los días trabajados para que sean igual a un mes de 30 días
+            if self.date_to.month == 2 and self.date_to.day in (28,29):
+                february_worked_days = worked_days_lines.filtered(lambda l: l.work_entry_type_id.code == 'WORK100')
+                days_summary = 2 if self.date_to.day == 28 else 1
+                hours_summary = 16 if self.date_to.day == 28 else 8
+                if len(february_worked_days) > 0:
+                    for february_days in worked_days_lines:
+                        if february_days.work_entry_type_id.code == 'WORK100':
+                            february_days.number_of_days = february_days.number_of_days + days_summary # Se agregan 2 días
+                            february_days.number_of_hours = february_days.number_of_hours + hours_summary # Se agregan 16 horas
+            return worked_days_lines
+        else:
+            return [(5, False, False)]
 
     def _get_payslip_lines(self,inherit_vacation=0,inherit_prima=0,inherit_contrato_dev=0,inherit_contrato_ded=0,localdict=None):
         def _sum_salary_rule_category(localdict, category, amount):

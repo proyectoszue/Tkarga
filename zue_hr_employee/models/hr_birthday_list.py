@@ -101,14 +101,14 @@ class hr_birthday_list(models.TransientModel):
             'report_name': 'zue_hr_employee.report_birthday_list',
             'report_type': 'qweb-pdf',
             'datas': datas        
-        }
+        }      
 
     def generate_birthday_excel(self):
         query_where = ''
         if self.month == '0':
-            query_where = "where 1 = 1"
+            query_where = "where a.company_id = " + str(self.env.company.id)
         else:
-            query_where = "where date_part('month',a.birthday) = " + self.month
+            query_where = "where a.company_id = " + str(self.env.company.id) + "and date_part('month',a.birthday) = " + self.month
         # ----------------------------------Ejecutar consulta
         query_report = f'''
                           select c.name,b.vat,b.name as name_employee,a.birthday
@@ -197,4 +197,3 @@ class hr_birthday_list(models.TransientModel):
                 'target': 'self',
             }
             return action
-        
