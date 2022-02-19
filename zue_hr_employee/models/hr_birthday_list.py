@@ -101,7 +101,7 @@ class hr_birthday_list(models.TransientModel):
             'report_name': 'zue_hr_employee.report_birthday_list',
             'report_type': 'qweb-pdf',
             'datas': datas        
-        }
+        }      
 
     def generate_birthday_excel(self):
         query_where = ''
@@ -197,4 +197,3 @@ class hr_birthday_list(models.TransientModel):
                 'target': 'self',
             }
             return action
-        

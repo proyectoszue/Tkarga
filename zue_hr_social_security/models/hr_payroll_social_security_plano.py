@@ -245,8 +245,8 @@ class hr_payroll_social_security(models.Model):
             part_line_one = '%s%s%s%s%s%s%s%s%s%s%s%s%s' % (cTipoRegistro,cSecuencia,cTipIdTercero,cNumIdTercero,cTipoCotizante,cSubtipoCotizante,cExtranjeroNoObligadoPension,cResidenteExterior,cCodUbiLaboral,cPrimerApellido,cSegundoApellido,cPrimerNombre,cSegundoNombre)
 
             #-------------Novedades
-            cIngreso = 'X' if item.nIngreso else ' '
-            cRetiro = 'X' if item.nRetiro else ' '
+            cIngreso = 'X' if item.nIngreso and item.nDiasLiquidados > 0 else ' '
+            cRetiro = 'X' if item.nRetiro and item.nDiasLiquidados > 0 else ' '
             
             obj_entities_history = self.env['hr.contract.setting.history'].search([('employee_id','=',item.employee_id.id),('date_history','>=',date_start),('date_history','<=',date_end)])
 

@@ -58,7 +58,14 @@ class hr_accumulated_reports(models.TransientModel):
         final_year = self.final_year if self.final_month != '12' else self.final_year+1
         final_month = int(self.final_month)+1 if self.final_month != '12' else 1
         date_to = f'{str(final_year)}-{str(final_month)}-01'
-        query_where = f"where a.date_from >= '{date_from}' and a.date_to < '{date_to}' "
+        # query_where = f"where a.date_from >= '{date_from}' and a.date_to < '{date_to}' "
+        query_where = f'''where (
+                        --Validar con fecha inicial (Nóminas,Vacaciones,Liq Contrato)
+                        (a.struct_process in ('nomina','vacaciones','contrato','otro') and a.date_from >= '{date_from}' and a.date_from < '{date_to}')
+                        or
+                        --Validar con fecha final (Prima,Cesantias,Int Cesantias)
+                        (a.struct_process in ('prima','cesantias','intereses_cesantias') and a.date_to >= '{date_from}' and a.date_to < '{date_to}')
+                        ) '''
         query_where_accumulated = f"where a.date >= '{date_from}' and a.date < '{date_to}' "
         #Filtro compañia
         query_where = query_where + f"and b.id = {self.env.company.id} "
@@ -103,11 +110,11 @@ class hr_accumulated_reports(models.TransientModel):
             query_where_accumulated = query_where_accumulated + f"and 1 = 2 "
         # ----------------------------------Ejecutar consulta tablas estandar
         query_report = '''
-            Select liquidacion,descripcion,fecha_liquidacion,fecha_inicial,fecha_final,compania,sucursal,identificacion,empleado,ubicacion_laboral,
+            Select estructura,liquidacion,descripcion,fecha_liquidacion,fecha_inicial,fecha_final,compania,sucursal,identificacion,empleado,ubicacion_laboral,
                     cuenta_analitica,secuencia_contrato,categoria_regla,regla_salarial,entidad,unidades,valor_devengo,valor_deduccion,
                     base_seguridad_social,base_parafiscales,base_prima,base_cesantias,base_intereses_cesantias,base_vacaciones,base_vacaciones_dinero 
             From ( 
-            Select a."number" as liquidacion,a."name" as descripcion,
+            Select upper(a.struct_process) as estructura,a."number" as liquidacion,a."name" as descripcion,
                     a.date_to as fecha_liquidacion,a.date_from as fecha_inicial,a.date_to as fecha_final,
                     b."name" as compania,coalesce(h."name",'') as sucursal,
                     c.identification_id as identificacion,c."name" as empleado,
@@ -134,7 +141,7 @@ class hr_accumulated_reports(models.TransientModel):
             left join res_partner as m on l.partner_id = m.id 
             %s          
             UNION ALL
-            Select 'SLIP/00000' as liquidacion,'Tabla de acumulados' as descripcion,
+            Select 'ACUMULADOS' as estructura,'SLIP/00000' as liquidacion,'Tabla de acumulados' as descripcion,
                     a."date" as fecha_liquidacion,a."date" as fecha_inicial,a."date" as fecha_final,
                     c."name" as compania,coalesce(h."name",'') as sucursal,
                     b.identification_id as identificacion,b."name" as empleado,
@@ -166,7 +173,7 @@ class hr_accumulated_reports(models.TransientModel):
         stream = io.BytesIO()
         book = xlsxwriter.Workbook(stream, {'in_memory': True})
         #Columnas
-        columns = ['Liquidación', 'Descripción', 'Fecha liquidación', 'Fecha inicial', 'Fecha final', 'Compañía',
+        columns = ['Estructura','Liquidación', 'Descripción', 'Fecha liquidación', 'Fecha inicial', 'Fecha final', 'Compañía',
                    'Sucursal', 'Identificación', 'Nombre empleado', 'Ubicación laboral', 'Cuenta analÍtica',
                    'Secuencia contrato', 'Categoria','Regla Salarial', 'Entidad', 'Unidades', 'Valor devengo', 'Valor deducción',
                    'Base seguridad social','Base parafiscales','Base prima','Base cesantias','Base int. cesantias','Base vacaciones','Base vacaciones en dinero']
@@ -182,16 +189,16 @@ class hr_accumulated_reports(models.TransientModel):
         cell_format_title.set_bottom(5)
         cell_format_title.set_bottom_color('#1F497D')
         cell_format_title.set_font_color('#1F497D')
-        sheet.merge_range('A1:Y1', text_company, cell_format_title)
-        sheet.merge_range('A2:Y2', text_title, cell_format_title)
-        sheet.merge_range('A3:Y3', text_dates, cell_format_title)
+        sheet.merge_range('A1:Z1', text_company, cell_format_title)
+        sheet.merge_range('A2:Z2', text_title, cell_format_title)
+        sheet.merge_range('A3:Z3', text_dates, cell_format_title)
         cell_format_text_generate = book.add_format({'bold': False, 'align': 'left'})
         cell_format_text_generate.set_font_name('Calibri')
         cell_format_text_generate.set_font_size(10)
         cell_format_text_generate.set_bottom(5)
         cell_format_text_generate.set_bottom_color('#1F497D')
         cell_format_text_generate.set_font_color('#1F497D')
-        sheet.merge_range('A4:Y4', text_generate, cell_format_text_generate)
+        sheet.merge_range('A4:Z4', text_generate, cell_format_text_generate)
         # Formato para fechas
         date_format = book.add_format({'num_format': 'dd/mm/yyyy'})
         # Agregar columnas
@@ -221,7 +228,7 @@ class hr_accumulated_reports(models.TransientModel):
             dict = {'header': i}
             array_header_table.append(dict)
 
-        sheet.add_table(4, 0, aument_rows, 24, {'style': 'Table Style Medium 2', 'columns': array_header_table})
+        sheet.add_table(4, 0, aument_rows-1, len(columns)-1, {'style': 'Table Style Medium 2', 'columns': array_header_table})
         #Guadar Excel
         book.close()
 
