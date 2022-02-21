@@ -4,20 +4,31 @@
         <t t-call="web.html_container">
             <t t-foreach="inside_foreach_docs or docs" t-as="o">
                 <t t-call="web.external_layout">
-                    <div class="row text-center">
-                        <h1>
-                            <strong>Formulario Datos Personales</strong>
-                        </h1>
+                    <div class="col-md-12">
+                        <div class="col-md-8 text-left">
+                            <h1>
+                                <strong>Formulario Datos Personales</strong>
+                            </h1>
+                        </div>
+                        <div class="col-md-4" align="right">
+                            <img t-if="o.image_1920" t-att-src="image_data_uri(o.image_1920)" align="right" style="max-height: 120px; "/>
+                        </div>
                     </div>
                     <br/>
                     <div class="table-responsive">
-                        <table class="table table-borderless table-sm">
+                        <table class="table table-borderless table-sm" style="font-size: 13px">
                             <thead>
                                 <tr>
+                                    <td>Tipo Documento:</td>
+                                    <td>
+                                        <span t-field="o.partner_encab_id.x_document_type"/>
+                                    </td>
                                     <td>Documento:</td>
                                     <td>
                                         <span t-field="o.identification_id"/>
                                     </td>
+                                </tr>
+                                <tr>
                                     <td>Empleado:</td>
                                     <td>
                                         <span t-field="o.name"/>
@@ -28,7 +39,7 @@
                                     <td>
                                         <span t-field="o.branch_id"/>
                                     </td>
-                                    <td>Título de Trabajo:</td>
+                                    <td>Cargo:</td>
                                     <td>
                                         <span t-field="o.job_id.name"/>
                                     </td>
@@ -48,19 +59,19 @@
                                     <td>
                                         <span t-field="o.gender"/>
                                     </td>
-                                    <td>Celular:</td>
-                                    <td>
-                                        <span t-field="o.address_home_id.mobile"/>
-                                    </td>
-                                </tr>
-                                <tr>
                                     <td>Estado Civil:</td>
                                     <td>
                                         <span t-field="o.marital"/>
                                     </td>
-                                    <td>Direccion de residencia:</td>
+                                </tr>
+                                <tr>
+                                    <td>Celular:</td>
                                     <td>
-                                        <span t-field="o.address_home_id.street"/>
+                                        <span t-field="o.address_home_id.mobile"/>
+                                    </td>
+                                    <td>Fecha de ingreso:</td>
+                                    <td>
+                                        <span t-field="o.get_info_contract().date_start"/>
                                     </td>
                                 </tr>
                                 <tr>
@@ -68,9 +79,9 @@
                                     <td>
                                         <span t-field="o.address_home_id.x_city"/>
                                     </td>
-                                    <td>Contacto de emergencia:</td>
+                                    <td>Direccion de residencia:</td>
                                     <td>
-                                        <span t-field="o.emergency_contact"/>
+                                        <span t-field="o.address_home_id.street"/>
                                     </td>
                                 </tr>
                                 <tr>
@@ -78,47 +89,16 @@
                                     <td>
                                         <span t-field="o.emergency_phone"/>
                                     </td>
-                                    <td>Fecha Ingreso:</td>
+                                    <td>Contacto de emergencia:</td>
                                     <td>
-                                        <span t-esc="o.get_info_contract().date_start"/>
+                                        <span t-esc="o.emergency_contact"/>
                                     </td>
                                 </tr>
                             </thead>
                         </table>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-striped table-sm">
-                            <thead>
-                                <tr>
-                                    <td colspan="3">
-                                        <h4>Documentación</h4>
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>NOMBRE</td>
-                                    <td>FECHA DE VENCIMIENTO</td>
-                                    <td>CATEGORÍA</td>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <tr t-foreach="o.documents_ids" t-as="d">
-                                    <td>
-                                        <span t-field="d.document.name"/>
-                                    </td>
-                                    <td>
-                                        <span t-esc="d.expiration_date"/>
-                                    </td>
-                                    <td>
-                                        <t t-foreach="d.document.tag_ids" t-as="t">
-                                           » <span t-esc="t.name"/> <br/>
-                                        </t>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="table table-striped table-sm">
+                        <table class="table table-striped table-sm" style="font-size: 13px">
                             <thead>
                                 <tr>
                                     <td colspan="3">
@@ -128,7 +108,6 @@
                                 <tr>
                                     <td>TIPO</td>
                                     <td>ENTIDAD</td>
-                                    <td>FECHA DE INGRESO</td>
                                 </tr>
                             </thead>
                             <tbody>
@@ -139,15 +118,12 @@
                                     <td>
                                         <span t-esc="l.partner_id.partner_id.name"/>
                                     </td>
-                                    <td>
-                                        <span t-esc="l.date_change"/>
-                                    </td>
                                 </tr>
                             </tbody>
                         </table>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-striped table-sm">
+                        <table class="table table-striped table-sm" style="font-size: 13px">
                             <thead>
                                 <tr>
                                     <td colspan="3">
@@ -176,7 +152,7 @@
                         </table>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-striped table-sm">
+                        <table class="table table-striped table-sm" style="font-size: 13px">
                             <thead>
                                 <tr>
                                     <td colspan="4">
@@ -209,7 +185,7 @@
                         </table>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-striped table-sm">
+                        <table class="table table-striped table-sm" style="font-size: 13px">
                             <thead>
                                 <tr>
                                     <td colspan="4">
@@ -242,7 +218,7 @@
                         </table>
                     </div>
                     <div class="table-responsive">
-                        <table class="table table-striped table-sm">
+                        <table class="table table-striped table-sm" style="font-size: 13px">
                             <thead>
                                 <tr>
                                     <td colspan="4">
@@ -262,10 +238,10 @@
                                         <span t-field="s.skill_type_id"/>
                                     </td>
                                     <td>
-                                        <span t-esc="s.skill_level_id"/>
+                                        <span t-esc="s.skill_level_id.name"/>
                                     </td>
                                     <td>
-                                        <span t-esc="s.skill_id"/>
+                                        <span t-esc="s.skill_id.name"/>
                                     </td>
                                     <td>
                                         <span t-esc="s.level_progress"/>

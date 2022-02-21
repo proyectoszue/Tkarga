@@ -380,6 +380,27 @@ class Hr_payslip(models.Model):
                         if february_days.work_entry_type_id.code == 'WORK100':
                             february_days.number_of_days = february_days.number_of_days + days_summary # Se agregan 2 días
                             february_days.number_of_hours = february_days.number_of_hours + hours_summary # Se agregan 16 horas
+                else:
+                    march_date_from = self.date_to + timedelta(days=1)
+                    march_date_to = self.date_to + timedelta(days=1)
+
+                    work_hours = self.contract_id._get_work_hours(march_date_from, march_date_to)
+                    total_hours = sum(work_hours.values()) or 1
+                    work_hours_ordered = sorted(work_hours.items(), key=lambda x: x[1])
+                    biggest_work = work_hours_ordered[-1][0] if work_hours_ordered else 0
+                    if biggest_work== 0:
+                        work_entry_type = self.env['hr.work.entry.type'].search([('code','=','WORK100')])
+                    else:
+                        work_entry_type = self.env['hr.work.entry.type'].search([('id', '=', biggest_work)])
+                    attendance_line = {
+                        'sequence': work_entry_type.sequence,
+                        'work_entry_type_id': work_entry_type.id,
+                        'number_of_days': days_summary,
+                        'number_of_hours': hours_summary,
+                        'amount': 0,
+                    }
+                    worked_days_lines |= worked_days_lines.new(attendance_line)
+
             return worked_days_lines
         else:
             return [(5, False, False)]
