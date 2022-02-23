@@ -250,6 +250,33 @@
                             </tbody>
                         </table>
                     </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm" style="font-size: 13px">
+                            <thead>
+                                <tr>
+                                    <td colspan="3">
+                                        <h4>Resultado de Pruebas</h4>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>NOMBRE</td>
+                                    <td>DESCRIPCIÓN</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.resume_line_ids" t-as="e">
+                                    <t t-if="e.line_type_id.name == 'Entrevista'">
+                                        <td>
+                                            <span t-field="e.name"/>
+                                        </td>
+                                        <td>
+                                            <span t-esc="e.description"/>
+                                        </td>
+                                    </t>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
                     <br/>
                     <p style="line-height:15px;margin:10px;font-size: 100%;">
                         <b>Observaciones:</b>

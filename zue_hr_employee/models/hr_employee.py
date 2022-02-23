@@ -195,6 +195,7 @@ class hr_employee(models.Model):
                                             ('RC', 'Registro civil'),
                                             ('PA', 'Pasaporte')], 'Tipo de identificación cónyuge', track_visibility='onchange')
     num_identification_spouse = fields.Char('Número de identificación cónyuge', track_visibility='onchange')
+    spouse_phone= fields.Char('Teléfono del cónyuge')
 
     _sql_constraints = [('emp_identification_uniq', 'unique(company_id,identification_id)', 'La cédula debe ser unica. La cédula ingresada ya existe en esta compañía')]
 
