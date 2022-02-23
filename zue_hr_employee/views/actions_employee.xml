@@ -41,9 +41,7 @@
                     <div class="oe_title">
                         <h1>
                             <field name="type_thirdparty" invisible="1"/>
-                            <field name="partner_encab_id" placeholder="Tercero" required="1"
-                                   context="{'default_type': 'private', 'default_x_type_thirdparty': [type_thirdparty], 'form_view_ref': 'base.res_partner_view_form_private'}"
-                                   options="{'always_reload': True, 'highlight_first_line': True}"/>
+                            <field name="partner_encab_id" placeholder="Tercero" required="1" context="{'default_type': 'private', 'default_x_type_thirdparty': [type_thirdparty], 'form_view_ref': 'base.res_partner_view_form_private'}" options="{'always_reload': True, 'highlight_first_line': True}"/>
                         </h1>
                         <h2>
                             <field name="name" placeholder="Nombre empleado" readonly="1" force_save="1"/>
@@ -51,9 +49,7 @@
                         <h3>
                             <field name="job_title" placeholder="Puesto de trabajo" readonly="1" force_save="1"/>
                         </h3>
-                        <field name="category_ids" widget="many2many_tags"
-                               options="{'color_field': 'color', 'no_create_edit': True}" placeholder="Tags"
-                               groups="hr.group_hr_manager"/>
+                        <field name="category_ids" widget="many2many_tags" options="{'color_field': 'color', 'no_create_edit': True}" placeholder="Tags" groups="hr.group_hr_manager"/>
                     </div>
                 </xpath>
                 <xpath expr="//field[@name='work_email']" position="before">
@@ -69,12 +65,17 @@
                 <xpath expr="//page[2]" position="attributes">
                     <attribute name="string">Información Pública</attribute>
                 </xpath>
-                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='public']/div[1]/div[1]/group[1]"
-                       position="after">
+                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='public']/div[1]/div[1]/group[1]" position="after">
                     <group name="asignacion" string="Asignación">
                         <group>
                             <field name="branch_id"/>
                             <field name="analytic_account_id"/>
+                        </group>
+                    </group>
+                    <group name="alianzat" invisible="1">
+                        <group>
+                            <field name="ed_qualification"/>
+                            <field name="ed_observation"/>
                         </group>
                         <group>
                             <field name="front_back" widget='radio'/>
@@ -91,15 +92,9 @@
                             </tree>
                         </field>
                     </group>
-                    <group name="evaluacion_desempeño" string="Evaluación de desempeño">
-                        <group>
-                            <field name="ed_qualification"/>
-                            <field name="ed_observation"/>
-                        </group>
-                    </group>
+
                 </xpath>
-                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='public']/div[1]/div[1]/group[not(@name)][2]"
-                       position="after">
+                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='public']/div[1]/div[1]/group[not(@name)][2]" position="after">
                     <group name="licencia_conducción" string="Licencia de Conducción">
                         <field name="licencia_rh"/>
                         <field name="licencia_categoria"/>
@@ -112,18 +107,15 @@
                 <xpath expr="//field[@name='visa_no']" position="before">
                     <field name="sabado"/>
                 </xpath>
-                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='personal_information']/group[1]/group[1]"
-                       position="attributes">
+                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='personal_information']/group[1]/group[1]" position="attributes">
                     <attribute name="attrs">{}</attribute>
                     <attribute name="invisible">1</attribute>
                 </xpath>
-                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='personal_information']/group[1]/group[3]"
-                       position="attributes">
+                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='personal_information']/group[1]/group[3]" position="attributes">
                     <attribute name="attrs">{}</attribute>
                     <attribute name="invisible">1</attribute>
                 </xpath>
-                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='personal_information']/group[1]/group[4]"
-                       position="attributes">
+                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='personal_information']/group[1]/group[4]" position="attributes">
                     <attribute name="attrs">{}</attribute>
                     <attribute name="invisible">1</attribute>
                 </xpath>
@@ -176,11 +168,8 @@
                 <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">
                     <page string="Contratos" name="contratos">
                         <group>
-                            <field name="contract_ids" nolabel="1"
-                                   context="{'default_employee_id': active_id, 'default_view_inherit_employee': True, 'default_analytic_account_id':analytic_account_id}">
-                                <tree string="Contracts" decoration-bf="message_needaction == True"
-                                      decoration-info="state == 'draft'" decoration-muted="state in ('close', 'cancel')"
-                                      decoration-danger="state == 'pending'">
+                            <field name="contract_ids" nolabel="1" context="{'default_employee_id': active_id, 'default_view_inherit_employee': True, 'default_analytic_account_id':analytic_account_id}">
+                                <tree string="Contracts" decoration-bf="message_needaction == True" decoration-info="state == 'draft'" decoration-muted="state in ('close', 'cancel')" decoration-danger="state == 'pending'">
                                     <field name="name"/>
                                     <field name="employee_id" attrs="{}" invisible="1"/>
                                     <field name="job_id"/>
@@ -188,8 +177,7 @@
                                     <field name="date_start"/>
                                     <field name="date_end"/>
                                     <field name="state" attrs="{}" invisible="1"/>
-                                    <field name="kanban_state" widget="state_selection" readonly="1" attrs="{}"
-                                           invisible="1"/>
+                                    <field name="kanban_state" widget="state_selection" readonly="1" attrs="{}" invisible="1"/>
                                     <field name="wage" attrs="{}"/>
                                     <field name="message_needaction" invisible="1"/>
                                     <field name="company_id"/>
@@ -201,16 +189,13 @@
                         <group>
                             <group>
                                 <field name="marital"/>
-                                <field name="type_identification_spouse"
-                                       attrs="{'invisible': [('marital', 'not in', ['married', 'cohabitant'])]}"/>
-                                <field name="num_identification_spouse"
-                                       attrs="{'invisible': [('marital', 'not in', ['married', 'cohabitant'])]}"/>
+                                <field name="type_identification_spouse" attrs="{'invisible': [('marital', 'not in', ['married', 'cohabitant'])]}"/>
+                                <field name="num_identification_spouse" attrs="{'invisible': [('marital', 'not in', ['married', 'cohabitant'])]}"/>
                             </group>
                             <group>
-                                <field name="spouse_complete_name"
-                                       attrs="{'invisible': [('marital', 'not in', ['married', 'cohabitant'])]}"/>
-                                <field name="spouse_birthdate"
-                                       attrs="{'invisible': [('marital', 'not in', ['married', 'cohabitant'])]}"/>
+                                <field name="spouse_complete_name" attrs="{'invisible': [('marital', 'not in', ['married', 'cohabitant'])]}"/>
+                                <field name="spouse_birthdate" attrs="{'invisible': [('marital', 'not in', ['married', 'cohabitant'])]}"/>
+                                <field name="spouse_phone" attrs="{'invisible': [('marital', 'not in', ['married', 'cohabitant'])]}"/>
                             </group>
                         </group>
                         <group name="dependientes" string="Dependientes">
