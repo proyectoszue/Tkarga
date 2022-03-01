@@ -44,6 +44,7 @@
         'views/actions_hr_history_prima.xml',
         'views/actions_hr_work_entry.xml',
         'views/actions_hr_electronic_payroll.xml',
+        'views/actions_hr_electronic_adjust_payroll.xml',
         'views/actions_accumulated_reports.xml',
         'views/actions_hr_absence_history.xml',
         'views/actions_hr_consolidated_reports.xml',

@@ -38,8 +38,11 @@ if obj_salary_rule and dias != 0.0 and contract.contract_type != 'aprendizaje':
     if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
         total = categories.DEV_SALARIAL if aplicar == 0 else categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from, payslip.date_to)
         if dias != 0.0:
-            if (contract.wage <= auxtransporte_tope) and (total <= auxtransporte_tope):
-                result = round(dias * auxtransporte /30)
+            if contract.not_validate_top_auxtransportation == True:
+                result = round(dias * auxtransporte / 30)
+            else:
+                if (contract.wage <= auxtransporte_tope) and (total <= auxtransporte_tope):
+                    result = round(dias * auxtransporte /30)
 #---------------------------------------Salud Empleado--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('SSOCIAL001',employee.type_employee.id)
