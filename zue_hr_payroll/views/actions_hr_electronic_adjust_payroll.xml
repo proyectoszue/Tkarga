@@ -1,35 +1,35 @@
 <odoo>
     <data>
-        <!-- Nómina Electrónica -->
-        <record model="ir.actions.act_window" id="action_hr_electronic_payroll">
-            <field name="name">Nómina Electrónica</field>
-            <field name="res_model">hr.electronic.payroll</field>
+        <!-- Nómina Electrónica de ajuste-->
+        <record model="ir.actions.act_window" id="action_hr_electronic_adjust_payroll">
+            <field name="name">Nómina Electrónica de ajuste</field>
+            <field name="res_model">hr.electronic.adjust.payroll</field>
             <field name="view_mode">tree,form</field>
         </record>
 
         <!-- Crear record rule para filtrar las compañias-->
-        <record id="rule_hr_electronic_payroll_company" model="ir.rule">
-            <field name="name">Permisos compañia Nómina Electrónica</field>
-            <field name="model_id" ref="model_hr_electronic_payroll"/>
-            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>                
+        <record id="rule_hr_electronic_adjust_payroll_company" model="ir.rule">
+            <field name="name">Permisos compañia Nómina Electrónica de ajuste</field>
+            <field name="model_id" ref="model_hr_electronic_adjust_payroll"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
         </record>
 
-        <record model="ir.ui.view" id="hr_electronic_payroll_list">
-            <field name="name">hr electronic payroll list</field>
-            <field name="model">hr.electronic.payroll</field>
+        <record model="ir.ui.view" id="hr_electronic_adjust_payroll_list">
+            <field name="name">hr electronic adjust payroll list</field>
+            <field name="model">hr.electronic.adjust.payroll</field>
             <field name="arch" type="xml">
                 <tree>
-                    <field name="year"/>
-                    <field name="month"/>
+                    <field name="electronic_payroll_id"/>
                     <field name="company_id"/>
+                    <field name="state"/>
                     <field name="observations"/>
                 </tree>
             </field>
         </record>
 
-        <record model="ir.ui.view" id="hr_electronic_payroll_form">
-            <field name="name">hr electronic payroll form</field>
-            <field name="model">hr.electronic.payroll</field>
+        <record model="ir.ui.view" id="hr_electronic_adjust_payroll_form">
+            <field name="name">hr electronic adjust payroll form</field>
+            <field name="model">hr.electronic.adjust.payroll</field>
             <field name="arch" type="xml">
                 <form>
                     <header>
@@ -44,9 +44,8 @@
                     </header>
                     <sheet>
                         <group>
-                            <group string="Periodo">
-                                <field name="year"/>
-                                <field name="month"/>
+                            <group>
+                                <field name="electronic_payroll_id"/>
                                 <field name="prefix"/>
                             </group>
                             <group string="Observaciones">
@@ -54,7 +53,15 @@
                             </group>
                         </group>
                         <group>
-                            <field name="company_id" groups="base.group_multi_company"/>                            
+                            <field name="electronic_payroll_detail_ids">
+                                <tree>
+                                    <field name="employee_id"/>
+                                    <field name="sequence" optional="show"/>
+                                    <field name="status" optional="show"/>
+                                    <field name="transaction_id" optional="hide"/>
+                                </tree>
+                            </field>
+                            <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                         <hr style="border-style:solid;border-width:2px;width:100%;"/>
                         <h2 style="text-align:center">Proceso</h2>
@@ -64,7 +71,7 @@
                                     <field name="qty_failed" readonly="1"/>
                                     <field name="qty_done" readonly="1"/>
                                 </group>
-                                <field name="executing_electronic_payroll_ids" nolabel="1">
+                                <field name="executing_electronic_adjust_payroll_ids" nolabel="1">
                                     <tree>
                                         <field name="employee_id" optional="show"/>
                                         <field name="sequence" optional="show"/>
@@ -76,6 +83,7 @@
                                             <group>
                                                 <field name="employee_id" readonly="1"/>
                                                 <field name="contract_id" readonly="1"/>
+                                                <field name="electronic_adjust_payroll_detail_id" readonly="1"/>
                                                 <field name="sequence" readonly="1"/>
                                                 <field name="payslip_ids" widget="many2many_tags" force_save="1" attrs="{'readonly': [('status', '=', 'ACCEPTED')]}"/>
                                                 <field name="result_upload_xml" readonly="1"/>
@@ -106,30 +114,5 @@
                 </form>
             </field>
         </record>
-
-        <!-- Nómina Electrónica -->
-        <record model="ir.actions.act_window" id="action_hr_electronic_payroll_detail">
-            <field name="name">Nómina Electrónica Detalle</field>
-            <field name="res_model">hr.electronic.payroll.detail</field>
-            <field name="view_mode">tree,form</field>
-        </record>
-
-        <record model="ir.ui.view" id="hr_electronic_payroll_detail_list">
-            <field name="name">hr electronic payroll detail list</field>
-            <field name="model">hr.electronic.payroll.detail</field>
-            <field name="arch" type="xml">
-                <tree>
-                    <field name="employee_id"/>
-                    <field name="contract_id"/>
-                    <field name="item"/>
-                    <field name="sequence"/>
-                    <field name="status"/>
-                    <field name="transaction_id"/>
-                    <field name="payslip_ids" widget="many2many_tags"/>
-                </tree>
-            </field>
-        </record>
-
-
     </data>
 </odoo>

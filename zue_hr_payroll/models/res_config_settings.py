@@ -3,6 +3,15 @@
 
 from odoo import fields, models
 
+class ResCompany(models.Model):
+    _inherit = 'res.company'
+
+    payroll_electronic_username_ws = fields.Char(string='Usuario WS')
+    payroll_electronic_password_ws = fields.Char(string='Contraseña WS')
+    payroll_electronic_company_id_ws = fields.Char(string='Identificador compañia WS')
+    payroll_electronic_account_id_ws = fields.Char(string='Identificador cuenta WS')
+    payroll_electronic_service_ws = fields.Char(string='Servicio WS', default='PAYROLL')
+
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
@@ -12,6 +21,12 @@ class ResConfigSettings(models.TransientModel):
 
     pay_vacations_in_payroll = fields.Boolean('¿Liquidar vacaciones en nómina?')
     vacation_days_calculate_absences = fields.Char('Días de vacaciones para calcular ausencias')
+    #Nómina electronica
+    payroll_electronic_username_ws = fields.Char(related='company_id.payroll_electronic_username_ws',string='Usuario WS', readonly=False)
+    payroll_electronic_password_ws = fields.Char(related='company_id.payroll_electronic_password_ws',string='Contraseña WS', readonly=False)
+    payroll_electronic_company_id_ws = fields.Char(related='company_id.payroll_electronic_company_id_ws',string='Identificador compañia WS', readonly=False)
+    payroll_electronic_account_id_ws = fields.Char(related='company_id.payroll_electronic_account_id_ws',string='Identificador cuenta WS', readonly=False)
+    payroll_electronic_service_ws = fields.Char(related='company_id.payroll_electronic_service_ws',string='Servicio WS', default='PAYROLL', readonly=False)
 
     def set_values(self):
         super(ResConfigSettings, self).set_values()

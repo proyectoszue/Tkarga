@@ -78,6 +78,7 @@
                             <field name="ed_observation"/>
                         </group>
                         <group>
+                            <field name="info_project"/>
                             <field name="front_back" widget='radio'/>
                             <field name="confianza_manejo"/>
                             <field name="cost_assumed_by" widget='radio'/>

@@ -140,6 +140,7 @@ class hr_employee(models.Model):
     front_back = fields.Selection([('front','Front office'),('back','Back office')],'Area laboral', track_visibility='onchange')
     confianza_manejo = fields.Boolean('Confianza y manejo', track_visibility='onchange')
     type_thirdparty = fields.Many2one('zue.type_thirdparty',string='Tipo de tercero', domain=[('types', '=', '4')], default=_get_default_type_thirdparty)
+    info_project = fields.Char(string='Proyecto')
     #Evaluación de desempeño
     ed_qualification = fields.Float(string='Calificación', track_visibility='onchange')
     ed_observation = fields.Text(string='Observaciones', track_visibility='onchange')
