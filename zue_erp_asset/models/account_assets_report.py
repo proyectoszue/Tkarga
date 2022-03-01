@@ -19,7 +19,7 @@ class assets_report(models.AbstractModel):
         return [
             [
                 {'name': ''},
-                {'name': _('Datos históricos'), 'colspan': 6},
+                {'name': _('Datos históricos'), 'colspan': 5},
                 {'name': _('Caracteristics'), 'colspan': 4},
                 {'name': _('Assets'), 'colspan': 4},
                 {'name': _('Depreciation'), 'colspan': 4},
@@ -182,7 +182,7 @@ class assets_report(models.AbstractModel):
                 x_accumulated_depreciation_total = al['x_accumulated_depreciation'] or 0
 
                 #Variable total
-                total = [x + y for x, y in zip(total, [x_history_cost_total,x_accumulated_depreciation_total,asset_opening, asset_add, asset_minus, asset_closing, depreciation_opening, depreciation_add, depreciation_minus, depreciation_closing, asset_gross])]
+                total = [x + y for x, y in zip(total, [x_history_cost_total,x_accumulated_depreciation_total, asset_opening, asset_add, asset_minus, asset_closing, depreciation_opening, depreciation_add, depreciation_minus, depreciation_closing, asset_gross])]
 
                 id = "_".join([self._get_account_group_with_company(al['account_code'], al['company_id'])[0], str(al['asset_id'])])
                 name = str(al['asset_name'])
@@ -196,19 +196,19 @@ class assets_report(models.AbstractModel):
                         # {'name': al['x_date_depreciation'] and format_date(self.env, al['x_date_depreciation']) or '', 'no_format_name': ''},
                         {'name': al['x_ussefull_life'] or '', 'no_format_name': ''},
                         {'name': al['x_deprecieted_periods'] or 0, 'no_format_name': ''},
-                        {'name': self.format_value(x_accumulated_depreciation_total) , 'no_format_name': x_accumulated_depreciation_total},
+                        {'name': self.format_value(x_accumulated_depreciation_total), 'no_format_name': x_accumulated_depreciation_total},
                         {'name': al['asset_acquisition_date'] and format_date(self.env, al['asset_acquisition_date']) or '', 'no_format_name': ''},  # Caracteristics
                         {'name': al['asset_date'] and format_date(self.env, al['asset_date']) or '', 'no_format_name': ''},
                         {'name': (al['asset_method'] == 'linear' and _('Linear')) or (al['asset_method'] == 'degressive' and _('Degressive')) or _('Accelerated'), 'no_format_name': ''},
                         {'name': asset_depreciation_rate, 'no_format_name': ''},
-                        {'name': self.format_value(asset_opening), 'no_format_name': asset_opening},  # Assets
+                        {'name': self.format_value(asset_opening + x_accumulated_depreciation_total), 'no_format_name': (asset_opening + x_accumulated_depreciation_total)},  # Assets
                         {'name': self.format_value(asset_add), 'no_format_name': asset_add},
                         {'name': self.format_value(asset_minus), 'no_format_name': asset_minus},
-                        {'name': self.format_value(asset_closing), 'no_format_name': asset_closing},
-                        {'name': self.format_value(depreciation_opening), 'no_format_name': depreciation_opening},  # Depreciation
+                        {'name': self.format_value(asset_closing + x_accumulated_depreciation_total), 'no_format_name': (asset_closing + x_accumulated_depreciation_total)},
+                        {'name': self.format_value(depreciation_opening + x_accumulated_depreciation_total), 'no_format_name': (depreciation_opening + x_accumulated_depreciation_total)},  # Depreciation
                         {'name': self.format_value(depreciation_add), 'no_format_name': depreciation_add},
                         {'name': self.format_value(depreciation_minus), 'no_format_name': depreciation_minus},
-                        {'name': self.format_value(depreciation_closing), 'no_format_name': depreciation_closing},
+                        {'name': self.format_value(depreciation_closing + x_accumulated_depreciation_total), 'no_format_name': (depreciation_closing + x_accumulated_depreciation_total)},
                         {'name': self.format_value(asset_gross), 'no_format_name': asset_gross},  # Gross
                     ],
                     'unfoldable': False,

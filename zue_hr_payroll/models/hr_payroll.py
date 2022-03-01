@@ -293,6 +293,7 @@ class Hr_payslip(models.Model):
     observation = fields.Text(string='Observación')
     analytic_account_id = fields.Many2one(related='contract_id.analytic_account_id',string='Cuenta analítica', store=True)
     struct_process = fields.Selection(related='struct_id.process', string='Proceso', store=True)
+    employee_branch_id = fields.Many2one(related='employee_id.branch_id', string='Sucursal empleado', store=True)
     definitive_plan = fields.Boolean(string='Plano definitivo generado')
     #Fechas liquidación de contrato
     date_liquidacion = fields.Date('Fecha liquidación de contrato')
