@@ -25,6 +25,34 @@
                 </div>
             </xpath>
             <xpath expr="//div[@id='hr_payroll_localization']" position="after">
+                <h2>Nómina eletrónica</h2>
+                <div class="row mt16 o_settings_container" id="attributes_vacations">
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane"/>
+                        <div class="o_setting_right_pane">
+                            <div class="row">
+                                <label for="payroll_electronic_username_ws" class="col-lg-3 o_light_label"/>
+                                <field name="payroll_electronic_username_ws"/>
+                            </div>
+                            <div class="row">
+                                <label for="payroll_electronic_password_ws" class="col-lg-3 o_light_label"/>
+                                <field name="payroll_electronic_password_ws"/>
+                            </div>
+                            <div class="row">
+                                <label for="payroll_electronic_company_id_ws" class="col-lg-3 o_light_label"/>
+                                <field name="payroll_electronic_company_id_ws"/>
+                            </div>
+                            <div class="row">
+                                <label for="payroll_electronic_account_id_ws" class="col-lg-3 o_light_label"/>
+                                <field name="payroll_electronic_account_id_ws"/>
+                            </div>
+                            <div class="row">
+                                <label for="payroll_electronic_service_ws" class="col-lg-3 o_light_label"/>
+                                <field name="payroll_electronic_service_ws"/>
+                            </div>
+                        </div>
+                    </div>
+                </div>
                 <h2>Vacaciones</h2>
                 <div class="row mt16 o_settings_container" id="attributes_vacations">
                     <div class="col-12 col-lg-6 o_setting_box">

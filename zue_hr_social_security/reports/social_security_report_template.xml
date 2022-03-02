@@ -111,7 +111,7 @@
                                         <span t-esc="float('{:.2f}'.format(dif_round_total_eps))" t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
                                     </td>
                                     <td>
-                                        <span t-esc="float('{:.2f}'.format(dif_round_total_eps)) + float('{:.2f}'.format(value_company_total_eps)) + float('{:.2f}'.format(dif_round_total_eps))" t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
+                                        <span t-esc="float('{:.2f}'.format(value_employees_total_eps)) + float('{:.2f}'.format(value_company_total_eps)) + float('{:.2f}'.format(dif_round_total_eps))" t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
                                     </td>
                                 </tr>
                             </tbody>

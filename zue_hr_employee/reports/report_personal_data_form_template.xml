@@ -33,6 +33,10 @@
                                     <td>
                                         <span t-field="o.name"/>
                                     </td>
+                                    <td>Compañia:</td>
+                                    <td>
+                                        <span t-field="o.company_id.name"/>
+                                    </td>
                                 </tr>
                                 <tr>
                                     <td>Sucursal:</td>
@@ -193,14 +197,15 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td>Empresa</td>
-                                    <td>Fecha Inicial</td>
-                                    <td>Fecha Final</td>
-                                    <td>Descripción</td>
+                                    <td style="width: 35%;">Empresa</td>
+                                    <td style="width: 15%;">Fecha Inicial</td>
+                                    <td style="width: 15%;">Fecha Final</td>
+                                    <td style="width: 35%;">Descripción</td>
                                 </tr>
                             </thead>
                             <tbody>
                                 <tr t-foreach="o.resume_line_ids" t-as="r">
+                                 <t t-if="r.line_type_id.name == 'Experience'">
                                     <td>
                                         <span t-field="r.name"/>
                                     </td>
@@ -213,6 +218,34 @@
                                     <td>
                                         <span t-esc="r.description"/>
                                     </td>
+                                    </t>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-striped table-sm" style="font-size: 13px">
+                            <thead>
+                                <tr>
+                                    <td colspan="4">
+                                        <h4>Entrevista</h4>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>NOMBRE</td>
+                                    <td>DESCRIPCIÓN</td>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="o.resume_line_ids" t-as="e">
+                                    <t t-if="e.line_type_id.name == 'Entrevista'">
+                                        <td>
+                                            <span t-field="e.name"/>
+                                        </td>
+                                        <td>
+                                            <span t-esc="e.description"/>
+                                        </td>
+                                    </t>
                                 </tr>
                             </tbody>
                         </table>
@@ -229,7 +262,6 @@
                                     <td>Tipo</td>
                                     <td>Nivel</td>
                                     <td>Habilidad</td>
-                                    <td>Dominio (%)</td>
                                 </tr>
                             </thead>
                             <tbody>
@@ -242,9 +274,6 @@
                                     </td>
                                     <td>
                                         <span t-esc="s.skill_id.name"/>
-                                    </td>
-                                    <td>
-                                        <span t-esc="s.level_progress"/>
                                     </td>
                                 </tr>
                             </tbody>
