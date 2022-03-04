@@ -10,5 +10,6 @@
         <menuitem name="Configuración contable cierre de nómina" id="zue_hr_closing_configuration_menu" parent="hr_payroll.menu_hr_payroll_configuration" action="action_hr_closing_configuration"/>
         <menuitem name="Sucursales seguridad social" id="zue_hr_social_security_branches" parent="hr_payroll.menu_hr_payroll_configuration" action="action_hr_social_security_branches"/>
         <menuitem name="Centros de trabajo seguridad social" id="zue_hr_social_security_work_center" parent="hr_payroll.menu_hr_payroll_configuration" action="action_hr_social_security_work_center"/>
+        <menuitem name="Reporte entidades empleados" id="hr_entities_reports" parent="hr_payroll.menu_hr_payroll_report" action="action_hr_entities_reports" sequence="26"/>
     </data>
 </odoo>

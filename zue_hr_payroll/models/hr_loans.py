@@ -2,6 +2,7 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from dateutil.relativedelta import relativedelta
+from datetime import datetime, timedelta
 
 class HrLoans(models.Model):
     _name = 'hr.loans'
@@ -37,14 +38,18 @@ class HrLoans(models.Model):
                                     string="Departamento")
     contract_id = fields.Many2one('hr.contract', string="Contrato", required=True, domain="[('employee_id','=', employee_id)]")
     entity_id = fields.Many2one('hr.employee.entities', string="Entidad", required=True)
+    type_installment = fields.Selection([('period', 'N° de Periodos'),
+                                        ('counts', 'N° de Cuotas (Personalizadas)')], 'Calcular en base a', required=True, default='period')
     installment = fields.Integer(string="N° de Periodos", default=1)
+    installment_count = fields.Integer(string="N° de Cuotas (Personalizadas)", default=0)
     payment_date = fields.Date(string="Fecha de Primera Cuota", required=True, default=fields.Date.today())
     apply_charge = fields.Selection([('15','Primera quincena'),
                                     ('30','Segunda quincena'),
                                     ('0','Siempre')],'Aplicar cobro',  required=True, help='Indica a que quincena se va a aplicar la deduccion')
     salary_rule = fields.Many2one('hr.salary.rule', string="Regla salarial", required=True)
     prestamo_lines = fields.One2many('hr.loans.line', 'prestamo_id', string="Detalle", index=True, ondelete='cascade')    
-    currency_id = fields.Many2one('res.currency', string='Moneda', required=True)                    
+    currency_id = fields.Many2one('res.currency', string='Moneda', required=True)
+    prestamo_original_amount = fields.Float(string="Valor Original del Préstamo", required=True, default=0)
     prestamo_amount = fields.Float(string="Valor Préstamo", required=True)
     total_amount = fields.Float(string="Importe Total", readonly=True, compute='_compute_prestamo_amount')    
     total_paid_amount = fields.Float(string="Importe Total Pagado", compute='_compute_prestamo_amount')
@@ -53,6 +58,7 @@ class HrLoans(models.Model):
     prestamo_pending_amount = fields.Float(string="Monto Cuotas Pendientes", compute='_compute_pending_amount')
     prestamo_pending_count = fields.Integer(string="N° Cuotas x Pagar", compute='_compute_pending_amount')
     payment_date_end = fields.Date(string="Fecha de Ultima Cuota", readonly=True)
+    description = fields.Text(string='Descripción')
 
     state = fields.Selection([
         ('draft', 'Borrador'),
@@ -130,7 +136,10 @@ class HrLoans(models.Model):
         self.write({'state': 'refuse'})
     
     def action_cancel(self):
-        self.write({'state': 'cancel'})
+        for record in self:
+            obj_concept = self.env['hr.contract.concepts'].search([('contract_id','=',record.contract_id.id),('loan_id','=',record.id)])
+            obj_concept.write({'state': 'cancel'})
+            record.write({'state': 'cancel'})
 
     def action_approve(self):
         for data in self:
@@ -151,7 +160,8 @@ class HrLoans(models.Model):
                         'aplicar': data.apply_charge,
                         'partner_id': data.entity_id.id,
                         'contract_id': data.contract_id.id,
-                        'loan_id': data.id}   
+                        'loan_id': data.id,
+                        'state':'done'}
 
                 self.env['hr.contract.concepts'].create(data)
                 self.write({'state': 'approve'})
@@ -161,8 +171,8 @@ class HrLoans(models.Model):
         
         for prestamo in self:
             date_pay = prestamo.payment_date
-            if date_pay.day != 15 and date_pay.day != 30:
-                if date_pay.month == 2 and (date_pay.day != 28 or date_pay.day != 15):
+            if (date_pay.month != 2 and date_pay.day != 15 and date_pay.day != 30) or (date_pay.month == 2 and date_pay.day != 28 and date_pay.day != 15):
+                if date_pay.month == 2:
                     raise UserError(_('Atención: La fecha de la primera cuota debe ser un día 15 o 28'))
                 else:
                      raise UserError(_('Atención: La fecha de la primera cuota debe ser un día 15 o 30'))
@@ -174,46 +184,76 @@ class HrLoans(models.Model):
             if int(total_lines) >= int(prestamo.prestamo_amount):
                 raise UserError(_('Atención: ya se han calculado las cuotas. Bórrela(s) si desea recalcular el pago del saldo pendiente'))
             else:
-                if prestamo.apply_charge == '0':
-                    amount = (prestamo.prestamo_amount - total_lines) / (prestamo.installment*2)
+                if prestamo.type_installment == 'counts':
+                    amount = (prestamo.prestamo_amount - total_lines) / prestamo.installment_count
                     date_start = date_pay
                     date_end = date_pay
-                    for i in range(1, prestamo.installment + 1):                        
-                        # Primera Quincena
-                        day = 15
-                        month = int(date_start.month)
-                        year = int(date_start.year)
-                        self.env['hr.loans.line'].create({
-                            'date': str(year)+'-'+str(month)+'-'+str(day),
-                            'amount': amount,
-                            'currency_id': prestamo.currency_id.id,
-                            'employee_id': prestamo.employee_id.id,
-                            'prestamo_id': prestamo.id})
-                        # Segunda Quincena
-                        day = 30 if month != 2 else 28
-                        self.env['hr.loans.line'].create({
-                            'date': str(year)+'-'+str(month)+'-'+str(day),
-                            'amount': amount,
-                            'currency_id': prestamo.currency_id.id,
-                            'employee_id': prestamo.employee_id.id,
-                            'prestamo_id': prestamo.id})
-                        date_end = str(year)+'-'+str(month)+'-'+str(day)
-                        date_start = date_pay + relativedelta(months=i)
-                    self.payment_date_end = date_end
-                else: 
-                    amount = (prestamo.prestamo_amount - total_lines) / prestamo.installment
-                    date_start = date_pay
-                    date_end = date_pay
-                    for i in range(1, prestamo.installment + 1):
+                    for i in range(1, prestamo.installment_count + 1):
                         self.env['hr.loans.line'].create({
                             'date': date_start,
                             'amount': amount,
                             'currency_id': prestamo.currency_id.id,
                             'employee_id': prestamo.employee_id.id,
                             'prestamo_id': prestamo.id})
-                        date_end = date_start
-                        date_start = date_pay + relativedelta(months=i)
+                        if prestamo.apply_charge == '0':
+                            date_end = date_start
+                            if date_start.day == 15:
+                                year = int(date_start.year)
+                                month = int(date_start.month)
+                                day = 30 if month != 2 else 28
+                                date_start = str(year)+'-'+str(month)+'-'+str(day)
+                                date_start = datetime.strptime(date_start, '%Y-%m-%d').date()
+                            else:
+                                year = int(date_start.year)+1 if int(date_start.month) == 12 else int(date_start.year)
+                                month = 1 if int(date_start.month) == 12 else int(date_start.month)+1
+                                day = 15
+                                date_start = str(year) + '-' + str(month) + '-' + str(day)
+                                date_start = datetime.strptime(date_start, '%Y-%m-%d').date()
+                        else:
+                            date_end = date_start
+                            date_start = date_pay + relativedelta(months=i)
                     self.payment_date_end = date_end
+                else:
+                    if prestamo.apply_charge == '0':
+                        amount = (prestamo.prestamo_amount - total_lines) / (prestamo.installment*2)
+                        date_start = date_pay
+                        date_end = date_pay
+                        for i in range(1, prestamo.installment + 1):
+                            # Primera Quincena
+                            day = 15
+                            month = int(date_start.month)
+                            year = int(date_start.year)
+                            self.env['hr.loans.line'].create({
+                                'date': str(year)+'-'+str(month)+'-'+str(day),
+                                'amount': amount,
+                                'currency_id': prestamo.currency_id.id,
+                                'employee_id': prestamo.employee_id.id,
+                                'prestamo_id': prestamo.id})
+                            # Segunda Quincena
+                            day = 30 if month != 2 else 28
+                            self.env['hr.loans.line'].create({
+                                'date': str(year)+'-'+str(month)+'-'+str(day),
+                                'amount': amount,
+                                'currency_id': prestamo.currency_id.id,
+                                'employee_id': prestamo.employee_id.id,
+                                'prestamo_id': prestamo.id})
+                            date_end = str(year)+'-'+str(month)+'-'+str(day)
+                            date_start = date_pay + relativedelta(months=i)
+                        self.payment_date_end = date_end
+                    else:
+                        amount = (prestamo.prestamo_amount - total_lines) / prestamo.installment
+                        date_start = date_pay
+                        date_end = date_pay
+                        for i in range(1, prestamo.installment + 1):
+                            self.env['hr.loans.line'].create({
+                                'date': date_start,
+                                'amount': amount,
+                                'currency_id': prestamo.currency_id.id,
+                                'employee_id': prestamo.employee_id.id,
+                                'prestamo_id': prestamo.id})
+                            date_end = date_start
+                            date_start = date_pay + relativedelta(months=i)
+                        self.payment_date_end = date_end
         return True
 
         
@@ -234,5 +274,11 @@ class hr_contract_concepts(models.Model):
     _inherit = 'hr.contract.concepts'
     
     loan_id = fields.Many2one('hr.loans', 'Prestamo', readonly=True)
+
+    def change_state_cancel(self):
+        super(hr_contract_concepts, self).change_state_cancel()
+        if self.loan_id:
+            obj_loan = self.env['hr.loans'].search([('id', '=', self.loan_id.id)])
+            obj_loan.write({'state': 'cancel'})
 
     _sql_constraints = [('change_contract_uniq', 'unique(input_id, contract_id, loan_id)', 'Ya existe esta regla para este contrato, por favor verficar.')]

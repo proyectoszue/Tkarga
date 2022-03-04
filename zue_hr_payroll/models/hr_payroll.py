@@ -352,7 +352,23 @@ class Hr_payslip(models.Model):
     def restart_payroll(self):
         for payslip in self:
             #Eliminar contabilización y el calculo
-            payslip.mapped('move_id').unlink() 
+            payslip.mapped('move_id').unlink()
+            # Modificar cuotas de prestamos pagadas
+            obj_payslip_line = self.env['hr.payslip.line'].search(
+                [('slip_id', '=', payslip.id), ('loan_id', '!=', False)])
+            for payslip_line in obj_payslip_line:
+                obj_loan_line = self.env['hr.loans.line'].search(
+                    [('employee_id', '=', payslip_line.employee_id.id), ('prestamo_id', '=', payslip_line.loan_id.id),
+                     ('payslip_id', '>=', payslip.id)])
+                obj_loan_line.write({
+                    'paid': False,
+                    'payslip_id': False
+                })
+                obj_loan = self.env['hr.loans'].search(
+                    [('employee_id', '=', payslip_line.employee_id.id), ('id', '=', payslip_line.loan_id.id)])
+                if obj_loan.balance_amount > 0:
+                    self.env['hr.contract.concepts'].search([('loan_id', '=', payslip_line.loan_id.id)]).write(
+                        {'state': 'done'})
             payslip.line_ids.unlink()
             payslip.not_line_ids.unlink()
             #Eliminar historicos            
@@ -611,7 +627,7 @@ class Hr_payslip(models.Model):
                         'salary_rule_id': concepts.salary_rule_id.id,
                         'contract_id': contract.id,
                         'employee_id': employee.id,
-                        # 'entity_id': entity_id,
+                        'entity_id': concepts.partner_id.id if concepts.partner_id else False,
                         # 'loan_id': loan_id,
                         'amount': tot_rule, #Se redondean los decimales de todas las reglas
                         'quantity': 1.0,
@@ -925,7 +941,7 @@ class Hr_payslip(models.Model):
                 
                 obj_loan = self.env['hr.loans'].search([('employee_id', '=', payslip_line.employee_id.id),('id', '=', payslip_line.loan_id.id)])
                 if obj_loan.balance_amount <= 0:
-                    self.env['hr.contract.concepts'].search([('loan_id', '=', payslip_line.loan_id.id)]).unlink()
+                    self.env['hr.contract.concepts'].search([('loan_id', '=', payslip_line.loan_id.id)]).write({'state':'cancel'})
 
             if record.struct_id.process == 'vacaciones' or pay_vacations_in_payroll == True:
                 history_vacation = []
