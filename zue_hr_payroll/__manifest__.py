@@ -61,7 +61,6 @@
         'reports/report_book_cesantias_template.xml',
         'views/actions_vacation_book_reports.xml',
         'views/actions_account_journal.xml',
-        'views/actions_hr_entities_reports.xml',
         'views/menus.xml',
     ],
     

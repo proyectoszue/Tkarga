@@ -27,9 +27,10 @@
         'views/actions_hr_social_security_branches.xml',
         'views/actions_hr_provisions.xml',
         'views/actions_hr_closing_configuration.xml',
+        'views/actions_hr_entities_reports.xml',
         'views/menus.xml',
         'reports/social_security_report_template.xml',
-        'reports/social_security_report.xml',              
+        'reports/social_security_report.xml',
         'security/ir.model.access.csv',
     ],    
 }

@@ -17,7 +17,8 @@
 					<field name="dev_or_ded"/>           					
                     <field name="date"/>                
 					<field name="amount"/> 
-					<field name="description"/>           					
+					<field name="description"/>   
+					<field name="partner_id"/>           					
 				</tree>
 			</field>
 		</record>

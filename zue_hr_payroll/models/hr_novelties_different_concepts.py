@@ -12,7 +12,8 @@ class hr_novelties_different_concepts(models.Model):
                                      ('deduccion', 'Deducción')],'Naturaleza',related='salary_rule_id.dev_or_ded',store=True, readonly=True)    
     date = fields.Date('Fecha', required=True)
     amount = fields.Float('Valor', required=True)
-    description = fields.Char('Descripción')  
+    description = fields.Char('Descripción') 
+    partner_id = fields.Many2one('hr.employee.entities', 'Entidad') 
 
     @api.constrains('amount')
     def _check_amount(self):  

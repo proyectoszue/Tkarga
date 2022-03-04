@@ -354,8 +354,8 @@ class hr_payroll_social_security(models.Model):
             part_line_five = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s' % (cTarifaARP,cCentroTrabajo,cValorARP,cTarifaCCF,cValorCajaCom,cTarifaSENA,cValorSENA,cTarifaICBF,cValorICBF,cTarifaESAP,cValorESAP,cTarifaMEN,cValorMEN,cIdentificacionCotizantePrincipal,cExonerado1607,cCodigoEntidadARP,cNivelRiesgo,cIndicadorTarifaEspecial)
 
             #------Fechas
-            cFechaIngreso = item.contract_id.date_start.strftime('%Y-%m-%d') if item.nIngreso else ' '*10
-            cFechaRetiro = item.contract_id.retirement_date.strftime('%Y-%m-%d') if item.nRetiro else ' '*10
+            cFechaIngreso = item.contract_id.date_start.strftime('%Y-%m-%d') if item.nIngreso and item.nDiasLiquidados > 0  else ' '*10
+            cFechaRetiro = item.contract_id.retirement_date.strftime('%Y-%m-%d') if item.nRetiro and item.nDiasLiquidados > 0  else ' '*10
             cFechaInicioVSP = obj_change_wage.date_start.strftime('%Y-%m-%d') if len(obj_change_wage) > 0 and item.nDiasLiquidados > 0 else ' '*10
             cFechaInicioSLN = item.dFechaInicioSLN.strftime('%Y-%m-%d') if item.dFechaInicioSLN else ' '*10
             cFechaFinSLN = item.dFechaFinSLN.strftime('%Y-%m-%d') if item.dFechaFinSLN else ' '*10

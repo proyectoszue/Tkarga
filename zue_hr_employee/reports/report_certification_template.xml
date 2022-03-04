@@ -14,14 +14,13 @@
 
             <div class="page">
                 <div class="oe_structure"></div>
-                <div class="row">
-                <br/><br/><br/>
+                <div class="row"><br/><br/>
                 <div class="col-md-12 text-center" style="text-align:center">
                     <strong><h4><span t-field="o.employee_id.company_id.name"/></h4></strong>
                     <p style="line-height:0px"><strong>NIT:</strong> <span t-field="o.employee_id.company_id.company_registry" /></p><br/>
                     <p style="line-height:0px"><strong><h4>CERTIFICA QUE</h4></strong></p>
                 </div>
-                <br/><br/>
+                <br/>
                 <div class="col-md-12">
                     <p style="text-align:justify">
                     <span t-if="o.employee_id.gender == 'male'">El señor</span> <span t-if="o.employee_id.gender == 'female'">La señora</span> <b><span t-esc="o.employee_id.name"/></b>
@@ -48,7 +47,7 @@
                         Para constancia se firma en la ciudad de Bogotá D.C, <span t-esc="o.get_date_text(datetime.datetime.now(),1)"/>
                     </p>
                 </div>
-                <br/><br/>
+                <br/>
                 <div class="col-md-12 col-md-offset-12">
                     <p style="text-align:justify">Cordialmente,</p>
                     <t t-set="autorizado" t-value="o.get_signature_certification()"/>
@@ -64,12 +63,7 @@
             </div>
 
             <footer>
-                <t t-if="o.employee_id.company_id.name == 'GRUPO EMPRESARIAL ALIANZA T S.A.'">
-                    <img src="/zue_hr_employee/static/src/img/footer_alianza.png"/>
-                </t>
-                <t t-if="o.employee_id.company_id.name != 'GRUPO EMPRESARIAL ALIANZA T S.A.'">
-                    <img src="/zue_hr_employee/static/src/img/footer.png"/>
-                </t>
+                <img class="img img-responsive" t-att-src="o.get_image_footer()"/>
                 <p style="text-align:justify">
                     Certificado N° <span t-esc="m.sequence"/>
                 </p>
