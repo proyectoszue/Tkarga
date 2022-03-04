@@ -137,7 +137,12 @@ class AccountBalancePartnerReport(models.Model):
         ''' % (date_filter,date_filter,date_filter,date_filter)
 
     @api.model
-    def _from(self,date_filter):
+    def _from(self,date_filter,company_id,excluded_diaries_ids):
+
+        filter_diaries = ''
+        if excluded_diaries_ids:
+            filter_diaries = 'and COALESCE(AJ.id,0) not in (' + excluded_diaries_ids + ')'
+
         return '''
             FROM account_move_line B
             LEFT JOIN res_partner C on B.partner_id = C.id 
@@ -164,12 +169,17 @@ class AccountBalancePartnerReport(models.Model):
                         ) D on B.account_id = D.id            
             INNER JOIN res_company G on B.company_id = G.id
             LEFT JOIN (
-                        SELECT partner_id,account_id,
-                                SUM(debit - credit) as saldo_ant 
-                        FROM account_move_line 
-                        WHERE "date" < '%s' and parent_state = 'posted' group by partner_id,account_id
+                        SELECT b.partner_id,b.account_id,
+                                SUM(b.debit - b.credit) as saldo_ant 
+                        FROM account_move_line as b 
+                        LEFT JOIN account_move AM on AM.id = b.move_id
+                        LEFT JOIN account_journal AJ on AJ.id = AM.journal_id
+                        WHERE b."date" < '%s' and b.parent_state = 'posted' 
+                                and COALESCE(B.company_id,0) = case when %s = 0 then COALESCE(B.company_id,0) else %s end
+                                %s
+                        group by b.partner_id,b.account_id
                       ) as E on COALESCE(B.partner_id,0) = COALESCE(E.partner_id,0) and D.id = E.account_id
-        ''' % (date_filter,)
+        ''' % (date_filter,company_id, company_id, filter_diaries)
 
     @api.model
     def _where(self,date_filter,company_id,excluded_diaries_ids):
@@ -277,7 +287,7 @@ class AccountBalancePartnerReport(models.Model):
             )
         ''' % (
             # self._table, self._select(date_filter), self._from(date_filter), self._where(date_filter_next,company_id), self._group_by()
-            self._table, self._select(date_filter), self._from(date_filter), self._where(date_filter_next,company_id,excluded_diaries_ids), self._group_by()
+            self._table, self._select(date_filter), self._from(date_filter,company_id,excluded_diaries_ids), self._where(date_filter_next,company_id,excluded_diaries_ids), self._group_by()
         ))
 
     
