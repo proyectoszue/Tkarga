@@ -300,7 +300,16 @@ class Hr_payslip(models.Model):
     date_prima = fields.Date('Fecha liquidación de prima')
     date_cesantias = fields.Date('Fecha liquidación de cesantías')
     date_vacaciones = fields.Date('Fecha liquidación de vacaciones')    
-    
+
+    def name_get(self):
+        result = []
+        for record in self:
+            if record.payslip_run_id:
+                result.append((record.id, "{} - {}".format(record.payslip_run_id.name,record.employee_id.name)))
+            else:
+                result.append((record.id, "{} - {} - {}".format(record.struct_id.name,record.employee_id.name,str(record.date_from))))
+        return result
+
     @api.onchange('worked_days_line_ids', 'input_line_ids')
     def _onchange_worked_days_inputs(self):
         if self.line_ids and self.state in ['draft', 'verify']:
