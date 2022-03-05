@@ -306,7 +306,15 @@ class hr_contract(models.Model):
     def get_amount_text(self, valor):
         letter_amount = self.numero_to_letras(float(valor))         
         return letter_amount.upper()
-    
+
+    def get_image_footer(self):
+        base_url = self.env['ir.config_parameter'].sudo().get_param('web.base.url')
+        if self.employee_id.company_id.name == 'GRUPO EMPRESARIAL ALIANZA T S.A.':
+            url_img = base_url+'/zue_hr_employee/static/src/img/footer_alianza.png'
+        else:
+            url_img = base_url+'/zue_hr_employee/static/src/img/footer.png'
+        return url_img
+
     def get_average_concept_heyrec(self): #Promedio horas extra
         promedio = False
         model_payslip = self.env['hr.payslip']

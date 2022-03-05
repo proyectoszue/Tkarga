@@ -36,7 +36,7 @@
                     <field name="alert_days_vacation" readonly="1" invisible="1"/>
                     <div class="alert alert-warning oe_edit_only" role="alert" attrs="{'invisible': [('alert_days_vacation', '=', False)]}">
                         El empleado solo dispone de <field name="accumulated_vacation_days" readonly="1"/>
- días de vacaciones pendientes.
+                        días de vacaciones pendientes.
                     </div>
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/group[1]/group[1]/label[1]" position="before">

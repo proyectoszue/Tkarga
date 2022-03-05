@@ -18,7 +18,7 @@
     'version': '0.1',
 
     # any module necessary for this one to work correctly
-    'depends': ['base','account','account_reports','documents'],
+    'depends': ['base','account','account_reports','documents','l10n_co_reports'],
 
     # always loaded
     'data': [
