@@ -98,8 +98,7 @@ class Hr_payslip(models.Model):
                             # date = slip_date
                             move_dict = {
                                 'narration': '',
-                                'ref': date.strftime(
-                                    '%B %Y') + ' - Nómina: ' + slip.number + ' - ' + slip.employee_id.name,
+                                'ref': slip.display_name,
                                 'journal_id': journal_id,
                                 'date': date,
                             }
