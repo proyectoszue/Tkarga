@@ -191,11 +191,12 @@ class hr_executing_provisions(models.Model):
                                 lines_payslip = env['hr.payslip.line'].search(
                                     [('slip_id.state', '=', 'done'), ('slip_id.date_from', '>=', date_start),
                                      ('slip_id.date_from', '<=', date_end), ('code', 'in', code_filter),
-                                     ('slip_id.contract_id', '=', contract.id)])
+                                     ('slip_id.contract_id', '=', contract.id),('is_history_reverse','=',False)])
                                 lines_payslip += env['hr.payslip.line'].search(
                                     [('slip_id.state', '=', 'done'), ('slip_id.date_to', '>=', date_start),
                                      ('slip_id.date_to', '<=', date_end), ('code', 'in', code_filter),
-                                     ('slip_id.contract_id', '=', contract.id),('id','not in',lines_payslip.ids),
+                                     ('slip_id.contract_id', '=', contract.id),('is_history_reverse','=',False),
+                                     ('id','not in',lines_payslip.ids),
                                      ('slip_id.struct_id.process','in',['cesantias','intereses_cesantias','prima'])])
                                 if len(lines_payslip) > 0:
                                     value_payments = sum([i.total for i in obj_payslip.browse(lines_payslip.ids)])

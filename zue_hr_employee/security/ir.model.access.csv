@@ -20,3 +20,4 @@ access_hr_cost_distribution_employee, access_hr_cost_distribution_employee,model
 access_hr_conf_certificate_income, access_hr_conf_certificate_income,model_hr_conf_certificate_income,,1,1,1,1
 access_hr_labor_certificate_history, access_hr_labor_certificate_history,model_hr_labor_certificate_history,,1,1,1,1
 access_hr_type_of_jurisdiction, access_hr_type_of_jurisdiction,model_hr_type_of_jurisdiction,,1,1,1,1
+access_hr_labor_certificate_template, access_hr_labor_certificate_template,model_hr_labor_certificate_template,,1,1,1,1

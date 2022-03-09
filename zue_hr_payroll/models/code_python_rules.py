@@ -71,10 +71,12 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje':
         dias_work_act = worked_days.WORK100.number_of_days if worked_days.WORK100 else 0
         dias_work = dias_work_act if (aplicar == 0) else dias_work + dias_work_act
         top_twenty_five_smmlv = (annual_parameters.top_twenty_five_smmlv / 30) * dias_work
-        total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
         if contract.modality_salary == 'integral':
             porc_integral_salary = annual_parameters.porc_integral_salary/100
             total = total*porc_integral_salary
+            total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
+        else:
+            total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
         result = round((total)*porc)*-1 
 #---------------------------------------Pension Empleado--------------------------------------------------------
 result = 0.0
@@ -104,10 +106,12 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje' and employee.subt
         dias_work_act = worked_days.WORK100.number_of_days if worked_days.WORK100 else 0
         dias_work = dias_work_act if (aplicar == 0) else dias_work + dias_work_act
         top_twenty_five_smmlv = (annual_parameters.top_twenty_five_smmlv / 30) * dias_work
-        total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
         if contract.modality_salary == 'integral':
-            porc_integral_salary = annual_parameters.porc_integral_salary/100
-            total = total*porc_integral_salary
+            porc_integral_salary = annual_parameters.porc_integral_salary / 100
+            total = total * porc_integral_salary
+            total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
+        else:
+            total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
         result = round((total)*porc)*-1
 #---------------------------------------Fondo Solidadridad--------------------------------------------------------
 result = 0.0
@@ -137,10 +141,12 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje':
         dias_work_act = worked_days.WORK100.number_of_days if worked_days.WORK100 else 0
         dias_work = dias_work_act if (aplicar == 0) else dias_work + dias_work_act
         top_twenty_five_smmlv = (annual_parameters.top_twenty_five_smmlv / 30) * dias_work
-        total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
         if contract.modality_salary == 'integral':
-            porc_integral_salary = annual_parameters.porc_integral_salary/100
-            total = total*porc_integral_salary
+            porc_integral_salary = annual_parameters.porc_integral_salary / 100
+            total = total * porc_integral_salary
+            total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
+        else:
+            total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
         if (total/salario_minimo) > 4 and (total/salario_minimo) < 16:
             result =  round(total * 0.005 * (-1),-2)
         if  (total/salario_minimo) >= 16 and (total/salario_minimo) <= 17:
