@@ -6,6 +6,8 @@
         <menuitem name="Tipos de empleado" id="zue_hr_employee.menu_types_employee" parent="hr.menu_human_resources_configuration_employee" action="zue_menu_action_types_employee"/>                
         <!-- Menu parametrización riesgos profesionales -->
         <menuitem name="Riesgos profesionales" id="zue_hr_employee.menu_contract_risk" parent="hr.menu_human_resources_configuration_employee" action="zue_menu_action_contract_risk"/>                
+        <!-- Menu Configuración plantilla certificado laboral-->
+        <menuitem name="Configuración plantilla certificado laboral" id="zue_hr_employee.menu_hr_labor_certificate_template" parent="hr_payroll.menu_hr_payroll_configuration" action="action_labor_certificate_template"/>
         <!-- Menu Tipos de entidades-->
         <menuitem name="Tipo de entidades" id="zue_hr_employee.menu_types_entities" parent="hr_payroll.menu_hr_payroll_configuration" action="zue_menu_action_types_entities"/>                
         <!-- Menu Entidades -->

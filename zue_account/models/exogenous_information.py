@@ -36,7 +36,7 @@ class fiscal_accounting_code(models.Model):
                               ], 'Tipo de cuenta')
     move_type = fields.Selection([('debit', 'Débito'),
                                   ('credit', 'Crédito'),
-                                  ('net', 'Neto')], string='Tipo de movimiento', required=True)
+                                  ('net', 'Neto')], string='Tipo de movimiento', default='net',required=True)
     retention_associated = fields.Many2one('fiscal.accounting.code', string='Retención Asociada')
     accounting_details_ids = fields.Many2many('account.account',string='Cuentas')
     #concept = fields.Char(string="Concepto")
