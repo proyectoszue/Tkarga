@@ -70,24 +70,24 @@
                                 <span t-if="o.employee_id.gender == 'male'">El señor</span>
                                 <span t-if="o.employee_id.gender == 'female'">La señora</span>
                                 <b>
-                                    <span t-esc="o.employee_id.name"/>
+                                    <span t-esc="o.employee_id.name"/>,
                                 </b>
-                                , identificado con cédula de ciudadanía número<span
+                                identificado con cédula de ciudadanía número<span
                                     t-esc="'{:20,.0f}'.format(int(o.employee_id.identification_id))"/>,
                                 labora en nuestra compañía desde el<span t-esc="o.get_date_text(o.date_start)"/>,
                                 mediante un
                                 <b>
-                                    <span t-esc="o.get_contract_type()"/>
+                                    <span t-esc="o.get_contract_type()"/>,
                                 </b>
-                                , desempeñando el cargo de
+                                desempeñando el cargo de
                                 <b>
                                     <span t-esc="o.job_id.name"/>
                                 </b>
                                 en la seccional
                                 <b>
-                                    <span t-esc="o.employee_id.branch_id.name"/>
+                                    <span t-esc="o.employee_id.branch_id.name"/>,
                                 </b>
-                                , devengando un salario básico mensual de
+                                devengando un salario básico mensual de
                                 <b>
                                     <span t-esc="o.get_amount_text(o.wage)"/>
                                     M/Cte.
