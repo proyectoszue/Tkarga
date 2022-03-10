@@ -103,11 +103,13 @@ class hr_payroll_social_security(models.Model):
                             obj_payslip = obj_payslip.filtered(lambda p: (p.date_from >= date_start and p.date_from <= date_end) or (p.date_to >= date_start and p.date_to <= date_end))
 
                             #Primero, encontró una entrada de trabajo que no excedió el intervalo.
+                            datetime_start = datetime.combine(date_start, datetime.min.time())
+                            datetime_end = datetime.combine(date_end, datetime.max.time())
                             work_entries = env['hr.work.entry'].search(
                                 [
                                     ('state', 'in', ['validated', 'draft']),
-                                    ('date_start', '>=', date_start),
-                                    ('date_stop', '<=', date_end),
+                                    ('date_start', '>=', datetime_start),
+                                    ('date_stop', '<=', datetime_end),
                                     ('contract_id', '=', obj_contract.id),
                                     ('leave_id','!=',False)
                                 ]
@@ -120,16 +122,16 @@ class hr_payroll_social_security(models.Model):
                                     ('state', 'in', ['validated', 'draft']),
                                     ('contract_id', '=', obj_contract.id),
                                     '|', '|', '&', '&',
-                                    ('date_start', '>=', date_start),
-                                    ('date_start', '<', date_end),
-                                    ('date_stop', '>', date_end),
+                                    ('date_start', '>=', datetime_start),
+                                    ('date_start', '<', datetime_end),
+                                    ('date_stop', '>', datetime_end),
                                     '&', '&',
-                                    ('date_start', '<', date_start),
-                                    ('date_stop', '<=', date_end),
-                                    ('date_stop', '>', date_start),
+                                    ('date_start', '<', datetime_start),
+                                    ('date_stop', '<=', datetime_end),
+                                    ('date_stop', '>', datetime_start),
                                     '&',
-                                    ('date_start', '<', date_start),
-                                    ('date_stop', '>', date_end),
+                                    ('date_start', '<', datetime_start),
+                                    ('date_stop', '>', datetime_end),
                                 ]
                             )
 
@@ -180,7 +182,10 @@ class hr_payroll_social_security(models.Model):
                                 #Obtener fechas y dias
                                 request_date_from = leave.leave_id.request_date_from if leave.leave_id.request_date_from >= date_start else date_start
                                 request_date_to = leave.leave_id.request_date_to if leave.leave_id.request_date_to <= date_end else date_end
-                                number_of_days = self.dias360(request_date_from,request_date_to)
+                                if request_date_from.month == 2 and request_date_to.month == 2:
+                                    number_of_days = (request_date_to-request_date_from).days + 1
+                                else:
+                                    number_of_days = self.dias360(request_date_from,request_date_to)
 
                                 leave_dict = {'id':leave.leave_id.id,
                                                 'type':leave.leave_id.holiday_status_id.code,
@@ -259,7 +264,7 @@ class hr_payroll_social_security(models.Model):
                                 for leave in leave_list:
                                     nDiasTotales += leave['days'] if leave['type'] != 'COMPENSATORIO' else 0
 
-                                nDiasLiquidados = (nDiasLiquidados-(nDiasTotales-30)) if (30-nDiasTotales) < 0 else nDiasLiquidados
+                                nDiasLiquidados = (nDiasLiquidados-(nDiasTotales-30)) if (30-nDiasTotales) < 0 else (nDiasLiquidados+(30-nDiasTotales))
 
                                 #Guardar linea principal
                                 result = {
