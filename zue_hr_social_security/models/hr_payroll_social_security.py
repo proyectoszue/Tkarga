@@ -264,7 +264,10 @@ class hr_payroll_social_security(models.Model):
                                 for leave in leave_list:
                                     nDiasTotales += leave['days'] if leave['type'] != 'COMPENSATORIO' else 0
 
-                                nDiasLiquidados = (nDiasLiquidados-(nDiasTotales-30)) if (30-nDiasTotales) < 0 else (nDiasLiquidados+(30-nDiasTotales))
+                                if nIngreso == False and nRetiro == False and self.month == '2':
+                                    nDiasLiquidados = (nDiasLiquidados-(nDiasTotales-30)) if (30-nDiasTotales) < 0 else (nDiasLiquidados+(30-nDiasTotales))
+                                else:
+                                    nDiasLiquidados = (nDiasLiquidados - (nDiasTotales - 30)) if (30 - nDiasTotales) < 0 else nDiasLiquidados
 
                                 #Guardar linea principal
                                 result = {
