@@ -136,7 +136,18 @@
                             </field>
                         </group>
                     </page>
-                    <page string="Fuero o Reubicados" name="fuero o reubicados">
+                    <page string="Modificaciones contractuales" name="modificaciones_contractuales">
+                        <group>
+                            <field name="contract_modification_history" nolabel="1">
+                                <tree editable="bottom">
+                                    <field name="date"/>
+                                    <field name="description"/>
+                                    <field name="attached"/>
+                                </tree>
+                            </field>
+                        </group>
+                    </page>
+                    <page string="Fuero o Reubicados" name="fuero_o_reubicados">
                         <group>
                             <group>
                                 <field name="type_of_jurisdiction"/>
