@@ -46,12 +46,16 @@
                             <field name="show_observation"/>
                         </group>
                         <group string="Firmas a solicitar">
-                            <field name="signature_prepared"/>
-                            <!-- <field name="partner_signature_prepared" attrs="{'invisible':[('signature_prepared', '!=', True)]}"/> -->
-                            <field name="signature_reviewed"/>
-                            <!-- <field name="partner_signature_reviewed" attrs="{'invisible':[('signature_reviewed', '!=', True)]}"/> -->
-                            <field name="signature_approved"/>
-                            <!-- <field name="partner_signature_approved" attrs="{'invisible':[('signature_approved', '!=', True)]}"/> -->
+                            <group>
+                                <field name="signature_prepared"/>
+                                <field name="signature_reviewed"/>
+                                <field name="signature_approved"/>
+                            </group>
+                            <group>
+                                <field name="txt_signature_prepared" attrs="{'invisible':[('signature_prepared', '!=', True)]}"/>
+                                <field name="txt_signature_reviewed" attrs="{'invisible':[('signature_reviewed', '!=', True)]}"/>
+                                <field name="txt_signature_approved" attrs="{'invisible':[('signature_approved', '!=', True)]}"/>
+                            </group>
                         </group>
                     </sheet>
                 </form>

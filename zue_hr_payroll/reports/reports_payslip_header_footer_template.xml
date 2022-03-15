@@ -22,17 +22,8 @@
                         </t>
                         <!-- Firmas y observaciones -->
                         <div>
-                            <br/><br/>
+                            <br/>
                             <div class="col-md-6 col-md-offset-9">
-                                <t t-if="cp_template.signature_prepared == True or cp_template.signature_reviewed == True or cp_template.signature_approved == True">
-                                    <table class="table table-striped">
-                                        <tr class="text-center">
-                                        <td style="width: 30%" t-if="cp_template.signature_prepared == True">ELABORÓ</td>
-                                        <td style="width: 30%" t-if="cp_template.signature_reviewed == True">REVISÓ</td>
-                                        <td style="width: 30%" t-if="cp_template.signature_approved == True">APROBÓ</td>
-                                        </tr>
-                                    </table>
-                                </t>
                                 <t t-if="cp_template.show_observation == True">
                                     <br/>
                                     <b>Observaciones:</b>
@@ -44,6 +35,22 @@
                                 <br/>
                                 <t t-if="cp_template.notes">
                                     <span t-esc="cp_template.notes"/>
+                                </t>
+                                <br/><br/>
+                                <t t-if="cp_template.signature_prepared == True or cp_template.signature_reviewed == True or cp_template.signature_approved == True">
+                                    <table class="table table-striped">
+                                        <tr class="text-center">
+                                        <td style="width: 30%" t-if="cp_template.signature_prepared == True">
+                                            ELABORÓ <span t-if="cp_template.txt_signature_prepared" t-esc="cp_template.txt_signature_prepared"/>
+                                        </td>
+                                        <td style="width: 30%" t-if="cp_template.signature_reviewed == True">
+                                            REVISÓ <span t-if="cp_template.txt_signature_reviewed" t-esc="cp_template.txt_signature_reviewed"/>
+                                        </td>
+                                        <td style="width: 30%" t-if="cp_template.signature_approved == True">
+                                            APROBÓ <span t-if="cp_template.txt_signature_approved" t-esc="cp_template.txt_signature_approved"/>
+                                        </td>
+                                        </tr>
+                                    </table>
                                 </t>
                             </div>
                         </div>
@@ -70,15 +77,8 @@
                         </t>
                         <!-- Firmas y observaciones -->
                         <div>
-                            <br/><br/>
+                            <br/>
                             <div class="col-md-6 col-md-offset-9">
-                                <table class="table table-striped">
-                                    <tr class="text-center">
-                                    <td style="width: 30%" t-if="cp_template.signature_prepared == True">ELABORÓ</td>
-                                    <td style="width: 30%" t-if="cp_template.signature_reviewed == True">REVISÓ</td>
-                                    <td style="width: 30%" t-if="cp_template.signature_approved == True">APROBÓ</td>
-                                    </tr>
-                                </table>
                                 <t t-if="cp_template.show_observation == True">
                                     <br/>
                                     <b>Observaciones:</b>
@@ -90,6 +90,22 @@
                                 <br/>
                                 <t t-if="cp_template.notes">
                                     <span t-esc="cp_template.notes"/>
+                                </t>
+                                <br/><br/>
+                                <t t-if="cp_template.signature_prepared == True or cp_template.signature_reviewed == True or cp_template.signature_approved == True">
+                                    <table class="table table-striped">
+                                        <tr class="text-center">
+                                        <td style="width: 30%" t-if="cp_template.signature_prepared == True">
+                                            ELABORÓ <span t-if="cp_template.txt_signature_prepared" t-esc="cp_template.txt_signature_prepared"/>
+                                        </td>
+                                        <td style="width: 30%" t-if="cp_template.signature_reviewed == True">
+                                            REVISÓ <span t-if="cp_template.txt_signature_reviewed" t-esc="cp_template.txt_signature_reviewed"/>
+                                        </td>
+                                        <td style="width: 30%" t-if="cp_template.signature_approved == True">
+                                            APROBÓ <span t-if="cp_template.txt_signature_approved" t-esc="cp_template.txt_signature_approved"/>
+                                        </td>
+                                        </tr>
+                                    </table>
                                 </t>
                             </div>
                         </div>

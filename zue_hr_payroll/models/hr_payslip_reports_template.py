@@ -23,11 +23,11 @@ class hr_payslip_reports_template(models.Model):
     caption = fields.Text(string='Leyenda')
     notes = fields.Text(string='Notas')
     signature_prepared = fields.Boolean('Elaboró')
-    #partner_signature_prepared = fields.Many2one('res.partner',string='Contacto Elaboró')
+    txt_signature_prepared = fields.Char(string='Contacto Elaboró')
     signature_reviewed = fields.Boolean('Revisó')
-    #partner_signature_reviewed = fields.Many2one('res.partner',string='Contacto Revisó')
+    txt_signature_reviewed = fields.Char(string='Contacto Revisó')
     signature_approved = fields.Boolean('Aprobó')
-    #partner_signature_approved = fields.Many2one('res.partner',string='Contacto Aprobó')
+    txt_signature_approved = fields.Char(string='Contacto Aprobó')
 
     _sql_constraints = [
         ('company_payslip_reports_template', 'UNIQUE (company_id,type_report)', 'Ya existe una configuración de plantilla de este tipo para esta compañía, por favor verificar')
