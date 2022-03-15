@@ -299,7 +299,7 @@ class Hr_payslip(models.Model):
     date_liquidacion = fields.Date('Fecha liquidación de contrato')
     date_prima = fields.Date('Fecha liquidación de prima')
     date_cesantias = fields.Date('Fecha liquidación de cesantías')
-    date_vacaciones = fields.Date('Fecha liquidación de vacaciones')    
+    date_vacaciones = fields.Date('Fecha liquidación de vacaciones')
 
     def name_get(self):
         result = []
@@ -309,6 +309,12 @@ class Hr_payslip(models.Model):
             else:
                 result.append((record.id, "{} - {} - {}".format(record.struct_id.name,record.employee_id.name,str(record.date_from))))
         return result
+
+    def get_hr_payslip_reports_template(self):
+        obj = self.env['hr.payslip.reports.template'].search([('company_id','=',self.employee_id.company_id.id),('type_report','=',self.struct_process)])
+        if len(obj) == 0:
+            raise ValidationError(_('No tiene configurada plantilla de liquidacion. Por favor verifique!'))
+        return obj
 
     @api.onchange('worked_days_line_ids', 'input_line_ids')
     def _onchange_worked_days_inputs(self):

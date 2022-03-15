@@ -33,6 +33,7 @@
         'views/actions_contract.xml',
         'views/actions_labor_certificate_history.xml',
         'views/actions_labor_certificate_template.xml',
+        'views/actions_parameterization_of_contributors.xml',
         'reports/report_certification.xml',         
         'reports/report_certification_template.xml',
         'reports/report_birthday_list.xml', 

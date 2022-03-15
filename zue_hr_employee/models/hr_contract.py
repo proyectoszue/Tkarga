@@ -68,10 +68,18 @@ class hr_contract_concepts(models.Model):
         self.state = 'done'        
 
     def change_state_cancel(self):
-        self.state = 'cancel'        
+        self.state = 'cancel'
+
+class hr_contractual_modifications(models.Model):
+    _name = 'hr.contractual.modifications'
+    _description = 'Modificaciones contractuales'
+
+    contract_id = fields.Many2one('hr.contract', 'Contrato', required=True, ondelete='cascade')
+    date = fields.Date('Fecha', required=True)
+    description = fields.Char('Descripción de modificacion contractual', required=True)
+    attached = fields.Many2one('documents.document', string='Adjunto')
 
 #Deducciones para retención en la fuente
-
 class hr_contract_deductions_rtf(models.Model):
     _name = 'hr.contract.deductions.rtf'
     _description = 'Reglas salariales para retención en la fuente'
@@ -164,6 +172,7 @@ class hr_contract(models.Model):
     retirement_date = fields.Date('Fecha retiro')
     change_wage_ids = fields.One2many('hr.contract.change.wage', 'contract_id', 'Cambios salario')
     concepts_ids = fields.One2many('hr.contract.concepts', 'contract_id', 'Devengos & Deducciones')
+    contract_modification_history = fields.One2many('hr.contractual.modifications', 'contract_id','Modificaciones contractuales')
     deductions_rtf_ids = fields.One2many('hr.contract.deductions.rtf', 'contract_id', 'Deducciones retención en la fuente', default=_get_default_deductions_rtf_ids, track_visibility='onchange')
     risk_id = fields.Many2one('hr.contract.risk', string='Riesgo profesional', track_visibility='onchange')
     contract_type = fields.Selection([('obra', 'Contrato por Obra o Labor'), 
