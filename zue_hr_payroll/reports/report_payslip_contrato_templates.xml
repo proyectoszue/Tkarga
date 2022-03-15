@@ -1,134 +1,100 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>  
-    <template id="report_liquidacion_final_document">      
-        <t t-call="web.html_container">
-        <t t-foreach="inside_foreach_docs or docs" t-as="o">
-        <t t-call="web.external_layout">
+    <template id="report_liquidacion_final_document">
         <t t-set="o" t-value="o.with_context(lang=o.employee_id.address_home_id.lang or o.env.lang)"/>         
-            <div class="row">                                            
-                <div class="col-md-12 text-center"><strong>LIQUIDACION DE CONTRATO LABORAL</strong></div>
-            </div>       
-            <br/><br/>  
-            <div class="page" style="font-style: normal; font-size: 12px;">
-                <div class="oe_structure"/>
-                <div class="row">
-                    <div class="col-md-6 col-md-offset-6">
-                        <table style="width:100%;">
-                            <tr style="border: 1px solid black;">
-                                <td>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Identidad</b>           :<span t-field="o.employee_id.identification_id"/></p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Empleado</b>            :<span t-field="o.employee_id.name"/></p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ingreso</b>       :<span t-field="o.contract_id.date_start"/></p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Cargo</b>               :<span t-field="o.employee_id.job_id.name"/></p>
-                                </td>
-                                <td>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Tipo contrato</b>       :<span t-field="o.contract_id.contract_type"/></p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult cesantias</b> :<span t-field="o.date_cesantias"/></p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult prima</b>     :<span t-field="o.date_prima"/></p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult vacaciones</b>:<span t-field="o.date_vacaciones"/></p>
-                                </td>
-                                <td>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Sucursal</b>            :<span t-field="o.employee_id.branch_id.name"/></p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Salario basico</b>      :<span t-field="o.contract_id.wage"/></p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha retiro</b>        :<span t-field="o.date_liquidacion"/></p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Motivo retiro</b>       :<span t-field="o.reason_retiro"/></p>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>
-                </div> 
-                <br/>             
-                <div class="row">                    
-                    <div class="col-md-6 col-md-offset-9">
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr>
-                                    <th>Concepto</th>
-                                    <th>Base</th>
-                                    <th>Desde</th>
-                                    <th>Hasta</th>
-                                    <th>Cantidad</th>                                    
-                                    <th class="text-right">Valor</th>
-                                </tr>
-                            </thead>
-                            <tbody class="invoice_tbody">
-                                <tr t-foreach="o.line_ids" t-as="l">
-                                <span t-if="not l.category_id.name in ['Neto','Bruto']">
-                                    <td><span t-field="l.name"/></td>                                    
-                                    <td><span t-esc="l.amount_base" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/></td>
-                                    <t t-if="l.code in ['CESANTIAS','INTCESANTIAS']">
-                                        <td><span t-esc="o.date_cesantias"/></td>
-                                    </t>
-                                    <t t-if="l.code == 'PRIMA'">
-                                        <td><span t-esc="o.date_prima"/></td>
-                                    </t>
-                                    <t t-if="l.code == 'VACCONTRATO'">
-                                        <td><span t-esc="o.date_vacaciones"/></td>
-                                    </t>
-                                    <t t-if="not l.code in ['CESANTIAS','INTCESANTIAS','PRIMA','VACCONTRATO']">
-                                        <td><span t-esc="o.date_from"/></td>
-                                    </t>
-                                    <td><span t-esc="o.date_to"/></td>
-                                    <td><span t-esc="l.quantity"/></td>                                                              
-                                    <td class="text-right"><span t-esc="l.total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/></td>                                      
-                                </span>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-                <div class="row">                                            
-                    <div class="col-md-6 col-md-offset-6">
-                        <table class="table">
-                            <tr>
-                                <td style="width: 80%">
-                                    <p align="justify">Declaro que recibi de la empresa <span t-esc="o.company_id.name" /> Nit: <span t-esc="o.company_id.company_registry"/> La suma de <span t-field="o.line_ids.filtered(lambda line: line.code == 'NET').total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
-                                        por concepto de mi liquidacion de acreencias laborales.
-                                        Que la anterior liquidacion se halla estrictamente ceñida a la ley, por haberse tenido en cuenta tanto el salario devengado como tiempo de servicio.
-                                        Reconozco que el Patrono, no me adeuda ningun valor  por concepto de salarios, bonificaciones, vacaciones, tiempo suplementario, cesantias, accidentes de trabajo,
-                                        auxilios de enfermedad, primas, etc. y en general por ningun concepto, con lo cual queda a PAZ y SALVO.
-                                        En constrancia de lo anterior firmo el presente documento. </p>
-                                </td>
-                                <td style="width: 20%">
-                                    <table class="table table-condensed">
-                                        <tr class="border-black">
-                                            <td><strong>NETO A PAGAR</strong></td>
-                                            <td class="text-right">
-                                                    <span t-field="o.line_ids.filtered(lambda line: line.code == 'NET').total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
-                                            </td>
-                                        </tr>
-                                    </table>
-                                </td>
-                            </tr>
-                        </table>
-                    </div>  
-                </div>
-                <br/><br/>
-                <div class="row">
-                    <div class="col-md-6 col-md-offset-9">
-                        <table class="table table-striped">
-                            <tr>
-                            <td style="width: 30%"><span t-esc="o.employee_id.name"/></td>
-                            <td style="border:none; width: 5%;"></td>
-                            <td style="width: 30%">EL EMPLEADOR</td>
-                            <td style="border:none; width: 5%;"></td>
-                            <td style="width: 30%">REVISO</td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-                <br/><br/>
-                <div class="row">
-                    <b>Observaciones:</b>
-                    <br/><br/>  
-                    <t t-if="o.observation">
-                        <span t-field="o.observation"/>
-                    </t>
+        <div class="row">
+            <div class="col-md-12 text-center"><strong>LIQUIDACION DE CONTRATO LABORAL</strong></div>
+        </div>
+        <div class="page" style="font-style: normal; font-size: 12px;">
+            <div class="oe_structure"/>
+            <div class="row">
+                <div class="col-md-6 col-md-offset-6">
+                    <table style="width:100%;">
+                        <tr style="border: 1px solid black;">
+                            <td>
+                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Identidad</b>           :<span t-field="o.employee_id.identification_id"/></p>
+                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Empleado</b>            :<span t-field="o.employee_id.name"/></p>
+                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ingreso</b>       :<span t-field="o.contract_id.date_start"/></p>
+                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Cargo</b>               :<span t-field="o.employee_id.job_id.name"/></p>
+                            </td>
+                            <td>
+                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Tipo contrato</b>       :<span t-field="o.contract_id.contract_type"/></p>
+                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult cesantias</b> :<span t-field="o.date_cesantias"/></p>
+                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult prima</b>     :<span t-field="o.date_prima"/></p>
+                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult vacaciones</b>:<span t-field="o.date_vacaciones"/></p>
+                            </td>
+                            <td>
+                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Sucursal</b>            :<span t-field="o.employee_id.branch_id.name"/></p>
+                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Salario basico</b>      :<span t-field="o.contract_id.wage"/></p>
+                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha retiro</b>        :<span t-field="o.date_liquidacion"/></p>
+                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Motivo retiro</b>       :<span t-field="o.reason_retiro"/></p>
+                            </td>
+                        </tr>
+                    </table>
                 </div>
             </div>
-        </t>
-        </t>    
-        </t>
+            <br/>
+            <div class="row">
+                <div class="col-md-6 col-md-offset-9">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Concepto</th>
+                                <th>Base</th>
+                                <th>Desde</th>
+                                <th>Hasta</th>
+                                <th>Cantidad</th>
+                                <th class="text-right">Valor</th>
+                            </tr>
+                        </thead>
+                        <tbody class="invoice_tbody">
+                            <tr t-foreach="o.line_ids" t-as="l">
+                            <span t-if="not l.category_id.name in ['Neto','Bruto']">
+                                <td><span t-field="l.name"/></td>
+                                <td><span t-esc="l.amount_base" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/></td>
+                                <t t-if="l.code in ['CESANTIAS','INTCESANTIAS']">
+                                    <td><span t-esc="o.date_cesantias"/></td>
+                                </t>
+                                <t t-if="l.code == 'PRIMA'">
+                                    <td><span t-esc="o.date_prima"/></td>
+                                </t>
+                                <t t-if="l.code == 'VACCONTRATO'">
+                                    <td><span t-esc="o.date_vacaciones"/></td>
+                                </t>
+                                <t t-if="not l.code in ['CESANTIAS','INTCESANTIAS','PRIMA','VACCONTRATO']">
+                                    <td><span t-esc="o.date_from"/></td>
+                                </t>
+                                <td><span t-esc="o.date_to"/></td>
+                                <td><span t-esc="l.quantity"/></td>
+                                <td class="text-right"><span t-esc="l.total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/></td>
+                            </span>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-6 col-md-offset-6">
+                    <table class="table">
+                        <tr>
+                            <td style="width: 80%">
+                                <p align="justify"><span t-if="cp_template.caption" t-esc="cp_template.caption" /></p>
+                            </td>
+                            <td style="width: 20%">
+                                <table class="table table-condensed">
+                                    <tr class="border-black">
+                                        <td><strong>NETO A PAGAR</strong></td>
+                                        <td class="text-right">
+                                                <span t-field="o.line_ids.filtered(lambda line: line.code == 'NET').total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
     </template>
 
     <template id="report_liquidacion_final">

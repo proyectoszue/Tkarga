@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="reports_payslip_header_footer_template">
+            <t t-call="web.html_container">
+            <t t-foreach="inside_foreach_docs or docs" t-as="o">
+            <t t-set="cp_template" t-value="o.get_hr_payslip_reports_template()"/>
+                <t t-if="cp_template.type_header_footer == 'default'">
+                    <t t-call="web.external_layout">
+                        <!-- Contenido dependiendo la estructura -->
+                        <t t-if="cp_template.type_report == 'nomina'">
+                            <t t-call="hr_payroll.report_payslip"/>
+                        </t>
+                        <t t-if="cp_template.type_report == 'vacaciones'">
+                            <t t-call="zue_hr_payroll.report_liquidacion_vacaciones_document"/>
+                        </t>
+                        <t t-if="cp_template.type_report in ('prima','cesantias','intereses_cesantias')">
+                            <t t-call="zue_hr_payroll.report_liquidacion_cesantias_prima_document"/>
+                        </t>
+                        <t t-if="cp_template.type_report == 'contrato'">
+                            <t t-call="zue_hr_payroll.report_liquidacion_final_document"/>
+                        </t>
+                        <!-- Firmas y observaciones -->
+                        <div>
+                            <br/><br/>
+                            <div class="col-md-6 col-md-offset-9">
+                                <t t-if="cp_template.signature_prepared == True or cp_template.signature_reviewed == True or cp_template.signature_approved == True">
+                                    <table class="table table-striped">
+                                        <tr class="text-center">
+                                        <td style="width: 30%" t-if="cp_template.signature_prepared == True">ELABORÓ</td>
+                                        <td style="width: 30%" t-if="cp_template.signature_reviewed == True">REVISÓ</td>
+                                        <td style="width: 30%" t-if="cp_template.signature_approved == True">APROBÓ</td>
+                                        </tr>
+                                    </table>
+                                </t>
+                                <t t-if="cp_template.show_observation == True">
+                                    <br/>
+                                    <b>Observaciones:</b>
+                                    <br/>
+                                    <t t-if="o.observation">
+                                        <span t-field="o.observation"/>
+                                    </t>
+                                </t>
+                                <br/>
+                                <t t-if="cp_template.notes">
+                                    <span t-esc="cp_template.notes"/>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                </t>
+                <t t-if="cp_template.type_header_footer == 'custom'">
+                    <t t-call="web.basic_layout">
+                        <!-- Encabezado -->
+                        <div class="header">
+                            <span t-raw="cp_template.header_custom"/>
+                        </div>
+                        <!-- Contenido dependiendo la estructura -->
+                        <t t-if="cp_template.type_report == 'nomina'">
+                            <t t-call="hr_payroll.report_payslip"/>
+                        </t>
+                        <t t-if="cp_template.type_report == 'vacaciones'">
+                            <t t-call="zue_hr_payroll.report_liquidacion_vacaciones_document"/>
+                        </t>
+                        <t t-if="cp_template.type_report in ('prima','cesantias','intereses_cesantias')">
+                            <t t-call="zue_hr_payroll.report_liquidacion_cesantias_prima_document"/>
+                        </t>
+                        <t t-if="cp_template.type_report == 'contrato'">
+                            <t t-call="zue_hr_payroll.report_liquidacion_final_document"/>
+                        </t>
+                        <!-- Firmas y observaciones -->
+                        <div>
+                            <br/><br/>
+                            <div class="col-md-6 col-md-offset-9">
+                                <table class="table table-striped">
+                                    <tr class="text-center">
+                                    <td style="width: 30%" t-if="cp_template.signature_prepared == True">ELABORÓ</td>
+                                    <td style="width: 30%" t-if="cp_template.signature_reviewed == True">REVISÓ</td>
+                                    <td style="width: 30%" t-if="cp_template.signature_approved == True">APROBÓ</td>
+                                    </tr>
+                                </table>
+                                <t t-if="cp_template.show_observation == True">
+                                    <br/>
+                                    <b>Observaciones:</b>
+                                    <br/>
+                                    <t t-if="o.observation">
+                                        <span t-field="o.observation"/>
+                                    </t>
+                                </t>
+                                <br/>
+                                <t t-if="cp_template.notes">
+                                    <span t-esc="cp_template.notes"/>
+                                </t>
+                            </div>
+                        </div>
+                        <!-- Pie de pagina -->
+                        <div class="footer">
+                            <span t-raw="cp_template.footer_custom"/>
+                        </div>
+                    </t>
+                </t>
+            </t>
+            </t>
+        </template>
+
+        <template id="reports_payslip_header_footer_template_final">
+             <t t-foreach="docs" t-as="o">
+                <t t-set="inside_foreach_docs" t-value="o"/>
+                <t t-call="zue_hr_payroll.reports_payslip_header_footer_template" t-lang="o.employee_id.address_home_id.lang"/>
+            </t>
+        </template>
+
+    </data>
+</odoo>
+

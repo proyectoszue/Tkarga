@@ -52,5 +52,7 @@
         <menuitem name="Acumulados" id="zue_hr_payroll.menu_payroll_accumulated" parent="hr_payroll.menu_hr_payroll_payslips" action="action_hr_accumulated_payroll" sequence="4"/>
         <!-- Menu diagnosticos Ausencias -->
         <menuitem name="Diagnosticos Ausencias" id="zue_hr_payroll.menu_hr_leave_diagnostic" parent="hr_payroll.menu_hr_payroll_configuration" action="action_hr_leave_diagnostic"/>
+        <!-- Menu Configuración plantillas reportes de liquidación-->
+        <menuitem name="Configuración plantillas reportes de liquidación" id="zue_hr_payroll.menu_hr_payslip_reports_template" parent="hr_payroll.menu_hr_payroll_configuration" action="action_hr_payslip_reports_template"/>
     </data>
 </odoo>

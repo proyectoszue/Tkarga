@@ -1,10 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>  
     <template id="report_liquidacion_cesantias_prima_document">      
-        <t t-call="web.html_container">
-        <t t-foreach="inside_foreach_docs or docs" t-as="o">
-        <t t-call="web.external_layout">
-        <t t-set="o" t-value="o.with_context(lang=o.employee_id.address_home_id.lang or o.env.lang)"/>         
+        <t t-set="o" t-value="o.with_context(lang=o.employee_id.address_home_id.lang or o.env.lang)"/>
             <div class="row">       
                 <t t-if="o.struct_id.process == 'prima'">                                     
                     <div class="col-md-12 text-center"><strong>LIQUIDACION DE PRIMA</strong></div>
@@ -15,8 +12,7 @@
                 <t t-if="o.struct_id.process == 'intereses_cesantias'">
                     <div class="col-md-12 text-center"><strong>LIQUIDACION DE INTERESES DE CESANTÍAS</strong></div>
                 </t>
-            </div>       
-            <br/><br/>  
+            </div>
             <div class="page" style="font-style: normal; font-size: 12px;">
                 <div class="oe_structure"/>
                 <div class="row">
@@ -73,7 +69,8 @@
                     <div class="col-md-6 col-md-offset-6">
                         <table class="table">
                             <tr>
-                                <td style="width: 80%">                                    
+                                <td style="width: 80%">
+                                    <p align="justify"><span t-if="cp_template.caption" t-esc="cp_template.caption" /></p>
                                 </td>
                                 <td style="width: 20%">
                                     <table class="table table-condensed">
@@ -89,32 +86,7 @@
                         </table>
                     </div>  
                 </div>
-                <br/><br/>
-                <div class="row">
-                    <div class="col-md-6 col-md-offset-9">
-                        <table class="table table-striped">
-                            <tr>
-                            <td style="width: 30%"><span t-esc="o.employee_id.name"/></td>
-                            <td style="border:none; width: 5%;"></td>
-                            <td style="width: 30%">EL EMPLEADOR</td>
-                            <td style="border:none; width: 5%;"></td>
-                            <td style="width: 30%">REVISO</td>
-                            </tr>
-                        </table>
-                    </div>
-                </div>
-                <br/><br/>
-                <div class="row">
-                    <b>Observaciones:</b>
-                    <br/><br/>  
-                    <t t-if="o.observation">
-                        <span t-field="o.observation"/>
-                    </t>
-                </div>
             </div>
-        </t>
-        </t>    
-        </t>
     </template>
 
     <template id="report_liquidacion_cesantias_prima">

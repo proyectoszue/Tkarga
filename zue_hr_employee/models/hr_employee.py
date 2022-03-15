@@ -7,17 +7,42 @@ class hr_tipo_cotizante(models.Model):
     _name = 'hr.tipo.cotizante'
     _description = 'Tipos de cotizante'
     
-    code = fields.Char('Código', required=False, size=10)
-    name = fields.Char('Nombre', required=False, size=200)
+    code = fields.Char('Código', required=True)
+    name = fields.Char('Nombre', required=True)
 
 
 class hr_subtipo_cotizante(models.Model):
     _name = 'hr.subtipo.cotizante'
     _description = 'Subtipos de cotizante'
 
-    code = fields.Char('Código', required=True, size=10)
-    name = fields.Char('Novedad', required=True, size=200)
+    code = fields.Char('Código', required=True)
+    name = fields.Char('Novedad', required=True)
     not_contribute_pension = fields.Boolean('No aporta pensión')
+
+class hr_parameterization_of_contributors(models.Model):
+    _name = 'hr.parameterization.of.contributors'
+    _description = 'Parametrizacion Cotizantes'
+
+    type_of_contributor = fields.Many2one('hr.tipo.cotizante', string='Tipo de cotizante')
+    contributor_subtype = fields.Many2one('hr.subtipo.cotizante', string='Subtipos de cotizante')
+    liquidated_eps_employee = fields.Boolean('Liquida EPS Empleado')
+    liquidate_employee_pension = fields.Boolean('Liquida Pensión Empleado')
+    liquidated_aux_transport = fields.Boolean('Liquida Auxilio de Transporte')
+    liquidates_solidarity_fund = fields.Boolean('Liquida Fondo de Solidaridad')
+    liquidates_eps_company = fields.Boolean('Liquida EPS Empresa')
+    liquidated_company_pension = fields.Boolean('Liquida Pensión Empresa')
+    liquidated_arl = fields.Boolean('Liquida ARL')
+    liquidated_sena = fields.Boolean('Liquida SENA')
+    liquidated_icbf = fields.Boolean('Liquida ICBF')
+    liquidated_compensation_fund = fields.Boolean('Liquida Caja de Compensación')
+
+    _sql_constraints = [('parameterization_type_of_contributor_uniq', 'unique(type_of_contributor,contributor_subtype)', 'Ya existe esta parametrizacion de tipo de cotizante y subtipo de cotizante, por favor verficar.')]
+
+    def name_get(self):
+        result = []
+        for record in self:
+            result.append((record.id, "Parametrización {} | {}".format(record.type_of_contributor.name, record.contributor_subtype.name)))
+        return result
 
 class hr_indicador_especial_pila(models.Model):
     _name = 'hr.indicador.especial.pila'
