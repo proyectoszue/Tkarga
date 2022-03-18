@@ -67,7 +67,7 @@
                         <div class="o_setting_left_pane"/>
                         <div class="o_setting_right_pane">
                             <div class="content-group">
-                                <span class="o_form_label">Días de vacaciones para calcular ausencias</span>
+                                <span class="o_form_label">Días de vacaciones para calcular deducciones</span>
                                 <field name="vacation_days_calculate_absences" class="o_light_label mt16"/>
                             </div>
                             <div class="text-muted">

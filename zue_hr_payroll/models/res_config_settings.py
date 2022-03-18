@@ -20,7 +20,7 @@ class ResConfigSettings(models.TransientModel):
                                         string='Contabilización por lote')
 
     pay_vacations_in_payroll = fields.Boolean('¿Liquidar vacaciones en nómina?')
-    vacation_days_calculate_absences = fields.Char('Días de vacaciones para calcular ausencias')
+    vacation_days_calculate_absences = fields.Char('Días de vacaciones para calcular deducciones')
     #Nómina electronica
     payroll_electronic_username_ws = fields.Char(related='company_id.payroll_electronic_username_ws',string='Usuario WS', readonly=False)
     payroll_electronic_password_ws = fields.Char(related='company_id.payroll_electronic_password_ws',string='Contraseña WS', readonly=False)

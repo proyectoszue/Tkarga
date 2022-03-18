@@ -7,6 +7,13 @@
 				<field name="view_mode">tree,form</field>
 		</record>
 
+        <!-- Crear record rule para filtrar las compañias-->
+        <record id="rule_hr_voucher_sending_company" model="ir.rule">
+            <field name="name">Permisos compañia Comprobantes de nómina</field>
+            <field name="model_id" ref="model_hr_voucher_sending"/>
+            <field name="domain_force">['|','|','|',('payslip_run_id.company_id','=',False),('payslip_run_id.company_id', 'in', company_ids),('payslip_id.company_id','=',False),('payslip_id.company_id', 'in', company_ids)]</field>
+        </record>
+
         <record id="hr_voucher_sending_tree" model="ir.ui.view">
             <field name="name">Comprobantes de nómina</field>
             <field name="model">hr.voucher.sending</field>
