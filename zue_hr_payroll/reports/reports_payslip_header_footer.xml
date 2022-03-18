@@ -17,7 +17,7 @@
         <report
             id="report_liquidacion_template_action"
             model="hr.payslip"
-            string="Reporte de liquidación"
+            string="Comprobante de Nómina"
             report_type="qweb-pdf"
             name="zue_hr_payroll.reports_payslip_header_footer_template_final"
             file="zue_hr_payroll.reports_payslip_header_footer_template_final"

@@ -6,6 +6,7 @@ from datetime import date
 class hr_tipo_cotizante(models.Model):
     _name = 'hr.tipo.cotizante'
     _description = 'Tipos de cotizante'
+    _order = 'code,name'
     
     code = fields.Char('Código', required=True)
     name = fields.Char('Nombre', required=True)
@@ -14,6 +15,7 @@ class hr_tipo_cotizante(models.Model):
 class hr_subtipo_cotizante(models.Model):
     _name = 'hr.subtipo.cotizante'
     _description = 'Subtipos de cotizante'
+    _order = 'code,name'
 
     code = fields.Char('Código', required=True)
     name = fields.Char('Novedad', required=True)
