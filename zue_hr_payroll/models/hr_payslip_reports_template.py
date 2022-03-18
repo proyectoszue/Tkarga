@@ -6,12 +6,12 @@ class hr_payslip_reports_template(models.Model):
     _description = 'Configuración plantillas reportes de liquidación'
 
     company_id = fields.Many2one('res.company', string='Compañía', default=lambda self: self.env.company)
-    type_report = fields.Selection([('nomina', 'Nónima'),
+    type_report = fields.Selection([('nomina', 'Nómina'),
                                      ('vacaciones', 'Vacaciones'),
                                      ('prima', 'Prima'),
                                      ('cesantias', 'Cesantías'),
                                      ('intereses_cesantias', 'Intereses de cesantías'),
-                                     ('contrato', 'Liq. de Contrato')], 'Reporte de liquidación',required=True, default='nomina')
+                                     ('contrato', 'Liq. de Contrato')], 'Tipo de Comprobante',required=True, default='nomina')
     #Encabezado y pie de pagina
     type_header_footer = fields.Selection([('default', 'Por defecto'),
                                            ('custom', 'Personalizado')], 'Tipo de encabezado y pie de pagina',

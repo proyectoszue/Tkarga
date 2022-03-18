@@ -21,7 +21,7 @@
                             <t t-call="zue_hr_payroll.report_liquidacion_final_document"/>
                         </t>
                         <!-- Firmas y observaciones -->
-                        <div>
+                        <div style="font-style: normal; font-size: 12px;">
                             <br/>
                             <div class="col-md-6 col-md-offset-9">
                                 <t t-if="cp_template.show_observation == True">
@@ -41,13 +41,16 @@
                                     <table class="table table-striped">
                                         <tr class="text-center">
                                         <td style="width: 30%" t-if="cp_template.signature_prepared == True">
-                                            ELABORÓ <span t-if="cp_template.txt_signature_prepared" t-esc="cp_template.txt_signature_prepared"/>
+                                            ELABORÓ <br/>
+                                            <span t-if="cp_template.txt_signature_prepared" t-esc="cp_template.txt_signature_prepared"/>
                                         </td>
                                         <td style="width: 30%" t-if="cp_template.signature_reviewed == True">
-                                            REVISÓ <span t-if="cp_template.txt_signature_reviewed" t-esc="cp_template.txt_signature_reviewed"/>
+                                            REVISÓ <br/>
+                                            <span t-if="cp_template.txt_signature_reviewed" t-esc="cp_template.txt_signature_reviewed"/>
                                         </td>
                                         <td style="width: 30%" t-if="cp_template.signature_approved == True">
-                                            APROBÓ <span t-if="cp_template.txt_signature_approved" t-esc="cp_template.txt_signature_approved"/>
+                                            APROBÓ <br/>
+                                            <span t-if="cp_template.txt_signature_approved" t-esc="cp_template.txt_signature_approved"/>
                                         </td>
                                         </tr>
                                     </table>
@@ -76,7 +79,7 @@
                             <t t-call="zue_hr_payroll.report_liquidacion_final_document"/>
                         </t>
                         <!-- Firmas y observaciones -->
-                        <div>
+                        <div style="font-style: normal; font-size: 12px;">
                             <br/>
                             <div class="col-md-6 col-md-offset-9">
                                 <t t-if="cp_template.show_observation == True">
@@ -96,13 +99,16 @@
                                     <table class="table table-striped">
                                         <tr class="text-center">
                                         <td style="width: 30%" t-if="cp_template.signature_prepared == True">
-                                            ELABORÓ <span t-if="cp_template.txt_signature_prepared" t-esc="cp_template.txt_signature_prepared"/>
+                                            ELABORÓ <br/>
+                                            <span t-if="cp_template.txt_signature_prepared" t-esc="cp_template.txt_signature_prepared"/>
                                         </td>
                                         <td style="width: 30%" t-if="cp_template.signature_reviewed == True">
-                                            REVISÓ <span t-if="cp_template.txt_signature_reviewed" t-esc="cp_template.txt_signature_reviewed"/>
+                                            REVISÓ <br/>
+                                            <span t-if="cp_template.txt_signature_reviewed" t-esc="cp_template.txt_signature_reviewed"/>
                                         </td>
                                         <td style="width: 30%" t-if="cp_template.signature_approved == True">
-                                            APROBÓ <span t-if="cp_template.txt_signature_approved" t-esc="cp_template.txt_signature_approved"/>
+                                            APROBÓ <br/>
+                                            <span t-if="cp_template.txt_signature_approved" t-esc="cp_template.txt_signature_approved"/>
                                         </td>
                                         </tr>
                                     </table>
