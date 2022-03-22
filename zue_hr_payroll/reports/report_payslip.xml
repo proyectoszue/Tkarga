@@ -244,6 +244,11 @@
                                                       t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
                                             </td>
                                         </tr>
+                                        <tr>
+                                            <td class="text-justify" colspan="2">
+                                                    <span t-esc="o.contract_id.get_amount_text(o.line_ids.filtered(lambda line: line.code == 'NET').total).lower().capitalize()"/>
+                                            </td>
+                                        </tr>
                                     </table>
                                 </td>
                             </tr>
