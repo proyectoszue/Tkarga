@@ -316,6 +316,9 @@ class Hr_payslip(models.Model):
             raise ValidationError(_('No tiene configurada plantilla de liquidacion. Por favor verifique!'))
         return obj
 
+    def get_pay_vacations_in_payroll(self):
+        return bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.pay_vacations_in_payroll')) or False
+
     @api.onchange('worked_days_line_ids', 'input_line_ids')
     def _onchange_worked_days_inputs(self):
         if self.line_ids and self.state in ['draft', 'verify']:

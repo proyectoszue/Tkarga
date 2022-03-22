@@ -69,15 +69,20 @@
                     <div class="col-md-6 col-md-offset-6">
                         <table class="table">
                             <tr>
-                                <td style="width: 80%">
+                                <td style="width: 70%">
                                     <p align="justify"><span t-if="cp_template.caption" t-esc="cp_template.caption" /></p>
                                 </td>
-                                <td style="width: 20%">
+                                <td style="width: 30%">
                                     <table class="table table-condensed">
                                         <tr class="border-black">
                                             <td><strong>NETO A PAGAR</strong></td>
                                             <td class="text-right">
                                                 <span t-esc="value_neto" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>                                                
+                                            </td>
+                                        </tr>
+                                        <tr>
+                                            <td class="text-justify" colspan="2">
+                                                    <span t-esc="o.contract_id.get_amount_text(value_neto).lower().capitalize()"/>
                                             </td>
                                         </tr>
                                     </table>

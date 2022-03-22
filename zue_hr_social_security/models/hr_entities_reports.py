@@ -85,7 +85,7 @@ class hr_entities_reports(models.TransientModel):
         query_report = f'''
                         select * from
                         (
-                            select a."name" as empleado,rc."name" as compania,rb."name"  as sucursal,aaa."name" as cuenta_analitica,c."name" as tipo_entidad,e."name" as entidad,
+                            select a."name" as empleado,rc."name" as compania,hc.date_start as fecha_ingreso,rb."name"  as sucursal,aaa."name" as cuenta_analitica,c."name" as tipo_entidad,e."name" as entidad,
                                     hssb."name" as sucusal_seguridad_social,hsswc."name" as centro_trabajo_seguridad_social,
                                     true as es_actual,coalesce(f."name",'') as nivel_riesgo
                             from hr_employee as a
@@ -102,7 +102,7 @@ class hr_entities_reports(models.TransientModel):
                             left join hr_social_security_work_center as hsswc on a.work_center_social_security_id = hsswc.id
                             %s
                             union
-                            select a."name" as empleado,rc."name" as compania,rb."name"  as sucursal,aaa."name" as cuenta_analitica,c."name" as tipo_entidad,e."name" as entidad,
+                            select a."name" as empleado,rc."name" as compania,hc.date_start as fecha_ingreso,rb."name"  as sucursal,aaa."name" as cuenta_analitica,c."name" as tipo_entidad,e."name" as entidad,
                                     hssb."name" as sucusal_seguridad_social,hsswc."name" as centro_trabajo_seguridad_social,
                                     false as es_actual,coalesce(f."name",'') as nivel_riesgo
                             from hr_employee as a
@@ -132,7 +132,7 @@ class hr_entities_reports(models.TransientModel):
         book = xlsxwriter.Workbook(stream, {'in_memory': True})
 
         # Columnas
-        columns = ['Empleado', 'Compañia', 'Sucursal', 'Cuenta analitica', 'Tipo de entidad', 'Entidad',
+        columns = ['Empleado', 'Compañia', 'Fecha ingreso', 'Sucursal', 'Cuenta analitica', 'Tipo de entidad', 'Entidad',
                     'Sucursal seguridad social','Centro de trabajo de seguridad social','Actual', 'Nivel de riesgo']
         sheet = book.add_worksheet('Entidades del empleado')
 
@@ -145,14 +145,14 @@ class hr_entities_reports(models.TransientModel):
         cell_format_title.set_bottom(5)
         cell_format_title.set_bottom_color('#1F497D')
         cell_format_title.set_font_color('#1F497D')
-        sheet.merge_range('A1:J1', text_title, cell_format_title)
+        sheet.merge_range('A1:K1', text_title, cell_format_title)
         cell_format_text_generate = book.add_format({'bold': False, 'align': 'left'})
         cell_format_text_generate.set_font_name('Calibri')
         cell_format_text_generate.set_font_size(10)
         cell_format_text_generate.set_bottom(5)
         cell_format_text_generate.set_bottom_color('#1F497D')
         cell_format_text_generate.set_font_color('#1F497D')
-        sheet.merge_range('A2:J2', text_generate, cell_format_text_generate)
+        sheet.merge_range('A2:K2', text_generate, cell_format_text_generate)
         # Formato para fechas
         date_format = book.add_format({'num_format': 'dd/mm/yyyy'})
 

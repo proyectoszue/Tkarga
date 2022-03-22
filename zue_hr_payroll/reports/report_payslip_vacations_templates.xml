@@ -17,7 +17,7 @@
                                 <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Cargo</b>    :     <span t-field="o.employee_id.job_id.name"/> </p>
                                 <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Basico</b>   :     <span t-field="o.contract_id.wage"/> </p>
                                 <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Ingreso</b>  :     <span t-field="o.contract_id.date_start"/> </p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Reintegro</b>:     <span t-field="o.refund_date"/> </p>
+                                <p style= "line-height:15px;margin:10px;font-size: 100%;" t-if="o.get_pay_vacations_in_payroll() == False"><b>Reintegro</b>:     <span t-field="o.refund_date"/> </p>
                             </td>
                             <td>
                                 <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Centro</b>   :  <span t-field="o.employee_id.analytic_account_id.name"/></p>
@@ -74,10 +74,10 @@
                     <div class="col-md-6 col-md-offset-6">
                         <table class="table">
                             <tr>
-                                <td style="width: 80%">
+                                <td style="width: 70%">
                                     <p align="justify"><span t-if="cp_template.caption" t-esc="cp_template.caption" /></p>
                                 </td>
-                                <td style="width: 20%">
+                                <td style="width: 30%">
                                     <table class="table table-condensed">
                                         <tr class="border-black">
                                             <td><strong>Devengos</strong></td>
@@ -97,6 +97,11 @@
                                                 <span t-field="o.line_ids.filtered(lambda line: line.code == 'NET').total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
                                             </td>
                                         </tr>
+                                        <tr>
+                                        <td class="text-justify" colspan="2">
+                                                <span t-esc="o.contract_id.get_amount_text(o.line_ids.filtered(lambda line: line.code == 'NET').total).lower().capitalize()"/>
+                                        </td>
+                                    </tr>
                                     </table>
                                 </td>
                             </tr>

@@ -26,6 +26,7 @@
                             <td>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Sucursal</b>            :<span t-field="o.employee_id.branch_id.name"/></p>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Salario basico</b>      :<span t-field="o.contract_id.wage"/></p>
+                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Dias Laborados</b>      :<span t-esc="(o.date_liquidacion - o.contract_id.date_start).days"/></p>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha retiro</b>        :<span t-field="o.date_liquidacion"/></p>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Motivo retiro</b>       :<span t-field="o.reason_retiro"/></p>
                             </td>
@@ -40,6 +41,7 @@
                         <thead>
                             <tr>
                                 <th>Concepto</th>
+                                <th>Entidad</th>
                                 <th>Base</th>
                                 <th>Desde</th>
                                 <th>Hasta</th>
@@ -51,6 +53,16 @@
                             <tr t-foreach="o.line_ids" t-as="l">
                             <span t-if="not l.category_id.name in ['Neto','Bruto']">
                                 <td><span t-field="l.name"/></td>
+                                <t t-if="l.entity_id.business_name">
+                                    <td style="width: 25%">
+                                        <span t-field="l.entity_id.business_name"/>
+                                    </td>
+                                </t>
+                                <t t-if="not l.entity_id.business_name">
+                                    <td style="width: 25%">
+                                        <span t-field="l.entity_id.name"/>
+                                    </td>
+                                </t>
                                 <td><span t-esc="l.amount_base" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/></td>
                                 <t t-if="l.code in ['CESANTIAS','INTCESANTIAS']">
                                     <td><span t-esc="o.date_cesantias"/></td>
@@ -77,15 +89,20 @@
                 <div class="col-md-6 col-md-offset-6">
                     <table class="table">
                         <tr>
-                            <td style="width: 80%">
+                            <td style="width: 70%">
                                 <p align="justify"><span t-if="cp_template.caption" t-esc="cp_template.caption" /></p>
                             </td>
-                            <td style="width: 20%">
+                            <td style="width: 30%">
                                 <table class="table table-condensed">
                                     <tr class="border-black">
                                         <td><strong>NETO A PAGAR</strong></td>
                                         <td class="text-right">
                                                 <span t-field="o.line_ids.filtered(lambda line: line.code == 'NET').total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-justify" colspan="2">
+                                                <span t-esc="o.contract_id.get_amount_text(o.line_ids.filtered(lambda line: line.code == 'NET').total).lower().capitalize()"/>
                                         </td>
                                     </tr>
                                 </table>
