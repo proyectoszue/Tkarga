@@ -133,6 +133,12 @@ class hr_employee_documents(models.Model):
     expiration_date = fields.Date('Fecha de vencimiento')
     document = fields.Many2one('documents.document',string='Documento',required=True)
 
+    def unlink(self):
+        obj_document = self.document
+        obj = super(hr_employee_documents, self).unlink()
+        obj_document.unlink()
+        return obj
+
 class hr_cost_distribution_employee(models.Model):
     _name = 'hr.cost.distribution.employee'
     _description = 'Distribucion de costos empleados'
