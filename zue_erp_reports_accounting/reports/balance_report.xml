@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <report
+            id="balance_report_html_pdf_action"
+            model="account.balance.report.filters"
+            string="Balance de prueba"
+            report_type="qweb-pdf"
+            name="zue_erp_reports_accounting.balance_report_html_pdf_document"
+            file="zue_erp_reports_accounting.balance_report_html_pdf_document"
+        />
+</odoo>

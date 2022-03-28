@@ -77,18 +77,26 @@
                         </group>
                         <group>
                             <group>
+                                <p>Requiere entidad EPS:</p>
                                 <field name="liquidates_eps_company"/>
                                 <field name="liquidated_eps_employee"/>
+                                <br/><br/>
+                                <p>Requiere entidad pensión:</p>
                                 <field name="liquidated_company_pension"/>
                                 <field name="liquidate_employee_pension"/>
                                 <field name="liquidates_solidarity_fund"/>
                             </group>
                             <group>
-                                <field name="liquidated_aux_transport"/>
+                                <p>Requiere entidad ARL:</p>
                                 <field name="liquidated_arl"/>
+                                <br/><br/>
+                                <p>Requiere entidad caja de compensación:</p>
+                                <field name="liquidated_compensation_fund"/>
+                                <br/><br/>
+                                <p>Las entidades se toman de forma automática en caso de ser necesario:</p>
+                                <field name="liquidated_aux_transport"/>
                                 <field name="liquidated_sena"/>
                                 <field name="liquidated_icbf"/>
-                                <field name="liquidated_compensation_fund"/>
                             </group>
                         </group>
                     </sheet>
