@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="balance_report_html_pdf_document">
+        <t t-call="web.html_container">
+            <t t-foreach="inside_foreach_docs or docs" t-as="o">
+                <t t-call="web.external_layout">
+                    <span t-raw="o.preview"/>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

@@ -31,6 +31,9 @@
     # always loaded
     'data': [
         'security/ir.model.access.csv',       
-        'views/reports_views.xml' ,
+        'views/reports_views.xml',
+        'views/action_balance_report.xml',
+        'reports/balance_report.xml',
+        'reports/balance_report_template.xml',
     ]    
 }
