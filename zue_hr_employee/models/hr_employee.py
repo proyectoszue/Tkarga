@@ -307,12 +307,12 @@ class hr_employee(models.Model):
                     if qty_pension > 1:
                         raise ValidationError(_('El empleado tiene más de una entidad Pensión asignada, por favor verificar.'))
 
-                # Validar ARL/ARP
-                if obj_parameterization_contributors.liquidated_arl:
-                    if qty_riesgo == 0:
-                        raise ValidationError(_('El empleado no tiene entidad ARL asignada, por favor verificar.'))
-                    if qty_riesgo > 1:
-                        raise ValidationError(_('El empleado tiene más de una entidad ARL asignada, por favor verificar.'))
+                # Validar ARL/ARP - Se comenta debido a que se maneja por compañia
+                #if obj_parameterization_contributors.liquidated_arl:
+                #    if qty_riesgo == 0:
+                #        raise ValidationError(_('El empleado no tiene entidad ARL asignada, por favor verificar.'))
+                #    if qty_riesgo > 1:
+                #        raise ValidationError(_('El empleado tiene más de una entidad ARL asignada, por favor verificar.'))
 
                 # Validar CAJA DE COMPENSACIÓN
                 if obj_parameterization_contributors.liquidated_compensation_fund:
