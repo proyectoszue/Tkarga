@@ -76,6 +76,11 @@ class account_balance_report_filters(models.TransientModel):
     filter_account_analytic_group_ids = fields.Many2many('account.analytic.group', string="Cuentas analíticas mayores")
     filter_account_analytic_ids = fields.Many2many('account.analytic.account', string="Cuentas analíticas terminales")
     filter_show_only_terminal_account_analytic = fields.Boolean(string='Mostrar solo cuentas analíticas terminales')
+    filter_higher_level_analytic = fields.Selection([
+        ('1', '1'), ('2', '2'), ('3', '3'),
+        ('4', '4'), ('5', '5'), ('6', '6'),
+        ('7', '7'), ('8', '8'), ('9', '9')
+    ], string='Nivel Analítico')
     # --Diarios
     filter_account_journal_ids = fields.Many2many('account.journal', string="Diarios Excluidos")
     #Cierre de año
@@ -260,6 +265,9 @@ class account_balance_report_filters(models.TransientModel):
         #Agrupar información de acuerdo al tipo de balance
         lst_dataframes,lst_group_by,lst_levels_group_by,lst_levels_group_analytic_by = [],[],[],[]
         cant_levels = len(lst_levels_group) + 2 #La cantidad de niveles encontrados + los 2 por defecto
+        cant_levels_analytic = len(lst_levels_group_analytic) + 2  # La cantidad de niveles encontrados + los 2 por defecto
+        filter_higher_level = int(self.filter_higher_level) if self.filter_higher_level else 9999
+        filter_higher_level_analytic = int(self.filter_higher_level_analytic) if self.filter_higher_level_analytic else 9999
         if self.type_balance == '1': # Balance por Cuenta Contable
             lst_group_by = ['Cuenta', 'Descripción']
             lst_levels_group_by = ['Nivel 0', 'Nivel 0 Descripción']
@@ -275,12 +283,13 @@ class account_balance_report_filters(models.TransientModel):
             lst_levels_group_analytic_by = ['Cuenta', 'Descripción', 'Nivel Analítica 0']
         elif self.type_balance == '3.1': # Balance por Cuenta Analítica - Cuenta Contable
             lst_group_by = ['Cuenta Analítica','Cuenta', 'Descripción']
-            lst_levels_group_by = ['Cuenta Analítica','Nivel 0', 'Nivel 0 Descripción']
+            top_analytic = lst_levels_group_analytic[filter_higher_level_analytic-1] if filter_higher_level_analytic <= len(lst_levels_group_analytic) else 'Nivel Analítica 0'
+            top_analytic = 'Cuenta Analítica' if filter_higher_level_analytic > len(lst_levels_group_analytic)+1 else top_analytic
+            lst_levels_group_by = [top_analytic,'Nivel 0', 'Nivel 0 Descripción']
             lst_levels_group_analytic_by = ['Nivel Analítica 0','Cuenta', 'Descripción']
         df_report = df_report_original.groupby(by=lst_group_by, group_keys=False,as_index=False).sum()
         # Agrupar información niveles cuentas
         lst_agroup_higher_level = []
-        filter_higher_level = int(self.filter_higher_level) if self.filter_higher_level else 9999
         if self.filter_show_only_terminal_accounts == False:
             if filter_higher_level >= cant_levels - 1:
                 lst_levels_group_by_dinamic = []
@@ -310,30 +319,46 @@ class account_balance_report_filters(models.TransientModel):
                     lst_dataframes.append(df_level)
                 item_level += 1
         # Agrupar información niveles cuentas analíticas cuando el tipo de balance lo requiere
+        lst_agroup_higher_level_analytic = []
         if self.filter_show_only_terminal_account_analytic == False and self.type_balance in ('3','3.1'):
             if self.type_balance == '3':
-                df_level_analytic_0 = df_report_original.groupby(by=lst_levels_group_analytic_by, group_keys=False,
-                                                        as_index=False).sum()
-                lst_dataframes.append(df_level_analytic_0)
+                if filter_higher_level_analytic >= cant_levels_analytic - 1:
+                    df_level_analytic_0 = df_report_original.groupby(by=lst_levels_group_analytic_by, group_keys=False,
+                                                            as_index=False).sum()
+                    lst_dataframes.append(df_level_analytic_0)
+                item_level = 1
                 for level in lst_levels_group_analytic:  # Se recorren los niveles de las cuentas contables y se mayoriza
-                    lst_levels_group_by_dinamic = []
-                    for index, group in enumerate(lst_levels_group_analytic_by):
-                        lst_levels_group_by_dinamic.append(lst_levels_group_analytic_by[index].replace('Nivel Analítica 0', level))
-                    df_level = df_report_original.groupby(by=lst_levels_group_by_dinamic, group_keys=False,
-                                                          as_index=False).sum()
-                    lst_dataframes.append(df_level)
+                    if filter_higher_level_analytic >= item_level:
+                        lst_levels_group_by_dinamic = []
+                        for index, group in enumerate(lst_levels_group_analytic_by):
+                            lst_levels_group_by_dinamic.append(lst_levels_group_analytic_by[index].replace('Nivel Analítica 0', level))
+                        df_level = df_report_original.groupby(by=lst_levels_group_by_dinamic, group_keys=False,
+                                                              as_index=False).sum()
+                        lst_dataframes.append(df_level)
+                    item_level += 1
             else:
-                lst_level_0_group_by_dinamic = ['Nivel Analítica 0','Nivel 0 Tercero', 'Nivel 0 Cuenta Analítica']
-                df_level_analytic_0 = df_report_original.groupby(by=lst_level_0_group_by_dinamic, group_keys=False,
-                                                                 as_index=False).sum()
-                lst_dataframes.append(df_level_analytic_0)
+                lst_level_0_group_by_dinamic = ['Nivel Analítica 0', 'Nivel 0 Tercero', 'Nivel 0 Cuenta Analítica']
+                if filter_higher_level_analytic >= cant_levels_analytic - 1:
+                    if filter_higher_level_analytic == cant_levels_analytic - 1:
+                        lst_level_0_group_by_dinamic = ['Nivel Analítica 0', 'Cuenta', 'Descripción']
+
+                    df_level_analytic_0 = df_report_original.groupby(by=lst_level_0_group_by_dinamic, group_keys=False,
+                                                                     as_index=False).sum()
+                    lst_dataframes.append(df_level_analytic_0)
+                item_level = 1
+                lst_level_0_group_by_dinamic = ['Nivel Analítica 0', 'Nivel 0 Tercero', 'Nivel 0 Cuenta Analítica']
                 for level in lst_levels_group_analytic:  # Se recorren los niveles de las cuentas contables y se mayoriza
-                    lst_levels_group_by_dinamic = []
-                    for index, group in enumerate(lst_level_0_group_by_dinamic):
-                        lst_levels_group_by_dinamic.append(lst_level_0_group_by_dinamic[index].replace('Nivel Analítica 0', level))
-                    df_level = df_report_original.groupby(by=lst_levels_group_by_dinamic, group_keys=False,
-                                                          as_index=False).sum()
-                    lst_dataframes.append(df_level)
+                    if filter_higher_level_analytic >= item_level:
+                        lst_levels_group_by_dinamic = []
+                        if filter_higher_level_analytic == item_level:
+                            lst_levels_group_by_dinamic = [level, 'Cuenta', 'Descripción']
+                        else:
+                            for index, group in enumerate(lst_level_0_group_by_dinamic):
+                                lst_levels_group_by_dinamic.append(lst_level_0_group_by_dinamic[index].replace('Nivel Analítica 0', level))
+                        df_level = df_report_original.groupby(by=lst_levels_group_by_dinamic, group_keys=False,
+                                                              as_index=False).sum()
+                        lst_dataframes.append(df_level)
+                    item_level += 1
         #Agrupar por tipo de balance
         if self.type_balance in ['2','3']:
             if filter_higher_level >= cant_levels:  # Si es balance con tercero o cuenta analitica se crea la sumatoria de la cuenta contable
@@ -346,10 +371,10 @@ class account_balance_report_filters(models.TransientModel):
             df_account = df_report_original.groupby(by=['Tercero', 'Nivel 0 Tercero', 'Nivel 0 Cuenta Analítica'],group_keys=False,as_index=False).sum()
             lst_dataframes.append(df_account)
         if self.type_balance in ['3.1']:  # Si es balance por cuenta analitica - cuenta contable, se crea la sumatoria de la cuenta analitica
-            df_account = df_report_original.groupby(by=['Cuenta Analítica', 'Nivel 0 Tercero', 'Nivel 0 Cuenta Analítica'], group_keys=False,as_index=False).sum()
+            df_account = df_report_original.groupby(by=[top_analytic, 'Nivel 0 Tercero', 'Nivel 0 Cuenta Analítica'], group_keys=False,as_index=False).sum()
             lst_dataframes.append(df_account)
         #Concatenar dataframes
-        if filter_higher_level >= cant_levels:
+        if filter_higher_level >= cant_levels and filter_higher_level_analytic >= cant_levels_analytic:
             lst_dataframes.append(df_report)
         df_report_finally = False
         columns = lst_group_by + ['Saldo Anterior', 'Débito', 'Crédito', 'Nuevo Saldo']
@@ -365,6 +390,8 @@ class account_balance_report_filters(models.TransientModel):
             df_report_finally = df_report_finally.sort_values(by=lst_levels_group_by_dinamic)
         #Eliminar duplicados para garantizar la información
         df_report_finally = df_report_finally.drop_duplicates()
+        #Eliminar filas con todos sus valores en 0
+        df_report_finally = df_report_finally[(df_report_finally['Saldo Anterior'] != 0) | (df_report_finally['Débito'] != 0) | (df_report_finally['Crédito'] != 0) | (df_report_finally['Nuevo Saldo'] != 0)]
         #Dataframe totales
         df_total = df_report_original.groupby(by=['Total'], group_keys=False,as_index=False).sum()
         #-------------------------------------------Crear Excel------------------------------------------------------

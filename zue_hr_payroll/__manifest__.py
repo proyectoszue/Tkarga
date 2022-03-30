@@ -59,8 +59,11 @@
         'reports/report_book_vacation_template.xml',      
         'reports/report_book_cesantias.xml', 
         'reports/report_book_cesantias_template.xml',
+        'reports/hr_report_absenteeism_history.xml',
+        'reports/hr_report_absenteeism_history_template.xml',
         'views/actions_vacation_book_reports.xml',
         'views/actions_account_journal.xml',
+        'views/actions_hr_absenteeism_history.xml',
         'views/menus.xml',
     ],
     
