@@ -3,4 +3,6 @@ access_hr_contract_public,hr_contract_public,model_hr_contract_public,,1,1,1,1
 access_hr_payslip_public,hr_payslip_public,model_hr_payslip_public,,1,1,1,1
 access_hr_payslip_worked_days_public,hr_payslip_worked_days_public,model_hr_payslip_worked_days_public,,1,1,1,1
 access_hr_payslip_line_public,hr_payslip_line_public,model_hr_payslip_line_public,,1,1,1,1
+access_hr_permit_application,hr_permit_application,model_hr_permit_application,,1,1,1,1
+access_hr_labor_certificate_history_public,hr_labor_certificate_history_public,model_hr_labor_certificate_history_public,,1,1,1,1
 
