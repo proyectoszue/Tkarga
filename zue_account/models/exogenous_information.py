@@ -175,7 +175,7 @@ class generate_media_magnetic(models.TransientModel):
                 format_fields = fiscal.format_id.details_ids
 
                 partner_ids = self.env['account.move.line'].search([('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
-                                                                      ('move_id.accounting_closing_id','==',False),('account_id', 'in', fiscal.accounting_details_ids.ids)]).partner_id.ids
+                                                                      ('move_id.accounting_closing_id','=',False),('account_id', 'in', fiscal.accounting_details_ids.ids)]).partner_id.ids
                 obj_partner_ids = self.env['res.partner'].search([('id','in',partner_ids)])
 
                 dict_partner_minor = {}
@@ -184,7 +184,7 @@ class generate_media_magnetic(models.TransientModel):
                 for partner in obj_partner_ids:
                     moves = self.env['account.move.line'].search(
                         [('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
-                         ('move_id.accounting_closing_id','==',False),('account_id', 'in', fiscal.accounting_details_ids.ids),('partner_id', '=', partner.id)])
+                         ('move_id.accounting_closing_id','=',False),('account_id', 'in', fiscal.accounting_details_ids.ids),('partner_id', '=', partner.id)])
                     account_moves_ids = account_moves_ids + moves.ids
                     amount = 0
                     tax_base_amount = 0
@@ -239,7 +239,7 @@ class generate_media_magnetic(models.TransientModel):
                             obj_retention_associated = self.env['fiscal.accounting.code'].search([('id','in',fiscal_associated.ids),('retention_associated','=',fiscal.id)])
                             moves_associated = self.env['account.move.line'].search(
                                 [('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
-                                ('move_id.accounting_closing_id','==',False),('account_id', 'in', obj_retention_associated.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
+                                ('move_id.accounting_closing_id','=',False),('account_id', 'in', obj_retention_associated.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
                             amount_associated = abs(sum([i.balance for i in moves_associated]))
                             name_associated = fiscal_associated.code_description.replace(' ','_')
                             info_associated[name_associated] = amount_associated
@@ -262,7 +262,7 @@ class generate_media_magnetic(models.TransientModel):
                             obj_retention_associated = self.env['fiscal.accounting.code'].search([('id','in',fiscal_associated.ids),('retention_associated','=',fiscal.id)])
                             moves_associated = self.env['account.move.line'].search(
                                 [('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
-                                ('move_id.accounting_closing_id','==',False),('account_id', 'in', obj_retention_associated.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
+                                ('move_id.accounting_closing_id','=',False),('account_id', 'in', obj_retention_associated.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
                             amount_associated = abs(sum([i.balance for i in moves_associated]))
                             name_associated = fiscal_associated.code_description.replace(' ','_')
                             dict_partner_minor_associated[name_associated] = dict_partner_minor_associated.get(name_associated, 0) + amount_associated
