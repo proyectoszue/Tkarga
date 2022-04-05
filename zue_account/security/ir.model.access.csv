@@ -6,3 +6,4 @@ access_fiscal_accounting_group,fiscal.accounting.group,model_fiscal_accounting_g
 access_format_encab,format.encab,model_format_encab,,1,1,1,1
 access_format_detail,format.detail,model_format_detail,,1,1,1,1
 access_res_company_note,res.company.note,model_res_company_note,,1,1,1,1
+access_annual_accounting_closing,annual.accounting.closing,model_annual_accounting_closing,,1,1,1,1
