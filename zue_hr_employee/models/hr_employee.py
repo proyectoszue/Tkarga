@@ -274,10 +274,15 @@ class hr_employee(models.Model):
     @api.constrains('tipo_coti_id','social_security_entities','subtipo_coti_id')
     def _check_social_security_entities(self):
         for record in self:
-            if record.tipo_coti_id.code not in ['12', '19']:
-                if len(record.social_security_entities) == 0 or record.social_security_entities == False:
-                    raise ValidationError(_('El empleado no tiene entidades asignadas, por favor verificar.'))
-                qty_eps,qty_pension,qty_riesgo,qty_caja = 0,0,0,0
+            if record.tipo_coti_id or record.subtipo_coti_id:
+                #Obtener parametriazación de cotizantes
+                obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
+                    [('type_of_contributor', '=', record.tipo_coti_id.id),
+                     ('contributor_subtype', '=', record.subtipo_coti_id.id)],limit=1)
+                if len(obj_parameterization_contributors) == 0:
+                    raise ValidationError(_('No existe parametrización para este tipo de cotizante / subtipo de cotizante, por favor verificar.'))
+                #Obtener las entidades seleccionadas del empleado
+                qty_eps, qty_pension, qty_riesgo, qty_caja = 0, 0, 0, 0
                 for entity in record.social_security_entities:
                     if entity.contrib_id.type_entities == 'eps':  # SALUD
                         qty_eps += 1
@@ -288,26 +293,33 @@ class hr_employee(models.Model):
                     if entity.contrib_id.type_entities == 'caja':  # CAJA DE COMPENSACIÓN
                         qty_caja += 1
 
-                if qty_eps == 0:
-                    raise ValidationError(_('El empleado no tiene entidad EPS asignada, por favor verificar.'))
-                if qty_eps > 1:
-                    raise ValidationError(_('El empleado tiene más de una entidad EPS asignada, por favor verificar.'))
+                #Validar EPS
+                if obj_parameterization_contributors.liquidates_eps_company or obj_parameterization_contributors.liquidated_eps_employee:
+                    if qty_eps == 0:
+                        raise ValidationError(_('El empleado no tiene entidad EPS asignada, por favor verificar.'))
+                    if qty_eps > 1:
+                        raise ValidationError(_('El empleado tiene más de una entidad EPS asignada, por favor verificar.'))
 
-                if record.subtipo_coti_id.not_contribute_pension == False:
+                # Validar PENSIÓN
+                if obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidates_solidarity_fund:
                     if qty_pension == 0:
                         raise ValidationError(_('El empleado no tiene entidad Pensión asignada, por favor verificar.'))
                     if qty_pension > 1:
                         raise ValidationError(_('El empleado tiene más de una entidad Pensión asignada, por favor verificar.'))
 
-                if qty_riesgo == 0:
-                    raise ValidationError(_('El empleado no tiene entidad ARL asignada, por favor verificar.'))
-                if qty_riesgo > 1:
-                    raise ValidationError(_('El empleado tiene más de una entidad ARL asignada, por favor verificar.'))
+                # Validar ARL/ARP - Se comenta debido a que se maneja por compañia
+                #if obj_parameterization_contributors.liquidated_arl:
+                #    if qty_riesgo == 0:
+                #        raise ValidationError(_('El empleado no tiene entidad ARL asignada, por favor verificar.'))
+                #    if qty_riesgo > 1:
+                #        raise ValidationError(_('El empleado tiene más de una entidad ARL asignada, por favor verificar.'))
 
-                if qty_caja == 0:
-                    raise ValidationError(_('El empleado no tiene entidad Caja de compensación asignada, por favor verificar.'))
-                if qty_caja > 1:
-                    raise ValidationError(_('El empleado tiene más de una entidad Caja de compensación asignada, por favor verificar.'))
+                # Validar CAJA DE COMPENSACIÓN
+                if obj_parameterization_contributors.liquidated_compensation_fund:
+                    if qty_caja == 0:
+                        raise ValidationError(_('El empleado no tiene entidad Caja de compensación asignada, por favor verificar.'))
+                    if qty_caja > 1:
+                        raise ValidationError(_('El empleado tiene más de una entidad Caja de compensación asignada, por favor verificar.'))
 
     @api.model
     def create(self, vals):

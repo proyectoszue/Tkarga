@@ -213,7 +213,7 @@
                     <page string="Seguridad Social" name="seguridad_social">
                         <group name="pila" string="PILA">
                             <field name="tipo_coti_id" required="1"/>
-                            <field name="subtipo_coti_id"/>
+                            <field name="subtipo_coti_id" required="1"/>
                             <field name="extranjero"/>
                             <field name="residente"/>
                             <field name="date_of_residence_abroad" attrs="{'invisible':[('residente', '=', False)]}"/>

@@ -1,0 +1,38 @@
+<odoo>
+    <data>
+        <template id="labor_certification" name="Certificado Laboral">
+            <link rel="stylesheet" href="/zue_payroll_self_management_portal/static/src/css/main.css"/>
+            <t t-call="website.layout">
+                <div class="oe_structure">
+                    <main>
+                        <div class="container">
+                            <br/>
+                            <center>
+                                <h1>
+                                    <span t-esc="report_name"/>
+                                </h1>
+                            </center>
+                            <hr/>
+                            <div>
+                                <form class='filters' action='/zue_payroll_self_management_portal/certification_print' method="POST">
+                                    <p class="text-justify">Por favor digite los campos solicitados para generar su certificado laboral</p>
+                                    <br/>
+                                    <p><strong> Contrato : </strong><span t-esc="contract"/></p>
+                                    <p><strong> Fecha de Generacion : </strong> <span t-esc="generation_date"/></p>
+                                    <div class="mb-3 row">
+                                        <label for="addressed" class="col-sm-2 col-form-label">Dirigido A: </label>
+                                        <div class="col-sm-10">
+                                        <input type="text" class="form-control" id="addressed" name="addressed"/>
+                                        </div>
+                                    </div>
+                                    <br/>
+                                    <input type="submit" class="btn btn-success" value="Generar Certificado"/>
+                                </form>
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </t>
+        </template>
+    </data>
+</odoo>

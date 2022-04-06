@@ -27,6 +27,8 @@
         'views/res_users.xml',
         'views/payroll_vouchers.xml',
         'views/update_personal_data.xml',
+        'views/labor_certification.xml',
+        'views/application_permit.xml',
         'reports/laboral_certification.xml',
         'reports/books_reports.xml',
         'reports/book_vacation_portal_template.xml',

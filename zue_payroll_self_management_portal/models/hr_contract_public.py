@@ -8,6 +8,7 @@ class HrContractPublic(models.Model):
     _log_access = True
 
     id = fields.Integer(string='id')
+    name = fields.Char(string='contrato')
     employee_id = fields.Many2one('hr.employee.public',string='Empleado')
     company_id = fields.Many2one('res.company',string='Compañia')
     state = fields.Char(string='Estado')

@@ -136,7 +136,7 @@ class generate_media_magnetic(models.TransientModel):
     _name = 'generate.media.magnetic'
     _description = 'Generar Medios Magneticos'
 
-    company_id = fields.Many2one('res.company',string='Compañia', required=True, default=lambda self: self.env.company)
+    company_id = fields.Many2one('res.company',string='Compañia', readonly=True,required=True, default=lambda self: self.env.company)
     type_media_magnetic = fields.Selection([('dian', 'Generar Artículo 631'),
                                             ('distrital', 'Generar Impuesto Distrital')],'Tipo de medio magnético', default='dian')
     year =  fields.Integer(string="Año", required=True)
@@ -160,7 +160,8 @@ class generate_media_magnetic(models.TransientModel):
         date_end = str(self.year) +'-12-31'
         date_start = datetime.strptime(date_start, '%Y-%m-%d').date()
         date_end = datetime.strptime(date_end, '%Y-%m-%d').date()
-        minor_amounts = 0        
+        minor_amounts = 0
+        account_moves_ids = []
         #Traer todos los formatos
         obj_formats = self.env['format.encab'].search([('id','!=',False)])
 
@@ -173,8 +174,8 @@ class generate_media_magnetic(models.TransientModel):
                                                                               limit=1)
                 format_fields = fiscal.format_id.details_ids
 
-                partner_ids = self.env['account.move.line'].search([('date', '>=', date_start), ('date', '<=', date_end),
-                                                                      ('account_id', 'in', fiscal.accounting_details_ids.ids)]).partner_id.ids
+                partner_ids = self.env['account.move.line'].search([('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
+                                                                      ('move_id.accounting_closing_id','=',False),('account_id', 'in', fiscal.accounting_details_ids.ids)]).partner_id.ids
                 obj_partner_ids = self.env['res.partner'].search([('id','in',partner_ids)])
 
                 dict_partner_minor = {}
@@ -182,18 +183,18 @@ class generate_media_magnetic(models.TransientModel):
 
                 for partner in obj_partner_ids:
                     moves = self.env['account.move.line'].search(
-                        [('date', '>=', date_start), ('date', '<=', date_end),
-                         ('account_id', 'in', fiscal.accounting_details_ids.ids),('partner_id', '=', partner.id)])
-
+                        [('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
+                         ('move_id.accounting_closing_id','=',False),('account_id', 'in', fiscal.accounting_details_ids.ids),('partner_id', '=', partner.id)])
+                    account_moves_ids = account_moves_ids + moves.ids
                     amount = 0
                     tax_base_amount = 0
                     for i in moves:
                         if fiscal.move_type == 'debit':
-                            amount += i.debit
+                            amount += abs(i.debit)
                         elif fiscal.move_type == 'credit':
-                            amount += i.credit
+                            amount += abs(i.credit)
                         else:
-                            amount += i.balance
+                            amount += abs(i.balance)
                         tax_base_amount += i.tax_base_amount
 
                     if len(obj_group_fiscal) > 0:
@@ -211,21 +212,21 @@ class generate_media_magnetic(models.TransientModel):
                         info = {'fiscal_accounting_id': fiscal.concept_dian,
                                 'concept_dian': fiscal.code_description,
                                 'format':fiscal.format_id.format_id,
-                                'x_document_type': document_type,
+                                'x_document_type': partner.x_document_type,
                                 'vat': partner.vat,
-                                'x_first_name': partner.x_first_name,
-                                'x_second_name': partner.x_second_name,
-                                'x_first_lastname': partner.x_first_lastname,
-                                'x_second_lastname': partner.x_second_lastname,
+                                'x_first_name': partner.x_first_name or '',
+                                'x_second_name': partner.x_second_name if partner.x_second_name else '',
+                                'x_first_lastname': partner.x_first_lastname or '',
+                                'x_second_lastname': partner.x_second_lastname or '',
                                 'commercial_company_name': partner.name,
                                 'x_digit_verification': partner.x_digit_verification,
                                 'street': partner.street,
-                                'state_id': partner.state_id.name,
-                                'x_city': partner.x_city.name,
+                                'state_id': partner.x_city.code[:2],
+                                'x_city': partner.x_city.code[2:],
                                 'amount': amount,
                                 'operator':obj_group_fiscal.operator,
                                 'tax': tax_base_amount,
-                                'x_code_dian':partner.x_city.code,
+                                'x_code_dian':partner.country_id.code,
                                 'phone': partner.phone or partner.mobile,
                                 'unit_rate': 0,
                                 'email': partner.email,
@@ -237,9 +238,9 @@ class generate_media_magnetic(models.TransientModel):
                         for fiscal_associated in obj_account_fiscal_associated:
                             obj_retention_associated = self.env['fiscal.accounting.code'].search([('id','in',fiscal_associated.ids),('retention_associated','=',fiscal.id)])
                             moves_associated = self.env['account.move.line'].search(
-                                [('date', '>=', date_start), ('date', '<=', date_end),
-                                ('account_id', 'in', obj_retention_associated.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
-                            amount_associated = sum([i.balance for i in moves_associated])
+                                [('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
+                                ('move_id.accounting_closing_id','=',False),('account_id', 'in', obj_retention_associated.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
+                            amount_associated = abs(sum([i.balance for i in moves_associated]))
                             name_associated = fiscal_associated.code_description.replace(' ','_')
                             info_associated[name_associated] = amount_associated
                         #Guardado final
@@ -260,9 +261,9 @@ class generate_media_magnetic(models.TransientModel):
                         for fiscal_associated in obj_account_fiscal_associated:
                             obj_retention_associated = self.env['fiscal.accounting.code'].search([('id','in',fiscal_associated.ids),('retention_associated','=',fiscal.id)])
                             moves_associated = self.env['account.move.line'].search(
-                                [('date', '>=', date_start), ('date', '<=', date_end),
-                                ('account_id', 'in', obj_retention_associated.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
-                            amount_associated = sum([i.balance for i in moves_associated])
+                                [('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
+                                ('move_id.accounting_closing_id','=',False),('account_id', 'in', obj_retention_associated.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
+                            amount_associated = abs(sum([i.balance for i in moves_associated]))
                             name_associated = fiscal_associated.code_description.replace(' ','_')
                             dict_partner_minor_associated[name_associated] = dict_partner_minor_associated.get(name_associated, 0) + amount_associated
 
@@ -273,21 +274,21 @@ class generate_media_magnetic(models.TransientModel):
                     info = {'fiscal_accounting_id': dict_partner_minor.get('fiscal_info').concept_dian,
                             'concept_dian': dict_partner_minor.get('fiscal_info').code_description,
                             'format': dict_partner_minor.get('fiscal_info').format_id.format_id,
-                            'x_document_type': document_type,
+                            'x_document_type':  dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_document_type,
                             'vat': dict_partner_minor.get('group_fiscal').partner_minor_amounts.vat,
-                            'x_first_name': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_first_name,
-                            'x_second_name': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_second_name,
-                            'x_first_lastname': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_first_lastname,
-                            'x_second_lastname': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_second_lastname,
+                            'x_first_name': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_first_name or '',
+                            'x_second_name': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_second_name or '',
+                            'x_first_lastname': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_first_lastname or '',
+                            'x_second_lastname': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_second_lastname or '' ,
                             'commercial_company_name': dict_partner_minor.get('group_fiscal').partner_minor_amounts.name,
                             'x_digit_verification': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_digit_verification,
                             'street': dict_partner_minor.get('group_fiscal').partner_minor_amounts.street,
-                            'state_id': dict_partner_minor.get('group_fiscal').partner_minor_amounts.state_id.name,
-                            'x_city': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_city.name,
-                            'amount': dict_partner_minor.get('amount',0),
+                            'state_id': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_city.code[:2],
+                            'x_city': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_city.code[2:],
+                            'amount': abs(dict_partner_minor.get('amount',0)),
                             'operator': dict_partner_minor.get('group_fiscal').operator,
                             'tax': dict_partner_minor.get('tax',0),
-                            'x_code_dian': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_city.code,
+                            'x_code_dian': dict_partner_minor.get('group_fiscal').partner_minor_amounts.country_id.code,
                             'phone': dict_partner_minor.get('group_fiscal').partner_minor_amounts.phone or dict_partner_minor.get('group_fiscal').partner_minor_amounts.mobile,
                             'unit_rate': 0,
                             'email': dict_partner_minor.get('group_fiscal').partner_minor_amounts.email,
@@ -330,6 +331,43 @@ class generate_media_magnetic(models.TransientModel):
                 dict_h = {'header': i}
                 array_header_table.append(dict_h)
             sheet.add_table(0, 0, aument_rows-1, len(columns)-1, {'style': 'Table Style Medium 2', 'columns': array_header_table})
+
+        # Generar hoja de excel resumen
+        sheet_resumen = book.add_worksheet("Resumen")
+        columns = ['Documento','Fecha','Referencia','Débito','Crédito','Balance','Nombre']
+        # Agregar columnas
+        aument_columns = 0
+        for column in columns:
+            sheet_resumen.write(0, aument_columns, column)
+            aument_columns = aument_columns + 1
+        #Agrefar info
+        date_format = book.add_format({'num_format': 'dd/mm/yyyy'})
+        info_moves = self.env['account.move.line'].search([('id', 'in', account_moves_ids)])
+        aument_rows_resumen = 1
+        for move in info_moves:
+            sheet_resumen.write(aument_rows_resumen, 0, move.move_name)
+            sheet_resumen.set_column(0, 0, len(str(move.move_name))+10)
+            sheet_resumen.write_datetime(aument_rows_resumen, 1, move.date, date_format)
+            sheet_resumen.set_column(1, 1, len(str(move.date)) + 10)
+            sheet_resumen.write(aument_rows_resumen, 2, move.ref)
+            sheet_resumen.set_column(2, 2, len(str(move.ref)) + 10)
+            sheet_resumen.write(aument_rows_resumen, 3, move.debit)
+            sheet_resumen.set_column(3, 3, len(str(move.debit)) + 10)
+            sheet_resumen.write(aument_rows_resumen, 4, move.credit)
+            sheet_resumen.set_column(4, 4, len(str(move.credit)) + 10)
+            sheet_resumen.write(aument_rows_resumen, 5, move.balance)
+            sheet_resumen.set_column(5, 5, len(str(move.balance)) + 10)
+            sheet_resumen.write(aument_rows_resumen, 6, move.partner_id.name)
+            sheet_resumen.set_column(6, 6, len(str(move.partner_id.name)) + 10)
+            aument_rows_resumen = aument_rows_resumen + 1
+
+        # Convertir en tabla
+        array_header_table_resumen = []
+        for i in columns:
+            dict_h = {'header': i}
+            array_header_table_resumen.append(dict_h)
+        sheet_resumen.add_table(0, 0, aument_rows_resumen - 1, len(columns) - 1,
+                        {'style': 'Table Style Medium 2', 'columns': array_header_table_resumen})
 
         book.close()
         self.write({
