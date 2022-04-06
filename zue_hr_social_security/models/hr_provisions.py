@@ -112,9 +112,9 @@ class hr_executing_provisions(models.Model):
                         #Obtener fecha vacaciones
                         date_vacation = contract.date_start
                         if retirement_date == False:
-                            obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<',date_end),('departure_date','<=',date_end)])
+                            obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<',date_end),('departure_date','<=',date_end),('leave_id','=',False)])
                         else:
-                            obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date),('departure_date','<=',retirement_date)])
+                            obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date),('departure_date','<=',retirement_date),('leave_id','=',False)])
                         if obj_vacation:
                             for history in sorted(obj_vacation, key=lambda x: x.final_accrual_date):
                                 date_vacation = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_vacation else date_vacation             

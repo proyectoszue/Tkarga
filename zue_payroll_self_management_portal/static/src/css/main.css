@@ -1,6 +1,7 @@
 :root {
     --gray: #EAEBF3;
     --dark-gray: #6c757d;
+    --title: #6c757d;
     --black: #000000;
     --cyan: #0dcaf0;
     --blue-primary :#0d6efd;
@@ -29,6 +30,7 @@
 
 body{
     color: var(--black);
+    font-family: var(--bs-font-sans-serif);
 }
 
 .center {
@@ -42,7 +44,7 @@ body{
 
 .title{
     margin: 25px 0px;
-    color: var(--blue-primary);
+    color: var(--title);
 }
 
 .form-update-data{
@@ -50,3 +52,21 @@ body{
     margin-bottom: 40px;
     
 }
+
+.filters{
+    margin:auto;
+    max-width: 800px;
+}
+
+.form-check{
+    margin: auto;
+}
+
+#observation {
+    height: 100px;;
+}
+
+#SaveData {
+    margin-top: 50px;;
+}
+

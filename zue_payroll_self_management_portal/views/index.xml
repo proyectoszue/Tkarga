@@ -9,7 +9,7 @@
             <center>
               <h1>
                 <b>
-                  <span t-esc="title"/>
+                  <span class="title" t-esc="title"/>
                 </b>
               </h1>
             </center>
@@ -39,25 +39,31 @@
                   <div class="text-center">
                     <ul style="list-style: none;">
                       <li>
-                        <a class="btn btn-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/certification">
+                        <a class="btn btn-outline-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/application_permit">
+                      Solicitar Permiso
+                        </a>
+                      </li>
+                      <br/>
+                      <li>
+                        <a class="btn btn-outline-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/labor_certification">
                       Certificado Laboral
                         </a>
                       </li>
                       <br/>
                       <li>
-                        <a class="btn btn-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/generate_vouchers">
+                        <a class="btn btn-outline-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/generate_vouchers">
                       Comprobantes de nómina
                         </a>
                       </li>
                       <br/>
                       <li>
-                        <a class="btn btn-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/book_vacation">
+                        <a class="btn btn-outline-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/book_vacation">
                       Libro de vacaciones 
                         </a>
                       </li>
                       <br/>
                       <li>
-                        <a class="btn btn-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/book_cesantias">
+                        <a class="btn btn-outline-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/book_cesantias">
                       Libro de cesantías
                         </a>
                       </li>
@@ -140,7 +146,7 @@
                         </tr>
                       </tbody>
                     </table>
-                    <a class="btn btn-primary center" t-attf-href="/zue_payroll_self_management_portal/update_personal_data">
+                    <a class="btn btn-outline-primary center" t-attf-href="/zue_payroll_self_management_portal/update_personal_data">
                       Actualizar datos personales
                     </a>
                   </div>

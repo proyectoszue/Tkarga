@@ -128,30 +128,31 @@ class HolidaysRequest(models.Model):
             if record.unpaid_absences:
                 days_unpaid_absences = record.number_of_days
                 days_vacation_represent = round((days_unpaid_absences * 15) / 365,0)
-                # Obtener contrato y ultimo historico de vacaciones
-                obj_contract = self.env['hr.contract'].search([('employee_id','=',record.employee_id.id),('state','=','open')])
-                date_vacation = obj_contract.date_start
-                obj_vacation = self.env['hr.vacation'].search(
-                    [('employee_id', '=', record.employee_id.id), ('contract_id', '=', obj_contract.id)])
-                if obj_vacation:
-                    for history in sorted(obj_vacation, key=lambda x: x.final_accrual_date):
-                        date_vacation = history.final_accrual_date + timedelta(
-                            days=1) if history.final_accrual_date > date_vacation else date_vacation
-                #Fechas de causación
-                initial_accrual_date = date_vacation
-                final_accrual_date = date_vacation + timedelta(days=days_unpaid_absences)
+                if days_vacation_represent > 0:
+                    # Obtener contrato y ultimo historico de vacaciones
+                    obj_contract = self.env['hr.contract'].search([('employee_id','=',record.employee_id.id),('state','=','open')])
+                    date_vacation = obj_contract.date_start
+                    obj_vacation = self.env['hr.vacation'].search(
+                        [('employee_id', '=', record.employee_id.id), ('contract_id', '=', obj_contract.id)])
+                    if obj_vacation:
+                        for history in sorted(obj_vacation, key=lambda x: x.final_accrual_date):
+                            date_vacation = history.final_accrual_date + timedelta(
+                                days=1) if history.final_accrual_date > date_vacation else date_vacation
+                    #Fechas de causación
+                    initial_accrual_date = date_vacation
+                    final_accrual_date = date_vacation + timedelta(days=days_vacation_represent)
 
-                info_vacation = {
-                    'employee_id': record.employee_id.id,
-                    'contract_id': obj_contract.id,
-                    'initial_accrual_date': initial_accrual_date,
-                    'final_accrual_date': final_accrual_date,
-                    'departure_date': record.request_date_from,
-                    'return_date': record.request_date_to,
-                    'business_units': days_vacation_represent,
-                    'leave_id': record.id
-                }
-                self.env['hr.vacation'].create(info_vacation)
+                    info_vacation = {
+                        'employee_id': record.employee_id.id,
+                        'contract_id': obj_contract.id,
+                        'initial_accrual_date': initial_accrual_date,
+                        'final_accrual_date': final_accrual_date,
+                        'departure_date': record.request_date_from,
+                        'return_date': record.request_date_to,
+                        'business_units': days_vacation_represent,
+                        'leave_id': record.id
+                    }
+                    self.env['hr.vacation'].create(info_vacation)
 
         return obj
 

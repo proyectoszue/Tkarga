@@ -28,7 +28,7 @@ class Hr_payslip(models.Model):
             self.date_prima = date_prima
             #Obtener fecha vacaciones
             date_vacation = self.contract_id.date_start     
-            obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', self.employee_id.id),('contract_id', '=', self.contract_id.id)])
+            obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', self.employee_id.id),('contract_id', '=', self.contract_id.id),('leave_id','=',False)])
             if obj_vacation:
                 for history in sorted(obj_vacation, key=lambda x: x.final_accrual_date):
                     date_vacation = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_vacation else date_vacation             
