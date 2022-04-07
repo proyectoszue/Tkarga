@@ -6,7 +6,7 @@
                 <t t-call="web.external_layout">
                     <t t-set="employees" t-value="o.get_employee_absenteeism()"></t>
                     <h1>
-                        <strong>Historico de ausentismos</strong>
+                        <center><strong>Historico de ausentismos</strong></center>
                     </h1>
                     <br/>
                     <table class="table table-borderless table-sm">
@@ -21,7 +21,7 @@
                     </table>
                     <t t-foreach="employees" t-as="emp">
                         <table class="table table-bordered">
-                            <thead>
+                            <thead style="font-size:90%;">
                                 <tr>
                                     <td colspan="5">
                                         <span t-esc="emp.identification_id"/> - <span t-esc="emp.name"/>
@@ -35,7 +35,7 @@
                                     <th>Descripción</th>
                                 </tr>
                             </thead>
-                            <tbody>
+                            <tbody style="font-size:85%;">
                                 <tr t-foreach="o.get_info_absenteeism().filtered(lambda x: x.employee_id.id == emp.id)" t-as="a">
                                     <td style="width: 30%">
                                         <span t-esc="a.holiday_status_id.name"/>
