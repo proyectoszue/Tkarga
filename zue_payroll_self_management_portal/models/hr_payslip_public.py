@@ -43,4 +43,6 @@ class HrPayslipPublic(models.Model):
         obj_line_ids = self.sudo().env['hr.payslip.line.public'].search([('slip_id','=',self.id)])            
         return obj_line_ids
         
-        
+    def get_hr_payslip_reports_template(self):
+        obj = self.sudo().env['hr.payslip'].search([('id', '=', self.id)]).get_hr_payslip_reports_template()
+        return  obj
