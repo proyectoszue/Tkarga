@@ -34,6 +34,7 @@
         'reports/book_vacation_portal_template.xml',
         'reports/book_cesantias_portal_template.xml',
         'reports/payroll_vouchers.xml',
+        'reports/payslip_header_footer_template.xml',
         'reports/portal_payslip.xml',
         'security/ir.model.access.csv',
         'data/hr_permissions_portal.xml'
