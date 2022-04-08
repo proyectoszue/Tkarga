@@ -16,9 +16,9 @@ class ZuePayrollSelfManagementPortal(Controller):
     def index(self, **kw):
         if not request.env.user:
             return request.not_found()
-
-        obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)])
-
+        
+        obj_employee = request.env['hr.employee.public'].sudo().search([('user_id','=',request.env.user.id)])
+        
         for employee in obj_employee:
             obj_contract = request.env['hr.contract.public'].search([('employee_id','=',employee.id),('state','=','open')], limit=1)                           
 
