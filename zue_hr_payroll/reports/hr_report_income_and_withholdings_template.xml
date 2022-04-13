@@ -1,0 +1,247 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="hr_report_income_and_withholdings_document">
+        <style>
+            div {
+            border: 1px solid #2A4B6E;
+            }
+        </style>
+        <t t-call="web.html_container">
+            <t t-foreach="inside_foreach_docs or docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <div class="container">
+                        <div class="row" style="font-size:small">
+                            <div class="col-2">
+                                DIAN Logo
+                            </div>
+                            <div class="col-8">
+                                <b>
+                                    <center>Certificado de Ingresos y Retenciones por Rentas de Trabajo y Pensiones año
+                                        Agravable 2021
+                                    </center>
+                                </b>
+                            </div>
+                            <div class="col-2">
+                                220
+                            </div>
+                        </div>
+                        <div class="row" style="font-size:small">
+                            <div class="col-8">
+                                Antes de diligenciar este formulario lea cuidadosamente las instrucciones
+                            </div>
+                            <div class="col-4">
+                                4. Número de formulario
+                            </div>
+                        </div>
+                        <div class="row" style="font-size:small">
+                            <div class="col-3">
+                                5. Número de Identificación Tributaria (NIT)
+                            </div>
+                            <div class="col-1">
+                                6. D.V
+                            </div>
+                            <div class="col-2">
+                                7. Primer Apellido
+                            </div>
+                            <div class="col-2">
+                                8. Segundo Apellido
+                            </div>
+                            <div class="col-2">
+                                9. Primer Nombre
+                            </div>
+                            <div class="col-2">
+                                10. Otros Nombres
+                            </div>
+                        </div>
+                        <div class="row" style="font-size:small">
+                            <div class="col-12">
+                                11. Razón Social
+                            </div>
+                        </div>
+                        <div class="row" style="font-size:small">
+                            <div class="col-2">
+                                24. Tipo de Documento
+                            </div>
+                            <div class="col-2">
+                                25. Número de Identificación
+                            </div>
+                            <div class="col-2">
+                                26. Primer Apellido
+                            </div>
+                            <div class="col-2">
+                                27. Segundo Apellido
+                            </div>
+                            <div class="col-2">
+                                28. Primer Nombre
+                            </div>
+                            <div class="col-2">
+                                29. Otros Nombres
+                            </div>
+                        </div>
+                        <div class="row" style="font-size:small">
+                            <div class="col-4">
+                                Período de Certificación
+                                30. DE
+                                31. A:
+                            </div>
+                            <div class="col-2">
+                                32. Fecha de expedición
+                            </div>
+                            <div class="col-3">
+                                33. Lugar donde se practicó la retención
+                            </div>
+                            <div class="col-1">
+                                34. Cód.Dpto.
+                            </div>
+                            <div class="col-2">
+                                35. Cód.Ciudad/Municipio
+                            </div>
+                        </div>
+                    </div>
+                    <table class="table  table-bordered border-#2A4B6E">
+                        <thead>
+                            <th>
+                                <center>
+                                    <b>Concepto de los Ingresos</b>
+                                </center>
+                            </th>
+                            <th>
+                                <b></b>
+                            </th>
+                            <th>
+                                <b>Valor</b>
+                            </th>
+                        </thead>
+                        <tbody>
+                            <td>Pagos por salarios o emolumentos eclesiásticos</td>
+                            <td>36</td>
+                            <td></td>
+                            <tr>
+                                <td>Pagos realizados con bonos electrónicos o de papel de servicio, cheques, tarjetas,
+                                    vales, etc.
+                                </td>
+                                <td>37</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Pagos por honorarios</td>
+                                <td>38</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Pagos por servicios</td>
+                                <td>39</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Pagos por comisiones</td>
+                                <td>40</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Pagos por prestaciones sociales</td>
+                                <td>41</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Pagos por viáticos</td>
+                                <td>42</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Pagos por gastos de representación</td>
+                                <td>43</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Pagos por compensaciones por el trabajo asociado cooperativo</td>
+                                <td>44</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Otros pagos</td>
+                                <td>45</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Cesantías e intereses de cesantías efectivamente pagadas al empleado</td>
+                                <td>46</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Cesantías consignadas al fondo de cesantias</td>
+                                <td>47</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Pensiones de jubilación, vejez o invalidez</td>
+                                <td>48</td>
+                                <td></td>
+                            </tr>
+                            <tr>
+                                <td>Total de ingresos brutos (Sume 36 a 48)</td>
+                                <td>49</td>
+                                <td></td>
+                            </tr>
+                        </tbody>
+                        <table class="table table-bordered border-#2A4B6E">
+                            <thead>
+                                <th>
+                                    <center>
+                                        <b>Concepto de los Aportes</b>
+                                    </center>
+                                </th>
+                                <th>
+                                    <b></b>
+                                </th>
+                                <th>
+                                    <b>Valor</b>
+                                </th>
+                            </thead>
+                            <tbody>
+                                <td>Aportes obligatorios por salud a cargo del trabajador</td>
+                                <td>50</td>
+                                <td></td>
+                                <tr>
+                                    <td>Aportes obligatorios a fondos de pensiones y solidaridad pensional a cargo del trabajador</td>
+                                    <td>51</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Cotizaciones voluntarias al régimen de ahorro individual con solidaridad - RAIS</td>
+                                    <td>52</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Aportes voluntarios a fondos de pensiones</td>
+                                    <td>53</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Aportes a cuentas AFC</td>
+                                    <td>54</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td>Valor de la retención en la fuente por ingresos laborales y de pensiones</td>
+                                    <td>55</td>
+                                    <td></td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3">Nombre del pagador o agente retenedor</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </table>
+                </t>
+            </t>
+        </t>
+    </template>
+
+    <template id="hr_report_income_and_withholdings">
+        <t t-foreach="docs" t-as="o">
+            <t t-set="inside_foreach_docs" t-value="o"/>
+            <t t-call="zue_hr_payroll.hr_report_income_and_withholdings_document"/>
+        </t>
+    </template>
+</odoo>

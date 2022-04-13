@@ -5,6 +5,12 @@
             <field name="res_model">hr.vacation</field>
             <field name="view_mode">tree,form</field>
 		</record>
+        <!-- Crear record rule para filtrar las compañias-->
+        <record id="rule_hr_vacation" model="ir.rule">
+            <field name="name">Permisos compañia Historico de vacaciones</field>
+            <field name="model_id" ref="model_hr_vacation"/>
+            <field name="domain_force">['|',('employee_id.company_id','=',False),('employee_id.company_id', 'in', company_ids)]</field>
+        </record>
 
         <record model="ir.ui.view" id="zue_hr_payroll.list_hr_vacation">
             <field name="name">zue list hr vacation</field>
