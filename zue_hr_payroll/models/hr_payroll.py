@@ -311,6 +311,7 @@ class Hr_payslip(models.Model):
         return result
 
     def get_hr_payslip_reports_template(self):
+        type_report = self.struct_process if self.struct_process != 'otro' else 'nomina'
         obj = self.env['hr.payslip.reports.template'].search([('company_id','=',self.employee_id.company_id.id),('type_report','=',self.struct_process)])
         if len(obj) == 0:
             raise ValidationError(_('No tiene configurada plantilla de liquidacion. Por favor verifique!'))
