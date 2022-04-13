@@ -6,6 +6,12 @@
 				<field name="res_model">hr.novelties.different.concepts</field>
 				<field name="view_mode">tree</field>
 		</record>
+		<!-- Crear record rule para filtrar las compañias-->
+        <record id="rule_hr_novelties_different_concepts" model="ir.rule">
+            <field name="name">Permisos compañia Por conceptos diferentes</field>
+            <field name="model_id" ref="model_hr_novelties_different_concepts"/>
+            <field name="domain_force">['|',('employee_id.company_id','=',False),('employee_id.company_id', 'in', company_ids)]</field>
+        </record>
 
         <record model="ir.ui.view" id="zue_hr_payroll.list_hr_novelties_different_concepts">
 			    <field name="name">hr novelties different concepts list</field>

@@ -7,6 +7,13 @@
 				<field name="view_mode">tree</field>
 		</record>
 
+		<!-- Crear record rule para filtrar las compañias-->
+        <record id="rule_hr_novelties_independents" model="ir.rule">
+            <field name="name">Permisos compañia Independientes</field>
+            <field name="model_id" ref="model_hr_novelties_independents"/>
+            <field name="domain_force">['|',('employee_id.company_id','=',False),('employee_id.company_id', 'in', company_ids)]</field>
+        </record>
+
         <record model="ir.ui.view" id="zue_hr_payroll.list_hr_novelties_independents">
 			    <field name="name">hr novelties independents list</field>
 			    <field name="model">hr.novelties.independents</field>

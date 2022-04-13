@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+        <report
+            id="hr_report_income_and_withholdings_action"
+            model="hr.annual.parameters"
+            string="Certificado ingreso y retenciones"
+            report_type="qweb-html"
+            name="zue_hr_payroll.hr_report_income_and_withholdings"
+            file="zue_hr_payroll.hr_report_income_and_withholdings"
+        />
+</odoo>

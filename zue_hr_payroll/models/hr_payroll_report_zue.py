@@ -143,7 +143,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
         ''' % (min_date,max_date,min_date,max_date,min_date,max_date,min_date,max_date)
 
         query_days = '''
-                    Select  c.item as "Id Interno",
+                    Select  c.item as "Item",
                     COALESCE(c.identification_id,'') as "Identificación",COALESCE(c.name,'') as "Empleado",COALESCE(d.date_start,'1900-01-01') as "Fecha Ingreso",
                     COALESCE(e.name,'') as "Seccional",COALESCE(f.name,'') as "Cuenta Analítica",
                     COALESCE(g.name,'') as "Cargo",COALESCE(d.code_sena,'') as "Código SENA",COALESCE(rp.name,'') as "Ubicación Laboral",COALESCE(dt.name,'') as "Departamento",
@@ -155,7 +155,8 @@ class HrPayrollReportZueFilter(models.TransientModel):
             Inner Join (Select distinct row_number() over(order by a.name) as item,
                         a.id,identification_id,a.name,a.branch_id,a.analytic_account_id,a.job_id,
                         address_id,a.department_id
-                        From hr_employee as a) as c on a.employee_id = c.id
+                        From hr_employee as a
+                        inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)) as c on a.employee_id = c.id
             Inner Join hr_contract as d on a.contract_id = d.id
             Inner Join hr_payslip_worked_days as b on a.id = b.payslip_id
             inner join hr_work_entry_type as wt on b.work_entry_type_id = wt.id
@@ -167,10 +168,10 @@ class HrPayrollReportZueFilter(models.TransientModel):
             Where a.id in (%s)     
             Group By c.item,c.identification_id,c.name,d.date_start,e.name,
                         f.name,g.name,d.code_sena,rp.name,dt.name,d.wage,wt.name
-        ''' % (str_ids)
+        ''' % (str_ids,str_ids)
 
         query_amount_rules ='''
-            Select  c.item as "Id Interno",
+            Select  c.item as "Item",
                     COALESCE(c.identification_id,'') as "Identificación",COALESCE(c.name,'') as "Empleado",COALESCE(d.date_start,'1900-01-01') as "Fecha Ingreso",
                     COALESCE(e.name,'') as "Seccional",COALESCE(f.name,'') as "Cuenta Analítica",
                     COALESCE(g.name,'') as "Cargo",COALESCE(d.code_sena,'') as "Código SENA",COALESCE(rp.name,'') as "Ubicación Laboral",COALESCE(dt.name,'') as "Departamento",
@@ -182,7 +183,8 @@ class HrPayrollReportZueFilter(models.TransientModel):
             Inner Join (Select distinct row_number() over(order by a.name) as item,
                         a.id,identification_id,a.name,a.branch_id,a.analytic_account_id,a.job_id,
                         address_id,a.department_id
-                        From hr_employee as a) as c on a.employee_id = c.id
+                        From hr_employee as a
+                        inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)) as c on a.employee_id = c.id
             Inner Join hr_contract as d on a.contract_id = d.id
             Left Join hr_payslip_line as b on a.id = b.slip_id
             Left Join hr_salary_rule_category as hc on b.category_id = hc.id
@@ -198,10 +200,10 @@ class HrPayrollReportZueFilter(models.TransientModel):
             Group By c.item,c.identification_id,c.name,d.date_start,e.name,
                         f.name,g.name,d.code_sena,rp.name,dt.name,d.wage,b.name,hc.code,
                         rp_et.x_business_name,rp_et.name,hc.name,b.sequence
-        ''' % (str_ids)
+        ''' % (str_ids,str_ids)
 
         query_quantity_bases_days = '''
-            Select c.item as "Id Interno",
+            Select c.item as "Item",
                 COALESCE(c.identification_id,'') as "Identificación",COALESCE(c.name,'') as "Empleado",COALESCE(d.date_start,'1900-01-01') as "Fecha Ingreso",
                 COALESCE(e.name,'') as "Seccional",COALESCE(f.name,'') as "Cuenta Analítica",
                 COALESCE(g.name,'') as "Cargo",COALESCE(d.code_sena,'') as "Código SENA",COALESCE(rp.name,'') as "Ubicación Laboral",COALESCE(dt.name,'') as "Departamento",
@@ -215,7 +217,8 @@ class HrPayrollReportZueFilter(models.TransientModel):
             Inner Join (Select distinct row_number() over(order by a.name) as item,
                         a.id,identification_id,a.name,a.branch_id,a.analytic_account_id,a.job_id,
                         address_id,a.department_id
-                        From hr_employee as a) as c on a.employee_id = c.id
+                        From hr_employee as a
+                        inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)) as c on a.employee_id = c.id
             Inner Join hr_contract as d on a.contract_id = d.id
             Left join zue_res_branch as e on c.branch_id = e.id
             Left join account_analytic_account as f on c.analytic_account_id = f.id
@@ -229,7 +232,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
             Group By c.item,c.identification_id,c.name,d.date_start,e.name,
                         f.name,g.name,d.code_sena,rp.name,dt.name,d.wage,b.name,hc.code,
                         rp_et.x_business_name,rp_et.name,hc.name,b.sequence
-        ''' % (str_ids)
+        ''' % (str_ids,str_ids)
 
         query = f"""
                     Select * from
@@ -252,7 +255,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
                 """
         
         query_totales = '''
-            Select 500000 as "Id Interno",'' as "Identificación", '' as "Empleado", '1900-01-01' as "Fecha Ingreso",
+            Select 500000 as "Item",'' as "Identificación", '' as "Empleado", '1900-01-01' as "Fecha Ingreso",
                     '' as "Seccional", '' as "Cuenta Analítica",'' as "Cargo",'' as "Código SENA",'' as "Ubicación Laboral",'' as "Departamento",
                     0 as "Salario Base",'' as "Novedades",
                     "Regla Salarial","Reglas Salariales + Entidad","Categoría","Secuencia",Sum("Monto") as "Monto"
@@ -297,7 +300,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
                 Group By c.name,b.name,hc.code,rp_et.x_business_name,rp_et.name,hc.name,b.sequence
             ) as a 
             Group By "Regla Salarial","Reglas Salariales + Entidad","Categoría","Secuencia"
-            order by "Id Interno","Empleado","Secuencia"
+            order by "Item","Empleado","Secuencia"
         ''' % (str_ids,str_ids,str_ids)
 
         #Finalizar query principal
@@ -333,7 +336,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
             if df_novedades.loc[i,'EsUltimo'] == 1:
                 df_report.loc[df_report['Identificación'] == identification, 'Novedades'] = novedades
 
-        columns_index = ['Id Interno', 'Identificación', 'Empleado']
+        columns_index = ['Item', 'Identificación', 'Empleado']
         if self.show_date_of_entry == True:
             columns_index.append('Fecha Ingreso')
         if self.show_job_placement == True:
@@ -408,14 +411,11 @@ class HrPayrollReportZueFilter(models.TransientModel):
         for size_column in column_len:
             worksheet.set_column(size_column['position'], size_column['position'], size_column['len_column'] + 5)
         #Campos númericos
-        #number_format = writer.book.add_format({'num_format': '#,##'})
-        #https://xlsxwriter.readthedocs.io/worksheet.html#conditional_format
-        #worksheet.conditional_format(3,10,cant_filas,10,
-        #                                {'type': 'no_errors',
-        #                                'format': number_format})
-        #worksheet.conditional_format(3,13,cant_filas,cant_columnas,
-        #                                {'type': 'no_errors',
-        #                                'format': number_format})
+        number_format = writer.book.add_format({'num_format': '#,##'})
+        # https://xlsxwriter.readthedocs.io/worksheet.html#conditional_format
+        worksheet.conditional_format(3, len(columns_index), cant_filas, cant_columnas,
+                                     {'type': 'no_errors',
+                                      'format': number_format})
         #Campo de novedades
         cell_format_novedades = writer.book.add_format({'text_wrap': True,'border':1})
         cell_format_novedades.set_font_name('Calibri')

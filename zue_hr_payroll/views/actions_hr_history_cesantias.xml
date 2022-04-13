@@ -6,6 +6,12 @@
             <field name="res_model">hr.history.cesantias</field>
             <field name="view_mode">tree,form</field>
         </record>
+        <!-- Crear record rule para filtrar las compañias-->
+        <record id="rule_hr_history_cesantias" model="ir.rule">
+            <field name="name">Permisos compañia Historico de censantias</field>
+            <field name="model_id" ref="model_hr_history_cesantias"/>
+            <field name="domain_force">['|',('employee_id.company_id','=',False),('employee_id.company_id', 'in', company_ids)]</field>
+        </record>
 
         <record model="ir.ui.view" id="hr_history_cesantias_viuw_tree">
             <field name="name">Historico de cesantías</field>
