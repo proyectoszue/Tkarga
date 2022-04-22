@@ -15,8 +15,18 @@ class Hr_payslip(models.Model):
 
     # Items contabilidad
     def _prepare_line_values(self, line, account_id, date, debit, credit, analytic_account_id):
+        addref_work_address_account_moves = self.env['ir.config_parameter'].sudo().get_param(
+            'zue_hr_payroll.addref_work_address_account_moves') or False
+        if addref_work_address_account_moves and line.slip_id.employee_id.address_id:
+            if line.slip_id.employee_id.address_id.parent_id:
+                name = f"{line.slip_id.employee_id.address_id.parent_id.vat} {line.slip_id.employee_id.address_id.display_name}|{line.name}"
+            else:
+                name = f"{line.slip_id.employee_id.address_id.vat} {line.slip_id.employee_id.address_id.display_name}|{line.name}"
+        else:
+            name = line.name
+
         return {
-            'name': line.name,
+            'name': name,
             'partner_id': line.partner_id.id,
             'account_id': account_id,
             'journal_id': line.slip_id.struct_id.journal_id.id,
@@ -109,6 +119,9 @@ class Hr_payslip(models.Model):
                         for line in slip.line_ids.filtered(lambda line: line.category_id):
                             amount = -line.total if slip.credit_note else line.total
                             if line.code == 'NET':  # Check if the line is the 'Net Salary'.
+                                obj_rule_net = self.env['hr.salary.rule'].search([('code', '=', 'NET'), ('struct_id', '=', slip.struct_id.id)], limit=1)
+                                if len(obj_rule_net) > 0:
+                                    line.write({'salary_rule_id': obj_rule_net.id})
                                 for tmp_line in slip.line_ids.filtered(lambda line: line.category_id):
                                     if tmp_line.salary_rule_id.not_computed_in_net:  # Check if the rule must be computed in the 'Net Salary' or not.
                                         if amount > 0:
@@ -185,7 +198,7 @@ class Hr_payslip(models.Model):
                                         credit_third_id = slip.employee_id.address_home_id
 
                                     # Asignación de Tercero final y Cuenta analitica cuando la cuenta contable inicie por 4,5,6 o 7
-                                    if debit_account_id:
+                                    if debit_account_id and amount >= 0:
                                         line.partner_id = debit_third_id
                                         if len(account_rule.debit_account) == 0:
                                             raise ValidationError(
@@ -195,7 +208,7 @@ class Hr_payslip(models.Model):
                                                                                                                   '5',
                                                                                                                   '6',
                                                                                                                   '7'] else analytic_account_id
-                                    elif credit_third_id:
+                                    elif (credit_third_id and amount < 0) or (credit_account_id and line.code == 'NET'):
                                         line.partner_id = credit_third_id
                                         if len(account_rule.credit_account) == 0:
                                             raise ValidationError(
@@ -208,7 +221,7 @@ class Hr_payslip(models.Model):
 
                                         # Fin Lógica ZUE
 
-                            if debit_account_id:  # If the rule has a debit account.
+                            if debit_account_id and amount >= 0:  # If the rule has a debit account.
                                 debit = abs(amount) if abs(amount) > 0.0 else 0.0
                                 credit = 0.0  # -amount if amount < 0.0 else 0.0
 
@@ -222,7 +235,7 @@ class Hr_payslip(models.Model):
                                     debit_line['debit'] += debit
                                     debit_line['credit'] += credit
 
-                            if credit_account_id:  # If the rule has a credit account.
+                            if (credit_account_id and amount < 0) or (credit_account_id and line.code == 'NET'):  # If the rule has a credit account.
                                 debit = 0.0  # -amount if amount < 0.0 else 0.0
                                 credit = abs(amount) if abs(amount) > 0.0 else 0.0
                                 credit_line = False  # self._get_existing_lines(line_ids, line, credit_account_id, debit, credit)
