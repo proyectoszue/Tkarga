@@ -267,9 +267,9 @@ class hr_electronic_payroll_detail(models.Model):
         value_base = 0
         for payslip in self.payslip_ids:
             for line in payslip.line_ids:
-                value_base += abs(line.total) if line.salary_rule_id.category_id.code == 'DEV_SALARIAL' else 0
+                value_base += abs(line.total) if line.salary_rule_id.category_id.code == 'DEV_SALARIAL' or line.salary_rule_id.category_id.parent_id.code == 'DEV_SALARIAL' else 0
 
-        if (value_base / annual_parameters.smmlv_monthly) > 4 and (
+        if (value_base / annual_parameters.smmlv_monthly) >= 4 and (
                 value_base / annual_parameters.smmlv_monthly) < 16:
             porc = 1
         if (value_base / annual_parameters.smmlv_monthly) >= 16 and (

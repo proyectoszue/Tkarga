@@ -384,6 +384,17 @@ class hr_executing_provisions(models.Model):
                     elif account_rule.third_credit == 'empleado':
                         credit_third_id = slip.employee_id.address_home_id
 
+                    # Descripción final
+                    addref_work_address_account_moves = self.env['ir.config_parameter'].sudo().get_param(
+                        'zue_hr_payroll.addref_work_address_account_moves') or False
+                    if addref_work_address_account_moves and slip.employee_id.address_id:
+                        if slip.employee_id.address_id.parent_id:
+                            description = f"{slip.employee_id.address_id.parent_id.vat} {slip.employee_id.address_id.display_name}|{slip.provision.upper()}"
+                        else:
+                            description = f"{slip.employee_id.address_id.vat} {slip.employee_id.address_id.display_name}|{slip.provision.upper()}"
+                    else:
+                        description = slip.provision.upper()
+
                     #Valor
                     amount = slip.value_balance if slip.value_balance != 0 else slip.amount
 
@@ -391,7 +402,7 @@ class hr_executing_provisions(models.Model):
                         debit = abs(amount) if amount >= 0.0 else 0.0
                         credit = abs(amount) if amount < 0.0 else 0.0
                         debit_line = {
-                            'name': slip.provision.upper(),
+                            'name': description,
                             'partner_id': debit_third_id.id,# if debit > 0 else credit_third_id.id,
                             'account_id': debit_account_id.id,# if debit > 0 else credit_account_id.id,
                             'journal_id': closing.journal_id.id,
@@ -407,7 +418,7 @@ class hr_executing_provisions(models.Model):
                         credit = abs(amount) if amount >= 0.0 else 0.0
 
                         credit_line = {
-                            'name': slip.provision.upper(),
+                            'name': description,
                             'partner_id': credit_third_id.id,
                             'account_id': credit_account_id.id,
                             'journal_id': closing.journal_id.id,
