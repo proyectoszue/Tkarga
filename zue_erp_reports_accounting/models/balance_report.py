@@ -62,6 +62,7 @@ class account_balance_report_filters(models.TransientModel):
     #Filtros
     #--Cuentas
     filter_show_only_terminal_accounts = fields.Boolean(string='Mostrar solo cuentas terminales')
+    filter_exclude_balance_test = fields.Boolean(string='Excluir cuentas parametrizadas')
     filter_accounting_class = fields.Char(string='Clase')
     filter_account_ids = fields.Many2many('account.account', string="Cuentas terminales")
     filter_account_group_ids = fields.Many2many('account.group', string="Cuentas mayores")
@@ -171,6 +172,8 @@ class account_balance_report_filters(models.TransientModel):
             domain.append(('account_id', 'in', self.filter_account_ids.ids))
         if len(self.filter_account_group_ids) > 0:  # Cuentas mayores
             domain.append(('account_id.group_id', 'child_of', self.filter_account_group_ids.ids))
+        if self.filter_exclude_balance_test:
+            domain.append(('account_id.exclude_balance_test', '=', False))
         #--------------------------------------Filtro de Cierre de Año------------------------------------------------
         if self.filter_with_close == False:
             domain_close = [('company_id', '=', self.company_id.id), ('parent_state', '=', 'posted'),
@@ -322,25 +325,33 @@ class account_balance_report_filters(models.TransientModel):
         lst_agroup_higher_level_analytic = []
         if self.filter_show_only_terminal_account_analytic == False and self.type_balance in ('3','3.1'):
             if self.type_balance == '3':
+                if filter_higher_level >= cant_levels:
+                    lst_dinamic_inherit_account = lst_levels_group_analytic_by
+                else:
+                    lst_dinamic_inherit_account = [lst_levels_group_by_dinamic[0],lst_levels_group_by_dinamic[1],'Nivel Analítica 0']
                 if filter_higher_level_analytic >= cant_levels_analytic - 1:
-                    df_level_analytic_0 = df_report_original.groupby(by=lst_levels_group_analytic_by, group_keys=False,
+                    df_level_analytic_0 = df_report_original.groupby(by=lst_dinamic_inherit_account, group_keys=False,
                                                             as_index=False).sum()
                     lst_dataframes.append(df_level_analytic_0)
                 item_level = 1
                 for level in lst_levels_group_analytic:  # Se recorren los niveles de las cuentas contables y se mayoriza
                     if filter_higher_level_analytic >= item_level:
                         lst_levels_group_by_dinamic = []
-                        for index, group in enumerate(lst_levels_group_analytic_by):
-                            lst_levels_group_by_dinamic.append(lst_levels_group_analytic_by[index].replace('Nivel Analítica 0', level))
+                        for index, group in enumerate(lst_dinamic_inherit_account):
+                            lst_levels_group_by_dinamic.append(lst_dinamic_inherit_account[index].replace('Nivel Analítica 0', level))
                         df_level = df_report_original.groupby(by=lst_levels_group_by_dinamic, group_keys=False,
                                                               as_index=False).sum()
                         lst_dataframes.append(df_level)
                     item_level += 1
             else:
+                if filter_higher_level >= cant_levels:
+                    lst_dinamic_inherit_account = ['Nivel Analítica 0', 'Cuenta', 'Descripción']
+                else:
+                    lst_dinamic_inherit_account = lst_levels_group_by_dinamic
                 lst_level_0_group_by_dinamic = ['Nivel Analítica 0', 'Nivel 0 Tercero', 'Nivel 0 Cuenta Analítica']
                 if filter_higher_level_analytic >= cant_levels_analytic - 1:
                     if filter_higher_level_analytic == cant_levels_analytic - 1:
-                        lst_level_0_group_by_dinamic = ['Nivel Analítica 0', 'Cuenta', 'Descripción']
+                        lst_level_0_group_by_dinamic = ['Nivel Analítica 0',lst_dinamic_inherit_account[1],lst_dinamic_inherit_account[2]]
 
                     df_level_analytic_0 = df_report_original.groupby(by=lst_level_0_group_by_dinamic, group_keys=False,
                                                                      as_index=False).sum()
@@ -351,7 +362,7 @@ class account_balance_report_filters(models.TransientModel):
                     if filter_higher_level_analytic >= item_level:
                         lst_levels_group_by_dinamic = []
                         if filter_higher_level_analytic == item_level:
-                            lst_levels_group_by_dinamic = [level, 'Cuenta', 'Descripción']
+                            lst_levels_group_by_dinamic = [level,lst_dinamic_inherit_account[1],lst_dinamic_inherit_account[2]]
                         else:
                             for index, group in enumerate(lst_level_0_group_by_dinamic):
                                 lst_levels_group_by_dinamic.append(lst_level_0_group_by_dinamic[index].replace('Nivel Analítica 0', level))

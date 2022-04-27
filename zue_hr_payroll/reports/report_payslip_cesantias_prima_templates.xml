@@ -82,7 +82,7 @@
                                         </tr>
                                         <tr>
                                             <td class="text-justify" colspan="2">
-                                                    <span t-esc="o.contract_id.get_amount_text(value_neto).lower().capitalize()"/>
+                                                    <span t-esc="o.contract_id.get_amount_text(value_neto).lower().capitalize()"/> pesos
                                             </td>
                                         </tr>
                                     </table>

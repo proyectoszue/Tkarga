@@ -124,15 +124,9 @@
                             <t t-set="autorizado" t-value="o.get_signature_certification()"/>
                             <img t-if="autorizado.get('firma')" t-att-src="image_data_uri(autorizado.get('firma'))"
                                  style="max-height: 150px;"/>
-                            <p style="text-align:justify;line-height:0px">
-                                <strong>
-                                    <span t-esc="autorizado.get('nombre')"/>
-                                </strong>
-                            </p>
-                            <p style="text-align:justify;line-height:0px">
-                                <strong>
-                                    <span t-esc="autorizado.get('cargo')"/>
-                                </strong>
+                            <br/><br/>
+                            <p>
+                                <span t-esc="cp.notes"/>
                             </p>
                         </div>
                     </div>

@@ -45,6 +45,7 @@
                                 <field name="code_description"/>
                                 <field name="move_type"/>
                                 <field name="retention_associated"/>
+                                <field name="required_retention_associated"/>
                             </group>
                         </group>
                         <notebook>
