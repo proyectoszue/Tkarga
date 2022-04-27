@@ -16,6 +16,7 @@ class account_account(models.Model):
     group_id = fields.Many2one(track_visibility='onchange')
     company_id = fields.Many2one(track_visibility='onchange')
     account_distribution = fields.Boolean(track_visibility='onchange')
+    exclude_balance_test = fields.Boolean('Permitir filtro de excluir en balance de prueba', track_visibility='onchange')
 
 class ReportCertificationReport(models.AbstractModel):
     _inherit = 'l10n_co_reports.certification_report'

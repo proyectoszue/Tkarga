@@ -38,6 +38,7 @@ class fiscal_accounting_code(models.Model):
                                   ('credit', 'Crédito'),
                                   ('net', 'Neto')], string='Tipo de movimiento', default='net',required=True)
     retention_associated = fields.Many2one('fiscal.accounting.code', string='Retención Asociada')
+    required_retention_associated = fields.Boolean('Aplica para todos los conceptos del formato asociado', track_visibility='onchange')
     accounting_details_ids = fields.Many2many('account.account',string='Cuentas')
     #concept = fields.Char(string="Concepto")
     #account_code = fields.Char(string="Código de cuenta")
@@ -222,11 +223,11 @@ class generate_media_magnetic(models.TransientModel):
                                 'x_digit_verification': partner.x_digit_verification,
                                 'street': partner.street,
                                 'state_id': partner.x_city.code[:2],
-                                'x_city': partner.x_city.code[2:],
+                                'x_city': partner.x_city.code,
                                 'amount': amount,
                                 'operator':obj_group_fiscal.operator,
                                 'tax': tax_base_amount,
-                                'x_code_dian':partner.country_id.code,
+                                'x_code_dian': '169',#partner.country_id.code,
                                 'phone': partner.phone or partner.mobile,
                                 'unit_rate': 0,
                                 'email': partner.email,
@@ -236,7 +237,10 @@ class generate_media_magnetic(models.TransientModel):
                         info_associated = {}
                         obj_account_fiscal_associated = self.env['fiscal.accounting.code'].search([('format_id', '=', format.format_associated_id.id)])
                         for fiscal_associated in obj_account_fiscal_associated:
-                            obj_retention_associated = self.env['fiscal.accounting.code'].search([('id','in',fiscal_associated.ids),('retention_associated','=',fiscal.id)])
+                            if (fiscal_associated.required_retention_associated == False):
+                                obj_retention_associated = self.env['fiscal.accounting.code'].search([('id','in',fiscal_associated.ids),('retention_associated','=',fiscal.id)])
+                            else:
+                                obj_retention_associated = self.env['fiscal.accounting.code'].search([('id', 'in', fiscal_associated.ids)])
                             moves_associated = self.env['account.move.line'].search(
                                 [('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
                                 ('move_id.accounting_closing_id','=',False),('account_id', 'in', obj_retention_associated.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
@@ -259,7 +263,10 @@ class generate_media_magnetic(models.TransientModel):
                         #Formatos asociados
                         obj_account_fiscal_associated = self.env['fiscal.accounting.code'].search([('format_id', '=', format.format_associated_id.id)])
                         for fiscal_associated in obj_account_fiscal_associated:
-                            obj_retention_associated = self.env['fiscal.accounting.code'].search([('id','in',fiscal_associated.ids),('retention_associated','=',fiscal.id)])
+                            if (fiscal_associated.required_retention_associated == False):
+                                obj_retention_associated = self.env['fiscal.accounting.code'].search([('id','in',fiscal_associated.ids),('retention_associated','=',fiscal.id)])
+                            else:
+                                obj_retention_associated = self.env['fiscal.accounting.code'].search([('id', 'in', fiscal_associated.ids)])
                             moves_associated = self.env['account.move.line'].search(
                                 [('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
                                 ('move_id.accounting_closing_id','=',False),('account_id', 'in', obj_retention_associated.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
@@ -284,11 +291,11 @@ class generate_media_magnetic(models.TransientModel):
                             'x_digit_verification': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_digit_verification,
                             'street': dict_partner_minor.get('group_fiscal').partner_minor_amounts.street,
                             'state_id': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_city.code[:2],
-                            'x_city': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_city.code[2:],
+                            'x_city': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_city.code,
                             'amount': abs(dict_partner_minor.get('amount',0)),
                             'operator': dict_partner_minor.get('group_fiscal').operator,
                             'tax': dict_partner_minor.get('tax',0),
-                            'x_code_dian': dict_partner_minor.get('group_fiscal').partner_minor_amounts.country_id.code,
+                            'x_code_dian': '169', #dict_partner_minor.get('group_fiscal').partner_minor_amounts.country_id.code,
                             'phone': dict_partner_minor.get('group_fiscal').partner_minor_amounts.phone or dict_partner_minor.get('group_fiscal').partner_minor_amounts.mobile,
                             'unit_rate': 0,
                             'email': dict_partner_minor.get('group_fiscal').partner_minor_amounts.email,
@@ -302,7 +309,9 @@ class generate_media_magnetic(models.TransientModel):
                     lst_Mvto.append({**media_magnetic, **dict_partner_minor_associated})
                     lst_partner_minor.append({**dict_partner_minor, **dict_partner_minor_associated})
             #Generar hoja de excel
-            sheet = book.add_worksheet(fiscal.format_id.format_id)
+            sheet = book.add_worksheet(format.format_id)
+            if len(lst_Mvto) == 0:
+                continue
             columns = []
             for field in lst_Mvto[0].keys():
                 field_name = dict(self.env['format.detail']._fields['available_fields'].selection).get(field,field.replace('_',' '))
@@ -334,7 +343,7 @@ class generate_media_magnetic(models.TransientModel):
 
         # Generar hoja de excel resumen
         sheet_resumen = book.add_worksheet("Resumen")
-        columns = ['Documento','Fecha','Referencia','Débito','Crédito','Balance','Nombre']
+        columns = ['Documento','Fecha','Referencia','Débito','Crédito','Balance','Número Documento','Nombre','Cuenta','Descripción Cuenta','Cuenta Analítíca']
         # Agregar columnas
         aument_columns = 0
         for column in columns:
@@ -346,7 +355,7 @@ class generate_media_magnetic(models.TransientModel):
         aument_rows_resumen = 1
         for move in info_moves:
             sheet_resumen.write(aument_rows_resumen, 0, move.move_name)
-            sheet_resumen.set_column(0, 0, len(str(move.move_name))+10)
+            sheet_resumen.set_column(0, 0, len(str(move.move_name))+13)
             sheet_resumen.write_datetime(aument_rows_resumen, 1, move.date, date_format)
             sheet_resumen.set_column(1, 1, len(str(move.date)) + 10)
             sheet_resumen.write(aument_rows_resumen, 2, move.ref)
@@ -354,11 +363,19 @@ class generate_media_magnetic(models.TransientModel):
             sheet_resumen.write(aument_rows_resumen, 3, move.debit)
             sheet_resumen.set_column(3, 3, len(str(move.debit)) + 10)
             sheet_resumen.write(aument_rows_resumen, 4, move.credit)
-            sheet_resumen.set_column(4, 4, len(str(move.credit)) + 10)
+            sheet_resumen.set_column(4, 4, len(str(move.credit)) + 15)
             sheet_resumen.write(aument_rows_resumen, 5, move.balance)
             sheet_resumen.set_column(5, 5, len(str(move.balance)) + 10)
-            sheet_resumen.write(aument_rows_resumen, 6, move.partner_id.name)
-            sheet_resumen.set_column(6, 6, len(str(move.partner_id.name)) + 10)
+            sheet_resumen.write(aument_rows_resumen, 6, move.partner_id.vat)
+            sheet_resumen.set_column(6, 6, len(str(move.partner_id.vat)) + 13)
+            sheet_resumen.write(aument_rows_resumen, 7, move.partner_id.name)
+            sheet_resumen.set_column(7, 7, len(str(move.partner_id.name)) + 13)
+            sheet_resumen.write(aument_rows_resumen, 8, move.account_id.code)
+            sheet_resumen.set_column(8, 8, len(str(move.account_id.code)) + 13)
+            sheet_resumen.write(aument_rows_resumen, 9, move.account_id.name)
+            sheet_resumen.set_column(9, 9, len(str(move.account_id.name)) + 15)
+            sheet_resumen.write(aument_rows_resumen, 10, move.analytic_account_id.name)
+            sheet_resumen.set_column(10, 10, len(str(move.analytic_account_id.name)) + 15)
             aument_rows_resumen = aument_rows_resumen + 1
 
         # Convertir en tabla
