@@ -15,7 +15,8 @@ class hr_type_overtime(models.Model):
                                       ('overtime_eddf','E-D-D/F | Extra diurna dominical/festivo'),
                                       ('overtime_endf','E-N-D/F | Extra nocturna dominical/festivo'),
                                       ('overtime_dof','D o F | Dominicales o festivos'),
-                                      ('overtime_rndf','RN-D/F | Recargo nocturno dominical/festivo')],'Tipo',  required=True)
+                                      ('overtime_rndf','RN-D/F | Recargo nocturno dominical/festivo'),
+                                      ('overtime_rdf','R-D/F | Recargo dominical/festivo')],'Tipo',  required=True)
     percentage = fields.Float(string='Porcentaje')
     equivalence_number_ne = fields.Integer(string='Num. Equivalencia NE')
 
@@ -38,7 +39,8 @@ class hr_overtime(models.Model):
     overtime_eddf = fields.Float('E-D-D/F', help='Extra diurna dominical/festivo') # EXTRA_DIURNA_DOMINICAL
     overtime_endf = fields.Float('E-N-D/F', help='Extra nocturna dominical/festivo') # EXTRA_NOCTURNA_DOMINICAL
     overtime_dof = fields.Float('D o F', help='Dominical o festivo') # DOMINICALES O FESTIVOS
-    overtime_rndf = fields.Float('RN-D/F', help='Recargo nocturno dominical/festivo') # EXTRA_RECARGO_DOMINICAL
+    overtime_rndf = fields.Float('RN-D/F', help='Recargo nocturno dominical/festivo') # EXTRA_RECARGO_NOCTURNO_DOMINICAL_FESTIVO
+    overtime_rdf = fields.Float('R-D/F', help='Recargo dominical/festivo')  # EXTRA_RECARGO_DOMINICAL_FESTIVO
     days_actually_worked = fields.Integer('Días efectivamente laborados')
     days_snack = fields.Integer('Días refrigerio')
     justification = fields.Char('Justificación')
@@ -47,7 +49,7 @@ class hr_overtime(models.Model):
 
     @api.model
     def create(self, vals):
-        total = vals.get('days_snack') + vals.get('days_actually_worked') + vals.get('overtime_rn') + vals.get('overtime_ext_d') + vals.get('overtime_ext_n') + vals.get('overtime_eddf') + vals.get('overtime_endf') + vals.get('overtime_dof') + vals.get('overtime_rndf')
+        total = vals.get('days_snack') + vals.get('days_actually_worked') + vals.get('overtime_rn') + vals.get('overtime_ext_d') + vals.get('overtime_ext_n') + vals.get('overtime_eddf') + vals.get('overtime_endf') + vals.get('overtime_dof') + vals.get('overtime_rndf') + vals.get('overtime_rdf')
         if total > 0:            
             if vals.get('employee_identification'):
                 obj_employee = self.env['hr.employee'].search([('identification_id', '=', vals.get('employee_identification'))])            
