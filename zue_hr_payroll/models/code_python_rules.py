@@ -147,7 +147,7 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje':
             total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
         else:
             total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
-        if (total/salario_minimo) > 4 and (total/salario_minimo) < 16:
+        if (total/salario_minimo) >= 4 and (total/salario_minimo) < 16:
             result =  round(total * 0.005 * (-1),-2)
         if  (total/salario_minimo) >= 16 and (total/salario_minimo) <= 17:
             result =  round(total * 0.006 * (-1),-2)

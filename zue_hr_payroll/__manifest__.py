@@ -49,6 +49,8 @@
         'views/actions_hr_absence_history.xml',
         'views/actions_hr_consolidated_reports.xml',
         'views/actions_payslip_reports_template.xml',
+        'views/actions_hr_transfers_of_entities.xml',
+        'views/actions_hr_withholding_and_income_certificate.xml',
         'reports/reports_payslip_header_footer_template.xml',
         'reports/report_payslip.xml',
         'reports/report_payslip_vacations_templates.xml',

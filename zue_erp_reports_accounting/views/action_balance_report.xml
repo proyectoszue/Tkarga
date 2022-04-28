@@ -47,6 +47,7 @@
                             <field name="filter_account_ids" widget="many2many_tags"/>
                             <field name="filter_accounting_class"/>
                             <field name="filter_show_only_terminal_accounts"/>
+                            <field name="filter_exclude_balance_test"/>
                         </group>
                         <group string="Terceros" colspan="4" attrs="{'invisible':[('type_balance', 'not in', ['2','2.1'])]}">
                             <field name="filter_partner_ids" widget="many2many_tags"/>

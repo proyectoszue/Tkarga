@@ -50,6 +50,7 @@
                             <field name="model_fields" widget="many2many_tags" invisible="1"/>
                             <field name="txt_model_fields" invisible="1"/>
                             <field name="body_labor_certificate" invisible="1"/>
+                            <field name="notes"/>
                             <field name="show_average_overtime"/>
                         </group>
                     </sheet>

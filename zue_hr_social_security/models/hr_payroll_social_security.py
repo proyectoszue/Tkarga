@@ -848,6 +848,15 @@ class hr_payroll_social_security(models.Model):
                             if debit_third_id == False and credit_third_id == False:
                                 raise ValidationError(_(f'Falta configurar la entidad para el proceso {description}.'))
 
+                            #Descripción final
+                            addref_work_address_account_moves = self.env['ir.config_parameter'].sudo().get_param(
+                                'zue_hr_payroll.addref_work_address_account_moves') or False
+                            if addref_work_address_account_moves and employee.address_id:
+                                if employee.address_id.parent_id:
+                                    description = f"{employee.address_id.parent_id.vat} {employee.address_id.display_name}|{description}"
+                                else:
+                                    description = f"{employee.address_id.vat} {employee.address_id.display_name}|{description}"
+
                             #Crear item contable
                             amount = value_account
                             if debit_account_id and amount != 0:

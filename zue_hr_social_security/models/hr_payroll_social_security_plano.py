@@ -248,7 +248,7 @@ class hr_payroll_social_security(models.Model):
             cIngreso = 'X' if item.nIngreso and item.nDiasLiquidados > 0 else ' '
             cRetiro = 'X' if item.nRetiro and item.nDiasLiquidados > 0 else ' '
             
-            obj_entities_history = self.env['hr.contract.setting.history'].search([('employee_id','=',item.employee_id.id),('date_history','>=',date_start),('date_history','<=',date_end)])
+            obj_entities_history = self.env['hr.contract.setting.history'].search([('employee_id','=',item.employee_id.id),('date_history','>=',date_start),('date_history','<=',date_end),('is_transfer','=',True)])
 
             entity_eps_history = False
             entity_pension_history = False            

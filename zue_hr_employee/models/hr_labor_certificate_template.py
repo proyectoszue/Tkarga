@@ -6,6 +6,7 @@ class hr_labor_certificate_template(models.Model):
     _description = 'Configuración plantilla certificado laboral'
 
     company_id = fields.Many2one('res.company', string='Compañía', default=lambda self: self.env.company)
+    notes = fields.Text(string='Notas:')
     #Encabezado y pie de pagina
     type_header_footer = fields.Selection([('default', 'Por defecto'),
                                            ('custom', 'Personalizado')], 'Tipo de encabezado y pie de pagina',

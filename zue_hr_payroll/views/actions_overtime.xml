@@ -60,6 +60,7 @@
                     <field name="overtime_endf"/>
                     <field name="overtime_dof"/>
                     <field name="overtime_rndf"/>
+                    <field name="overtime_rdf"/>
                     <field name="days_actually_worked"/>
                     <field name="days_snack"/>
                     <field name="justification"/>

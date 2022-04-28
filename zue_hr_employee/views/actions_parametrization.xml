@@ -167,7 +167,8 @@
                                         <field name="value_porc_sena_company"/>
                                         <field name="value_porc_icbf_company"/>
                                     </group>
-                                    <group string="Provisiones prestaciones" name="provisiones_prestaciones" priority="4">
+                                    <group string="Provisiones prestaciones" name="provisiones_prestaciones"
+                                           priority="4">
                                         <field name="value_porc_provision_bonus"/>
                                         <field name="value_porc_provision_cesantias"/>
                                         <field name="value_porc_provision_intcesantias"/>
@@ -207,6 +208,17 @@
                                             </tree>
                                         </field>
                                     </group>
+                                    <group>
+                                        <field name="img_header_filename" invisible="1"/>
+                                        <field name="img_header_file" filename="img_header_filename"/>
+                                    </group>
+                                    <group>
+                                        <field name="img_footer_filename" invisible="1"/>
+                                        <field name="img_footer_file" filename="img_footer_filename"/>
+                                    </group>
+                                </group>
+                                <group string="Estructura Certificado ingresos y retenciones">
+                                    <field name="report_income_and_withholdings" nolabel="1" widget="html"/>
                                 </group>
                             </page>
                         </notebook>
