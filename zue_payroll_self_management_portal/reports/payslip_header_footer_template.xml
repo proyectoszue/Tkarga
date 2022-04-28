@@ -8,9 +8,7 @@
                 <t t-if="cp_template.type_header_footer == 'default'">
                     <t t-call="web.external_layout">
                         <!-- Contenido dependiendo la estructura -->
-                        <t t-if="cp_template.type_report == 'nomina'">
-                            <t t-call="zue_payroll_self_management_portal.report_payslip_portal"/>
-                        </t>
+                        <t t-call="zue_payroll_self_management_portal.report_payslip_portal"/>
                         <!-- Firmas y observaciones -->
                         <div style="font-style: normal; font-size: 12px;">
                             <br/>
@@ -57,18 +55,9 @@
                             <span t-raw="cp_template.header_custom"/>
                         </div>
                         <!-- Contenido dependiendo la estructura -->
-                        <t t-if="cp_template.type_report == 'nomina'">
-                            <t t-call="hr_payroll.report_payslip"/>
-                        </t>
-                        <t t-if="cp_template.type_report == 'vacaciones'">
-                            <t t-call="zue_hr_payroll.report_liquidacion_vacaciones_document"/>
-                        </t>
-                        <t t-if="cp_template.type_report in ('prima','cesantias','intereses_cesantias')">
-                            <t t-call="zue_hr_payroll.report_liquidacion_cesantias_prima_document"/>
-                        </t>
-                        <t t-if="cp_template.type_report == 'contrato'">
-                            <t t-call="zue_hr_payroll.report_liquidacion_final_document"/>
-                        </t>
+
+                        <t t-call="zue_payroll_self_management_portal.report_payslip_portal"/>
+
                         <!-- Firmas y observaciones -->
                         <div style="font-style: normal; font-size: 12px;">
                             <br/>
