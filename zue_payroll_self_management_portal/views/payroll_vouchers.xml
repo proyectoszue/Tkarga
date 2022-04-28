@@ -29,7 +29,7 @@
                                 <select name="month" class="form-control form-inline" style="width:30%;">
                                     <option value="1">Enero</option>
                                     <option value="2">Febrero</option>
-                                    <option value="3">Merzo</option>
+                                    <option value="3">Marzo</option>
                                     <option value="4">Abril</option>
                                     <option value="5">Mayo</option>
                                     <option value="6">Junio</option>

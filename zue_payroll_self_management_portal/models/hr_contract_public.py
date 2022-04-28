@@ -52,3 +52,6 @@ class HrContractPublic(models.Model):
     
     def get_info_book_cesantias(self):
         return self.sudo().env['hr.contract'].search([('id','=',self.id)]).get_info_book_cesantias()
+
+    def get_accumulated_vacation_days(self):
+        return self.sudo().env['hr.contract'].search([('id','=',self.id)]).get_accumulated_vacation_days()        
