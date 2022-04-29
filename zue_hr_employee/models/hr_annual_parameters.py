@@ -11,9 +11,10 @@ class hr_conf_certificate_income(models.Model):
 
     annual_parameters_id = fields.Many2one('hr.annual.parameters', string='Parametro Anual', required=True)
     sequence = fields.Integer(string='Secuencia', required=True)
-    salary_rule_id = fields.Many2one('hr.salary.rule', string='Regla Salarial', required=True)
+    salary_rule_id = fields.Many2one('hr.salary.rule', string='Regla Salarial')
+    information_fields_id = fields.Many2one('ir.model.fields', string="Información", domain="[('model_id.model', '=', 'hr.employee')]")
 
-    _sql_constraints = [('change_conf_rule_uniq', 'unique(annual_parameters_id,salary_rule_id)',
+    _sql_constraints = [('change_conf_rule_uniq', 'unique(annual_parameters_id,information_fields_id,salary_rule_id)',
                          'Ya existe una regla salarial asignada para el reporte de ingresos y retenciones, por favor verificar')]
 
 
@@ -506,11 +507,6 @@ class hr_annual_parameters(models.Model):
     purchases_and_consumption = fields.Float(string='Compras y consumos')
     conf_certificate_income_ids = fields.One2many('hr.conf.certificate.income', 'annual_parameters_id',
                                                   string='Configuración de reglas salariales')
-    # Imagen Dia y Formato Número
-    img_header_file = fields.Binary('Logo Dian')
-    img_header_filename = fields.Char('Logo Dian filename')
-    img_footer_file = fields.Binary('Número de formato')
-    img_footer_filename = fields.Char('Número de formato filename')
     # HTML Certificado Ingreso y retenciones
     report_income_and_withholdings = fields.Html('Estructura Certificado ingresos y retenciones',default=default_html_report_income_and_withholdings)
 

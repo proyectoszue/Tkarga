@@ -28,6 +28,8 @@ class hr_payslip_reports_template(models.Model):
     txt_signature_reviewed = fields.Char(string='Contacto Revisó')
     signature_approved = fields.Boolean('Aprobó')
     txt_signature_approved = fields.Char(string='Contacto Aprobó')
+    signature_employee = fields.Boolean('Empleado')
+    txt_signature_employee = fields.Char(string='Contacto Empleado', help='Utilizar $_name_employee para que tome el nombre del empleado')
 
     _sql_constraints = [
         ('company_payslip_reports_template', 'UNIQUE (company_id,type_report)', 'Ya existe una configuración de plantilla de este tipo para esta compañía, por favor verificar')

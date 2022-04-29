@@ -77,7 +77,14 @@
                                     <td><span t-esc="o.date_from"/></td>
                                 </t>
                                 <td><span t-esc="o.date_to"/></td>
-                                <td><span t-esc="l.quantity"/></td>
+                                <td>
+                                    <t t-if="l.salary_rule_id.display_days_worked == True">
+                                        <span t-esc="sum([i.number_of_days for i in o.worked_days_line_ids.filtered(lambda x: x.code == 'WORK100')])"/>
+                                    </t>
+                                    <t t-else="">
+                                        <span t-field="l.quantity"/>
+                                    </t>
+                                </td>
                                 <td class="text-right"><span t-esc="l.total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/></td>
                             </span>
                             </tr>

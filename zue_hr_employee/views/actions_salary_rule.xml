@@ -35,6 +35,9 @@
                             <group name="base_seguridad_social" string="Base de seguridad social">
                                 <field name="base_seguridad_social"/>
                                 <field name="base_parafiscales"/>
+                                <separator string="Reportes"/>
+                                <field name="short_name"/>
+                                <field name="display_days_worked"/>
                             </group>
                         </group>
                     </page>

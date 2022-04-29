@@ -19,6 +19,14 @@
                             <field name="payslip_ids" widget="many2many_tags"/>
                             <field name="liquidations_ids" widget="many2many_tags"/>
                         </group>
+                        <group>
+                            <group>
+                                <field name="not_show_rule_entity"/>
+                            </group>
+                            <group>
+                                <field name="not_show_quantity" invisible="1"/>
+                            </group>
+                        </group>
                         <group string="Campos a mostrar">
                             <button name="show_all_fields" string="Seleccionar Todos" type="object"/>
                             <button name="not_show_all_fields" string="Borrar Todos" type="object"/>
