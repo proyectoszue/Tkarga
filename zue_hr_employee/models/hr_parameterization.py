@@ -171,4 +171,6 @@ class hr_salary_rule(models.Model):
     base_parafiscales = fields.Boolean('Para parafiscales', track_visibility='onchange')
     #Contabilización
     salary_rule_accounting = fields.One2many('hr.salary.rule.accounting', 'salary_rule', string="Contabilización", track_visibility='onchange')
-    
+    #Reportes
+    display_days_worked = fields.Boolean(string='Mostrar la cantidad de días trabajados en los formatos de impresión', track_visibility='onchange')
+    short_name = fields.Char(string='Nombre corto/reportes')

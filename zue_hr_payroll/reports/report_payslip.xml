@@ -187,7 +187,12 @@
                                                     <span t-field="line.category_id.name"/>
                                                 </td>
                                                 <td style="width: 7%">
-                                                    <span t-field="line.quantity"/>
+                                                    <t t-if="line.salary_rule_id.display_days_worked == True">
+                                                        <span t-esc="sum([i.number_of_days for i in o.worked_days_line_ids.filtered(lambda x: x.code == 'WORK100')])"/>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <span t-field="line.quantity"/>
+                                                    </t>
                                                 </td>
                                                 <t t-if="line.salary_rule_id.dev_or_ded == 'devengo'">
                                                     <td style="width: 14%">

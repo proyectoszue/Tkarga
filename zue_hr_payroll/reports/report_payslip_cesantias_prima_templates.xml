@@ -56,7 +56,14 @@
                                     <span t-if="not l.category_id.name in ['Neto','Bruto']">
                                         <td><span t-field="l.name"/></td>                                    
                                         <td><span t-esc="l.amount_base" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/></td>
-                                        <td><span t-esc="l.quantity"/></td>                                                              
+                                        <td>
+                                            <t t-if="l.salary_rule_id.display_days_worked == True">
+                                                <span t-esc="sum([i.number_of_days for i in o.worked_days_line_ids.filtered(lambda x: x.code == 'WORK100')])"/>
+                                            </t>
+                                            <t t-else="">
+                                                <span t-field="l.quantity"/>
+                                            </t>
+                                        </td>
                                         <td class="text-right"><span t-esc="l.total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/></td>                                       
                                         <t t-set="value_neto" t-value="value_neto + l.total" > </t>
                                     </span>

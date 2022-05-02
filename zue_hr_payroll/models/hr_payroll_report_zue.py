@@ -25,6 +25,8 @@ class HrPayrollReportZueFilter(models.TransientModel):
     show_job = fields.Boolean(string="Cargo", default= True)
     show_sena_code = fields.Boolean(string="Código SENA", default= True)
     show_basic_salary = fields.Boolean(string="Salario Base", default= True)
+    not_show_rule_entity = fields.Boolean(string="No mostrar las reglas + entidad", default= False)
+    not_show_quantity= fields.Boolean(string="No mostrar cantidades horas extra y prestaciones", default=False)
     excel_file = fields.Binary('Excel file')
     excel_file_name = fields.Char('Excel name', size=64)
 
@@ -176,7 +178,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
                     COALESCE(e.name,'') as "Seccional",COALESCE(f.name,'') as "Cuenta Analítica",
                     COALESCE(g.name,'') as "Cargo",COALESCE(d.code_sena,'') as "Código SENA",COALESCE(rp.name,'') as "Ubicación Laboral",COALESCE(dt.name,'') as "Departamento",
                     COALESCE(d.wage,0) as "Salario Base",'' as "Novedades",
-                    COALESCE(b.name,'') as "Regla Salarial",COALESCE(b.name,'') ||' '|| case when hc.code = 'SSOCIAL' then '' else COALESCE(COALESCE(rp_et.x_business_name,rp_et.name),'') end as "Reglas Salariales + Entidad",
+                    COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Regla Salarial",COALESCE(hr.short_name,COALESCE(hr.name,'')) ||' '|| case when hc.code = 'SSOCIAL' then '' else COALESCE(COALESCE(rp_et.x_business_name,rp_et.name),'') end as "Reglas Salariales + Entidad",
                     COALESCE(hc.name,'') as "Categoría",COALESCE(b.sequence,0) as "Secuencia",COALESCE(Sum(b.total),0) as "Monto"
             From hr_payslip as a 
             --Info Empleado
@@ -187,6 +189,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
                         inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)) as c on a.employee_id = c.id
             Inner Join hr_contract as d on a.contract_id = d.id
             Left Join hr_payslip_line as b on a.id = b.slip_id
+            Left Join hr_salary_rule as hr on b.salary_rule_id = hr.id
             Left Join hr_salary_rule_category as hc on b.category_id = hc.id
             Left join zue_res_branch as e on c.branch_id = e.id
             Left join account_analytic_account as f on c.analytic_account_id = f.id
@@ -198,7 +201,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
             Left Join res_partner rp_et on et.partner_id = rp_et.id            
             Where a.id in (%s)     
             Group By c.item,c.identification_id,c.name,d.date_start,e.name,
-                        f.name,g.name,d.code_sena,rp.name,dt.name,d.wage,b.name,hc.code,
+                        f.name,g.name,d.code_sena,rp.name,dt.name,d.wage,hr.short_name,hr.name,hc.code,
                         rp_et.x_business_name,rp_et.name,hc.name,b.sequence
         ''' % (str_ids,str_ids)
 
@@ -208,10 +211,11 @@ class HrPayrollReportZueFilter(models.TransientModel):
                 COALESCE(e.name,'') as "Seccional",COALESCE(f.name,'') as "Cuenta Analítica",
                 COALESCE(g.name,'') as "Cargo",COALESCE(d.code_sena,'') as "Código SENA",COALESCE(rp.name,'') as "Ubicación Laboral",COALESCE(dt.name,'') as "Departamento",
                 COALESCE(d.wage,0) as "Salario Base",'' as "Novedades",
-                b.name as "Regla Salarial",REPLACE_TITULO,
+                COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Regla Salarial",REPLACE_TITULO,
                 hc.name as "Categoría",b.sequence as "Secuencia",REPLACE_VALUE
             From hr_payslip as a 
-            Inner Join hr_payslip_line as b on a.id = b.slip_id                
+            Inner Join hr_payslip_line as b on a.id = b.slip_id   
+            Inner Join hr_salary_rule as hr on b.salary_rule_id = hr.id             
             Inner Join hr_salary_rule_category as hc on b.category_id = hc.id REPLACE_FILTER_RULE_CATEGORY
             --Info Empleado
             Inner Join (Select distinct row_number() over(order by a.name) as item,
@@ -230,7 +234,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
             Left Join res_partner rp_et on et.partner_id = rp_et.id            
             Where a.id in (%s)
             Group By c.item,c.identification_id,c.name,d.date_start,e.name,
-                        f.name,g.name,d.code_sena,rp.name,dt.name,d.wage,b.name,hc.code,
+                        f.name,g.name,d.code_sena,rp.name,dt.name,d.wage,hr.short_name,hr.name,hc.code,
                         rp_et.x_business_name,rp_et.name,hc.name,b.sequence
         ''' % (str_ids,str_ids)
 
@@ -244,13 +248,13 @@ class HrPayrollReportZueFilter(models.TransientModel):
                         {query_amount_rules}
                         Union 
                         -- CANTIDAD SOLO PARA HORAS EXTRAS Y PRESTACIONES SOCIALES (CESANTIAS & PRIMA)
-                        {query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Cantidad de ' || b.name as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.quantity),0) as "Cantidad"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and hc.code in ('HEYREC','PRESTACIONES_SOCIALES') ''')}
+                        {query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Cantidad de ' || COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.quantity),0) as "Cantidad"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and hc.code in ('HEYREC','PRESTACIONES_SOCIALES') ''')}
         				Union 
         				-- BASE SOLO PARA PRESTACIONES SOCIALES (CESANTIAS & PRIMA)
-        				{query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Base de ' || b.name as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.amount_base),0) as "Base"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and hc.code in ('PRESTACIONES_SOCIALES') ''')}
+        				{query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Base de ' || COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.amount_base),0) as "Base"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and hc.code in ('PRESTACIONES_SOCIALES') ''')}
         				Union
         				-- DIAS AUSENCIAS NO REMUNERADOS		
-        				{query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Días Ausencias no remuneradas de ' || b.name as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.days_unpaid_absences),0) as "Dias Ausencias no remuneradas"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and b.days_unpaid_absences > 0 ''')}
+        				{query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Días Ausencias no remuneradas de ' || COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.days_unpaid_absences),0) as "Dias Ausencias no remuneradas"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and b.days_unpaid_absences > 0 ''')}
                     ) as a 
                 """
         
@@ -271,10 +275,11 @@ class HrPayrollReportZueFilter(models.TransientModel):
                 Where a.id in (%s)
                 Group By c.name,wt.name
                 Union
-                Select  c.name,b.name as "Regla Salarial",b.name ||' '|| case when hc.code = 'SSOCIAL' then '' else COALESCE(COALESCE(rp_et.x_business_name,rp_et.name),'') end as "Reglas Salariales + Entidad",
+                Select  c.name,COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Regla Salarial",COALESCE(hr.short_name,COALESCE(hr.name,'')) ||' '|| case when hc.code = 'SSOCIAL' then '' else COALESCE(COALESCE(rp_et.x_business_name,rp_et.name),'') end as "Reglas Salariales + Entidad",
                         hc.name as "Categoría",b.sequence as "Secuencia",COALESCE(Sum(b.total),0) as "Monto"
                 From hr_payslip as a 
                 Inner Join hr_payslip_line as b on a.id = b.slip_id
+                Inner Join hr_salary_rule as hr on b.salary_rule_id = hr.id
                 Inner Join hr_salary_rule_category as hc on b.category_id = hc.id
                 --Info Empleado
                 Inner Join hr_employee  as c on a.employee_id = c.id                
@@ -283,12 +288,13 @@ class HrPayrollReportZueFilter(models.TransientModel):
                 Left Join hr_employee_entities et on b.entity_id = et.id
                 Left Join res_partner rp_et on et.partner_id = rp_et.id
                 Where a.id in (%s)
-                Group By c.name,b.name,hc.code,rp_et.x_business_name,rp_et.name,hc.name,b.sequence
+                Group By c.name,hr.short_name,hr.name,hc.code,rp_et.x_business_name,rp_et.name,hc.name,b.sequence
                 Union
-                Select c.name,b.name as "Regla Salarial",'Cantidad de ' || b.name as "Reglas Salariales + Entidad",
+                Select c.name,COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Regla Salarial",'Cantidad de ' || COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Reglas Salariales + Entidad",
                        hc.name as "Categoría",b.sequence as "Secuencia",COALESCE(Sum(b.quantity),0) as "Cantidad"
                 From hr_payslip as a 
-                Inner Join hr_payslip_line as b on a.id = b.slip_id                
+                Inner Join hr_payslip_line as b on a.id = b.slip_id         
+                Inner Join hr_salary_rule as hr on b.salary_rule_id = hr.id       
                 Inner Join hr_salary_rule_category as hc on b.category_id = hc.id and hc.code = 'HEYREC'
                 --Info Empleado
                 Inner Join hr_employee  as c on a.employee_id = c.id
@@ -297,7 +303,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
                 Left Join hr_employee_entities et on b.entity_id = et.id
                 Left Join res_partner rp_et on et.partner_id = rp_et.id 
                 Where a.id in (%s)
-                Group By c.name,b.name,hc.code,rp_et.x_business_name,rp_et.name,hc.name,b.sequence
+                Group By c.name,hr.short_name,hr.name,hc.code,rp_et.x_business_name,rp_et.name,hc.name,b.sequence
             ) as a 
             Group By "Regla Salarial","Reglas Salariales + Entidad","Categoría","Secuencia"
             order by "Item","Empleado","Secuencia"
@@ -366,8 +372,13 @@ class HrPayrollReportZueFilter(models.TransientModel):
             position_initial += 1
 
         #Pivotear consulta final
+        if self.not_show_rule_entity:
+            columns_pivot_final = ['Secuencia', 'Categoría', 'Regla Salarial']
+        else:
+            columns_pivot_final = ['Secuencia', 'Categoría', 'Reglas Salariales + Entidad']
+
         pivot_report = pd.pivot_table(df_report, values='Monto', index=columns_index,
-                                      columns=['Secuencia', 'Categoría', 'Reglas Salariales + Entidad'], aggfunc=np.sum)
+                                      columns=columns_pivot_final, aggfunc=np.sum)
         
         #Obtener titulo y fechas de liquidación
         text_title = 'Informe de Liquidación'
