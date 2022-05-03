@@ -19,7 +19,7 @@ class ResConfigSettings(models.TransientModel):
                                                         ('1','Crear movimiento contable por empleado')],
                                         string='Contabilización por lote')
     addref_work_address_account_moves = fields.Boolean('¿Agregar ubicación laboral del empleado en la descripción de los movimientos contables?')
-
+    round_payroll = fields.Boolean('NO redondear decimales en procesos de liquidación')
     pay_vacations_in_payroll = fields.Boolean('¿Liquidar vacaciones en nómina?')
     vacation_days_calculate_absences = fields.Char('Días de vacaciones para calcular deducciones')
     #Nómina electronica
@@ -34,6 +34,7 @@ class ResConfigSettings(models.TransientModel):
         set_param = self.env['ir.config_parameter'].sudo().set_param
         set_param('zue_hr_payroll.module_hr_payroll_batch_account', self.module_hr_payroll_batch_account)
         set_param('zue_hr_payroll.addref_work_address_account_moves', self.addref_work_address_account_moves)
+        set_param('zue_hr_payroll.round_payroll', self.round_payroll)
         set_param('zue_hr_payroll.pay_vacations_in_payroll', self.pay_vacations_in_payroll)
         set_param('zue_hr_payroll.vacation_days_calculate_absences', self.vacation_days_calculate_absences)
 
@@ -42,6 +43,7 @@ class ResConfigSettings(models.TransientModel):
         get_param = self.env['ir.config_parameter'].sudo().get_param
         res['module_hr_payroll_batch_account'] = get_param('zue_hr_payroll.module_hr_payroll_batch_account')
         res['addref_work_address_account_moves'] = get_param('zue_hr_payroll.addref_work_address_account_moves')
+        res['round_payroll'] = get_param('zue_hr_payroll.round_payroll')
         res['pay_vacations_in_payroll'] = get_param('zue_hr_payroll.pay_vacations_in_payroll')
         res['vacation_days_calculate_absences'] = get_param('zue_hr_payroll.vacation_days_calculate_absences')
         return res

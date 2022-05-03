@@ -88,7 +88,8 @@ class Hr_payslip(models.Model):
         rules_dict = {}
         worked_days_dict = {line.code: line for line in self.worked_days_line_ids if line.code}
         inputs_dict = {line.code: line for line in self.input_line_ids if line.code}
-        
+        round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
+
         employee = self.employee_id
         contract = self.contract_id
 
@@ -155,17 +156,17 @@ class Hr_payslip(models.Model):
                     auxtransporte_tope = annual_parameters.top_max_transportation_assistance
                     #Calculo base
                     if wage <= auxtransporte_tope:
-                        amount_base = round(wage + auxtransporte + acumulados_promedio, 0)
+                        amount_base = round(wage + auxtransporte + acumulados_promedio, 0) if round_payroll == False else wage + auxtransporte + acumulados_promedio
                     else:
-                        amount_base = round(wage + acumulados_promedio, 0)              
+                        amount_base = round(wage + acumulados_promedio, 0) if round_payroll == False else wage + acumulados_promedio
 
                     #amount = round(amount_base * dias_liquidacion / 360, 0)
-                    amount = round(amount_base / 360, 0)
+                    amount = round(amount_base / 360, 0) if round_payroll == False else amount_base / 360
                     qty = dias_liquidacion
 
                     if rule.code == 'INTCESANTIAS':
-                        amount_base = round(amount * qty * rate / 100.0,0)
-                        amount = round(amount_base / 360, 0)
+                        amount_base = round(amount * qty * rate / 100.0,0) if round_payroll == False else amount * qty * rate / 100.0
+                        amount = round(amount_base / 360, 0) if round_payroll == False else amount_base / 360
                         qty = dias_liquidacion
                         rate = 12
 
@@ -175,11 +176,12 @@ class Hr_payslip(models.Model):
                         if entity.contrib_id.type_entities == 'cesantias':
                             entity_cesantias = entity.partner_id
 
-                amount = round(amount,0) #Se redondean los decimales de todas las reglas
+                amount = round(amount,0) if round_payroll == False else amount
                 #check if there is already a rule computed with that code
                 previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
                 #set/overwrite the amount computed for this rule in the localdict
-                tot_rule = round(amount * qty * rate / 100.0,0) + previous_amount
+                tot_rule = round(amount * qty * rate / 100.0,0) if round_payroll == False else amount * qty * rate / 100.0
+                tot_rule += previous_amount
                 localdict[rule.code] = tot_rule
                 rules_dict[rule.code] = rule
                 # sum the amount for its salary category

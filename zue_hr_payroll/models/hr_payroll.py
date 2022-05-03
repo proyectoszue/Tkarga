@@ -245,8 +245,9 @@ class Hr_payslip_line(models.Model):
 
     @api.depends('quantity', 'amount', 'rate')
     def _compute_total(self):
+        round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
         for line in self:
-            line.total = round(float(line.quantity) * line.amount * line.rate / 100,0)
+            line.total = round(float(line.quantity) * line.amount * line.rate / 100,0) if round_payroll == False else float(line.quantity) * line.amount * line.rate / 100
 
 class Hr_payslip_not_line(models.Model):
     _name = 'hr.payslip.not.line'
@@ -477,6 +478,7 @@ class Hr_payslip(models.Model):
             'zue_hr_payroll.pay_vacations_in_payroll')) or False
         vacation_days_calculate_absences = int(self.env['ir.config_parameter'].sudo().get_param(
             'zue_hr_payroll.vacation_days_calculate_absences')) or 5
+        round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
         
         worked_days_entry = 0
         leaves_days_law = 0
@@ -614,7 +616,7 @@ class Hr_payslip(models.Model):
             if concepts.amount != 0 and inherit_prima == 0:
                 previous_amount = concepts.salary_rule_id.code in localdict and localdict[concepts.salary_rule_id.code] or 0.0
                 #set/overwrite the amount computed for this rule in the localdict
-                tot_rule = round(concepts.amount * 1.0 * 100 / 100.0,0)
+                tot_rule = round(concepts.amount * 1.0 * 100 / 100.0,0) if round_payroll == False else concepts.amount * 1.0 * 100 / 100.0
 
                 #LIQUIDACION DE CONTRATO SOLO DEV OR DED DEPENDIENTO SU ORIGEN
                 if (inherit_contrato_dev != 0 or inherit_contrato_ded != 0) and self.novelties_payroll_concepts == False and not concepts.salary_rule_id.code in ['TOTALDEV','TOTALDED','NET']:
@@ -749,7 +751,7 @@ class Hr_payslip(models.Model):
                                         amount, qty, rate = 0,1.0,100
 
                             #Continuar con el proceso normal
-                            amount = round(amount,0) #Se redondean los decimales de todas las reglas
+                            amount = round(amount,0) if round_payroll == False else amount #Se redondean los decimales de todas las reglas
                             #check if there is already a rule computed with that code
                             previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
                             #set/overwrite the amount computed for this rule in the localdict
@@ -833,7 +835,7 @@ class Hr_payslip(models.Model):
                             or (inherit_vacation != 0 and rule.dev_or_ded != 'deduccion' and not rule.code in ['TOTALDEV','NET']):
                         amount, qty, rate = 0,1.0,100
 
-                    amount = round(amount,0) #Se redondean los decimales de todas las reglas
+                    amount = round(amount,0) if round_payroll == False else amount #Se redondean los decimales de todas las reglas
                     #check if there is already a rule computed with that code
                     previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
                     #set/overwrite the amount computed for this rule in the localdict
