@@ -69,6 +69,7 @@ class Hr_payslip(models.Model):
         rules_dict = {}
         worked_days_dict = {line.code: line for line in self.worked_days_line_ids if line.code}
         inputs_dict = {line.code: line for line in self.input_line_ids if line.code}
+        round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
         
         employee = self.employee_id
         contract = self.contract_id
@@ -126,12 +127,12 @@ class Hr_payslip(models.Model):
                     auxtransporte = annual_parameters.transportation_assistance_monthly
                     auxtransporte_tope = annual_parameters.top_max_transportation_assistance
                     if wage <= auxtransporte_tope:
-                        amount_base = round(wage + auxtransporte + acumulados_promedio, 0)
+                        amount_base = round(wage + auxtransporte + acumulados_promedio, 0) if round_payroll == False else wage + auxtransporte + acumulados_promedio
                     else:
-                        amount_base = round(wage + acumulados_promedio, 0)              
+                        amount_base = round(wage + acumulados_promedio, 0) if round_payroll == False else wage + acumulados_promedio
 
                     #amount = round(amount_base * dias_liquidacion / 360, 0)
-                    amount = amount_base / 360
+                    amount = round(amount_base / 360,0) if round_payroll == False else amount_base / 360
                     qty = dias_liquidacion
 
                 #amount = round(amount,0) #Se redondean los decimales de todas las reglas

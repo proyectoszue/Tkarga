@@ -113,7 +113,8 @@ class Hr_payslip(models.Model):
         rules_dict = {}
         worked_days_dict = {line.code: line for line in self.worked_days_line_ids if line.code}
         inputs_dict = {line.code: line for line in self.input_line_ids if line.code}
-        
+        round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
+
         employee = self.employee_id
         contract = self.contract_id
         year = self.date_from.year
@@ -263,7 +264,7 @@ class Hr_payslip(models.Model):
 
                         localdict.update({'leaves':  BrowsableObject(employee.id, leaves, self.env)})
                         amount, qty, rate = rule._compute_rule(localdict)
-                        amount = round(amount,0) #Se redondean los decimales de todas las reglas
+                        amount = round(amount,0) if round_payroll == False else amount#Se redondean los decimales de todas las reglas
                         #check if there is already a rule computed with that code
                         previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
                         #set/overwrite the amount computed for this rule in the localdict
@@ -335,7 +336,7 @@ class Hr_payslip(models.Model):
 
                         localdict.update({'leaves':  BrowsableObject(employee.id, leaves, self.env)})
                         amount, qty, rate = rule._compute_rule(localdict)
-                        amount = round(amount,0) #Se redondean los decimales de todas las reglas
+                        amount = round(amount,0) if round_payroll == False else amount#Se redondean los decimales de todas las reglas
                         #check if there is already a rule computed with that code
                         previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
                         #set/overwrite the amount computed for this rule in the localdict
@@ -411,10 +412,10 @@ class Hr_payslip(models.Model):
 
                         amount_base = contract.wage + acumulados_promedio
 
-                        amount = round(amount_base / 720, 0)
+                        amount = round(amount_base / 720, 0) if round_payroll == False else amount_base / 720
                         qty = dias_liquidacion
 
-                    amount = round(amount,0) #Se redondean los decimales de todas las reglas
+                    amount = round(amount,0) if round_payroll == False else amount #Se redondean los decimales de todas las reglas
                     #check if there is already a rule computed with that code
                     previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
                     #set/overwrite the amount computed for this rule in the localdict
