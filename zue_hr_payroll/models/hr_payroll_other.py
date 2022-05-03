@@ -25,6 +25,7 @@ class Hr_payslip(models.Model):
         rules_dict = {}
         worked_days_dict = {line.code: line for line in self.worked_days_line_ids if line.code}
         inputs_dict = {line.code: line for line in self.input_line_ids if line.code}
+        round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
 
         employee = self.employee_id
         contract = self.contract_id
@@ -61,7 +62,7 @@ class Hr_payslip(models.Model):
                 previous_amount = concepts.salary_rule_id.code in localdict and localdict[
                     concepts.salary_rule_id.code] or 0.0
                 # set/overwrite the amount computed for this rule in the localdict
-                tot_rule = round(concepts.amount * 1.0 * 100 / 100.0, 0)
+                tot_rule = round(concepts.amount * 1.0 * 100 / 100.0, 0) if round_payroll == False else concepts.amount * 1.0 * 100 / 100.0
 
                 localdict[concepts.salary_rule_id.code + '-INDEPENDIENTE'] = tot_rule
                 rules_dict[concepts.salary_rule_id.code + '-INDEPENDIENTE'] = concepts.salary_rule_id
