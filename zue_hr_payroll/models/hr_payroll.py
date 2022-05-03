@@ -245,9 +245,9 @@ class Hr_payslip_line(models.Model):
 
     @api.depends('quantity', 'amount', 'rate')
     def _compute_total(self):
-        round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
+        #round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
         for line in self:
-            line.total = round(float(line.quantity) * line.amount * line.rate / 100,0) if round_payroll == False else float(line.quantity) * line.amount * line.rate / 100
+            line.total = round(float(line.quantity) * line.amount * line.rate / 100,0) #if round_payroll == False else float(line.quantity) * line.amount * line.rate / 100
 
 class Hr_payslip_not_line(models.Model):
     _name = 'hr.payslip.not.line'
