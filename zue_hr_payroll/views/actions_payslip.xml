@@ -169,6 +169,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='sequence']" position="after">
                     <field name="deduct_deductions" widget="radio" attrs="{'invisible':[('is_leave', '=', False)]}"/>
+                    <field name="not_contribution_base" attrs="{'invisible':[('is_leave', '=', False)]}"/>
                 </xpath>
             </field>
         </record>
