@@ -176,6 +176,24 @@ class Payslips(BrowsableObject):
 
         return res and res[0] or 0.0
 
+    # Calcula los dias que son validos para seguridad social
+    def sum_days_contribution_base(self, from_date, to_date):
+        from_month = from_date.month
+        from_year = from_date.year
+
+        to_month = to_date.month + 1 if to_date.month != 12 else 1
+        to_year = to_date.year + 1 if to_date.month == 12 else to_date.year
+
+        self.env.cr.execute("""Select coalesce(number_of_days,0) as dias from hr_payslip_worked_days hd
+    								Inner Join hr_payslip as hp on hp.id = hd.payslip_id and hp.state = 'done'
+    								Inner Join hr_work_entry_type as wt on hd.work_entry_type_id = wt.id
+    								Where wt.not_contribution_base = False AND hp.contract_id = %s
+    								AND hp.date_from >= '%s-%s-01' AND hp.date_to < '%s-%s-01'""",
+                            (self.contract_id.id, from_year, from_month, to_year, to_month))
+        res = self.env.cr.fetchone()
+
+        return res and res[0] or 0.0
+
     #Retorna el objeto de la regla salarial
     def get_salary_rule(self, salary_rule_code, type_employee_id):
         res = self.env['hr.salary.rule'].search([('code', '=', salary_rule_code),('types_employee','in',[type_employee_id])])
