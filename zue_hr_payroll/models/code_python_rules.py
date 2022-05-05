@@ -30,7 +30,8 @@ dias = 0 if aplicar == 0 else payslip.sum_days_works('WORK100', payslip.date_fro
 dias += worked_days.WORK100.number_of_days if worked_days.WORK100 else 0
 if worked_days.COMPENSATORIO != 0.0:
     dias += worked_days.COMPENSATORIO.number_of_days
-if obj_salary_rule and dias != 0.0 and contract.contract_type != 'aprendizaje':
+liquidated_aux_transport = False if payslip.settle_payroll_concepts == False and inherit_contrato!=0 else True
+if obj_salary_rule and liquidated_aux_transport and dias != 0.0 and contract.contract_type != 'aprendizaje':
     auxtransporte = annual_parameters.transportation_assistance_monthly
     auxtransporte_tope = annual_parameters.top_max_transportation_assistance
     day_initial_payrroll = payslip.date_from.day
@@ -67,8 +68,10 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje':
             if total_statute > 0:
                 total += total_statute
         # Fin Ley 1393
-        dias_work = payslip.sum_days_works('WORK100', payslip.date_from, payslip.date_to)
-        dias_work_act = worked_days.WORK100.number_of_days if worked_days.WORK100 else 0
+        dias_work = payslip.sum_days_contribution_base(payslip.date_from, payslip.date_to)
+        dias_work_act = 0
+        for wd in worked_days.dict.values():
+            dias_work_act += wd.number_of_days if wd.work_entry_type_id.not_contribution_base == False else 0
         dias_work = dias_work_act if (aplicar == 0) else dias_work + dias_work_act
         top_twenty_five_smmlv = (annual_parameters.top_twenty_five_smmlv / 30) * dias_work
         if contract.modality_salary == 'integral':
@@ -102,8 +105,10 @@ if obj_salary_rule and contract.contract_type != 'aprendizaje' and employee.subt
             if total_statute > 0:
                 total += total_statute
         # Fin Ley 1393
-        dias_work = payslip.sum_days_works('WORK100', payslip.date_from, payslip.date_to)
-        dias_work_act = worked_days.WORK100.number_of_days if worked_days.WORK100 else 0
+        dias_work = payslip.sum_days_contribution_base(payslip.date_from, payslip.date_to)
+        dias_work_act = 0
+        for wd in worked_days.dict.values():
+            dias_work_act += wd.number_of_days if wd.work_entry_type_id.not_contribution_base == False else 0
         dias_work = dias_work_act if (aplicar == 0) else dias_work + dias_work_act
         top_twenty_five_smmlv = (annual_parameters.top_twenty_five_smmlv / 30) * dias_work
         if contract.modality_salary == 'integral':

@@ -112,12 +112,16 @@ class hr_executing_provisions(models.Model):
                         #Obtener fecha vacaciones
                         date_vacation = contract.date_start
                         if retirement_date == False:
-                            obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<',date_end),('departure_date','<=',date_end),('leave_id','=',False)])
+                            obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<',date_end),('departure_date','<=',date_end)])
                         else:
-                            obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date),('departure_date','<=',retirement_date),('leave_id','=',False)])
+                            obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date),('departure_date','<=',retirement_date)])
                         if obj_vacation:
                             for history in sorted(obj_vacation, key=lambda x: x.final_accrual_date):
-                                date_vacation = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_vacation else date_vacation             
+                                if history.leave_id:
+                                    if history.leave_id.holiday_status_id.unpaid_absences == False:
+                                        date_vacation = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_vacation else date_vacation
+                                else:
+                                    date_vacation = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_vacation else date_vacation
 
                         #Simular liquidación de cesantias
                         Payslip = env['hr.payslip']
@@ -226,9 +230,13 @@ class hr_executing_provisions(models.Model):
                                     current_payable_value = amount - value_payments
 
                                 #Valor provision Mes
-                                if value_payments > 0 and provision == 'vacaciones':
+                                if value_payments > 0 and current_payable_value < 0 and provision == 'vacaciones':
+                                    value_provision = abs(current_payable_value)
+                                    current_payable_value = 0
+                                elif value_payments > 0 and current_payable_value >= 0 and provision == 'vacaciones':
                                     value_provision = amount - current_payable_value
-                                elif value_payments == 0 and provision == 'vacaciones':
+                                    current_payable_value = amount
+                                elif value_payments == 0 and current_payable_value >= 0 and provision == 'vacaciones':
                                     value_provision = amount - amount_ant
                                 else:
                                     value_provision = amount - value_balance
