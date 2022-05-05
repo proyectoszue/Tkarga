@@ -11,11 +11,11 @@ class hr_conf_certificate_income(models.Model):
 
     annual_parameters_id = fields.Many2one('hr.annual.parameters', string='Parametro Anual', required=True)
     sequence = fields.Integer(string='Secuencia', required=True)
-    salary_rule_id = fields.Many2one('hr.salary.rule', string='Regla Salarial')
-    information_fields_id = fields.Many2one('ir.model.fields', string="Información", domain="[('model_id.model', '=', 'hr.employee')]")
+    salary_rule_id = fields.Many2many('hr.salary.rule', string='Regla Salarial')
+    information_fields_id = fields.Many2one('ir.model.fields', string="Información", domain="[('model_id.model', 'in', ['hr.employee','res.partner','hr.contract'])]")
 
-    _sql_constraints = [('change_conf_rule_uniq', 'unique(annual_parameters_id,information_fields_id,salary_rule_id)',
-                         'Ya existe una regla salarial asignada para el reporte de ingresos y retenciones, por favor verificar')]
+    _sql_constraints = [('change_conf_rule_uniq', 'unique(annual_parameters_id,sequence)',
+                         'Ya existe esta secuencia, por favor verificar')]
 
 
 default_html_report_income_and_withholdings = '''

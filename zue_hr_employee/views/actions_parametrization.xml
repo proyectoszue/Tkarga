@@ -208,7 +208,7 @@
                                                 <tree editable="bottom">
                                                     <field name="sequence"/>
                                                     <field name="information_fields_id"/>
-                                                    <field name="salary_rule_id"/>
+                                                    <field name="salary_rule_id" widget="many2many_tags"/>
                                                 </tree>
                                             </field>
                                         </group>

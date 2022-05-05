@@ -158,7 +158,8 @@ class HrPayrollReportZueFilter(models.TransientModel):
                         a.id,identification_id,a.name,a.branch_id,a.analytic_account_id,a.job_id,
                         address_id,a.department_id
                         From hr_employee as a
-                        inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)) as c on a.employee_id = c.id
+                        inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)
+                        group by a.id,identification_id,a.name,a.branch_id,a.analytic_account_id,a.job_id,address_id,a.department_id) as c on a.employee_id = c.id
             Inner Join hr_contract as d on a.contract_id = d.id
             Inner Join hr_payslip_worked_days as b on a.id = b.payslip_id
             inner join hr_work_entry_type as wt on b.work_entry_type_id = wt.id
@@ -186,7 +187,8 @@ class HrPayrollReportZueFilter(models.TransientModel):
                         a.id,identification_id,a.name,a.branch_id,a.analytic_account_id,a.job_id,
                         address_id,a.department_id
                         From hr_employee as a
-                        inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)) as c on a.employee_id = c.id
+                        inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)
+                        group by a.id,identification_id,a.name,a.branch_id,a.analytic_account_id,a.job_id,address_id,a.department_id) as c on a.employee_id = c.id
             Inner Join hr_contract as d on a.contract_id = d.id
             Left Join hr_payslip_line as b on a.id = b.slip_id
             Left Join hr_salary_rule as hr on b.salary_rule_id = hr.id
@@ -222,7 +224,8 @@ class HrPayrollReportZueFilter(models.TransientModel):
                         a.id,identification_id,a.name,a.branch_id,a.analytic_account_id,a.job_id,
                         address_id,a.department_id
                         From hr_employee as a
-                        inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)) as c on a.employee_id = c.id
+                        inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)
+                        group by a.id,identification_id,a.name,a.branch_id,a.analytic_account_id,a.job_id,address_id,a.department_id) as c on a.employee_id = c.id
             Inner Join hr_contract as d on a.contract_id = d.id
             Left join zue_res_branch as e on c.branch_id = e.id
             Left join account_analytic_account as f on c.analytic_account_id = f.id
