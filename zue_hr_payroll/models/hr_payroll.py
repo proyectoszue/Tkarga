@@ -199,6 +199,9 @@ class HrPayslipEmployees(models.TransientModel):
                                              states=['open'])  # , 'close'
         contracts._generate_work_entries(payslip_run.date_start, payslip_run.date_end)
 
+        if len(contracts) == 0:
+            raise UserError(_("No se encontraron contratos activos para procesar, por favor verificar."))
+        
         #--------------------------MANEJO POR HILOS PARA LA LIQUIDACIÓN EN LOTE--------------------------------
 
         # Se dividen los contratos en 3 lotes para ser ejecutados en 2 hilos
