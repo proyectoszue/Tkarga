@@ -129,15 +129,27 @@ class HrPayslipEmployees(models.TransientModel):
     def compute_sheet(self):
         self.ensure_one()
         if not self.env.context.get('active_id'):
-            from_date = fields.Date.to_date(self.env.context.get('default_date_start'))
-            end_date = fields.Date.to_date(self.env.context.get('default_date_end'))
-            payslip_run = self.env['hr.payslip.run'].create({
-                'name': from_date.strftime('%B %Y'),
-                'date_start': from_date,
-                'date_end': end_date,
-            })
+            #from_date = fields.Date.to_date(self.env.context.get('default_date_start'))
+            #end_date = fields.Date.to_date(self.env.context.get('default_date_end'))
+            #payslip_run = self.env['hr.payslip.run'].create({
+            #    'name': from_date.strftime('%B %Y'),
+            #    'date_start': from_date,
+            #    'date_end': end_date,
+            #})
+            _logger.info(f'PROCESAMIENTOS DE NÓMINAS / LOTES - ERROR - SE INTENTO CREAR UN LOTE DE FORMA AUTOMATICA.')
+            return {'type': 'ir.actions.act_window_close'}
         else:
             payslip_run = self.env['hr.payslip.run'].browse(self.env.context.get('active_id'))
+
+        obj_payslip_exists = self.env['hr.payslip'].search([('payslip_run_id','in',payslip_run.ids)])
+        if len(obj_payslip_exists) > 0:
+            _logger.info(f'PROCESAMIENTOS DE NÓMINAS / LOTES - ERROR - SE INTENTO DUPLICAR LOS REGISTROS.')
+            return {
+                'type': 'ir.actions.act_window',
+                'res_model': 'hr.payslip.run',
+                'views': [[False, 'form']],
+                'res_id': payslip_run.id,
+            }
 
         employees = self.with_context(active_test=False).employee_ids
         if not employees:
