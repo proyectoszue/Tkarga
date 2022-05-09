@@ -3,7 +3,6 @@ from odoo import models, fields, api, _, SUPERUSER_ID
 from odoo.exceptions import UserError, ValidationError
 from .browsable_object import BrowsableObject, InputLine, WorkedDays, Payslips
 from odoo.tools import float_compare, float_is_zero
-from logging import exception
 from collections import defaultdict
 from datetime import datetime, timedelta, date, time
 
@@ -11,7 +10,9 @@ import math
 import pytz
 import odoo
 import threading
+import logging
 
+_logger = logging.getLogger(__name__)
 #---------------------------LIQUIDACIÓN DE NÓMINA-------------------------------#
 class HrPayslipRun(models.Model):
     _inherit = 'hr.payslip.run'
@@ -84,10 +85,11 @@ class HrPayslipEmployees(models.TransientModel):
 
         return calendar_is_not_covered
 
-    def compute_sheet_thread(self,obj_structure_id,obj_payslip_run,obj_contracts):
+    def compute_sheet_thread(self,item,obj_structure_id,obj_payslip_run,obj_contracts):
         with odoo.api.Environment.manage():
             registry = odoo.registry(self._cr.dbname)
             with registry.cursor() as cr:
+                _logger.info(f'(START) HILO/REGISTRO {str(item)} - Ejecución liquidación de nómina con {len(obj_contracts.ids)} contratos.')
                 env = api.Environment(cr, SUPERUSER_ID, {})
 
                 payslips = env['hr.payslip']
@@ -115,12 +117,14 @@ class HrPayslipEmployees(models.TransientModel):
                         values = payslip._convert_to_write(payslip._cache)
                         payslips += Payslip.create(values)
                     payslips.compute_sheet()
+                    _logger.info(f'(END) HILO/REGISTRO {str(item)} - Ejecución liquidación de nómina con {len(obj_contracts.ids)} contratos.')
                 except Exception as e:
                     msg = 'ERROR: ' + str(e.args[0])
                     if payslip_run.observations:
                         payslip_run.write({'observations':payslip_run.observations + '\n' + msg})
                     else:
                         payslip_run.write({'observations':msg})
+                    _logger.info(f'(END/ERROR) HILO/REGISTRO {str(item)} - Ejecución liquidación de nómina con {len(obj_contracts.ids)} contratos.')
 
     def compute_sheet(self):
         self.ensure_one()
@@ -196,15 +200,23 @@ class HrPayslipEmployees(models.TransientModel):
         # ----------------------------Recorrer empleados por multihilos
         threads = []
         date_start_process = datetime.now()
-
+        item = 1
         for i_contracts in contracts_array_def:
             if len(i_contracts) > 0:
-                t = threading.Thread(target=self.compute_sheet_thread, args=(self.structure_id,payslip_run,i_contracts,))
+                t = threading.Thread(target=self.compute_sheet_thread, args=(item,self.structure_id,payslip_run,i_contracts,))
                 threads.append(t)
                 t.start()
+            item += 1
 
         for thread in threads:
-            thread.join()
+            try:
+                thread.join()
+            except Exception as e:
+                msg = 'ERROR: ' + str(e.args[0])
+                if payslip_run.observations:
+                    payslip_run.write({'observations': payslip_run.observations + '\n' + msg})
+                else:
+                    payslip_run.write({'observations': msg})
 
         date_finally_process = datetime.now()
         time_process = date_finally_process - date_start_process
