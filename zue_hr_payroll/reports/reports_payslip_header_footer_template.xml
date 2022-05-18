@@ -42,6 +42,8 @@
                                             ELABORÓ <br/>
                                             <t t-if="cp_template.txt_signature_prepared == '$_name_employee'">
                                                 <span t-if="cp_template.txt_signature_prepared" t-esc="o.employee_id.name"/>
+                                                <br/>
+                                                 C.C <span t-if="cp_template.txt_signature_prepared" t-esc="o.employee_id.identification_id"/>
                                             </t>
                                             <t t-else="">
                                                 <span t-if="cp_template.txt_signature_prepared" t-esc="cp_template.txt_signature_prepared"/>
@@ -51,6 +53,8 @@
                                             REVISÓ <br/>
                                             <t t-if="cp_template.txt_signature_reviewed == '$_name_employee'">
                                                 <span t-if="cp_template.txt_signature_reviewed" t-esc="o.employee_id.name"/>
+                                                <br/>
+                                                 C.C <span t-if="cp_template.txt_signature_reviewed" t-esc="o.employee_id.identification_id"/>
                                             </t>
                                             <t t-else="">
                                                 <span t-if="cp_template.txt_signature_reviewed" t-esc="cp_template.txt_signature_reviewed"/>
@@ -60,6 +64,8 @@
                                             APROBÓ <br/>
                                             <t t-if="cp_template.txt_signature_approved == '$_name_employee'">
                                                 <span t-if="cp_template.txt_signature_approved" t-esc="o.employee_id.name"/>
+                                                <br/>
+                                                 C.C <span t-if="cp_template.txt_signature_approved" t-esc="o.employee_id.identification_id"/>
                                             </t>
                                             <t t-else="">
                                                 <span t-if="cp_template.txt_signature_approved" t-esc="cp_template.txt_signature_approved"/>
@@ -69,6 +75,8 @@
                                             EMPLEADO <br/>
                                             <t t-if="cp_template.txt_signature_employee == '$_name_employee'">
                                                 <span t-if="cp_template.txt_signature_employee" t-esc="o.employee_id.name"/>
+                                                <br/>
+                                                 C.C <span t-if="cp_template.txt_signature_employee" t-esc="o.employee_id.identification_id"/>
                                             </t>
                                             <t t-else="">
                                                 <span t-if="cp_template.txt_signature_employee" t-esc="cp_template.txt_signature_employee"/>
@@ -122,6 +130,8 @@
                                             ELABORÓ <br/>
                                             <t t-if="cp_template.txt_signature_prepared == '$_name_employee'">
                                                 <span t-if="cp_template.txt_signature_prepared" t-esc="o.employee_id.name"/>
+                                                <br/>
+                                                 C.C <span t-if="cp_template.txt_signature_prepared" t-esc="o.employee_id.identification_id"/>
                                             </t>
                                             <t t-else="">
                                                 <span t-if="cp_template.txt_signature_prepared" t-esc="cp_template.txt_signature_prepared"/>
@@ -131,6 +141,8 @@
                                             REVISÓ <br/>
                                             <t t-if="cp_template.txt_signature_reviewed == '$_name_employee'">
                                                 <span t-if="cp_template.txt_signature_reviewed" t-esc="o.employee_id.name"/>
+                                                <br/>
+                                                 C.C <span t-if="cp_template.txt_signature_reviewed" t-esc="o.employee_id.identification_id"/>
                                             </t>
                                             <t t-else="">
                                                 <span t-if="cp_template.txt_signature_reviewed" t-esc="cp_template.txt_signature_reviewed"/>
@@ -140,6 +152,8 @@
                                             APROBÓ <br/>
                                             <t t-if="cp_template.txt_signature_approved == '$_name_employee'">
                                                 <span t-if="cp_template.txt_signature_approved" t-esc="o.employee_id.name"/>
+                                                <br/>
+                                                 C.C <span t-if="cp_template.txt_signature_approved" t-esc="o.employee_id.identification_id"/>
                                             </t>
                                             <t t-else="">
                                                 <span t-if="cp_template.txt_signature_approved" t-esc="cp_template.txt_signature_approved"/>
@@ -149,6 +163,8 @@
                                             EMPLEADO <br/>
                                             <t t-if="cp_template.txt_signature_employee == '$_name_employee'">
                                                 <span t-if="cp_template.txt_signature_employee" t-esc="o.employee_id.name"/>
+                                                <br/>
+                                                 C.C <span t-if="cp_template.txt_signature_employee" t-esc="o.employee_id.identification_id"/>
                                             </t>
                                             <t t-else="">
                                                 <span t-if="cp_template.txt_signature_employee" t-esc="cp_template.txt_signature_employee"/>
