@@ -95,7 +95,8 @@ class hr_payroll_social_security(models.Model):
             '13': 'CC',
             '22': 'CE',
             '31': 'NI',
-            '41': 'PA'
+            '41': 'PA',
+            'PE': 'PT'
         }             
         cTipIdTercero = switch_cTipIdTercero.get(self.company_id.partner_id.x_document_type, '/')
         if cTipIdTercero == '/':
@@ -184,7 +185,8 @@ class hr_payroll_social_security(models.Model):
                 '13': 'CC',
                 '22': 'CE',
                 '31': 'NI',
-                '41': 'PA'
+                '41': 'PA',
+                'PE': 'PT'
             }             
             cTipIdTercero = switch_cTipIdTercero.get(item.employee_id.address_home_id.x_document_type, '/')
             if cTipIdTercero == '/':
