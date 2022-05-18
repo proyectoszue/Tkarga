@@ -8,6 +8,12 @@
         <div class="page" style="font-style: normal; font-size: 12px;">
             <div class="oe_structure"/>
             <div class="row">
+        <style>
+            th, td{
+                padding-bottom: 1px !important;
+                padding-top: 1px !important;
+            }
+        </style>
                 <div class="col-md-6 col-md-offset-6">
                     <table style="width:100%;">
                         <tr style="border: 1px solid black;">
@@ -92,6 +98,7 @@
                     </table>
                 </div>
             </div>
+            <br/>
             <div class="row">
                 <div class="col-md-6 col-md-offset-6">
                     <table class="table">

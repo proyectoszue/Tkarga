@@ -268,7 +268,7 @@ class hr_payroll_social_security(models.Model):
             obj_change_wage = self.env['hr.contract.change.wage'].search([('contract_id','=',item.contract_id.id),('date_start','!=',False),('date_start','>=',date_start),('date_start','<=',date_end)],limit=1)
             cVSP = 'X' if len(obj_change_wage) > 0 and item.nDiasLiquidados > 0 else ' '
             cCorrecciones = ' '
-            cVST = 'X' if item.nSueldo != item.nValorBaseSalud and item.nDiasLiquidados > 0 and cTipoCotizante not in ('12','19') and cVSP != 'X' else ' '
+            cVST = 'X' if item.nValorBaseSalud > item.nSueldo and item.nDiasLiquidados > 0 and cTipoCotizante not in ('12','19') and cVSP != 'X' else ' '
             
             cSLN = 'X' if item.nDiasLicencia > 0 else ' '
             cIGE = 'X' if item.nDiasIncapacidadEPS > 0 else ' '

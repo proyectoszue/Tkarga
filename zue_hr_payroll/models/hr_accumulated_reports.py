@@ -110,11 +110,33 @@ class hr_accumulated_reports(models.TransientModel):
             query_where_accumulated = query_where_accumulated + f"and 1 = 2 "
         # ----------------------------------Ejecutar consulta tablas estandar
         query_report = '''
-            Select estructura,liquidacion,descripcion,fecha_liquidacion,fecha_inicial,fecha_final,compania,sucursal,identificacion,empleado,ubicacion_laboral,
+            Select estructura,liquidacion,descripcion,contrato,estado_de_contrato,estado_de_liquidacion,fecha_liquidacion,fecha_inicial,fecha_final,compania,sucursal,identificacion,empleado,ubicacion_laboral,
                     cuenta_analitica,secuencia_contrato,categoria_regla,regla_salarial,entidad,unidades,valor_devengo,valor_deduccion,
                     base_seguridad_social,base_parafiscales,base_prima,base_cesantias,base_intereses_cesantias,base_vacaciones,base_vacaciones_dinero 
             From ( 
-            Select upper(a.struct_process) as estructura,a."number" as liquidacion,a."name" as descripcion,
+            Select upper(a.struct_process) as estructura,a."number" as liquidacion,a."name" as descripcion,e."name" as contrato,
+				case when e."state" = 'open' then 'En proceso'
+						else case when e."state" = 'close' then 'Expirado'
+							else case when e."state" = 'finished' then 'Finalizado'
+								else case when e."state" = 'draft' then 'Nuevo'
+									else case when e."state" = 'cancel' then 'Cancelado(a)'
+										else ''
+										end
+									end
+								end
+							end
+						end as estado_de_contrato,
+				case when a."state" = 'draft' then 'Borrador'
+						else case when a."state" = 'verify' then 'En espera'
+							else case when a."state" = 'done' then 'Hecho'
+								else case when a."state" = 'draft' then 'Nuevo'
+									else case when a."state" = 'cancel' then 'Rechazada'
+										else ''
+										end
+									end
+								end
+							end
+						end as estado_de_liquidacion,
                     a.date_to as fecha_liquidacion,a.date_from as fecha_inicial,a.date_to as fecha_final,
                     b."name" as compania,coalesce(h."name",'') as sucursal,
                     c.identification_id as identificacion,c."name" as empleado,
@@ -138,10 +160,10 @@ class hr_accumulated_reports(models.TransientModel):
             left join res_partner as i on c.address_id = i.id            
             left join account_analytic_account as k on a.analytic_account_id  = k.id
             left join hr_employee_entities as l on aa.entity_id = l.id
-            left join res_partner as m on l.partner_id = m.id 
-            %s          
+            left join res_partner as m on l.partner_id = m.id    
+            %s 
             UNION ALL
-            Select 'ACUMULADOS' as estructura,'SLIP/00000' as liquidacion,'Tabla de acumulados' as descripcion,
+            Select 'ACUMULADOS' as estructura,'SLIP/00000' as liquidacion,'Tabla de acumulados' as descripcion,'' as contrato,'' as estado_de_contrato,'' as estado_de_liquidacion, 
                     a."date" as fecha_liquidacion,a."date" as fecha_inicial,a."date" as fecha_final,
                     c."name" as compania,coalesce(h."name",'') as sucursal,
                     b.identification_id as identificacion,b."name" as empleado,
@@ -163,7 +185,7 @@ class hr_accumulated_reports(models.TransientModel):
             left join account_analytic_account as k on b.analytic_account_id  = k.id
             %s
             ) as a
-            order by a.fecha_liquidacion,a.fecha_inicial,a.fecha_final,a.compania,a.sucursal, a.empleado, a.secuencia_regla           
+            order by a.fecha_liquidacion,a.fecha_inicial,a.fecha_final,a.compania,a.sucursal, a.empleado, a.secuencia_regla        
             ''' % (query_where,query_where_accumulated)
         self._cr.execute(query_report)
         result_query = self._cr.dictfetchall()
@@ -173,7 +195,7 @@ class hr_accumulated_reports(models.TransientModel):
         stream = io.BytesIO()
         book = xlsxwriter.Workbook(stream, {'in_memory': True})
         #Columnas
-        columns = ['Estructura','Liquidación', 'Descripción', 'Fecha liquidación', 'Fecha inicial', 'Fecha final', 'Compañía',
+        columns = ['Estructura','Liquidación', 'Descripción','Contrato','Estado de contrato','Estado de liquidación', 'Fecha liquidación', 'Fecha inicial', 'Fecha final', 'Compañía',
                    'Sucursal', 'Identificación', 'Nombre empleado', 'Ubicación laboral', 'Cuenta analÍtica',
                    'Secuencia contrato', 'Categoria','Regla Salarial', 'Entidad', 'Unidades', 'Valor devengo', 'Valor deducción',
                    'Base seguridad social','Base parafiscales','Base prima','Base cesantias','Base int. cesantias','Base vacaciones','Base vacaciones en dinero']
@@ -189,16 +211,16 @@ class hr_accumulated_reports(models.TransientModel):
         cell_format_title.set_bottom(5)
         cell_format_title.set_bottom_color('#1F497D')
         cell_format_title.set_font_color('#1F497D')
-        sheet.merge_range('A1:Z1', text_company, cell_format_title)
-        sheet.merge_range('A2:Z2', text_title, cell_format_title)
-        sheet.merge_range('A3:Z3', text_dates, cell_format_title)
+        sheet.merge_range('A1:AC1', text_company, cell_format_title)
+        sheet.merge_range('A2:AC2', text_title, cell_format_title)
+        sheet.merge_range('A3:AC3', text_dates, cell_format_title)
         cell_format_text_generate = book.add_format({'bold': False, 'align': 'left'})
         cell_format_text_generate.set_font_name('Calibri')
         cell_format_text_generate.set_font_size(10)
         cell_format_text_generate.set_bottom(5)
         cell_format_text_generate.set_bottom_color('#1F497D')
         cell_format_text_generate.set_font_color('#1F497D')
-        sheet.merge_range('A4:Z4', text_generate, cell_format_text_generate)
+        sheet.merge_range('A4:AC4', text_generate, cell_format_text_generate)
         # Formato para fechas
         date_format = book.add_format({'num_format': 'dd/mm/yyyy'})
         # Agregar columnas
