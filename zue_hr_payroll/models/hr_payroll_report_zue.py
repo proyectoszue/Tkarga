@@ -442,6 +442,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
         cell_format_total.set_font_name('Calibri')
         cell_format_total.set_font_size(11)
         worksheet.merge_range(cant_filas,0,cant_filas,len(columns_index)-1,'TOTALES',cell_format_total)
+        worksheet.set_zoom(80)
         #worksheet.set_column('M:M', 0, None, {'hidden': 1})
         #Guardar excel
         writer.save()
