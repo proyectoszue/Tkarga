@@ -269,6 +269,11 @@ class Hr_payslip_line(models.Model):
     days_unpaid_absences = fields.Integer(string='Días de ausencias no pagadas',readonly=True)
     amount_base = fields.Float('Base')
     is_history_reverse = fields.Boolean(string='Es historico para reversar')
+    #Campos informe detalle
+    branch_employee_id = fields.Many2one(related='employee_id.branch_id', string='Sucursal', store=True)
+    state_slip = fields.Selection(related='slip_id.state', string='Estado Nómina', store=True)
+    analytic_account_slip_id = fields.Many2one(related='slip_id.analytic_account_id', string='Cuenta Analitica', store=True)
+    struct_slip_id = fields.Many2one(related='slip_id.struct_id', string='Estructura', store=True)
 
     @api.depends('quantity', 'amount', 'rate')
     def _compute_total(self):
