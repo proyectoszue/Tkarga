@@ -996,7 +996,7 @@ class Hr_payslip(models.Model):
                 if obj_loan.balance_amount <= 0:
                     self.env['hr.contract.concepts'].search([('loan_id', '=', payslip_line.loan_id.id)]).write({'state':'cancel'})
 
-            if record.struct_id.process == 'vacaciones' or pay_vacations_in_payroll == True:
+            if record.struct_id.process == 'vacaciones' or (pay_vacations_in_payroll == True and record.struct_id.process != 'contrato'):
                 history_vacation = []
                 for line in sorted(record.line_ids.filtered(lambda filter: filter.initial_accrual_date), key=lambda x: x.initial_accrual_date):                
                     if line.code == 'VACDISFRUTADAS':
