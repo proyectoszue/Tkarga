@@ -28,7 +28,7 @@ class hr_electronic_payroll_detail(models.Model):
     xml_file = fields.Binary('XML')
     xml_file_name = fields.Char('XML name')
     result_upload_xml = fields.Text(string='Respuesta envio XML', readonly=True)
-    status = fields.Char(String='Estado')
+    status = fields.Char(string='Estado')
     result_status = fields.Text(string='Descripción estado', readonly=True)
 
     resource_type_document = fields.Selection([
@@ -67,7 +67,7 @@ class hr_electronic_payroll_detail(models.Model):
     def consume_web_service_send_xml(self):
         username = self.electronic_payroll_id.company_id.payroll_electronic_username_ws
         password = self.electronic_payroll_id.company_id.payroll_electronic_password_ws
-        nonce = self.nonce+'_'+str(uuid.uuid4())
+        nonce = str(uuid.uuid4().hex) + str(uuid.uuid1().hex)
         date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
         time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
         created = f'{str(date)}T{str(time)}-05:00'
@@ -99,7 +99,7 @@ class hr_electronic_payroll_detail(models.Model):
     def consume_web_service_status_document(self):
         username = self.electronic_payroll_id.company_id.payroll_electronic_username_ws
         password = self.electronic_payroll_id.company_id.payroll_electronic_password_ws
-        nonce = self.nonce + '_' + str(uuid.uuid4())
+        nonce = str(uuid.uuid4().hex) + str(uuid.uuid1().hex)
         date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
         time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
         created = f'{str(date)}T{str(time)}-05:00'
@@ -132,7 +132,7 @@ class hr_electronic_payroll_detail(models.Model):
     def consume_web_service_download_files(self):
         username = self.electronic_payroll_id.company_id.payroll_electronic_username_ws
         password = self.electronic_payroll_id.company_id.payroll_electronic_password_ws
-        nonce = self.nonce + '_' + str(uuid.uuid4())
+        nonce = str(uuid.uuid4().hex) + str(uuid.uuid1().hex)
         date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
         time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
         created = f'{str(date)}T{str(time)}-05:00'

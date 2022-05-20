@@ -269,6 +269,11 @@ class Hr_payslip_line(models.Model):
     days_unpaid_absences = fields.Integer(string='Días de ausencias no pagadas',readonly=True)
     amount_base = fields.Float('Base')
     is_history_reverse = fields.Boolean(string='Es historico para reversar')
+    #Campos informe detalle
+    branch_employee_id = fields.Many2one(related='employee_id.branch_id', string='Sucursal', store=True)
+    state_slip = fields.Selection(related='slip_id.state', string='Estado Nómina', store=True)
+    analytic_account_slip_id = fields.Many2one(related='slip_id.analytic_account_id', string='Cuenta Analitica', store=True)
+    struct_slip_id = fields.Many2one(related='slip_id.struct_id', string='Estructura', store=True)
 
     @api.depends('quantity', 'amount', 'rate')
     def _compute_total(self):
@@ -991,7 +996,7 @@ class Hr_payslip(models.Model):
                 if obj_loan.balance_amount <= 0:
                     self.env['hr.contract.concepts'].search([('loan_id', '=', payslip_line.loan_id.id)]).write({'state':'cancel'})
 
-            if record.struct_id.process == 'vacaciones' or pay_vacations_in_payroll == True:
+            if record.struct_id.process == 'vacaciones' or (pay_vacations_in_payroll == True and record.struct_id.process != 'contrato'):
                 history_vacation = []
                 for line in sorted(record.line_ids.filtered(lambda filter: filter.initial_accrual_date), key=lambda x: x.initial_accrual_date):                
                     if line.code == 'VACDISFRUTADAS':
