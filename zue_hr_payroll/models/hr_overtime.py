@@ -33,23 +33,23 @@ class hr_overtime(models.Model):
     employee_identification = fields.Char('Identificación empleado')
     department_id = fields.Many2one('hr.department', related="employee_id.department_id", readonly=True,string="Departamento")
     job_id = fields.Many2one('hr.job', related="employee_id.job_id", readonly=True,string="Servicio")
-    overtime_rn = fields.Float('RN', help='Recargo nocturno') # EXTRA_RECARGO
-    overtime_ext_d = fields.Float('EXT-D', help='Extra diurna') # EXTRA_DIURNA
-    overtime_ext_n = fields.Float('EXT-N', help='Extra nocturna') # EXTRA_NOCTURNA
-    overtime_eddf = fields.Float('E-D-D/F', help='Extra diurna dominical/festivo') # EXTRA_DIURNA_DOMINICAL
-    overtime_endf = fields.Float('E-N-D/F', help='Extra nocturna dominical/festivo') # EXTRA_NOCTURNA_DOMINICAL
-    overtime_dof = fields.Float('D o F', help='Dominical o festivo') # DOMINICALES O FESTIVOS
-    overtime_rndf = fields.Float('RN-D/F', help='Recargo nocturno dominical/festivo') # EXTRA_RECARGO_NOCTURNO_DOMINICAL_FESTIVO
-    overtime_rdf = fields.Float('R-D/F', help='Recargo dominical/festivo')  # EXTRA_RECARGO_DOMINICAL_FESTIVO
-    days_actually_worked = fields.Integer('Días efectivamente laborados')
-    days_snack = fields.Integer('Días refrigerio')
+    overtime_rn = fields.Float('RN', help='Recargo nocturno', default=0) # EXTRA_RECARGO
+    overtime_ext_d = fields.Float('EXT-D', help='Extra diurna', default=0) # EXTRA_DIURNA
+    overtime_ext_n = fields.Float('EXT-N', help='Extra nocturna', default=0) # EXTRA_NOCTURNA
+    overtime_eddf = fields.Float('E-D-D/F', help='Extra diurna dominical/festivo', default=0) # EXTRA_DIURNA_DOMINICAL
+    overtime_endf = fields.Float('E-N-D/F', help='Extra nocturna dominical/festivo', default=0) # EXTRA_NOCTURNA_DOMINICAL
+    overtime_dof = fields.Float('D o F', help='Dominical o festivo', default=0) # DOMINICALES O FESTIVOS
+    overtime_rndf = fields.Float('RN-D/F', help='Recargo nocturno dominical/festivo', default=0) # EXTRA_RECARGO_NOCTURNO_DOMINICAL_FESTIVO
+    overtime_rdf = fields.Float('R-D/F', help='Recargo dominical/festivo', default=0)  # EXTRA_RECARGO_DOMINICAL_FESTIVO
+    days_actually_worked = fields.Integer('Días efectivamente laborados', default=0)
+    days_snack = fields.Integer('Días refrigerio', default=0)
     justification = fields.Char('Justificación')
     state = fields.Selection([('revertido','Revertido'),('procesado','Procesado'),('nuevo','Nuevo')],'Estado')
     payslip_run_id = fields.Many2one('hr.payslip','Ref. Liquidación')
 
     @api.model
     def create(self, vals):
-        total = vals.get('days_snack') + vals.get('days_actually_worked') + vals.get('overtime_rn') + vals.get('overtime_ext_d') + vals.get('overtime_ext_n') + vals.get('overtime_eddf') + vals.get('overtime_endf') + vals.get('overtime_dof') + vals.get('overtime_rndf') + vals.get('overtime_rdf')
+        total = int(vals.get('days_snack',0)) + int(vals.get('days_actually_worked',0)) + float(vals.get('overtime_rn',0)) + float(vals.get('overtime_ext_d',0)) + float(vals.get('overtime_ext_n',0)) + float(vals.get('overtime_eddf',0)) + float(vals.get('overtime_endf',0)) + float(vals.get('overtime_dof',0)) + float(vals.get('overtime_rndf',0)) + float(vals.get('overtime_rdf',0))
         if total > 0:            
             if vals.get('employee_identification'):
                 obj_employee = self.env['hr.employee'].search([('identification_id', '=', vals.get('employee_identification'))])            
