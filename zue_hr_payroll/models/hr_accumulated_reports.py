@@ -164,7 +164,7 @@ class hr_accumulated_reports(models.TransientModel):
             left join res_partner as m on l.partner_id = m.id    
             %s 
             UNION ALL
-            Select 'ACUMULADOS' as estructura,'SLIP/00000' as liquidacion,'Tabla de acumulados' as descripcion,'' as contrato,'' as estado_de_contrato,'' as estado_de_liquidacion, 
+            Select 'ACUMULADOS' as estructura,'SLIP/00000' as liquidacion,'' as estado_de_liquidacion,'Tabla de acumulados' as descripcion,'' as contrato,'' as estado_de_contrato, 
                     a."date" as fecha_liquidacion,a."date" as fecha_inicial,a."date" as fecha_final,
                     c."name" as compania,coalesce(h."name",'') as sucursal,
                     b.identification_id as identificacion,b."name" as empleado,
