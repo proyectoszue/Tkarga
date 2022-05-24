@@ -6,6 +6,7 @@ from odoo.exceptions import UserError, ValidationError
 
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+from pytz import timezone
 
 import base64
 import io
@@ -22,8 +23,8 @@ class hr_payroll_social_security(models.Model):
         sheet = book.add_worksheet('Seguridad Social')
 
         columns = [
-            'Empleado', 'Sucursal', 'Contrato', 'Días liquidados', 'Días incapacidad EPS', 'Días licencia',
-            'Días licencia remunerada', 'Días maternidad', 'Días vacaciónes', 'Días incapacidad ARP',
+            'N° de identificación', 'Empleado', 'Sucursal', 'Contrato', 'Días liquidados', 'Días incapacidad EPS',
+            'Días licencia', 'Días licencia remunerada', 'Días maternidad', 'Días vacaciónes', 'Días incapacidad ARP',
             'Ingreso', 'Retiro', 'Sueldo', 'Tercero EPS', 'Valor base salud', 'Porc. Aporte salud empleados',
             'Valor salud empleado', 'Valor salud empleado nómina', 'Porc. Aporte salud empresa',
             'Valor salud empresa', 'Valor salud total', 'Diferencia salud', 'Tercero pensión',
@@ -40,80 +41,112 @@ class hr_payroll_social_security(models.Model):
             'Fecha Fin VCT', 'Fecha Inicio IRL', 'Fecha Fin IRL'
         ]
 
+        # Agregar textos al excel
+        text_title = 'Seguridad Social'
+        text_generate = 'Informe generado el %s' % (datetime.now(timezone(self.env.user.tz)))
+        cell_format_title = book.add_format({'bold': True, 'align': 'left'})
+        cell_format_title.set_font_name('Calibri')
+        cell_format_title.set_font_size(15)
+        cell_format_title.set_bottom(5)
+        cell_format_title.set_bottom_color('#1F497D')
+        cell_format_title.set_font_color('#1F497D')
+        sheet.merge_range('A1:BM1', text_title, cell_format_title)
+        cell_format_text_generate = book.add_format({'bold': False, 'align': 'left'})
+        cell_format_text_generate.set_font_name('Calibri')
+        cell_format_text_generate.set_font_size(10)
+        cell_format_text_generate.set_bottom(5)
+        cell_format_text_generate.set_bottom_color('#1F497D')
+        cell_format_text_generate.set_font_color('#1F497D')
+        sheet.merge_range('A2:BM2', text_generate, cell_format_text_generate)
+        # Formato para fechas
+        date_format = book.add_format({'num_format': 'dd/mm/yyyy'})
+
         # Agregar columnas
         aument_columns = 0
-        for columns in columns:
-            sheet.write(0, aument_columns, columns)
+        for column in columns:
+            sheet.write(2, aument_columns, column)
+            sheet.set_column(aument_columns, aument_columns, len(str(column)) + 10)
             aument_columns = aument_columns + 1
 
         # Agregar valores
-        aument_rows = 1
+        aument_rows = 3
         for item in self.executing_social_security_ids:
-            sheet.write(aument_rows, 0, item.employee_id.name)
-            sheet.write(aument_rows, 1, item.branch_id.name)
-            sheet.write(aument_rows, 2, item.contract_id.name)
-            sheet.write(aument_rows, 3, item.nDiasLiquidados)
-            sheet.write(aument_rows, 4, item.nDiasIncapacidadEPS)
-            sheet.write(aument_rows, 5, item.nDiasLicencia)
-            sheet.write(aument_rows, 6, item.nDiasLicenciaRenumerada)
-            sheet.write(aument_rows, 7, item.nDiasMaternidad)
-            sheet.write(aument_rows, 8, item.nDiasVacaciones)
-            sheet.write(aument_rows, 9, item.nDiasIncapacidadARP)
-            sheet.write(aument_rows, 10, item.nIngreso)
-            sheet.write(aument_rows, 11, item.nRetiro)
-            sheet.write(aument_rows, 12, item.nSueldo)
-            sheet.write(aument_rows, 13, item.TerceroEPS.name if item.TerceroEPS else '')
-            sheet.write(aument_rows, 14, item.nValorBaseSalud)
-            sheet.write(aument_rows, 15, item.nPorcAporteSaludEmpleado)
-            sheet.write(aument_rows, 16, item.nValorSaludEmpleado)
-            sheet.write(aument_rows, 17, item.nValorSaludEmpleadoNomina)
-            sheet.write(aument_rows, 18, item.nPorcAporteSaludEmpresa)
-            sheet.write(aument_rows, 19, item.nValorSaludEmpresa)
-            sheet.write(aument_rows, 20, item.nValorSaludTotal)
-            sheet.write(aument_rows, 21, item.nDiferenciaSalud)
-            sheet.write(aument_rows, 22, item.TerceroPension.name if item.TerceroPension else '')
-            sheet.write(aument_rows, 23, item.nValorBaseFondoPension)
-            sheet.write(aument_rows, 24, item.nPorcAportePensionEmpleado)
-            sheet.write(aument_rows, 25, item.nValorPensionEmpleado)
-            sheet.write(aument_rows, 26, item.nValorPensionEmpleadoNomina)
-            sheet.write(aument_rows, 27, item.nPorcAportePensionEmpresa)
-            sheet.write(aument_rows, 28, item.nValorPensionEmpresa)
-            sheet.write(aument_rows, 29, item.nValorPensionTotal)
-            sheet.write(aument_rows, 30, item.nDiferenciaPension)
-            sheet.write(aument_rows, 31, item.TerceroFondoSolidaridad.name if item.TerceroFondoSolidaridad else '')
-            sheet.write(aument_rows, 32, item.nPorcFondoSolidaridad)
-            sheet.write(aument_rows, 33, item.nValorFondoSolidaridad)
-            sheet.write(aument_rows, 34, item.nValorFondoSubsistencia)
-            sheet.write(aument_rows, 35, item.TerceroARP.name if item.TerceroARP else '')
-            sheet.write(aument_rows, 36, item.nValorBaseARP)
-            sheet.write(aument_rows, 37, item.nPorcAporteARP)
-            sheet.write(aument_rows, 38, item.nValorARP)
-            sheet.write(aument_rows, 39, item.cExonerado1607)
-            sheet.write(aument_rows, 40, item.TerceroCajaCom.name if item.TerceroCajaCom else '')
-            sheet.write(aument_rows, 41, item.nValorBaseCajaCom)
-            sheet.write(aument_rows, 42, item.nPorcAporteCajaCom)
-            sheet.write(aument_rows, 43, item.nValorCajaCom)
-            sheet.write(aument_rows, 44, item.TerceroSENA.name if item.TerceroSENA else '')
-            sheet.write(aument_rows, 45, item.nValorBaseSENA)
-            sheet.write(aument_rows, 46, item.nPorcAporteSENA)
-            sheet.write(aument_rows, 47, item.nValorSENA)
-            sheet.write(aument_rows, 48, item.TerceroICBF.name if item.TerceroICBF else '')
-            sheet.write(aument_rows, 49, item.nValorBaseICBF)
-            sheet.write(aument_rows, 50, item.nPorcAporteICBF)
-            sheet.write(aument_rows, 51, item.nValorICBF)
-            sheet.write(aument_rows, 52, item.dFechaInicioSLN)
-            sheet.write(aument_rows, 53, item.dFechaFinSLN)
-            sheet.write(aument_rows, 54, item.dFechaInicioIGE)
-            sheet.write(aument_rows, 55, item.dFechaFinIGE)
-            sheet.write(aument_rows, 56, item.dFechaInicioLMA)
-            sheet.write(aument_rows, 57, item.dFechaFinLMA)
-            sheet.write(aument_rows, 58, item.dFechaInicioVACLR)
-            sheet.write(aument_rows, 59, item.dFechaFinVACLR)
-            sheet.write(aument_rows, 60, item.dFechaInicioVCT)
-            sheet.write(aument_rows, 61, item.dFechaFinVCT)
-            sheet.write(aument_rows, 62, item.dFechaInicioIRL)
-            sheet.write(aument_rows, 63, item.dFechaFinIRL)
+            sheet.write(aument_rows, 0, item.employee_id.identification_id)
+            sheet.write(aument_rows, 1, item.employee_id.name)
+            sheet.write(aument_rows, 2, item.branch_id.name)
+            sheet.write(aument_rows, 3, item.contract_id.name)
+            sheet.write(aument_rows, 4, item.nDiasLiquidados)
+            sheet.write(aument_rows, 5, item.nDiasIncapacidadEPS)
+            sheet.write(aument_rows, 6, item.nDiasLicencia)
+            sheet.write(aument_rows, 7, item.nDiasLicenciaRenumerada)
+            sheet.write(aument_rows, 8, item.nDiasMaternidad)
+            sheet.write(aument_rows, 9, item.nDiasVacaciones)
+            sheet.write(aument_rows, 10, item.nDiasIncapacidadARP)
+            sheet.write(aument_rows, 11, item.nIngreso)
+            sheet.write(aument_rows, 12, item.nRetiro)
+            sheet.write(aument_rows, 13, item.nSueldo)
+            sheet.write(aument_rows, 14, item.TerceroEPS.name if item.TerceroEPS else '')
+            sheet.write(aument_rows, 15, item.nValorBaseSalud)
+            sheet.write(aument_rows, 16, item.nPorcAporteSaludEmpleado)
+            sheet.write(aument_rows, 17, item.nValorSaludEmpleado)
+            sheet.write(aument_rows, 18, item.nValorSaludEmpleadoNomina)
+            sheet.write(aument_rows, 19, item.nPorcAporteSaludEmpresa)
+            sheet.write(aument_rows, 20, item.nValorSaludEmpresa)
+            sheet.write(aument_rows, 21, item.nValorSaludTotal)
+            sheet.write(aument_rows, 22, item.nDiferenciaSalud)
+            sheet.write(aument_rows, 23, item.TerceroPension.name if item.TerceroPension else '')
+            sheet.write(aument_rows, 24, item.nValorBaseFondoPension)
+            sheet.write(aument_rows, 25, item.nPorcAportePensionEmpleado)
+            sheet.write(aument_rows, 26, item.nValorPensionEmpleado)
+            sheet.write(aument_rows, 27, item.nValorPensionEmpleadoNomina)
+            sheet.write(aument_rows, 28, item.nPorcAportePensionEmpresa)
+            sheet.write(aument_rows, 29, item.nValorPensionEmpresa)
+            sheet.write(aument_rows, 30, item.nValorPensionTotal)
+            sheet.write(aument_rows, 31, item.nDiferenciaPension)
+            sheet.write(aument_rows, 32, item.TerceroFondoSolidaridad.name if item.TerceroFondoSolidaridad else '')
+            sheet.write(aument_rows, 33, item.nPorcFondoSolidaridad)
+            sheet.write(aument_rows, 34, item.nValorFondoSolidaridad)
+            sheet.write(aument_rows, 35, item.nValorFondoSubsistencia)
+            sheet.write(aument_rows, 36, item.TerceroARP.name if item.TerceroARP else '')
+            sheet.write(aument_rows, 37, item.nValorBaseARP)
+            sheet.write(aument_rows, 38, item.nPorcAporteARP)
+            sheet.write(aument_rows, 39, item.nValorARP)
+            sheet.write(aument_rows, 40, item.cExonerado1607)
+            sheet.write(aument_rows, 41, item.TerceroCajaCom.name if item.TerceroCajaCom else '')
+            sheet.write(aument_rows, 42, item.nValorBaseCajaCom)
+            sheet.write(aument_rows, 43, item.nPorcAporteCajaCom)
+            sheet.write(aument_rows, 44, item.nValorCajaCom)
+            sheet.write(aument_rows, 45, item.TerceroSENA.name if item.TerceroSENA else '')
+            sheet.write(aument_rows, 46, item.nValorBaseSENA)
+            sheet.write(aument_rows, 47, item.nPorcAporteSENA)
+            sheet.write(aument_rows, 48, item.nValorSENA)
+            sheet.write(aument_rows, 49, item.TerceroICBF.name if item.TerceroICBF else '')
+            sheet.write(aument_rows, 50, item.nValorBaseICBF)
+            sheet.write(aument_rows, 51, item.nPorcAporteICBF)
+            sheet.write(aument_rows, 52, item.nValorICBF)
+            sheet.write(aument_rows, 53, item.dFechaInicioSLN, date_format)
+            sheet.write(aument_rows, 54, item.dFechaFinSLN, date_format)
+            sheet.write(aument_rows, 55, item.dFechaInicioIGE, date_format)
+            sheet.write(aument_rows, 56, item.dFechaFinIGE, date_format)
+            sheet.write(aument_rows, 57, item.dFechaInicioLMA, date_format)
+            sheet.write(aument_rows, 58, item.dFechaFinLMA, date_format)
+            sheet.write(aument_rows, 59, item.dFechaInicioVACLR, date_format)
+            sheet.write(aument_rows, 60, item.dFechaFinVACLR, date_format)
+            sheet.write(aument_rows, 61, item.dFechaInicioVCT, date_format)
+            sheet.write(aument_rows, 62, item.dFechaFinVCT, date_format)
+            sheet.write(aument_rows, 63, item.dFechaInicioIRL, date_format)
+            sheet.write(aument_rows, 64, item.dFechaFinIRL, date_format)
             aument_rows = aument_rows + 1
+
+        # Convertir en tabla
+        array_header_table = []
+        for i in columns:
+            dict = {'header': i}
+            array_header_table.append(dict)
+
+        sheet.add_table(2, 0, aument_rows - 1, len(columns) - 1,
+                        {'style': 'Table Style Medium 2', 'columns': array_header_table})
+
         book.close()
 
         self.write({
