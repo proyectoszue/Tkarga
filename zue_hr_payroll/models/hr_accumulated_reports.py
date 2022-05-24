@@ -110,11 +110,23 @@ class hr_accumulated_reports(models.TransientModel):
             query_where_accumulated = query_where_accumulated + f"and 1 = 2 "
         # ----------------------------------Ejecutar consulta tablas estandar
         query_report = '''
-            Select estructura,liquidacion,descripcion,contrato,estado_de_contrato,estado_de_liquidacion,fecha_liquidacion,fecha_inicial,fecha_final,compania,sucursal,identificacion,empleado,ubicacion_laboral,
+            Select estructura,liquidacion,estado_de_liquidacion,descripcion,contrato,estado_de_contrato,fecha_liquidacion,fecha_inicial,fecha_final,compania,sucursal,identificacion,empleado,ubicacion_laboral,
                     cuenta_analitica,secuencia_contrato,categoria_regla,regla_salarial,entidad,unidades,valor_devengo,valor_deduccion,
                     base_seguridad_social,base_parafiscales,base_prima,base_cesantias,base_intereses_cesantias,base_vacaciones,base_vacaciones_dinero 
             From ( 
-            Select upper(a.struct_process) as estructura,a."number" as liquidacion,a."name" as descripcion,e."name" as contrato,
+            Select upper(a.struct_process) as estructura,a."number" as liquidacion,
+            case when a."state" = 'draft' then 'Borrador'
+						else case when a."state" = 'verify' then 'En espera'
+							else case when a."state" = 'done' then 'Hecho'
+								else case when a."state" = 'draft' then 'Nuevo'
+									else case when a."state" = 'cancel' then 'Rechazada'
+										else ''
+										end
+									end
+								end
+							end
+						end as estado_de_liquidacion,
+            a."name" as descripcion,e."name" as contrato,
 				case when e."state" = 'open' then 'En proceso'
 						else case when e."state" = 'close' then 'Expirado'
 							else case when e."state" = 'finished' then 'Finalizado'
@@ -126,17 +138,6 @@ class hr_accumulated_reports(models.TransientModel):
 								end
 							end
 						end as estado_de_contrato,
-				case when a."state" = 'draft' then 'Borrador'
-						else case when a."state" = 'verify' then 'En espera'
-							else case when a."state" = 'done' then 'Hecho'
-								else case when a."state" = 'draft' then 'Nuevo'
-									else case when a."state" = 'cancel' then 'Rechazada'
-										else ''
-										end
-									end
-								end
-							end
-						end as estado_de_liquidacion,
                     a.date_to as fecha_liquidacion,a.date_from as fecha_inicial,a.date_to as fecha_final,
                     b."name" as compania,coalesce(h."name",'') as sucursal,
                     c.identification_id as identificacion,c."name" as empleado,
@@ -195,7 +196,7 @@ class hr_accumulated_reports(models.TransientModel):
         stream = io.BytesIO()
         book = xlsxwriter.Workbook(stream, {'in_memory': True})
         #Columnas
-        columns = ['Estructura','Liquidación', 'Descripción','Contrato','Estado de contrato','Estado de liquidación', 'Fecha liquidación', 'Fecha inicial', 'Fecha final', 'Compañía',
+        columns = ['Estructura','Liquidación','Estado de liquidación', 'Descripción','Contrato','Estado de contrato','Fecha liquidación', 'Fecha inicial', 'Fecha final', 'Compañía',
                    'Sucursal', 'Identificación', 'Nombre empleado', 'Ubicación laboral', 'Cuenta analÍtica',
                    'Secuencia contrato', 'Categoria','Regla Salarial', 'Entidad', 'Unidades', 'Valor devengo', 'Valor deducción',
                    'Base seguridad social','Base parafiscales','Base prima','Base cesantias','Base int. cesantias','Base vacaciones','Base vacaciones en dinero']
