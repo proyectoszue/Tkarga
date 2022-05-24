@@ -781,6 +781,9 @@ class Hr_payslip(models.Model):
                                 else:
                                     if worked_days_vac > vacation_days_calculate_absences:
                                         amount, qty, rate = 0,1.0,100
+                            else:
+                                if inherit_vacation != 0 and pay_vacations_in_payroll == True:
+                                    amount, qty, rate = 0, 1.0, 100
 
                             #Continuar con el proceso normal
                             amount = round(amount,0) if round_payroll == False else amount #Se redondean los decimales de todas las reglas
