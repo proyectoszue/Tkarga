@@ -119,11 +119,10 @@
                             </p>
                         </div>
                         <br/>
-                        <div class="col-md-12 col-md-offset-12">
+                        <div class="col-md-12">
                             <p style="text-align:justify">Cordialmente,</p>
                             <t t-set="autorizado" t-value="o.get_signature_certification()"/>
-                            <img t-if="autorizado.get('firma')" t-att-src="image_data_uri(autorizado.get('firma'))"
-                                 style="max-height: 150px;"/>
+                            <img t-if="autorizado.get('firma')" t-att-src="image_data_uri(autorizado.get('firma'))"/>
                             <br/><br/>
                             <p>
                                 <span t-esc="cp.notes"/>

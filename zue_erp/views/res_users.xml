@@ -11,7 +11,7 @@
                     <field string="Sucursales permitidas" name="branch_ids" widget="many2many_tags" options="{'no_create': True}"/>
                 </xpath> 
                 <xpath expr="//field[@name='signature']" position="before">                
-                    <field name="signature_documents" widget="signature"/>
+                    <field name="signature_documents"/>
                     <field name="signature_certification_laboral"/>
                 </xpath> 
             </field>
