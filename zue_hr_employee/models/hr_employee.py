@@ -60,7 +60,7 @@ class hr_contract_setting(models.Model):
     contrib_id = fields.Many2one('hr.contribution.register', 'Tipo Entidad', help='Concepto de aporte', required=True)
     partner_id = fields.Many2one('hr.employee.entities', 'Entidad', help='Entidad relacionada', domain="[('types_entities','in',[contrib_id])]", required=True)
     date_change = fields.Date(string='Fecha de ingreso')
-    is_transfer = fields.Boolean(string='Es un Traslado', defaul=False)
+    is_transfer = fields.Boolean(string='Es un Traslado', default=False)
     # account_debit_id = fields.Many2one('account.account', 'Cuenta deudora')
     # account_credit_id = fields.Many2one('account.account', 'Cuenta acreedora')
     employee_id = fields.Many2one('hr.employee', 'Empleado', required=True, ondelete='cascade')
