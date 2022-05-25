@@ -151,6 +151,18 @@ class hr_type_of_jurisdiction(models.Model):
     _sql_constraints = [('type_of_jurisdiction_uniq', 'unique(name)',
                          'Ya existe este tipo de fuero, por favor verificar.')]
 
+class hr_employee_endowment(models.Model):
+    _name = 'hr.employee.endowment'
+    _description = 'Dotación'
+
+    contract_id = fields.Many2one('hr.contract', 'Contrato', required=True, ondelete='cascade')
+    date = fields.Date('Fecha de Entrega')
+    supplies = fields.Char('Insumos Entregados')
+    quantity = fields.Integer('Cantidad')
+    initial_date = fields.Date('Fecha de Inicial')
+    final_date = fields.Date('Fecha de Final')
+    attached = fields.Many2one('documents.document', string='Adjunto')
+
 #Contratos
 class hr_contract(models.Model):
     _inherit = 'hr.contract'
@@ -216,6 +228,8 @@ class hr_contract(models.Model):
     previous_positions = fields.Char('Cargo anterior')
     new_positions = fields.Char('Cargo nuevo')
     time_with_the_state = fields.Char('Tiempo que lleva con el estado')
+    #Pestaña de dotacion
+    employee_endowment_ids = fields.One2many('hr.employee.endowment', 'contract_id', 'Dotación')
     
 
 

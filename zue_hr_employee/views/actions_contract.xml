@@ -162,6 +162,20 @@
                             </group>
                         </group>
                     </page>
+                    <page string="Dotación" name="dotacion">
+                        <group>
+                            <field name="employee_endowment_ids" nolabel="1">
+                                <tree editable="bottom">
+                                    <field name="date"/>
+                                    <field name="supplies"/>
+                                    <field name="quantity"/>
+                                    <field name="initial_date"/>
+                                    <field name="final_date"/>
+                                    <field name="attached"/>
+                                </tree>
+                            </field>
+                        </group>
+                    </page>
                 </xpath>
             </field>
         </record>
