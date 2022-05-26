@@ -7,6 +7,7 @@ class hr_labor_certificate_template(models.Model):
 
     company_id = fields.Many2one('res.company', string='Compañía', default=lambda self: self.env.company)
     notes = fields.Text(string='Notas:')
+    certificate_template_detail_ids = fields.One2many('hr.labor.certificate.template.detail', 'certificate_template_id',string='Detalle de la plantilla del certificado')
     #Encabezado y pie de pagina
     type_header_footer = fields.Selection([('default', 'Por defecto'),
                                            ('custom', 'Personalizado')], 'Tipo de encabezado y pie de pagina',
@@ -43,3 +44,17 @@ class hr_labor_certificate_template(models.Model):
             text = text + 'Tabla origen '+field.model_id.name+', Para el campo ' + name_public_field + ' digitar %(' + field.model+'.'+name_field + ')s \n'
         self.txt_model_fields = text
 
+class hr_labor_certificate_template_detail(models.Model):
+    _name = 'hr.labor.certificate.template.detail'
+    _description = 'Configuración plantilla certificado laboral detalle'
+
+    certificate_template_id = fields.Many2one('hr.labor.certificate.template', string='Plantilla del certificado')
+    rule_salary_id = fields.Many2one('hr.salary.rule', string='Regla Salarial',required=True )
+    sequence = fields.Integer(string='Secuencia')
+    last_month = fields.Boolean(string='Último mes')
+    average_last_months = fields.Boolean(string='Promedio  de los ultimos 3 meses')
+
+    _sql_constraints = [
+        ('rule_certificate_template_detail', 'UNIQUE (certificate_template_id, rule_salary_id)',
+         'Ya existe esta regla para la configuración de certificado laboral, por favor verificar')
+    ]

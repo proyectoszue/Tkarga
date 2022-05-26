@@ -79,7 +79,7 @@
                                 <b>
                                     <span t-esc="o.get_contract_type()"/>,
                                 </b>
-                                desempeñando el cargo de
+                                desempeñando el cargo de&#160;
                                 <b>
                                     <span t-esc="o.job_id.name"/>
                                 </b>
@@ -87,7 +87,7 @@
                                 <b>
                                     <span t-esc="o.employee_id.branch_id.name"/>,
                                 </b>
-                                devengando un salario básico mensual de
+                                devengando un salario básico mensual de&#160;
                                 <b>
                                     <span t-esc="o.get_amount_text(o.wage)"/>
                                     M/Cte.
@@ -98,7 +98,7 @@
                                 ),
                                 <t t-set="promedio_heyrec" t-value="o.get_average_concept_heyrec()"/>
                                 <t t-if="promedio_heyrec and cp.show_average_overtime">
-                                    y un promedio de horas extras mensual en los últimos tres meses de
+                                    y un promedio de horas extras mensual en los últimos tres meses de&#160;
                                     <b>
                                         <span t-esc="o.get_amount_text(promedio_heyrec)"/>
                                         M/Cte.
@@ -107,6 +107,28 @@
                                     <span t-esc="promedio_heyrec"
                                           t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
                                     ),
+                                </t>
+                                <t t-foreach="sorted(cp.certificate_template_detail_ids, key=lambda x: x.sequence)" t-as="cpd">
+                                    <t t-set="salary_rule_amount" t-value="o.get_average_concept_certificate(cpd.rule_salary_id,cpd.last_month,cpd.average_last_months)"/>
+                                    <t t-if="salary_rule_amount">
+                                        y un
+                                        <t t-if="cpd.average_last_months">
+                                            promedio de <span t-esc="cpd.rule_salary_id.name"/> en los últimos tres meses de&#160;
+                                        </t>
+                                        <t t-if="cpd.last_month">
+                                            <span t-esc="cpd.rule_salary_id.name"/> de&#160;
+                                        </t>
+                                        <span t-esc="o.get_amount_text(salary_rule_amount)"/>
+                                        M/Cte.
+                                        (
+                                        <span t-esc="salary_rule_amount"
+                                          t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
+                                        )
+                                        <t t-if="cpd.last_month">
+                                            promedio mensual
+                                        </t>
+                                        ,
+                                    </t>
                                 </t>
                             </p>
                             <br/>
