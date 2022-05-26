@@ -346,6 +346,33 @@ class hr_contract(models.Model):
                 promedio = total/(len(slips_ids)/2)                            
         return promedio
 
+    def get_average_concept_certificate(self,salary_rule_id,last,average): #Promedio horas extra
+        model_payslip = self.env['hr.payslip']
+        model_payslip_line = self.env['hr.payslip.line']
+        today = datetime.today()
+        if last == True:
+            total = False
+            date_start = today + relativedelta(months=-1)
+            today_str = today.strftime("%Y-%m-01")
+            date_start_str = date_start.strftime("%Y-%m-01")
+            slips_ids = model_payslip.search([('date_from','>=',date_start_str),('date_to','<=',today_str), ('contract_id', '=', self.id),('state', '=', 'done')])
+            lines_ids = model_payslip_line.search([('slip_id', 'in', slips_ids.ids), ('salary_rule_id', '=', salary_rule_id.id)])
+            if lines_ids:
+                total = sum([i.total for i in model_payslip_line.browse(lines_ids.ids)])
+            return total
+        if average == True:
+            promedio = False
+            date_start =  today + relativedelta(months=-3)
+            today_str = today.strftime("%Y-%m-01")
+            date_start_str = date_start.strftime("%Y-%m-01")
+            slips_ids = model_payslip.search([('date_from','>=',date_start_str),('date_to','<=',today_str),('contract_id','=',self.id),('state','=','done')])
+            lines_ids = model_payslip_line.search([('slip_id','in',slips_ids.ids),('salary_rule_id','=',salary_rule_id.id)])
+            if lines_ids:
+                total = sum([i.total for i in model_payslip_line.browse(lines_ids.ids)])
+                if len(slips_ids)/2 > 0:
+                    promedio = total/(len(slips_ids)/2)
+            return promedio
+
     def get_signature_certification(self):
         res = {'nombre':'NO AUTORIZADO', 'cargo':'NO AUTORIZADO','firma':''}
         obj_user = self.env['res.users'].search([('signature_certification_laboral','=',True)])
