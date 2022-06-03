@@ -28,4 +28,3 @@ access_hr_electronic_adjust_payroll_detail,hr.electronic.adjust.payroll.detail,m
 access_hr_absence_history,hr.absence.history,model_hr_absence_history,,1,1,1,1
 access_hr_leave_diagnostic,hr.leave.diagnostic,model_hr_leave_diagnostic,,1,1,1,1
 access_hr_payslip_reports_template,hr.payslip.reports.template,model_hr_payslip_reports_template,,1,1,1,1
-access_hr_report_expenses_employee,hr.report.expenses.employee,model_hr_report_expenses_employee,,1,1,1,1

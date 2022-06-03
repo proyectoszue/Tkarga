@@ -69,7 +69,6 @@
         'views/actions_vacation_book_reports.xml',
         'views/actions_account_journal.xml',
         'views/actions_hr_absenteeism_history.xml',
-        'views/actions_hr_report_expenses_employee.xml',
         'views/menus.xml',
     ],
     
