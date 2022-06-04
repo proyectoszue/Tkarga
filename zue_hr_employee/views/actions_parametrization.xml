@@ -204,11 +204,27 @@
                                 <notebook>
                                     <page string="Configuración de reglas salariales">
                                         <group>
-                                            <field name="conf_certificate_income_ids">
-                                                <tree editable="bottom">
+                                            <p>
+                                                Forma correcta de realizar la configuración dependiendo el campo Tipo Cálculo<br/><br/>
+                                                1. Si Tipo Cálculo es Información, se debe indicar el campo del cual se quiere la información en la columna información y su origen en la columna Origen Información<br/>
+                                                2. Si Tipo Cálculo es Sumatoria Reglas, se deben indicar las reglas a sumar en el campo Regla Salarial, si se debe tomar el acumulado del año anterior marca el check.<br/>
+                                                3. Si Tipo Cálculo es Sumatoria secuencias anteriores, se deben escribir las secuencias separadas por comas en el campo Sum secuncias. Ej: 36,37,38,39,40<br/>
+                                                4. Si Tipo Cálculo es Fecha expedición, no se debe ingresar nada más, el sistema detectara que en esa secuencia debe ir la fecha de generación del reporte<br/>
+                                                5. Si Tipo Cálculo es Fecha certificación inicial, no se debe ingresar nada más, el sistema detectara que en esa secuencia debe ir la fecha inicial del año que se reporta<br/>
+                                                6. Si Tipo Cálculo es Fecha certificación final, no se debe ingresar nada más, el sistema detectara que en esa secuencia debe ir la fecha final del año que se reporta<br/>
+                                                <br/>
+                                            </p>
+                                        </group>
+                                        <group>
+                                            <field name="conf_certificate_income_ids" nolabel="1">
+                                                <tree editable="bottom" default_order='sequence'>
                                                     <field name="sequence"/>
+                                                    <field name="calculation"/>
+                                                    <field name="type_partner"/>
                                                     <field name="information_fields_id"/>
                                                     <field name="salary_rule_id" widget="many2many_tags"/>
+                                                    <field name="accumulated_previous_year"/>
+                                                    <field name="sequence_list_sum"/>
                                                 </tree>
                                             </field>
                                         </group>
