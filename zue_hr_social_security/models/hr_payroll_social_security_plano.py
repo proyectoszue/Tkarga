@@ -395,7 +395,7 @@ class hr_payroll_social_security(models.Model):
         #Unir Encabezado y Detalle
         content_txt = encab_part +'\n'+ detalle_part 
         #Reemplazar la tecla Ñ por N
-        #content_txt = content_txt.replace("Ñ",'N')
+        content_txt = content_txt.replace("Ñ",'N')
 
         #Crear archivo
         if self.presentation_form != 'U':
