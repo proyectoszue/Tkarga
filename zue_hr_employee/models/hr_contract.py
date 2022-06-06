@@ -157,7 +157,7 @@ class hr_employee_endowment(models.Model):
 
     contract_id = fields.Many2one('hr.contract', 'Contrato', required=True, ondelete='cascade')
     date = fields.Date('Fecha de Entrega')
-    supplies = fields.Char('Insumos Entregados')
+    supplies = fields.Char('Descripción - Periodo de entrega')
     # quantity = fields.Integer('Cantidad')
     # initial_date = fields.Date('Fecha Inicial')
     # final_date = fields.Date('Fecha Final')
