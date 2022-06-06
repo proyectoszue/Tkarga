@@ -168,9 +168,9 @@
                                 <tree editable="bottom">
                                     <field name="date"/>
                                     <field name="supplies"/>
-                                    <field name="quantity"/>
-                                    <field name="initial_date"/>
-                                    <field name="final_date"/>
+<!--                                    <field name="quantity"/>-->
+<!--                                    <field name="initial_date"/>-->
+<!--                                    <field name="final_date"/>-->
                                     <field name="attached"/>
                                 </tree>
                             </field>

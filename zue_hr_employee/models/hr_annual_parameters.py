@@ -56,7 +56,7 @@ default_html_report_income_and_withholdings = '''
         </td>
         <td colspan="5">4. Número de formulario
             <br/>
-            $_val4
+            $_val4_$
         </td>
     </tr>
     <tr>
@@ -68,35 +68,35 @@ default_html_report_income_and_withholdings = '''
         <td colspan="2">
             5. Número de Identificación Tributaria (NIT)
             <br/>
-            $_val5
+            $_val5_$
         </td>
         <td class="width_items" colspan="1">6. D.V
             <br/>
-            $_val6
+            $_val6_$
         </td>
 
         <td colspan="2">7. Primer Apellido
             <br/>
-            $_val7
+            $_val7_$
         </td>
 
         <td colspan="2">8. Segundo Apellido
             <br/>
-            $_val8
+            $_val8_$
         </td>
         <td colspan="2">9. Primer Nombre
             <br/>
-            $_val9
+            $_val9_$
         </td>
         <td colspan="2">10. Otros Nombres
             <br/>
-            $_val10
+            $_val10_$
         </td>
     </tr>
     <tr>
         <td colspan="11">11. Razón Social
             <br/>
-            $_val11
+            $_val11_$
         </td>
     </tr>
     <tr>
@@ -107,49 +107,49 @@ default_html_report_income_and_withholdings = '''
         </td>
         <td colspan="1">24. Tipo de Documento
             <br/>
-            $_val24
+            $_val24_$
         </td>
         <td colspan="3">25. Número de Identificación
             <br/>
-            $_val25
+            $_val25_$
         </td>
         <td colspan="2">26. Primer Apellido
             <br/>
-            $_val26
+            $_val26_$
         </td>
         <td colspan="2">27. Segundo Apellido
             <br/>
-            $_val27
+            $_val27_$
         </td>
         <td colspan="2">28. Primer Nombre
             <br/>
-            $_val28
+            $_val28_$
         </td>
         <td colspan="2">29. Otros Nombres
             <br/>
-            $_val29
+            $_val29_$
         </td>
     </tr>
     <tr>
         <td colspan="5">Período de Certificación
             <br/>
-            30. DE $_val30 31. A $_val31:
+            30. DE $_val30_$ 31. A $_val31_$
         </td>
         <td colspan="2">32. Fecha de expedición
             <br/>
-            $_val32
+            $_val32_$
         </td>
         <td colspan="3">33. Lugar donde se practicó la retención
             <br/>
-            $_val33
+            $_val33_$
         </td>
         <td  colspan="1">34. Cód.Dpto
             <br/>
-            $_val34
+            $_val34_$
         </td>
         <td colspan="1">35. Cód.Ciudad/Municipio
             <br/>
-            $_val35
+            $_val35_$
         </td>
     </tr>
 </table>
@@ -172,7 +172,7 @@ default_html_report_income_and_withholdings = '''
     <tr>
         <td colspan="9">Pagos por salarios o emolumentos eclesiásticos</td>
         <td colspan="1" class="width_items">36</td>
-        <td colspan="2" class="width_values">$_val36</td>
+        <td colspan="2" class="width_values">$_val36_$</td>
     </tr>
     <tr>
         <td colspan="9">Pagos realizados con bonos electrónicos o de papel de servicio, cheques,
@@ -180,67 +180,67 @@ default_html_report_income_and_withholdings = '''
             vales, etc.
         </td>
         <td colspan="1" class="width_items">37</td>
-        <td colspan="2" class="width_values">$_val37</td>
+        <td colspan="2" class="width_values">$_val37_$</td>
     </tr>
     <tr>
         <td colspan="9">Pagos por honorarios</td>
         <td colspan="1" class="width_items">38</td>
-        <td colspan="2" class="width_values">$_val38</td>
+        <td colspan="2" class="width_values">$_val38_$</td>
     </tr>
     <tr>
         <td colspan="9">Pagos por servicios</td>
         <td colspan="1" class="width_items">39</td>
-        <td colspan="2" class="width_values">$_val39</td>
+        <td colspan="2" class="width_values">$_val39_$</td>
     </tr>
     <tr>
         <td colspan="9">Pagos por comisiones</td>
         <td colspan="1" class="width_items">40</td>
-        <td colspan="2" class="width_values">$_val40</td>
+        <td colspan="2" class="width_values">$_val40_$</td>
     </tr>
     <tr>
         <td colspan="9">Pagos por prestaciones sociales</td>
         <td colspan="1" class="width_items">41</td>
-        <td colspan="2" class="width_values">$_val41</td>
+        <td colspan="2" class="width_values">$_val41_$</td>
     </tr>
     <tr>
         <td colspan="9">Pagos por viáticos</td>
         <td colspan="1" class="width_items">42</td>
-        <td colspan="2" class="width_values">$_val42</td>
+        <td colspan="2" class="width_values">$_val42_$</td>
     </tr>
     <tr>
         <td colspan="9">Pagos por gastos de representación</td>
         <td colspan="1" class="width_items">43</td>
-        <td colspan="2" class="width_values">$_val43</td>
+        <td colspan="2" class="width_values">$_val43_$</td>
     </tr>
     <tr>
         <td colspan="9">Pagos por compensaciones por el trabajo asociado cooperativo</td>
         <td colspan="1" class="width_items">44</td>
-        <td colspan="2" class="width_values">$_val44</td>
+        <td colspan="2" class="width_values">$_val44_$</td>
     </tr>
     <tr>
         <td colspan="9">Otros pagos</td>
         <td colspan="1" class="width_items">45</td>
-        <td colspan="2" class="width_values">$_val45</td>
+        <td colspan="2" class="width_values">$_val45_$</td>
     </tr>
     <tr>
         <td colspan="9">Cesantías e intereses de cesantías efectivamente pagadas al empleado</td>
         <td colspan="1" class="width_items">46</td>
-        <td colspan="2" class="width_values">$_val46</td>
+        <td colspan="2" class="width_values">$_val46_$</td>
     </tr>
     <tr>
         <td colspan="9">Cesantías consignadas al fondo de cesantias</td>
         <td colspan="1" class="width_items">47</td>
-        <td colspan="2" class="width_values">$_val47</td>
+        <td colspan="2" class="width_values">$_val47_$</td>
     </tr>
     <tr>
         <td colspan="9">Pensiones de jubilación, vejez o invalidez</td>
         <td colspan="1" class="width_items">48</td>
-        <td colspan="2" class="width_values">$_val48</td>
+        <td colspan="2" class="width_values">$_val48_$</td>
     </tr>
     <tr>
         <td colspan="9">Total de ingresos brutos (Sume 36 a 48)</td>
         <td colspan="1" class="width_items">49</td>
-        <td colspan="2" class="width_values">$_val49</td>
+        <td colspan="2" class="width_values">$_val49_$</td>
     </tr>
     <!--Concepto de los Aportes-->
     <tr>
@@ -261,7 +261,7 @@ default_html_report_income_and_withholdings = '''
     <tr>
         <td colspan="9">Aportes obligatorios por salud a cargo del trabajador</td>
         <td colspan="1" class="width_items">50</td>
-        <td colspan="2" class="width_values">$_val50</td>
+        <td colspan="2" class="width_values">$_val50_$</td>
     </tr>
     <tr>
         <td colspan="9">Aportes obligatorios a fondos de pensiones y solidaridad pensional a
@@ -269,31 +269,31 @@ default_html_report_income_and_withholdings = '''
             trabajador
         </td>
         <td colspan="1" class="width_items">51</td>
-        <td colspan="2" class="width_values">$_val51</td>
+        <td colspan="2" class="width_values">$_val51_$</td>
     </tr>
     <tr>
         <td colspan="9">Cotizaciones voluntarias al régimen de ahorro individual con solidaridad
             - RAIS
         </td>
         <td colspan="1" class="width_items">52</td>
-        <td colspan="2" class="width_values">$_val52</td>
+        <td colspan="2" class="width_values">$_val52_$</td>
     </tr>
     <tr>
         <td colspan="9">Aportes voluntarios a fondos de pensiones</td>
         <td colspan="1" class="width_items">53</td>
-        <td colspan="2" class="width_values">$_val53</td>
+        <td colspan="2" class="width_values">$_val53_$</td>
     </tr>
     <tr>
         <td colspan="9">Aportes a cuentas AFC</td>
         <td colspan="1" class="width_items">54</td>
-        <td colspan="2" class="width_values">$_val54</td>
+        <td colspan="2" class="width_values">$_val54_$</td>
     </tr>
     <tr>
         <td colspan="9" style="background:#335E8B; color: white">Valor de la retención en la
             fuente por ingresos laborales y de pensiones
         </td>
         <td colspan="1" class="width_items">55</td>
-        <td colspan="2" class="width_values">$_val55</td>
+        <td colspan="2" class="width_values">$_val55_$</td>
     </tr>
     <tr>
         <td colspan="12">Nombre del pagador o agente retenedor</td>
@@ -328,56 +328,56 @@ default_html_report_income_and_withholdings = '''
     <tr>
         <td colspan="6">Arrendamientos</td>
         <td colspan="1" class="width_items">56</td>
-        <td colspan="2" class="width_values">$_val56</td>
+        <td colspan="2" class="width_values">$_val56_$</td>
         <td colspan="1" class="width_items">63</td>
-        <td colspan="2" class="width_values">$_val63</td>
+        <td colspan="2" class="width_values">$_val63_$</td>
     </tr>
     <tr>
         <td colspan="6">Honorarios, comisiones y servicios</td>
         <td colspan="1" class="width_items">57</td>
-        <td colspan="2" class="width_values">$_val57</td>
+        <td colspan="2" class="width_values">$_val57_$</td>
         <td colspan="1" class="width_items">64</td>
-        <td colspan="2" class="width_values">$_val64</td>
+        <td colspan="2" class="width_values">$_val64_$</td>
     </tr>
     <tr>
         <td colspan="6">Intereses y rendimientos financieros</td>
         <td colspan="1" class="width_items">58</td>
-        <td colspan="2" class="width_values">$_val58</td>
+        <td colspan="2" class="width_values">$_val58_$</td>
         <td colspan="1" class="width_items">65</td>
-        <td colspan="2" class="width_values">$_val65</td>
+        <td colspan="2" class="width_values">$_val65_$</td>
     </tr>
     <tr>
         <td colspan="6">Enajenación de activos fijos</td>
         <td colspan="1" class="width_items">59</td>
-        <td colspan="2" class="width_values">$_val59</td>
+        <td colspan="2" class="width_values">$_val59_$</td>
         <td colspan="1" class="width_items">66</td>
-        <td colspan="2" class="width_values">$_val66</td>
+        <td colspan="2" class="width_values">$_val66_$</td>
     </tr>
     <tr>
         <td colspan="6">Loterías, rifas, apuestas y similares</td>
         <td colspan="1" class="width_items">60</td>
-        <td colspan="2" class="width_values">$_val60</td>
+        <td colspan="2" class="width_values">$_val60_$</td>
         <td colspan="1" class="width_items">67</td>
-        <td colspan="2" class="width_values">$_val67</td>
+        <td colspan="2" class="width_values">$_val67_$</td>
     </tr>
     <tr>
         <td colspan="6">Otros</td>
         <td colspan="1" class="width_items">61</td>
-        <td colspan="2" class="width_values">$_val61</td>
+        <td colspan="2" class="width_values">$_val61_$</td>
         <td colspan="1" class="width_items">68</td>
-        <td colspan="2" class="width_values">$_val68</td>
+        <td colspan="2" class="width_values">$_val68_$</td>
     </tr>
     <tr>
         <td colspan="6">Totales: (Valor recibido: Sume 57 a 61), (Valor retenido: Sume 63 a 68)</td>
         <td colspan="1" class="width_items">62</td>
-        <td colspan="2" class="width_values">$_val62</td>
+        <td colspan="2" class="width_values">$_val62_$</td>
         <td colspan="1" class="width_items">69</td>
-        <td colspan="2" class="width_values">$_val69</td>
+        <td colspan="2" class="width_values">$_val69_$</td>
     </tr>
     <tr>
         <td colspan="9">Total retenciones año gravable 2021 (Sume 55 + 69)</td>
         <td colspan="1" class="width_items">70</td>
-        <td colspan="2" class="width_values">$_val70</td>
+        <td colspan="2" class="width_values">$_val70_$</td>
     </tr>
     <!--Identificación de los bienes y derechos poseídos-->
     <tr>
@@ -399,40 +399,40 @@ default_html_report_income_and_withholdings = '''
     </tr>
     <tr>
         <td colspan="1" class="width_items">1</td>
-        <td colspan="9">$_val71.1</td>
-        <td colspan="2" class="width_values">$_val72.1</td>
+        <td colspan="9">$_val71.1_$</td>
+        <td colspan="2" class="width_values">$_val72.1_$</td>
     </tr>
     <tr>
         <td colspan="1" class="width_items">2</td>
-        <td colspan="9">$_val71.2</td>
-        <td colspan="2" class="width_values">$_val72.2</td>
+        <td colspan="9">$_val71.2_$</td>
+        <td colspan="2" class="width_values">$_val72.2_$</td>
     </tr>
     <tr>
         <td colspan="1" class="width_items">3</td>
-        <td colspan="9">$_val71.3</td>
-        <td colspan="2" class="width_values">$_val72.3</td>
+        <td colspan="9">$_val71.3_$</td>
+        <td colspan="2" class="width_values">$_val72.3_$</td>
     </tr>
     <tr>
         <td colspan="1" class="width_items">4</td>
-        <td colspan="9">$_val71.4</td>
-        <td colspan="2" class="width_values">$_val72.4</td>
+        <td colspan="9">$_val71.4_$</td>
+        <td colspan="2" class="width_values">$_val72.4_$</td>
     </tr>
     <tr>
         <td colspan="1" class="width_items">5</td>
-        <td colspan="9">$_val71.5</td>
-        <td colspan="2" class="width_values">$_val72.5</td>
+        <td colspan="9">$_val71.5_$</td>
+        <td colspan="2" class="width_values">$_val72.5_$</td>
     </tr>
     <tr>
         <td colspan="1" class="width_items">6</td>
-        <td colspan="9">$_val71.6</td>
-        <td colspan="2" class="width_values">$_val72.6</td>
+        <td colspan="9">$_val71.6_$</td>
+        <td colspan="2" class="width_values">$_val72.6_$</td>
     </tr>
     <tr>
         <td colspan="9" style="background:#335E8B; color: white">Deudas vigentes a 31 de
             diciembre de 2021
         </td>
         <td colspan="1" class="width_items">73</td>
-        <td colspan="2" class="width_values">$_val73</td>
+        <td colspan="2" class="width_values">$_val73_$</td>
     </tr>
 </table>
 <table class="table border_report col-12" style="font-size: x-small;margin: 0px;">
@@ -450,19 +450,19 @@ default_html_report_income_and_withholdings = '''
     <tr>
         <td colspan="2" class="th_report">74. Tipo documento
             <br/>
-            $_val74
+            $_val74_$
         </td>
         <td colspan="2" class="th_report">75. No. Documento
             <br/>
-            $_val75
+            $_val75_$
         </td>
         <td colspan="6" class="th_report">76. Apellidos y Nombres
             <br/>
-            $_val76
+            $_val76_$
         </td>
         <td colspan="2" class="th_report">77. Parentesco
             <br/>
-            $_val77
+            $_val77_$
         </td>
     </tr>
     <tr>
