@@ -658,19 +658,19 @@ class Hr_payslip(models.Model):
                 if inherit_contrato_ded != 0 and concepts.salary_rule_id.dev_or_ded != 'deduccion'and not concepts.salary_rule_id.code in ['TOTALDEV','NET']:                            
                     tot_rule = 0
 
-                localdict[concepts.salary_rule_id.code+'-PCD'] = tot_rule
-                rules_dict[concepts.salary_rule_id.code+'-PCD'] = concepts.salary_rule_id
-                # sum the amount for its salary category
-                localdict = _sum_salary_rule_category(localdict, concepts.salary_rule_id.category_id, tot_rule - previous_amount)
-                localdict = _sum_salary_rule(localdict, concepts.salary_rule_id, tot_rule)
-                #Guardar valores de ausencias dependiendo parametrización
-                if concepts.salary_rule_id.is_leave:
-                    amount_leave = tot_rule if concepts.salary_rule_id.deduct_deductions == 'all' else 0
-                    localdict['values_leaves_all'] = localdict['values_leaves_all'] + amount_leave
-                    amount_leave_law = tot_rule if concepts.salary_rule_id.deduct_deductions == 'law' else 0
-                    localdict['values_leaves_law'] = localdict['values_leaves_law'] + amount_leave_law
-
                 if tot_rule != 0:
+                    localdict[concepts.salary_rule_id.code+'-PCD'] = tot_rule
+                    rules_dict[concepts.salary_rule_id.code+'-PCD'] = concepts.salary_rule_id
+                    # sum the amount for its salary category
+                    localdict = _sum_salary_rule_category(localdict, concepts.salary_rule_id.category_id, tot_rule - previous_amount)
+                    localdict = _sum_salary_rule(localdict, concepts.salary_rule_id, tot_rule)
+                    #Guardar valores de ausencias dependiendo parametrización
+                    if concepts.salary_rule_id.is_leave:
+                        amount_leave = tot_rule if concepts.salary_rule_id.deduct_deductions == 'all' else 0
+                        localdict['values_leaves_all'] = localdict['values_leaves_all'] + amount_leave
+                        amount_leave_law = tot_rule if concepts.salary_rule_id.deduct_deductions == 'law' else 0
+                        localdict['values_leaves_law'] = localdict['values_leaves_law'] + amount_leave_law
+
                     result_item = concepts.salary_rule_id.code+'-PCD'+str(concepts.id)
                     result[result_item] = {
                         'sequence': concepts.salary_rule_id.sequence,
