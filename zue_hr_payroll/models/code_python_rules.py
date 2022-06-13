@@ -392,7 +392,7 @@ if obj_salary_rule:
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('INCAPACIDAD007',employee.type_employee.id)
 if obj_salary_rule:
-    if worked_days.EGA != 0.0 and (leaves.EGA > 90 and leaves.EGA <= 180):
+    if worked_days.EGA != 0.0 and ((leaves.EGA > 90 and leaves.EGA <= 180) or leaves.EGA > 540):
         obj_leave_type = payslip.get_leave_type('EGA')
         if obj_leave_type:
             salario_minimo = annual_parameters.smmlv_monthly

@@ -6,6 +6,7 @@ from odoo.exceptions import UserError, ValidationError
 
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+from decimal import *
 
 import base64
 import io
@@ -379,106 +380,108 @@ class hr_payroll_social_security(models.Model):
                                     nDias = executing.nDiasLiquidados+executing.nDiasIncapacidadEPS+executing.nDiasLicencia+executing.nDiasLicenciaRenumerada+executing.nDiasMaternidad+executing.nDiasVacaciones+executing.nDiasIncapacidadARP
 
                                     #Calculos valores base dependiendo los días
+                                    salario_minimo_diario = Decimal(Decimal(annual_parameters.smmlv_monthly)/Decimal(30))
                                     if executing.nDiasLiquidados > 0:
                                         if dict_social_security['BaseSeguridadSocial'].dict.get('BASE', 0) > 0:
-                                            nValorDiario = (dict_social_security['BaseSeguridadSocial'].dict['BASE'] / executing.nDiasLiquidados)
-                                            nValorDiario = nValorDiario if nValorDiario >= annual_parameters.smmlv_monthly/30 else annual_parameters.smmlv_monthly/30
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['BASE']) / Decimal(executing.nDiasLiquidados))
+                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseSalud = nValorDiario * executing.nDiasLiquidados
                                             nValorBaseFondoPension = nValorDiario * executing.nDiasLiquidados
                                             nValorBaseARP = nValorDiario * executing.nDiasLiquidados
 
-                                            nValorDiario = (dict_social_security['BaseParafiscales'].dict['BASE'] / executing.nDiasLiquidados)
-                                            nValorDiario = nValorDiario if nValorDiario >= annual_parameters.smmlv_monthly/30 else annual_parameters.smmlv_monthly/30
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['BASE']) / Decimal(executing.nDiasLiquidados))
+                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseCajaCom = nValorDiario * executing.nDiasLiquidados
                                             nValorBaseSENA = nValorDiario * executing.nDiasLiquidados
                                             nValorBaseICBF = nValorDiario * executing.nDiasLiquidados
 
                                     if executing.nDiasIncapacidadEPS > 0:
                                         if dict_social_security['BaseSeguridadSocial'].dict.get('INCAPACIDAD', 0) > 0:
-                                            nValorDiario = (dict_social_security['BaseSeguridadSocial'].dict['INCAPACIDAD'] / dict_social_security['Dias'].dict['nDiasIncapacidadEPS'])
-                                            nValorDiario = nValorDiario if nValorDiario >= annual_parameters.smmlv_monthly/30 else annual_parameters.smmlv_monthly/30
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['INCAPACIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadEPS']))
+                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseSalud = nValorDiario * executing.nDiasIncapacidadEPS
                                             nValorBaseFondoPension = nValorDiario * executing.nDiasIncapacidadEPS
                                             nValorBaseARP = nValorDiario * executing.nDiasIncapacidadEPS
 
-                                            nValorDiario = (dict_social_security['BaseParafiscales'].dict['INCAPACIDAD'] / dict_social_security['Dias'].dict['nDiasIncapacidadEPS'])
-                                            nValorDiario = nValorDiario if nValorDiario >= annual_parameters.smmlv_monthly/30 else annual_parameters.smmlv_monthly/30
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['INCAPACIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadEPS']))
+                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseCajaCom = nValorDiario * executing.nDiasIncapacidadEPS
                                             nValorBaseSENA = nValorDiario * executing.nDiasIncapacidadEPS
                                             nValorBaseICBF = nValorDiario * executing.nDiasIncapacidadEPS
 
                                     if executing.nDiasLicencia > 0:
                                         if dict_social_security['BaseSeguridadSocial'].dict.get('LICENCIA_NO_REMUNERADA', 0) > 0:
-                                            nValorBaseSalud = (dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA'] / dict_social_security['Dias'].dict['nDiasLicencia']) * executing.nDiasLicencia
-                                            nValorBaseFondoPension = (dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA'] / dict_social_security['Dias'].dict['nDiasLicencia']) * executing.nDiasLicencia
-                                            nValorBaseARP = (dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA'] / dict_social_security['Dias'].dict['nDiasLicencia']) * executing.nDiasLicencia
+                                            nValorBaseSalud = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
+                                            nValorBaseFondoPension = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
+                                            nValorBaseARP = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
 
-                                            nValorBaseCajaCom = (dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA'] / dict_social_security['Dias'].dict['nDiasLicencia']) * executing.nDiasLicencia
-                                            nValorBaseSENA = (dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA'] / dict_social_security['Dias'].dict['nDiasLicencia']) * executing.nDiasLicencia
-                                            nValorBaseICBF = (dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA'] / dict_social_security['Dias'].dict['nDiasLicencia']) * executing.nDiasLicencia
+                                            nValorBaseCajaCom = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
+                                            nValorBaseSENA = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
+                                            nValorBaseICBF = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
 
                                     if executing.nDiasLicenciaRenumerada > 0:
                                         if dict_social_security['BaseSeguridadSocial'].dict.get('LICENCIA_REMUNERADA', 0) > 0:
-                                            nValorDiario = (dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_REMUNERADA'] / dict_social_security['Dias'].dict['nDiasLicenciaRenumerada'])
-                                            nValorDiario = nValorDiario if nValorDiario >= annual_parameters.smmlv_monthly/30 else annual_parameters.smmlv_monthly/30
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicenciaRenumerada']))
+                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseSalud = nValorDiario * executing.nDiasLicenciaRenumerada
                                             nValorBaseFondoPension = nValorDiario * executing.nDiasLicenciaRenumerada
                                             nValorBaseARP = nValorDiario * executing.nDiasLicenciaRenumerada
 
-                                            nValorDiario = (dict_social_security['BaseParafiscales'].dict['LICENCIA_REMUNERADA'] / dict_social_security['Dias'].dict['nDiasLicenciaRenumerada'])
-                                            nValorDiario = nValorDiario if nValorDiario >= annual_parameters.smmlv_monthly/30 else annual_parameters.smmlv_monthly/30
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicenciaRenumerada']))
+                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseCajaCom = nValorDiario * executing.nDiasLicenciaRenumerada
                                             nValorBaseSENA = nValorDiario * executing.nDiasLicenciaRenumerada
                                             nValorBaseICBF = nValorDiario * executing.nDiasLicenciaRenumerada
 
                                     if executing.nDiasMaternidad > 0:
                                         if dict_social_security['BaseSeguridadSocial'].dict.get('LICENCIA_MATERNIDAD', 0) > 0:
-                                            nValorDiario = (dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_MATERNIDAD'] / dict_social_security['Dias'].dict['nDiasMaternidad'])
-                                            nValorDiario = nValorDiario if nValorDiario >= annual_parameters.smmlv_monthly/30 else annual_parameters.smmlv_monthly/30
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_MATERNIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasMaternidad']))
+                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseSalud = nValorDiario * executing.nDiasMaternidad
                                             nValorBaseFondoPension = nValorDiario * executing.nDiasMaternidad
                                             nValorBaseARP = nValorDiario * executing.nDiasMaternidad
 
-                                            nValorDiario = (dict_social_security['BaseParafiscales'].dict['LICENCIA_MATERNIDAD'] / dict_social_security['Dias'].dict['nDiasMaternidad'])
-                                            nValorDiario = nValorDiario if nValorDiario >= annual_parameters.smmlv_monthly/30 else annual_parameters.smmlv_monthly/30
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_MATERNIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasMaternidad']))
+                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseCajaCom = nValorDiario * executing.nDiasMaternidad
                                             nValorBaseSENA = nValorDiario * executing.nDiasMaternidad
                                             nValorBaseICBF = nValorDiario * executing.nDiasMaternidad
 
                                     if executing.nDiasVacaciones > 0:
                                         if dict_social_security['BaseSeguridadSocial'].dict.get('VACACIONES', 0) > 0:
-                                            nValorDiario = (dict_social_security['BaseSeguridadSocial'].dict['VACACIONES'] / dict_social_security['BaseSeguridadSocial'].dict['DIAS_VACACIONES'])
-                                            nValorDiario = nValorDiario if nValorDiario >= annual_parameters.smmlv_monthly/30 else annual_parameters.smmlv_monthly/30
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['VACACIONES']) / Decimal(dict_social_security['BaseSeguridadSocial'].dict['DIAS_VACACIONES']))
+                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseSalud = nValorDiario * executing.nDiasVacaciones
                                             nValorBaseFondoPension = nValorDiario * executing.nDiasVacaciones
                                             nValorBaseARP = nValorDiario * executing.nDiasVacaciones
 
-                                            nValorDiario = (dict_social_security['BaseParafiscales'].dict['VACACIONES'] / dict_social_security['BaseParafiscales'].dict['DIAS_VACACIONES'])
-                                            nValorDiario = nValorDiario if nValorDiario >= annual_parameters.smmlv_monthly/30 else annual_parameters.smmlv_monthly/30
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['VACACIONES']) / Decimal(dict_social_security['BaseParafiscales'].dict['DIAS_VACACIONES']))
+                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseCajaCom = nValorDiario * executing.nDiasVacaciones
                                             nValorBaseSENA = nValorDiario * executing.nDiasVacaciones
                                             nValorBaseICBF = nValorDiario * executing.nDiasVacaciones
 
                                     if executing.nDiasIncapacidadARP > 0:
                                         if dict_social_security['BaseSeguridadSocial'].dict.get('ACCIDENTE_TRABAJO', 0) > 0:
-                                            nValorDiario = (dict_social_security['BaseSeguridadSocial'].dict['ACCIDENTE_TRABAJO'] / dict_social_security['Dias'].dict['nDiasIncapacidadARP'])
-                                            nValorDiario = nValorDiario if nValorDiario >= annual_parameters.smmlv_monthly/30 else annual_parameters.smmlv_monthly/30
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['ACCIDENTE_TRABAJO']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadARP']))
+                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseSalud = nValorDiario * executing.nDiasIncapacidadARP
                                             nValorBaseFondoPension = nValorDiario * executing.nDiasIncapacidadARP
                                             nValorBaseARP = nValorDiario * executing.nDiasIncapacidadARP
 
-                                            nValorDiario = (dict_social_security['BaseParafiscales'].dict['ACCIDENTE_TRABAJO'] / dict_social_security['Dias'].dict['nDiasIncapacidadARP'])
-                                            nValorDiario = nValorDiario if nValorDiario >= annual_parameters.smmlv_monthly/30 else annual_parameters.smmlv_monthly/30
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['ACCIDENTE_TRABAJO']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadARP']))
+                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseCajaCom = nValorDiario * executing.nDiasIncapacidadARP
                                             nValorBaseSENA = nValorDiario * executing.nDiasIncapacidadARP
                                             nValorBaseICBF = nValorDiario * executing.nDiasIncapacidadARP
 
+                                    valor_base_sueldo =(Decimal(executing.nSueldo) / Decimal(30)) * Decimal(nDias)
                                     #----------------CALCULOS SALUD
                                     if nValorBaseSalud == 0:
-                                        nValorBaseSalud = roundupdecimal((executing.nSueldo / 30) * nDias)
+                                        nValorBaseSalud = float(roundupdecimal(valor_base_sueldo))
                                     else:
-                                        nValorBaseSalud = roundupdecimal((executing.nSueldo / 30) * nDias) if abs(((executing.nSueldo / 30) * nDias) - nValorBaseSalud) < nRedondeoDecimalesDif else nValorBaseSalud
-                                    #nValorBaseSalud = ((executing.nSueldo / 30) * nDias) if nValorBaseSalud == 0 else (nValorBaseSalud)
+                                        nValorBaseSalud = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseSalud) < nRedondeoDecimalesDif else nValorBaseSalud)
+                                    #nValorBaseSalud = (valor_base_sueldo) if nValorBaseSalud == 0 else (nValorBaseSalud)
                                     if nValorBaseSalud > 0:
                                         if bEsAprendiz == False:
                                             nPorcAporteSaludEmpleado = annual_parameters.value_porc_health_employee
@@ -496,10 +499,10 @@ class hr_payroll_social_security(models.Model):
                                     #----------------CALCULOS PENSION
                                     if bEsAprendiz == False and employee.subtipo_coti_id.not_contribute_pension == False:
                                         if nValorBaseFondoPension == 0:
-                                            nValorBaseFondoPension = roundupdecimal((executing.nSueldo / 30) * nDias)
+                                            nValorBaseFondoPension = float(roundupdecimal(valor_base_sueldo))
                                         else:
-                                            nValorBaseFondoPension = roundupdecimal((executing.nSueldo / 30) * nDias) if abs(((executing.nSueldo / 30) * nDias) - nValorBaseFondoPension) < nRedondeoDecimalesDif else nValorBaseFondoPension
-                                        #nValorBaseFondoPension = ((executing.nSueldo / 30) * nDias) if nValorBaseFondoPension == 0 else (nValorBaseFondoPension)
+                                            nValorBaseFondoPension = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseFondoPension) < nRedondeoDecimalesDif else nValorBaseFondoPension)
+                                        #nValorBaseFondoPension = (valor_base_sueldo) if nValorBaseFondoPension == 0 else (nValorBaseFondoPension)
                                         if nValorBaseFondoPension > 0:
                                             nPorcAportePensionEmpleado = annual_parameters.value_porc_pension_employee if executing.nDiasLicencia == 0 else 0
                                             nPorcAportePensionEmpresa = annual_parameters.value_porc_pension_company if executing.nDiasLicencia == 0 else annual_parameters.value_porc_pension_company + annual_parameters.value_porc_pension_employee
@@ -534,19 +537,19 @@ class hr_payroll_social_security(models.Model):
                                         nValorBaseFondoPension = 0
                                     #----------------CALCULOS ARP
                                     if nValorBaseARP == 0:
-                                        nValorBaseARP = roundupdecimal((executing.nSueldo / 30) * nDias)
+                                        nValorBaseARP = float(roundupdecimal(valor_base_sueldo))
                                     else:
-                                        nValorBaseARP = roundupdecimal((executing.nSueldo / 30) * nDias) if abs(((executing.nSueldo / 30) * nDias) - nValorBaseARP) < nRedondeoDecimalesDif else nValorBaseARP
-                                    #nValorBaseARP = ((executing.nSueldo / 30) * nDias) if nValorBaseARP == 0 else (nValorBaseARP)
+                                        nValorBaseARP = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseARP) < nRedondeoDecimalesDif else nValorBaseARP)
+                                    #nValorBaseARP = (valor_base_sueldo) if nValorBaseARP == 0 else (nValorBaseARP)
                                     if nValorBaseARP > 0 and nDiasAusencias == 0 and nDiasVacaciones == 0:
                                         nValorARP = roundup100(nValorBaseARP * nPorcAporteARP / 100)
                                     #----------------CALCULOS CAJA DE COMPENSACIÓN
                                     if bEsAprendiz == False:
                                         if nValorBaseCajaCom == 0:
-                                            nValorBaseCajaCom = roundupdecimal((executing.nSueldo / 30) * nDias)
+                                            nValorBaseCajaCom = float(roundupdecimal(valor_base_sueldo))
                                         else:
-                                            nValorBaseCajaCom = roundupdecimal((executing.nSueldo / 30) * nDias) if abs(((executing.nSueldo / 30) * nDias) - nValorBaseCajaCom) < nRedondeoDecimalesDif else nValorBaseCajaCom
-                                        #nValorBaseCajaCom = ((executing.nSueldo / 30) * nDias) if nValorBaseCajaCom == 0 else (nValorBaseCajaCom)
+                                            nValorBaseCajaCom = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseCajaCom) < nRedondeoDecimalesDif else nValorBaseCajaCom)
+                                        #nValorBaseCajaCom = (valor_base_sueldo) if nValorBaseCajaCom == 0 else (nValorBaseCajaCom)
                                         if nValorBaseCajaCom > 0 and nDiasAusencias-executing.nDiasLicenciaRenumerada == 0:
                                             nPorcAporteCajaCom = annual_parameters.value_porc_compensation_box_company
                                             nValorCajaCom = roundup100(nValorBaseCajaCom * nPorcAporteCajaCom / 100)
@@ -555,14 +558,14 @@ class hr_payroll_social_security(models.Model):
                                     #----------------CALCULOS SENA & ICBF
                                     if bEsAprendiz == False:
                                         if nValorBaseSENA == 0:
-                                            nValorBaseSENA = roundupdecimal((executing.nSueldo / 30) * nDias)
+                                            nValorBaseSENA = float(roundupdecimal(valor_base_sueldo))
                                         else:
-                                            nValorBaseSENA = roundupdecimal((executing.nSueldo / 30) * nDias) if abs(((executing.nSueldo / 30) * nDias) - nValorBaseSENA) < nRedondeoDecimalesDif else nValorBaseSENA
+                                            nValorBaseSENA = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseSENA) < nRedondeoDecimalesDif else nValorBaseSENA)
                                         #nValorBaseSENA = ((executing.nValorBaseSENA / 30) * nDias) if nValorBaseSENA == 0 else (nValorBaseSENA)
                                         if nValorBaseICBF == 0:
-                                            nValorBaseICBF = roundupdecimal((executing.nSueldo / 30) * nDias)
+                                            nValorBaseICBF = float(roundupdecimal(valor_base_sueldo))
                                         else:
-                                            nValorBaseICBF = roundupdecimal((executing.nSueldo / 30) * nDias) if abs(((executing.nSueldo / 30) * nDias) - nValorBaseICBF) < nRedondeoDecimalesDif else nValorBaseICBF
+                                            nValorBaseICBF = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseICBF) < nRedondeoDecimalesDif else nValorBaseICBF)
                                         #nValorBaseICBF = ((executing.nValorBaseICBF / 30) * nDias) if nValorBaseICBF == 0 else (nValorBaseICBF)
                                         if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and nSueldo >= (annual_parameters.smmlv_monthly*10)):
                                             if nValorBaseSENA > 0 and nDiasAusencias == 0:

@@ -151,6 +151,18 @@ class hr_type_of_jurisdiction(models.Model):
     _sql_constraints = [('type_of_jurisdiction_uniq', 'unique(name)',
                          'Ya existe este tipo de fuero, por favor verificar.')]
 
+class hr_employee_endowment(models.Model):
+    _name = 'hr.employee.endowment'
+    _description = 'Dotación'
+
+    contract_id = fields.Many2one('hr.contract', 'Contrato', required=True, ondelete='cascade')
+    date = fields.Date('Fecha de Entrega')
+    supplies = fields.Char('Descripción - Periodo de entrega')
+    # quantity = fields.Integer('Cantidad')
+    # initial_date = fields.Date('Fecha Inicial')
+    # final_date = fields.Date('Fecha Final')
+    attached = fields.Many2one('documents.document', string='Adjunto')
+
 #Contratos
 class hr_contract(models.Model):
     _inherit = 'hr.contract'
@@ -216,6 +228,8 @@ class hr_contract(models.Model):
     previous_positions = fields.Char('Cargo anterior')
     new_positions = fields.Char('Cargo nuevo')
     time_with_the_state = fields.Char('Tiempo que lleva con el estado')
+    #Pestaña de dotacion
+    employee_endowment_ids = fields.One2many('hr.employee.endowment', 'contract_id', 'Dotación')
     
 
 
@@ -331,6 +345,33 @@ class hr_contract(models.Model):
             if len(slips_ids)/2 > 0:
                 promedio = total/(len(slips_ids)/2)                            
         return promedio
+
+    def get_average_concept_certificate(self,salary_rule_id,last,average): #Promedio horas extra
+        model_payslip = self.env['hr.payslip']
+        model_payslip_line = self.env['hr.payslip.line']
+        today = datetime.today()
+        if last == True:
+            total = False
+            date_start = today + relativedelta(months=-1)
+            today_str = today.strftime("%Y-%m-01")
+            date_start_str = date_start.strftime("%Y-%m-01")
+            slips_ids = model_payslip.search([('date_from','>=',date_start_str),('date_to','<=',today_str), ('contract_id', '=', self.id),('state', '=', 'done')])
+            lines_ids = model_payslip_line.search([('slip_id', 'in', slips_ids.ids), ('salary_rule_id', '=', salary_rule_id.id)])
+            if lines_ids:
+                total = sum([i.total for i in model_payslip_line.browse(lines_ids.ids)])
+            return total
+        if average == True:
+            promedio = False
+            date_start =  today + relativedelta(months=-3)
+            today_str = today.strftime("%Y-%m-01")
+            date_start_str = date_start.strftime("%Y-%m-01")
+            slips_ids = model_payslip.search([('date_from','>=',date_start_str),('date_to','<=',today_str),('contract_id','=',self.id),('state','=','done')])
+            lines_ids = model_payslip_line.search([('slip_id','in',slips_ids.ids),('salary_rule_id','=',salary_rule_id.id)])
+            if lines_ids:
+                total = sum([i.total for i in model_payslip_line.browse(lines_ids.ids)])
+                if len(slips_ids)/2 > 0:
+                    promedio = total/(len(slips_ids)/2)
+            return promedio
 
     def get_signature_certification(self):
         res = {'nombre':'NO AUTORIZADO', 'cargo':'NO AUTORIZADO','firma':''}
