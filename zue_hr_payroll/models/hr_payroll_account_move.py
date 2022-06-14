@@ -256,7 +256,7 @@ class Hr_payslip(models.Model):
                         if abs(debit_sum - credit_sum) > 10:
                             raise ValidationError(
                                 _('Verificar la dinamica contable de las reglas salariales, debido a que existe una diferencia de ' + str(
-                                    abs(debit_sum - credit_sum)) + ' pesos.'))
+                                    abs(debit_sum - credit_sum)) + ' pesos - Liquidación '+str(slip.display_name)+'.'))
 
                         if float_compare(credit_sum, debit_sum, precision_digits=precision) == -1:
                             acc_id = slip.journal_id.default_credit_account_id.id

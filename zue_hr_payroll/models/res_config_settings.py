@@ -6,6 +6,9 @@ from odoo import fields, models
 class ResCompany(models.Model):
     _inherit = 'res.company'
 
+    payroll_electronic_operator = fields.Selection([('Carvajal', 'Carvajal'),
+                                                    ('FacturaTech', 'FacturaTech')],
+                                                   string='Operador', default='Carvajal')
     payroll_electronic_username_ws = fields.Char(string='Usuario WS')
     payroll_electronic_password_ws = fields.Char(string='Contraseña WS')
     payroll_electronic_company_id_ws = fields.Char(string='Identificador compañia WS')
@@ -23,6 +26,7 @@ class ResConfigSettings(models.TransientModel):
     pay_vacations_in_payroll = fields.Boolean('¿Liquidar vacaciones en nómina?')
     vacation_days_calculate_absences = fields.Char('Días de vacaciones para calcular deducciones')
     #Nómina electronica
+    payroll_electronic_operator = fields.Selection(related='company_id.payroll_electronic_operator', string='Operador',readonly=False)
     payroll_electronic_username_ws = fields.Char(related='company_id.payroll_electronic_username_ws',string='Usuario WS', readonly=False)
     payroll_electronic_password_ws = fields.Char(related='company_id.payroll_electronic_password_ws',string='Contraseña WS', readonly=False)
     payroll_electronic_company_id_ws = fields.Char(related='company_id.payroll_electronic_company_id_ws',string='Identificador compañia WS', readonly=False)

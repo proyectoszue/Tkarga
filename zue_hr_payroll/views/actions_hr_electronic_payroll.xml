@@ -39,6 +39,7 @@
                         <button name="consume_web_service_status_document_all" type="object" string="Actualizar estado DIAN" class="oe_highlight" states="ws"/>
                         <button name="executing_electronic_payroll_failed" type="object" string="Actualizar XML (Fallidos)" states="ws"/>
                         <button name="consume_ws_failed" type="object" string="Enviar a WS (Fallidos)" states="ws"/>
+                        <button name="consume_web_service_get_cune_all" type="object" string="Obtener CUNEs" states="close"/>
                         <button name="convert_result_send_xml_all" type="object" string="Actualizar resultado envío" states="ws" invisible="1"/>
                         <field name="state" widget="statusbar"/>
                     </header>
@@ -81,6 +82,8 @@
                                                 <field name="result_upload_xml" readonly="1"/>
                                                 <field name="status" readonly="1"/>
                                                 <field name="result_status" readonly="1"/>
+                                                <field name="transaction_id" readonly="1"/>
+                                                <field name="cune" readonly="1"/>
                                             </group>
                                             <group string="Procesos">
                                                 <group string="XML" attrs="{'invisible':[('status', '=', 'ACCEPTED')]}">
@@ -89,9 +92,13 @@
                                                     <br/><br/>
                                                     <button name="convert_result_send_xml" type="object" string="Actualizar respuesta envío xml" invisible="1"/>
                                                 </group>
+                                                <group string="XML" attrs="{'invisible':[('status', '!=', 'ACCEPTED')]}">
+                                                    <button name="download_xml" type="object" string="Descargar XML"/>
+                                                </group>
                                                 <group string="WS">
                                                     <button name="consume_web_service_send_xml" type="object" string="Enviar XML" attrs="{'invisible':[('status', '=', 'ACCEPTED')]}"/>
                                                     <button name="consume_web_service_status_document" type="object" string="Consultar Estado" attrs="{'invisible':[('status', '=', 'ACCEPTED')]}"/>
+                                                    <button name="consume_web_service_get_cune" type="object" string="Obtener CUNE" attrs="{'invisible':[('status', '!=', 'ACCEPTED')]}"/>
                                                     <br/><br/>
                                                     <field name="resource_type_document"/>
                                                     <button name="consume_web_service_download_files" type="object" string="Descargar archivo"/>
