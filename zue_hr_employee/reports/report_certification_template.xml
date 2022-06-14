@@ -72,7 +72,7 @@
                                 <b>
                                     <span t-esc="o.employee_id.name"/>,
                                 </b>
-                                identificado con cédula de ciudadanía número<span
+                                identificado(a) con cédula de ciudadanía número<span
                                     t-esc="'{:20,.0f}'.format(int(o.employee_id.identification_id))"/>,
                                 labora en nuestra compañía desde el <span t-esc="o.get_date_text(o.date_start)"/>,
                                 mediante un

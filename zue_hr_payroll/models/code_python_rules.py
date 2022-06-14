@@ -358,7 +358,7 @@ if obj_salary_rule:
         if obj_leave_type.eps_arl_input_id.id == obj_salary_rule.id:
             salario_minimo = annual_parameters.smmlv_monthly
             ibc_real = (contract.wage * obj_leave_type.recognizing_factor_eps_arl)
-            #ibc_real = salario_minimo if (contract.wage * obj_leave_type.recognizing_factor_eps_arl) < salario_minimo else (contract.wage * obj_leave_type.recognizing_factor_eps_arl)
+            #ibc_real = salario_minimo if contract.modality_salary != 'sostenimiento' and (contract.wage * obj_leave_type.recognizing_factor_eps_arl) < salario_minimo else (contract.wage * obj_leave_type.recognizing_factor_eps_arl)
             days = worked_days.EGA.number_of_days - obj_leave_type.num_days_no_assume 
             days = days if days >= 0 else 0 
             result =  (ibc_real) /30
@@ -383,7 +383,7 @@ if obj_salary_rule:
         if obj_leave_type.company_input_id.id == obj_salary_rule.id:
             salario_minimo = annual_parameters.smmlv_monthly
             ibc_real = (contract.wage * obj_leave_type.recognizing_factor_company)
-            #ibc_real = salario_minimo if (contract.wage * obj_leave_type.recognizing_factor_company) < salario_minimo else (contract.wage * obj_leave_type.recognizing_factor_company)
+            #ibc_real = salario_minimo if contract.modality_salary != 'sostenimiento' and (contract.wage * obj_leave_type.recognizing_factor_company) < salario_minimo else (contract.wage * obj_leave_type.recognizing_factor_company)
             days = worked_days.EGA.number_of_days if worked_days.EGA.number_of_days <= obj_leave_type.num_days_no_assume else obj_leave_type.num_days_no_assume
             if days > 0:
                 result =  (ibc_real) /30
