@@ -153,7 +153,7 @@ class Hr_payslip(models.Model):
                                 if account_rule.department.id == slip.employee_id.department_id.id or account_rule.department.id == slip.employee_id.department_id.parent_id.id or account_rule.department.id == slip.employee_id.department_id.parent_id.parent_id.id or account_rule.department.id == False:
                                     bool_department = True
 
-                                if bool_department and bool_company and bool_work_location:
+                                if bool_department and bool_company and bool_work_location and (account_rule.debit_account or account_rule.credit_account):
                                     debit_account_id = account_rule.debit_account.id
                                     credit_account_id = account_rule.credit_account.id
 
@@ -219,6 +219,7 @@ class Hr_payslip(models.Model):
                                                                                                                   '6',
                                                                                                                   '7'] else analytic_account_id
 
+                                    break
                                         # Fin Lógica ZUE
 
                             if debit_account_id and amount >= 0:  # If the rule has a debit account.
