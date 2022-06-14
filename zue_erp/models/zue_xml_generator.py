@@ -16,8 +16,9 @@ class zue_xml_generator_details(models.Model):
     is_for = fields.Boolean(string='Es For')
     internal_for = fields.Char('For Interno')
     name_parent = fields.Char('Nombre Tag - Padre')
-    code_python = fields.Text(string='Código')
-    code_validation_python = fields.Text(string='Código Validación')
+    attributes_code_python = fields.Text(string='Código Atributos')
+    code_python = fields.Text(string='Código Valor')
+    code_validation_python = fields.Text(string='Código Validación Valor')
 
 class zue_xml_generator_header(models.Model):
     _name = 'zue.xml.generator.header'
@@ -26,7 +27,7 @@ class zue_xml_generator_header(models.Model):
     name = fields.Char(string='Nombre', required=True)
     code = fields.Char(string='Identificador',required=True)
     description = fields.Text(string='Descripción')  
-    details_ids = fields.One2many('zue.xml.generator.details', 'xml_generator_id', string='Estructura del XML (Tags)', ondelete='cascade')
+    details_ids = fields.One2many('zue.xml.generator.details', 'xml_generator_id', string='Estructura del XML (Tags)')
 
     sql_constraints = [
         ('name', 'UNIQUE (code)', 'Ya existe un registro con este identificador!')
@@ -37,20 +38,42 @@ class zue_xml_generator_header(models.Model):
         #Recorre estructura para armar el XML
         tag_initial = ''
         last_sequence = 0
+        first_tag = ''
+        old_tag = ''
 
         for item in sorted(self.details_ids, key=lambda x: x.sequence):
             val = ''
             for_item = ''
             validation = True
+            ldict = {'o': o}
+
+            item_attributes_code_python = f",{item.attributes_code_python}" if item.attributes_code_python else ""
+            if item.code_validation_python and item_attributes_code_python != "":
+                exec(item.code_validation_python, ldict)
+                validation = ldict.get('validation')
+                if validation == False:
+                    item_attributes_code_python = ""
+
             if item.sequence == 1:
                 tag_initial = item.name
+                old_tag = tag_initial
+                if item.code_validation_python:
+                    exec(item.code_validation_python, ldict)
+                    first_tag = ldict.get('tag')
+                    if first_tag:
+                        tag_initial = first_tag
+
 
             if item.is_for and item.sequence <= last_sequence:
                 continue
             else:
                 # Crear item
                 if item.name.find('&') == -1:
-                    create_element = f"{item.name} = etree.Element('{item.name}')"
+                    #ldict = {'o': o}
+                    if item.sequence == 1 and first_tag:
+                        create_element = f"{tag_initial} = etree.Element('{tag_initial}'{item_attributes_code_python})"
+                    else:
+                        create_element = f"{item.name} = etree.Element('{item.name}'{item_attributes_code_python})"
                     exec(create_element)
 
             # Ejecutar código Python
@@ -73,13 +96,16 @@ class zue_xml_generator_header(models.Model):
                         if type(val) is list:
                             for i in val:
                                 cont += 1
-                                asigne_element = f"{item.name.replace('&',str(cont))} = etree.Element('{item.name.replace('&',str(cont))}')"
+                                asigne_element = f"{item.name.replace('&',str(cont))} = etree.Element('{item.name.replace('&',str(cont))}'{item_attributes_code_python})"
                                 exec(asigne_element)
                                 val = str(i)
                                 asigne_element = f"{item.name.replace('&',str(cont))}.text = val"
                                 exec(asigne_element)
                                 if item.name_parent:
-                                    assignee_parent = f"{item.name_parent}.append({item.name.replace('&',str(cont))})"
+                                    if item.name_parent == old_tag:
+                                        assignee_parent = f"{first_tag}.append({item.name.replace('&', str(cont))})"
+                                    else:
+                                        assignee_parent = f"{item.name_parent}.append({item.name.replace('&',str(cont))})"
                                     exec(assignee_parent)
                         else:
                             if type(val) is float:
@@ -89,13 +115,21 @@ class zue_xml_generator_header(models.Model):
                             asigne_element = f"{item.name}.text = val"
                             exec(asigne_element)
                             if item.name_parent:
-                                assignee_parent = f"{item.name_parent}.append({item.name})"
+                                if item.name_parent == old_tag:
+                                    assignee_parent = f"{first_tag}.append({item.name})"
+                                else:
+                                    assignee_parent = f"{item.name_parent}.append({item.name})"
+
                                 exec(assignee_parent)
                 except Exception as e:
-                    raise UserError(_('Error al ejecutar el código python del item %s, %s') % (item.name, e))  
+                    raise UserError(_('Error al ejecutar el código python del item %s, %s') % (item.name, e))
             else:
                 if item.name_parent:
-                    assignee_parent = f"{item.name_parent}.append({item.name})"
+                    if item.name_parent == old_tag:
+                        assignee_parent = f"{first_tag}.append({item.name})"
+                    else:
+                        assignee_parent = f"{item.name_parent}.append({item.name})"
+
                     exec(assignee_parent)
 
                 if item.code_python and item.is_for:
@@ -132,92 +166,113 @@ class zue_xml_generator_header(models.Model):
                                     internal_max_rows = len(val)
 
                                     to_validate = ''
-                                    for j in range(internal_max_rows):
-                                        break_for = True
-                                        for third_item in sorted(self.details_ids.filtered(lambda x: x.sequence >= internal_sequence), key=lambda x: x.sequence):
-                                            if third_item.sequence < internal_sequence or third_item.is_for == False:
-                                                break
-                                            else:
-                                                last_sequence = third_item.sequence
-                                                to_execute = ''
+                                    if internal_max_rows > 0:
+                                        for j in range(internal_max_rows):
+                                            break_for = True
+                                            for third_item in sorted(self.details_ids.filtered(lambda x: x.sequence >= internal_sequence), key=lambda x: x.sequence):
+                                                if third_item.sequence < internal_sequence or third_item.is_for == False:
+                                                    break
+                                                else:
+                                                    last_sequence = third_item.sequence
+                                                    to_execute = ''
 
-                                                if third_item.name.find('&') == -1:
-                                                    if third_item.code_validation_python:
-                                                        to_validate = third_item.code_validation_python
+                                                    if third_item.name.find('&') == -1:
+                                                        if third_item.code_validation_python:
+                                                            to_validate = third_item.code_validation_python
 
-                                                        if 'index_i' in to_validate:
-                                                            to_validate = to_validate.replace('index_i', str(i))
-                                                        if 'index_j' in to_validate:
-                                                            to_validate = to_validate.replace('index_j', str(j))
+                                                            if 'index_i' in to_validate:
+                                                                to_validate = to_validate.replace('index_i', str(i))
+                                                            if 'index_j' in to_validate:
+                                                                to_validate = to_validate.replace('index_j', str(j))
 
-                                                        exec(to_validate, ldict)
-                                                        validation = ldict.get('validation')
+                                                            exec(to_validate, ldict)
+                                                            validation = ldict.get('validation')
 
-                                                        if validation == False:
-                                                            continue
+                                                            if validation == False:
+                                                                continue
 
-                                                    create_element = f"{third_item.name} = etree.Element('{third_item.name}')"
-                                                    exec(create_element)
+                                                        create_element = f"{third_item.name} = etree.Element('{third_item.name}'{item_attributes_code_python})"
+                                                        exec(create_element)
 
-                                                if third_item.code_python and third_item.is_parent == False:
-                                                    ldict = {'o': o}
-                                                    if third_item.code_python == 'index':
-                                                        val = str(i + 1)
-                                                    else:
-                                                        to_execute = third_item.code_python
+                                                    if third_item.code_python and third_item.is_parent == False:
+                                                        ldict = {'o': o}
+                                                        if third_item.code_python == 'index':
+                                                            val = str(i + 1)
+                                                        else:
+                                                            to_execute = third_item.code_python
 
-                                                        if 'index_i' in third_item.code_python:
-                                                            to_execute = to_execute.replace('index_i', str(i))
-                                                        if 'index_j' in third_item.code_python:
-                                                            to_execute = to_execute.replace('index_j', str(j))
+                                                            if 'index_i' in third_item.code_python:
+                                                                to_execute = to_execute.replace('index_i', str(i))
+                                                            if 'index_j' in third_item.code_python:
+                                                                to_execute = to_execute.replace('index_j', str(j))
 
-                                                        exec(to_execute, ldict)
-                                                        val = ldict.get('val')
-                                                    cont = 0
+                                                            exec(to_execute, ldict)
+                                                            val = ldict.get('val')
+                                                        cont = 0
 
-                                                    if third_item.code_validation_python:
-                                                        to_validate = third_item.code_validation_python
+                                                        if third_item.code_validation_python:
+                                                            to_validate = third_item.code_validation_python
 
-                                                        if 'index_i' in to_validate:
-                                                            to_validate = to_validate.replace('index_i', str(i))
-                                                        if 'index_j' in to_validate:
-                                                            to_validate = to_validate.replace('index_j', str(j))
+                                                            if 'index_i' in to_validate:
+                                                                to_validate = to_validate.replace('index_i', str(i))
+                                                            if 'index_j' in to_validate:
+                                                                to_validate = to_validate.replace('index_j', str(j))
 
-                                                        exec(to_validate, ldict)
-                                                        validation = ldict.get('validation')
+                                                            exec(to_validate, ldict)
+                                                            validation = ldict.get('validation')
 
-                                                    if validation == True:
-                                                        if type(val) is list:
-                                                            for i in val:
-                                                                cont += 1
-                                                                asigne_element = f"{third_item.name.replace('&', str(cont))} = etree.Element('{third_item.name.replace('&', str(cont))}')"
-                                                                exec(asigne_element)
-                                                                val = str(i)
-                                                                asigne_element = f"{third_item.name.replace('&', str(cont))}.text = val"
+                                                        if validation == True:
+                                                            if type(val) is list:
+                                                                for i in val:
+                                                                    cont += 1
+                                                                    asigne_element = f"{third_item.name.replace('&', str(cont))} = etree.Element('{third_item.name.replace('&', str(cont))}'{item_attributes_code_python})"
+                                                                    exec(asigne_element)
+                                                                    val = str(i)
+                                                                    asigne_element = f"{third_item.name.replace('&', str(cont))}.text = val"
+                                                                    exec(asigne_element)
+                                                                    if third_item.name_parent:
+                                                                        if third_item.name_parent == old_tag:
+                                                                            assignee_parent = f"{first_tag}.append({third_item.name.replace('&', str(cont))})"
+                                                                        else:
+                                                                            assignee_parent = f"{third_item.name_parent}.append({third_item.name.replace('&', str(cont))})"
+
+                                                                        exec(assignee_parent)
+                                                            else:
+                                                                if type(val) is float:
+                                                                    val = "{:.2f}".format(val)
+                                                                else:
+                                                                    val = str(val)
+                                                                asigne_element = f"{third_item.name}.text = val"
                                                                 exec(asigne_element)
                                                                 if third_item.name_parent:
-                                                                    assignee_parent = f"{third_item.name_parent}.append({third_item.name.replace('&', str(cont))})"
+                                                                    if third_item.name_parent == old_tag:
+                                                                        assignee_parent = f"{first_tag}.append({third_item.name})"
+                                                                    else:
+                                                                        assignee_parent = f"{third_item.name_parent}.append({third_item.name})"
+
                                                                     exec(assignee_parent)
-                                                        else:
-                                                            if type(val) is float:
-                                                                val = "{:.2f}".format(val)
+                                                    else:
+                                                        if third_item.name_parent:
+                                                            if third_item.name_parent == old_tag:
+                                                                assignee_parent = f"{first_tag}.append({third_item.name})"
                                                             else:
-                                                                val = str(val)
-                                                            asigne_element = f"{third_item.name}.text = val"
-                                                            exec(asigne_element)
-                                                            if third_item.name_parent:
                                                                 assignee_parent = f"{third_item.name_parent}.append({third_item.name})"
-                                                                exec(assignee_parent)
-                                                else:
-                                                    if third_item.name_parent:
-                                                        assignee_parent = f"{third_item.name_parent}.append({third_item.name})"
-                                                        exec(assignee_parent)
 
+                                                            exec(assignee_parent)
+                                    else:
+                                        if second_item.name_parent:
+                                            create_element = f"{second_item.name} = etree.Element('{second_item.name}'{item_attributes_code_python})"
+                                            exec(create_element)
 
+                                            if second_item.name_parent == old_tag:
+                                                assignee_parent = f"{first_tag}.append({second_item.name})"
+                                            else:
+                                                assignee_parent = f"{first_tag}.append({second_item.name})"
 
+                                            exec(assignee_parent)
                                 else:
                                     if second_item.name.find('&') == -1:
-                                        create_element = f"{second_item.name} = etree.Element('{second_item.name}')"
+                                        create_element = f"{second_item.name} = etree.Element('{second_item.name}'{item_attributes_code_python})"
                                         exec(create_element)
 
                                     if second_item.code_python and second_item.is_parent == False:
@@ -244,18 +299,24 @@ class zue_xml_generator_header(models.Model):
                                         if second_item.code_validation_python:
                                             exec(second_item.code_validation_python, ldict)
                                             validation = ldict.get('validation')
+                                        else:
+                                            validation = True
 
-                                        if validation == True:
+                                        if validation:
                                             if type(val) is list:
                                                 for i in val:
                                                     cont += 1
-                                                    asigne_element = f"{second_item.name.replace('&', str(cont))} = etree.Element('{second_item.name.replace('&', str(cont))}')"
+                                                    asigne_element = f"{second_item.name.replace('&', str(cont))} = etree.Element('{second_item.name.replace('&', str(cont))}'{item_attributes_code_python})"
                                                     exec(asigne_element)
                                                     val = str(i)
                                                     asigne_element = f"{second_item.name.replace('&', str(cont))}.text = val"
                                                     exec(asigne_element)
                                                     if second_item.name_parent:
-                                                        assignee_parent = f"{second_item.name_parent}.append({second_item.name.replace('&', str(cont))})"
+                                                        if second_item.name_parent == old_tag:
+                                                            assignee_parent = f"{first_tag}.append({second_item.name.replace('&', str(cont))})"
+                                                        else:
+                                                            assignee_parent = f"{second_item.name_parent}.append({second_item.name.replace('&', str(cont))})"
+
                                                         exec(assignee_parent)
                                             else:
                                                 if type(val) is float:
@@ -265,11 +326,19 @@ class zue_xml_generator_header(models.Model):
                                                 asigne_element = f"{second_item.name}.text = val"
                                                 exec(asigne_element)
                                                 if second_item.name_parent:
-                                                    assignee_parent = f"{second_item.name_parent}.append({second_item.name})"
+                                                    if second_item.name_parent == old_tag:
+                                                        assignee_parent = f"{first_tag}.append({second_item.name})"
+                                                    else:
+                                                        assignee_parent = f"{second_item.name_parent}.append({second_item.name})"
+
                                                     exec(assignee_parent)
                                     else:
                                         if second_item.name_parent:
-                                            assignee_parent = f"{second_item.name_parent}.append({second_item.name})"
+                                            if second_item.name_parent == old_tag:
+                                                assignee_parent = f"{first_tag}.append({second_item.name})"
+                                            else:
+                                                assignee_parent = f"{second_item.name_parent}.append({second_item.name})"
+
                                             exec(assignee_parent)
 
 
@@ -277,9 +346,11 @@ class zue_xml_generator_header(models.Model):
             exec(tree_str)
 
         xml_full_tags = etree.fromstring(eval("xml"))
-        #Remover tags vacios
-        for element in xml_full_tags.xpath(".//*[not(node())]"):
-            element.getparent().remove(element)
+        #Remover tags vacios se verifica 3 veces
+        for v in range(1,3):
+            for element in xml_full_tags.xpath(".//*[not(node())]"):
+                if element.attrib == {}:
+                    element.getparent().remove(element)
         #Retornar XML Final
         xml_finally = etree.tostring(xml_full_tags, pretty_print=True)
         return xml_finally

@@ -29,43 +29,42 @@
             <field name="model">zue.xml.generator.header</field>
             <field name="arch" type="xml">
                 <form>
-                    <sheet string="Generar XML">
-                        <group>
-                            <field name="name" required="1"/>
-                            <field name="code"/>
-                            <field name="description"/>
-                        </group>
-                        <group string="Estructura del XML (Tags)">
-                            <p>
-                                Notas:<br/>
-                                
-                                1. Los tags marcados como Padres, no deben tener información en el campo código, si la tiene el sistema no la procesara.<br/>
-                                2. En el campo Código se debe asignar el valor que debe contener el tag en la variable "val".<br/>
-                                3. Al realizar el llamado de un método o función se debe anteponer "o." <br/>
-                                4. En el campo Código Validación se debe asignar la validación y su resultado debe quedar en la variable "validation" y usar la variable "val" Ej. validation = val > 0<br/>
+                    <group>
+                        <field name="name" required="1"/>
+                        <field name="code"/>
+                        <field name="description"/>
+                    </group>
+                    <group string="Estructura del XML (Tags)">
+                        <p>
+                            Notas:<br/>
 
-                                Para ejecutar el XML se debe crear un objeto de este modelo y ejecutar el método xml_generator que recibe como parametro el objeto sobre el cual se ejecutaran las consultas.
-                                Se recomienda el siguente código.<br/><br/>
+                            1. Los tags marcados como Padres, no deben tener información en el campo código, si la tiene el sistema no la procesara.<br/>
+                            2. En el campo Código se debe asignar el valor que debe contener el tag en la variable "val".<br/>
+                            3. Al realizar el llamado de un método o función se debe anteponer "o." <br/>
+                            4. En el campo Código Validación se debe asignar la validación y su resultado debe quedar en la variable "validation" y usar la variable "val" Ej. validation = val > 0<br/>
 
-                                obj_xml = self.env['zue.xml.generator.header'].search([('code','=','Identificador')])<br/>
-                                obj_xml.xml_generator(self)<br/>
-                            </p>
-                        </group>
-                        <group>
-                            <field name="details_ids" nolabel="1">
-                                <tree editable="bottom">
-                                    <field name="name"/>
-                                    <field name="sequence"/>
-                                    <field name="is_parent"/>
-                                    <field name="name_parent"/>
-                                    <field name="code_python"/>
-                                    <field name="code_validation_python"/>
-                                    <field name="is_for"/>
-                                    <field name="internal_for"/>
-                                </tree>
-                            </field>
-                        </group>
-                    </sheet>
+                            Para ejecutar el XML se debe crear un objeto de este modelo y ejecutar el método xml_generator que recibe como parametro el objeto sobre el cual se ejecutaran las consultas.
+                            Se recomienda el siguente código.<br/><br/>
+
+                            obj_xml = self.env['zue.xml.generator.header'].search([('code','=','Identificador')])<br/>
+                            obj_xml.xml_generator(self)<br/>
+                        </p>
+                    </group>
+                    <group>
+                        <field name="details_ids" nolabel="1">
+                            <tree editable="bottom">
+                                <field name="name"/>
+                                <field name="sequence"/>
+                                <field name="is_parent"/>
+                                <field name="name_parent"/>
+                                <field name="attributes_code_python" optional="show"/>
+                                <field name="code_python" optional="show"/>
+                                <field name="code_validation_python" optional="show"/>
+                                <field name="is_for" optional="show"/>
+                                <field name="internal_for" optional="show"/>
+                            </tree>
+                        </field>
+                    </group>
                 </form>
             </field>
         </record>

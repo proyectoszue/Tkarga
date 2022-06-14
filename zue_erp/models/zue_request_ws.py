@@ -41,7 +41,7 @@ class zue_request_ws(models.Model):
             return True
 
     @api.model
-    def connection_requests(self, *args):
+    def connection_requests(self, *args, not_show_errors=0):
         for obj_ws in self:
             name = ''
             value = ''
@@ -145,7 +145,10 @@ class zue_request_ws(models.Model):
                     response = requests.request(obj_ws.method, final_url, data=data_body, headers=headers)
 
                 if response.status_code == 404:
-                    raise ValidationError(_("Error! No se encontró el método configurado en el servicio web " + obj_ws.name))
+                    if not_show_errors == 0:
+                        raise ValidationError(_("Error! No se encontró el método configurado en el servicio web " + obj_ws.name))
+                    else:
+                        return "Error! No se encontró el método configurado en el servicio web " + obj_ws.name
                 
                 if response:
                     if obj_ws.name == 'check_vehicle_odometer' or obj_ws.name == 'get_contract_services' or obj_ws.name == 'get_contracts_logirastreo':
@@ -155,4 +158,7 @@ class zue_request_ws(models.Model):
                     else:
                         return response.json()
                 else:
-                    raise ValidationError(_("Error! El servicio web no retorno un valor válido."))
+                    if not_show_errors == 0:
+                        raise ValidationError(_("Error! El servicio web no retorno un valor válido."))
+                    else:
+                        return "Error! El servicio web no retorno un valor válido."
