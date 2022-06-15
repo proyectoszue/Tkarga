@@ -12,6 +12,7 @@ class hr_payslip_reports_template(models.Model):
                                      ('cesantias', 'Cesantías'),
                                      ('intereses_cesantias', 'Intereses de cesantías'),
                                      ('contrato', 'Liq. de Contrato')], 'Tipo de Comprobante',required=True, default='nomina')
+    hide_vacation_dates = fields.Boolean('Ocultar fechas de vacaciones')
     #Encabezado y pie de pagina
     type_header_footer = fields.Selection([('default', 'Por defecto'),
                                            ('custom', 'Personalizado')], 'Tipo de encabezado y pie de pagina',
