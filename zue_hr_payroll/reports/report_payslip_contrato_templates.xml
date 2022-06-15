@@ -21,19 +21,20 @@
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Identidad</b>           :<span t-field="o.employee_id.identification_id"/></p>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Empleado</b>            :<span t-field="o.employee_id.name"/></p>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ingreso</b>       :<span t-field="o.contract_id.date_start"/></p>
-                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Cargo</b>               :<span t-field="o.employee_id.job_id.name"/></p>
+                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha retiro</b>        :<span t-field="o.date_liquidacion"/></p>
+                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Dias Laborados</b>      :<span t-esc="o.dias360(o.contract_id.date_start,o.date_liquidacion)"/></p>
                             </td>
                             <td>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Tipo contrato</b>       :<span t-field="o.contract_id.contract_type"/></p>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult cesantias</b> :<span t-field="o.date_cesantias"/></p>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult prima</b>     :<span t-field="o.date_prima"/></p>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult vacaciones</b>:<span t-field="o.date_vacaciones"/></p>
+                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Vacaciones Pendientes</b>:<span t-esc="o.contract_id.get_accumulated_vacation_days(o.id)"/></p>
                             </td>
                             <td>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Sucursal</b>            :<span t-field="o.employee_id.branch_id.name"/></p>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Salario basico</b>      :<span t-field="o.contract_id.wage"/></p>
-                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Dias Laborados</b>      :<span t-esc="(o.date_liquidacion - o.contract_id.date_start).days"/></p>
-                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha retiro</b>        :<span t-field="o.date_liquidacion"/></p>
+                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Cargo</b>               :<span t-field="o.employee_id.job_id.name"/></p>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Motivo retiro</b>       :<span t-field="o.reason_retiro"/></p>
                             </td>
                         </tr>
