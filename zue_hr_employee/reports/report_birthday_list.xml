@@ -14,7 +14,12 @@
             <field name="arch" type="xml">
                     <form string="Listado de cumpleaños">
                         <group>
-                            <field name="month"/>
+                            <group>
+                                <field name="month"/>
+                            </group>
+                            <group>
+                                <field name="branch" widget="many2many_tags"/>
+                            </group>
                         </group>
                         <footer>
                             <button name="generate_report" string="Generar PDF" type="object" class="oe_highlight"/>

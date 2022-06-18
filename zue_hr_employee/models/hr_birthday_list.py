@@ -10,7 +10,8 @@ import xlsxwriter
 class hr_birthday_list(models.TransientModel):
     _name = "hr.birthday.list"
     _description = "Listado de cumpleaños"
-    
+
+    branch = fields.Many2many('zue.res.branch', string='Sucursal')
     month = fields.Selection([('0', 'Todos'),
                             ('1', 'Enero'),
                             ('2', 'Febrero'),
@@ -43,7 +44,10 @@ class hr_birthday_list(models.TransientModel):
         return month
 
     def get_info_birthday(self,month):
-        obj_employee = self.env['hr.employee'].search([('birthday','!=',False)]).filtered(lambda x: x.birthday.month == int(month))
+        domain = [('birthday','!=',False)]
+        if len(self.branch) >0:
+            domain.append(('branch_id','in',self.branch.ids))
+        obj_employee = self.env['hr.employee'].search(domain).filtered(lambda x: x.birthday.month == int(month))
         return obj_employee
 
     def get_name_month(self,month_number):
@@ -109,13 +113,23 @@ class hr_birthday_list(models.TransientModel):
             query_where = "where a.company_id = " + str(self.env.company.id)
         else:
             query_where = "where a.company_id = " + str(self.env.company.id) + "and date_part('month',a.birthday) = " + self.month
+        # Filtro Sucursal
+        str_ids_branch = ''
+        for i in self.branch:
+            str_ids_branch = str(i.id) if str_ids_branch == '' else str_ids_branch + ',' + str(i.id)
+        if str_ids_branch == '' and len(self.env.user.branch_ids.ids) > 0:
+            for i in self.env.user.branch_ids.ids:
+                str_ids_branch = str(i) if str_ids_branch == '' else str_ids_branch + ',' + str(i)
+        if str_ids_branch != '':
+            query_where = query_where + f"and zrb.id in ({str_ids_branch}) "
         # ----------------------------------Ejecutar consulta
         query_report = f'''
-                          select c.name,b.vat,b.name as name_employee,a.birthday
+                    select c.name,b.vat,b.name as name_employee,zrb."name" as branch,a.birthday
                     from hr_employee as a
                     Inner join res_partner as b on b.id = a.partner_encab_id
                     Inner join res_company c on c.id = a.company_id 
                     inner join res_partner d on d.id = c.partner_id
+                    inner join zue_res_branch as zrb on a.branch_id = zrb.id
                     %s
 					order by date_part('month',a.birthday),date_part('day',a.birthday)
                     '''%(query_where)
@@ -129,7 +143,7 @@ class hr_birthday_list(models.TransientModel):
         book = xlsxwriter.Workbook(stream, {'in_memory': True})
 
         # Columnas
-        columns = ['Compañia', 'Identificación', 'Nombres', 'Fecha de cumpleaños']
+        columns = ['Compañia', 'Identificación', 'Nombres','Sucursal','Fecha de cumpleaños']
         sheet = book.add_worksheet('Listado de Cumpleaños')
 
         # Agregar textos al excel
@@ -141,14 +155,14 @@ class hr_birthday_list(models.TransientModel):
         cell_format_title.set_bottom(5)
         cell_format_title.set_bottom_color('#1F497D')
         cell_format_title.set_font_color('#1F497D')
-        sheet.merge_range('A1:D1', text_title, cell_format_title)
+        sheet.merge_range('A1:E1', text_title, cell_format_title)
         cell_format_text_generate = book.add_format({'bold': False, 'align': 'left'})
         cell_format_text_generate.set_font_name('Calibri')
         cell_format_text_generate.set_font_size(10)
         cell_format_text_generate.set_bottom(5)
         cell_format_text_generate.set_bottom_color('#1F497D')
         cell_format_text_generate.set_font_color('#1F497D')
-        sheet.merge_range('A2:D2', text_generate, cell_format_text_generate)
+        sheet.merge_range('A2:E2', text_generate, cell_format_text_generate)
         # Formato para fechas
         date_format = book.add_format({'num_format': 'dd/mm/yyyy'})
 
@@ -180,7 +194,7 @@ class hr_birthday_list(models.TransientModel):
                 dict = {'header': i}
                 array_header_table.append(dict)
 
-            sheet.add_table(2, 0, aument_rows, 3, {'style': 'Table Style Medium 2', 'columns': array_header_table})
+            sheet.add_table(2, 0, aument_rows-1, len(columns)-1, {'style': 'Table Style Medium 2', 'columns': array_header_table})
             # Guadar Excel
             book.close()
 
