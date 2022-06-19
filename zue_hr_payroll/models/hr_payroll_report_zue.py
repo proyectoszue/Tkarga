@@ -422,16 +422,17 @@ class HrPayrollReportZueFilter(models.TransientModel):
             logo_company = io.BytesIO(base64.b64decode(self.env.company.logo))
             worksheet.insert_image('A1', "logo_company.png", {'image_data': logo_company,'x_scale': 0.6, 'y_scale': 0.4})
         #Dar tamaño a las columnas
+        # cell_format_left = writer.book.add_format({'align': 'left'})
         for size_column in column_len:
             worksheet.set_column(size_column['position'], size_column['position'], size_column['len_column'] + 5)
         #Campos númericos
-        number_format = writer.book.add_format({'num_format': '#,##'})
+        number_format = writer.book.add_format({'num_format': '#,##', 'border': 1})
         # https://xlsxwriter.readthedocs.io/worksheet.html#conditional_format
         worksheet.conditional_format(3, len(columns_index), cant_filas, cant_columnas,
                                      {'type': 'no_errors',
                                       'format': number_format})
         #Campo de novedades
-        cell_format_novedades = writer.book.add_format({'text_wrap': True,'border':1})
+        cell_format_novedades = writer.book.add_format({'text_wrap': True, 'border': 1, 'align': 'left'})
         cell_format_novedades.set_font_name('Calibri')
         cell_format_novedades.set_font_size(11)
         worksheet.conditional_format(3,len(columns_index)-1,cant_filas-1,len(columns_index)-1,
@@ -444,7 +445,12 @@ class HrPayrollReportZueFilter(models.TransientModel):
         worksheet.merge_range(cant_filas,0,cant_filas,len(columns_index)-1,'TOTALES',cell_format_total)
         worksheet.set_zoom(80)
         #worksheet.set_column('M:M', 0, None, {'hidden': 1})
-        #Guardar excel
+        #Firmas
+        cell_format_firma = writer.book.add_format({'bold': True, 'align': 'center', 'top': 1})
+        worksheet.merge_range(cant_filas + 5, 1, cant_filas + 5, 2, 'ELABORO', cell_format_firma)
+        worksheet.merge_range(cant_filas + 5, 4, cant_filas + 5, 5, 'REVISO', cell_format_firma)
+        worksheet.merge_range(cant_filas + 5, 7, cant_filas + 5, 8, 'APROBO', cell_format_firma)
+        # Guardar excel
         writer.save()
 
         self.write({
