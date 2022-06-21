@@ -102,7 +102,7 @@ class zue_xml_generator_header(models.Model):
                                 asigne_element = f"{item.name.replace('&',str(cont))}.text = val"
                                 exec(asigne_element)
                                 if item.name_parent:
-                                    if item.name_parent == old_tag:
+                                    if item.name_parent == old_tag and first_tag!='':
                                         assignee_parent = f"{first_tag}.append({item.name.replace('&', str(cont))})"
                                     else:
                                         assignee_parent = f"{item.name_parent}.append({item.name.replace('&',str(cont))})"
@@ -115,7 +115,7 @@ class zue_xml_generator_header(models.Model):
                             asigne_element = f"{item.name}.text = val"
                             exec(asigne_element)
                             if item.name_parent:
-                                if item.name_parent == old_tag:
+                                if item.name_parent == old_tag and first_tag!='':
                                     assignee_parent = f"{first_tag}.append({item.name})"
                                 else:
                                     assignee_parent = f"{item.name_parent}.append({item.name})"
@@ -125,7 +125,7 @@ class zue_xml_generator_header(models.Model):
                     raise UserError(_('Error al ejecutar el código python del item %s, %s') % (item.name, e))
             else:
                 if item.name_parent:
-                    if item.name_parent == old_tag:
+                    if item.name_parent == old_tag and first_tag!='':
                         assignee_parent = f"{first_tag}.append({item.name})"
                     else:
                         assignee_parent = f"{item.name_parent}.append({item.name})"
@@ -334,7 +334,7 @@ class zue_xml_generator_header(models.Model):
                                                     exec(assignee_parent)
                                     else:
                                         if second_item.name_parent:
-                                            if second_item.name_parent == old_tag:
+                                            if second_item.name_parent == old_tag and first_tag!='':
                                                 assignee_parent = f"{first_tag}.append({second_item.name})"
                                             else:
                                                 assignee_parent = f"{second_item.name_parent}.append({second_item.name})"

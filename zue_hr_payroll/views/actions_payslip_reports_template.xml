@@ -44,6 +44,7 @@
                             <field name="caption"/>
                             <field name="notes"/>
                             <field name="show_observation"/>
+                            <field name="hide_vacation_dates"/>
                         </group>
                         <group string="Firmas a solicitar">
                             <group>

@@ -7,6 +7,7 @@ from pytz import timezone
 import base64
 import io
 import xlsxwriter
+import pandas as pd
 
 
 class hr_entities_reports(models.TransientModel):
@@ -125,17 +126,36 @@ class hr_entities_reports(models.TransientModel):
 
         self._cr.execute(query_report)
         result_query = self._cr.dictfetchall()
-
+        df_report = pd.DataFrame(result_query)
+        pt_report = pd.pivot_table(df_report, values='empleado', index=['tipo_entidad', 'entidad'], aggfunc='count',
+                                   margins=True, margins_name='Total', fill_value=0)
         # Generar EXCEL
         filename = 'Reporte Entidades del Empleado'
         stream = io.BytesIO()
-        book = xlsxwriter.Workbook(stream, {'in_memory': True})
+        #book = xlsxwriter.Workbook(stream, {'in_memory': True})
+        writer = pd.ExcelWriter(stream, engine='xlsxwriter')
+        writer.book.filename = stream
+        book = writer.book
 
         # Columnas
         columns = ['Empleado', 'Compañia', 'Fecha ingreso entidad', 'Sucursal', 'Cuenta analitica', 'Tipo de entidad', 'Entidad',
                     'Sucursal seguridad social','Centro de trabajo de seguridad social','Actual', 'Nivel de riesgo', 'Es traslado']
         sheet = book.add_worksheet('Entidades del empleado')
-
+        pt_report.to_excel(writer, sheet_name='Pivot agrupado por entidad',header=['Cantidad Empleados'])
+        sheet_pivot = writer.sheets['Pivot agrupado por entidad']
+        #Tamaños columnas pivot
+        align_format = book.add_format({'align': 'left'})
+        sheet_pivot.set_column(0,0, 20, align_format)
+        sheet_pivot.set_column(1,1, 100, align_format)
+        sheet_pivot.set_column(2,2, 20, align_format)
+        border_format = book.add_format({'border': 1, 'align': 'right'})
+        sheet_pivot.conditional_format(0, 0, len(pt_report), 2,
+                                     {'type': 'no_errors',
+                                      'format': border_format})
+        header_format = book.add_format({'border': 1, 'align': 'center','bold':True})
+        sheet_pivot.write(0, 0, 'Tipo de entidad',header_format)
+        sheet_pivot.write(0, 1, 'Entidad',header_format)
+        sheet_pivot.merge_range(len(pt_report), 0, len(pt_report), 1, 'Total', header_format)
         # Agregar textos al excel
         text_title = 'Entidades del empleado'
         text_generate = 'Informe generado el %s' % (datetime.now(timezone(self.env.user.tz)))
