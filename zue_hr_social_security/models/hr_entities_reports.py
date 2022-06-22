@@ -141,8 +141,8 @@ class hr_entities_reports(models.TransientModel):
         columns = ['Empleado', 'Compañia', 'Fecha ingreso entidad', 'Sucursal', 'Cuenta analitica', 'Tipo de entidad', 'Entidad',
                     'Sucursal seguridad social','Centro de trabajo de seguridad social','Actual', 'Nivel de riesgo', 'Es traslado']
         sheet = book.add_worksheet('Entidades del empleado')
-        pt_report.to_excel(writer, sheet_name='Entidaes agrupadas',header=['Cantidad Empleados'])
-        sheet_pivot = writer.sheets['Entidaes agrupadas']
+        pt_report.to_excel(writer, sheet_name='Entidades agrupadas',header=['Cantidad Empleados'])
+        sheet_pivot = writer.sheets['Entidades agrupadas']
         #Tamaños columnas pivot
         align_format = book.add_format({'align': 'left'})
         sheet_pivot.set_column(0,0, 20, align_format)
