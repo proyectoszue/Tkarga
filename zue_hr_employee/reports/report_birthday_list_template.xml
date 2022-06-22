@@ -57,7 +57,7 @@
                                     </td>
                                 </tr>
                                 <tr>
-                                    <td colspan="3" class="text-right">
+                                    <td colspan="4" class="text-right">
                                         <b>TOTAL <span t-esc="o.get_name_month(m)"/></b>
                                     </td>
                                     <td>
