@@ -12,6 +12,7 @@ class hr_birthday_list(models.TransientModel):
     _description = "Listado de cumpleaños"
 
     branch = fields.Many2many('zue.res.branch', string='Sucursal')
+    company = fields.Many2many('res.company',string='Compañías', required=True, default=lambda self: self.env.company.ids)
     month = fields.Selection([('0', 'Todos'),
                             ('1', 'Enero'),
                             ('2', 'Febrero'),
@@ -45,7 +46,9 @@ class hr_birthday_list(models.TransientModel):
 
     def get_info_birthday(self,month):
         domain = [('birthday','!=',False)]
-        if len(self.branch) >0:
+        if len(self.company) > 0:
+            domain.append(('company_id','in',self.company.ids))
+        if len(self.branch) > 0:
             domain.append(('branch_id','in',self.branch.ids))
         obj_employee = self.env['hr.employee'].search(domain).filtered(lambda x: x.birthday.month == int(month))
         return obj_employee
@@ -110,9 +113,9 @@ class hr_birthday_list(models.TransientModel):
     def generate_birthday_excel(self):
         query_where = ''
         if self.month == '0':
-            query_where = "where a.company_id = " + str(self.env.company.id)
+            query_where = "where a.company_id in (" + str(self.company.ids).replace('[','').replace(']','') + ") "
         else:
-            query_where = "where a.company_id = " + str(self.env.company.id) + "and date_part('month',a.birthday) = " + self.month
+            query_where = "where a.company_id in (" + str(self.company.ids).replace('[','').replace(']','') + ") and date_part('month',a.birthday) = " + self.month
         # Filtro Sucursal
         str_ids_branch = ''
         for i in self.branch:
@@ -136,7 +139,8 @@ class hr_birthday_list(models.TransientModel):
 
         self._cr.execute(query_report)
         result_query = self._cr.dictfetchall()
-
+        if len(result_query) == 0:
+            raise ValidationError(_('No se encontraron datos con los filtros seleccionados, por favor verificar.'))
         # Generar EXCEL
         filename = 'Reporte Listado de Cumpleaños'
         stream = io.BytesIO()
