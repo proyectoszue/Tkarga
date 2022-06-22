@@ -141,8 +141,8 @@ class hr_entities_reports(models.TransientModel):
         columns = ['Empleado', 'Compañia', 'Fecha ingreso entidad', 'Sucursal', 'Cuenta analitica', 'Tipo de entidad', 'Entidad',
                     'Sucursal seguridad social','Centro de trabajo de seguridad social','Actual', 'Nivel de riesgo', 'Es traslado']
         sheet = book.add_worksheet('Entidades del empleado')
-        pt_report.to_excel(writer, sheet_name='Pivot agrupado por entidad',header=['Cantidad Empleados'])
-        sheet_pivot = writer.sheets['Pivot agrupado por entidad']
+        pt_report.to_excel(writer, sheet_name='Entidaes agrupadas',header=['Cantidad Empleados'])
+        sheet_pivot = writer.sheets['Entidaes agrupadas']
         #Tamaños columnas pivot
         align_format = book.add_format({'align': 'left'})
         sheet_pivot.set_column(0,0, 20, align_format)
@@ -152,9 +152,10 @@ class hr_entities_reports(models.TransientModel):
         sheet_pivot.conditional_format(0, 0, len(pt_report), 2,
                                      {'type': 'no_errors',
                                       'format': border_format})
-        header_format = book.add_format({'border': 1, 'align': 'center','bold':True})
+        header_format = book.add_format({'border': 1, 'align': 'center','bold':True, 'bg_color':'#1F497D', 'font_color':'#FFFFFF'})
         sheet_pivot.write(0, 0, 'Tipo de entidad',header_format)
         sheet_pivot.write(0, 1, 'Entidad',header_format)
+        sheet_pivot.write(0, 2, 'Cantidad Empleados', header_format)
         sheet_pivot.merge_range(len(pt_report), 0, len(pt_report), 1, 'Total', header_format)
         # Agregar textos al excel
         text_title = 'Entidades del empleado'

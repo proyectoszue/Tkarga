@@ -428,7 +428,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
         #Campos númericos
         number_format = writer.book.add_format({'num_format': '#,##', 'border': 1})
         # https://xlsxwriter.readthedocs.io/worksheet.html#conditional_format
-        worksheet.conditional_format(3, len(columns_index), cant_filas, cant_columnas,
+        worksheet.conditional_format(3, len(columns_index), cant_filas, cant_columnas-1,
                                      {'type': 'no_errors',
                                       'format': number_format})
         #Campo de novedades
