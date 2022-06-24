@@ -202,6 +202,8 @@ class hr_contract(models.Model):
     view_inherit_employee = fields.Boolean('Viene de empleado')    
     type_employee = fields.Many2one(string='Tipo de empleado', store=True, readonly=True, related='employee_id.type_employee')
     not_validate_top_auxtransportation = fields.Boolean(string='No validar tope de auxilio de transporte', track_visibility='onchange')
+    info_project = fields.Char(related='employee_id.info_project', store=True)
+    branch_id = fields.Many2one(related='employee_id.branch_id', store=True)
     # date_prima = fields.Date('Fecha de liquidación de prima')
     # date_cesantias = fields.Date('Fecha de liquidación de cesantías')
     # date_vacaciones = fields.Date('Fecha de liquidación de vacaciones')
