@@ -128,7 +128,7 @@ class Zue_Payment_File(models.Model):
                     coalesce(b.vat,'') as NitBeneficiario,
                     coalesce(substring(b."name" from 1 for 30),'') as NombreBeneficiario,        
                     coalesce(case when f.type_account = 'C' then '27'when f.type_account = 'A' then '37'else null end,'') as TipoTransaccion,
-                    coalesce(d.bic,coalesce(g.bic,'')) as Banco,coalesce(f.acc_number,'') as NoCuentaBeneficiario,
+                    coalesce(g.bic,coalesce(d.bic,'')) as Banco,coalesce(f.acc_number,'') as NoCuentaBeneficiario,
                     coalesce(b.email,''),coalesce(substring(a."name" from 6 for 21),'') as DocumentoAutorizado,coalesce(substring(a.communication from 1 for 21),'') as Referencia,'' as OficinaEntrega,coalesce(a.amount,0) as ValorTransaccion,		
                     coalesce(cast(extract(year from a.payment_date) as varchar) || lpad(extract(month from a.payment_date)::text, 2, '0') ||  lpad(extract(day from a.payment_date)::text, 2, '0'),'') as FechaAplicacion,
                     coalesce(cast(b.x_digit_verification as varchar),'') as DigitoNitBeneficiario	

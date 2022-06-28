@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="action_account_report_assets_expenses" model="ir.actions.client">
+            <field name="name">Informe Gastos Diferidos</field>
+            <field name="tag">account_report</field>
+            <field name="context" eval="{'model': 'account.assets.report', 'expenses': True}" />
+        </record>
+
+        <menuitem id="menu_action_account_report_assets_expenses" name="Informe Gastos Diferidos"
+                  action="action_account_report_assets_expenses"
+                  parent="account.account_reports_management_menu"/>
+    </data>
+</odoo>

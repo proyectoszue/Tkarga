@@ -23,6 +23,7 @@
 
     # always loaded
     'data': [
+        'views/account_assets_report.xml',
         'security/ir.model.access.csv'
-    ]    
+    ]
 }
