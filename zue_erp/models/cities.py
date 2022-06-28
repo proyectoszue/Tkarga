@@ -15,6 +15,7 @@ class Cities(models.Model):
     name = fields.Char(string='Nombre', required=True)
 
 #--------------------------------Modelos heredados de Odoo------------------------------------#
+#--- test
 
 class ResCountry(models.Model):
     _inherit = 'res.country'

@@ -11,6 +11,7 @@ class account_move(models.Model):
     supplier_invoice_number = fields.Char(string='Nº de factura del proveedor',help="La referencia de esta factura proporcionada por el proveedor.", copy=False)
     supplier_invoice_attachment = fields.Many2one('documents.document',string="Soporte") #fields.Binary(string="Soporte")
     iva_amount = fields.Float('Valor IVA', compute='_compute_amount_iva', store=True)
+    tax_base_amount = fields.Float('Valor Base Impuestos', compute='_compute_tax_base_amount', store=True)
     l10n_co_edi_type = fields.Selection([('1', 'Factura de venta'),
                                         ('2', 'Factura de exportación'),
                                         ('3', 'Notas electrónicas'),
@@ -34,6 +35,23 @@ class account_move(models.Model):
                         iva_amount += lines.price_subtotal * percent / 100
 
         self.iva_amount = iva_amount
+
+    @api.depends('line_ids', 'invoice_line_ids')
+    def _compute_tax_base_amount(self):
+        for record in self:
+            tax_base_amount = 0
+
+            if record.invoice_line_ids.tax_id:
+                for lines in record.invoice_line_ids:
+                    if tax_base_amount > 0:
+                        break
+
+                    for taxes in lines.tax_ids:
+                        if not taxes.l10n_co_edi_type.retention:
+                            tax_base_amount = record.amount_untaxed
+                            break
+
+            record.tax_base_amount = tax_base_amount
 
     @api.constrains('line_ids','invoice_line_ids')
     def _check_line_ids(self):
@@ -85,12 +103,16 @@ class annual_accounting_closing(models.Model):
     _name = 'annual.accounting.closing'
     _description = 'Cierre contable anual'
 
+    name = fields.Char('Nombre')
     balance = fields.Float('Saldo', readonly=True)
     closing_year = fields.Integer('Año de cierre', size=4)
     counter_contab = fields.Integer(compute='compute_counter_contab', string='Movimientos')
     company_id = fields.Many2one('res.company', string='Compañía', readonly=True, required=True, default=lambda self: self.env.company)
-    journal_id = fields.Many2one('account.journal', string='Diario destino', company_dependent=True)
-    counterparty_account = fields.Many2one('account.account',string='Cuenta contrapartida', required=True)
+    journal_id = fields.Many2one('account.journal', string='Diario destino', company_dependent=True, required=True)
+    counterparty_account = fields.Many2one('account.account', string='Cuenta contrapartida')
+    filter_account_ids = fields.Many2many('account.group', string="Cuentas a cerrar")
+    partner_id = fields.Many2one('res.partner', 'Tercero de cierre', default=lambda self: self.env.company.partner_id.id)
+    closing_by_partner = fields.Boolean('Cerrar por tercero')
 
     def compute_counter_contab(self):
         count = self.env['account.move'].search_count([('accounting_closing_id', '=', self.id)])
@@ -140,7 +162,29 @@ class annual_accounting_closing(models.Model):
         year = str(self.closing_year)
         start_date = '01/01/' + year
         end_date = '31/12/' + year
-        accounts = '(4%|5%|6%|7%)'
+        row_count = 0
+        accounts = ''
+
+        if self.closing_by_partner:
+            if not self.partner_id:
+                raise ValidationError(_("No se ha especificado el tercero de cierre. Por favor verifique!"))
+            if not self.filter_account_ids:
+                raise ValidationError(_("No se han especificado las cuentas de cierre. Por favor verifique!"))
+        else:
+            if not self.counterparty_account:
+                raise ValidationError(_("No se han especificado la cuenta de contrapartida. Por favor verifique!"))
+
+        for account in self.filter_account_ids:
+            row_count += 1
+            if row_count == 1:
+                if row_count == len(self.filter_account_ids):
+                    accounts = '(' + account.code_prefix + '%)'
+                else:
+                    accounts = '(' + account.code_prefix + '%|'
+            elif row_count == len(self.filter_account_ids):
+                accounts += account.code_prefix + '%)'
+            else:
+                accounts += account.code_prefix + '%|'
 
         d_start_date = datetime.strptime(start_date, '%d/%m/%Y')
         d_end_date = datetime.strptime(end_date, '%d/%m/%Y')
@@ -152,7 +196,7 @@ class annual_accounting_closing(models.Model):
                 inner join account_account aa on aml.account_id = aa.id and code similar to '%s' 
                 where am."date" between '%s' and '%s' and am.company_id = %s and am.state = 'posted'
                 group by aml.account_id, aml.partner_id, aml.analytic_account_id 
-                ''' % (accounts, start_date, end_date, self.company_id.id)
+                ''' % (accounts, str(d_start_date), str(d_end_date), self.company_id.id)
 
         self.env.cr.execute(query)
         result_query = self.env.cr.fetchall()
@@ -199,6 +243,18 @@ class annual_accounting_closing(models.Model):
             }
             line_ids.append(line)
 
+            if self.closing_by_partner:
+                line = {
+                    'name': 'Cierre contable año: ' + year,
+                    'partner_id': self.partner_id.id,
+                    'account_id': account_id,
+                    'journal_id': self.journal_id.id,
+                    'date': d_end_date,
+                    'debit': credit,
+                    'credit': debit,
+                    'analytic_account_id': analytic_account_id,
+                }
+                line_ids.append(line)
         debit = 0
         credit = 0
         if total > 0:
@@ -206,16 +262,17 @@ class annual_accounting_closing(models.Model):
         elif total < 0:
             credit = abs(total)
 
-        line = {
-            'name': 'Cierre contable año: ' + year,
-            'partner_id': self.company_id.partner_id.id,
-            'account_id': self.counterparty_account.id,
-            'journal_id': self.journal_id.id,
-            'date': d_end_date,
-            'debit': debit,
-            'credit': credit
-        }
-        line_ids.append(line)
+        if not self.closing_by_partner:
+            line = {
+                'name': 'Cierre contable año: ' + year,
+                'partner_id': self.env.company.partner_id.id,
+                'account_id': self.counterparty_account.id,
+                'journal_id': self.journal_id.id,
+                'date': d_end_date,
+                'debit': debit,
+                'credit': credit
+            }
+            line_ids.append(line)
 
         move_dict['line_ids'] = [(0, 0, line_vals) for line_vals in line_ids]
         move = self.env['account.move'].create(move_dict)

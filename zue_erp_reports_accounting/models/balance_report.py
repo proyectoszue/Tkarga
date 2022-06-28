@@ -181,12 +181,19 @@ class account_balance_report_filters(models.TransientModel):
             domain.append(('id', 'not in', self.env['account.move.line'].search(domain_close).ids))
         #----------------------------------------Obtener información--------------------------------------------------
         obj_moves = self.env['account.move.line'].search(domain)
-        div = math.ceil(len(obj_moves) / 5)
-        moves_array_def, i, j = [], 0, div
+        div = 10000
+        moves_array, i, j = [], 0, div
         if len(obj_moves) == 0:
             raise ValidationError(_('No se encontro información con los filtros seleccionados, por favor verificar.'))
         while i <= len(obj_moves):
-            moves_array_def.append(obj_moves[i:j])
+            moves_array.append(obj_moves[i:j])
+            i = j
+            j += div
+
+        div = 5
+        moves_array_def, i, j = [], 0, div
+        while i <= len(moves_array):
+            moves_array_def.append(moves_array[i:j])
             i = j
             j += div
         # ----------------------------Recorrer información por multihilos
@@ -249,16 +256,17 @@ class account_balance_report_filters(models.TransientModel):
                         lst_info.append({**dict_levels_account, **dict_levels_analytic_account,**dict_initial})
                     return
 
-        threads = []
         lst_info, lst_levels_group, lst_levels_group_analytic = [], [], []
-        for i_moves in moves_array_def:
-            if len(i_moves) > 0:
-                t = threading.Thread(target=get_dict_moves,args=(i_moves.ids,))
-                threads.append(t)
-                t.start()
+        for moves_group in moves_array_def:
+            threads = []
+            for i_moves in moves_group:
+                if len(i_moves) > 0:
+                    t = threading.Thread(target=get_dict_moves,args=(i_moves.ids,))
+                    threads.append(t)
+                    t.start()
 
-        for thread in threads:
-            thread.join()
+            for thread in threads:
+                thread.join()
         # ----------------------------------------DATAFRAMES PANDAS--------------------------------------------------
         if len(lst_info) == 0:
             return

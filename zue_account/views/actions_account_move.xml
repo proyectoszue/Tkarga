@@ -43,6 +43,7 @@
 
                 <xpath expr="//field[@name='amount_untaxed']" position="after">
                     <field name="iva_amount"/>
+                    <field name="tax_base_amount" invisible="1"/>
                 </xpath>
 			</field>
 		</record>
@@ -91,10 +92,16 @@
                             </button>
                         </div>
                         <group>
+                            <field name="name"/>
                             <field name="closing_year"/>
-                            <field name="journal_id"/>
-                            <field name="counterparty_account"/>
                             <field name="company_id"/>
+                        </group>
+                        <group string="Datos de Cierre">
+                            <field name="journal_id"/>
+                            <field name="counterparty_account" attrs="{'invisible': [['closing_by_partner','=',True]]}"/>
+                            <field name="closing_by_partner"/>
+                            <field name="filter_account_ids" widget="many2many_tags" attrs="{'invisible': [['closing_by_partner','=',False]]}"/>
+                            <field name="partner_id" attrs="{'invisible': [['closing_by_partner','=',False]]}"/>
                         </group>
                         <group string="Saldo de cierre">
                             <h3><field name="balance" nolabel="1"/></h3>
