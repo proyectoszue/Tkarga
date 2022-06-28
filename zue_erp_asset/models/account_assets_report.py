@@ -55,6 +55,14 @@ class assets_report(models.AbstractModel):
         self.env['account.move.line'].check_access_rights('read')
         self.env['account.asset'].check_access_rights('read')
 
+        get_expenses = self.env.context.get('expenses', False)
+        asset_type = ''
+
+        if get_expenses:
+            asset_type = 'expense'
+        else:
+            asset_type = 'purchase'
+
         where_account_move = " AND state != 'cancel'"
         if not options.get('all_entries'):
             where_account_move = " AND state = 'posted'"
@@ -102,14 +110,14 @@ class assets_report(models.AbstractModel):
                 LEFT OUTER JOIN (SELECT MIN(date) as date, asset_id FROM temp_account_move WHERE date >= %(date_from)s AND date <= %(date_to)s {where_account_move} GROUP BY asset_id) min_date_in ON min_date_in.asset_id = asset.id
                 LEFT OUTER JOIN (SELECT MAX(date) as date, asset_id FROM temp_account_move WHERE date >= %(date_from)s AND date <= %(date_to)s {where_account_move} GROUP BY asset_id) max_date_in ON max_date_in.asset_id = asset.id
                 LEFT OUTER JOIN (SELECT MAX(date) as date, asset_id FROM temp_account_move WHERE date <= %(date_from)s {where_account_move} GROUP BY asset_id) max_date_before ON max_date_before.asset_id = asset.id
-                LEFT OUTER JOIN temp_account_move as first_move ON first_move.id = (SELECT m.id FROM temp_account_move m WHERE m.asset_id = asset.id AND m.date = min_date_in.date ORDER BY m.id ASC LIMIT 1)
-                LEFT OUTER JOIN temp_account_move as last_move ON last_move.id = (SELECT m.id FROM temp_account_move m WHERE m.asset_id = asset.id AND m.date = max_date_in.date ORDER BY m.id DESC LIMIT 1)
-                LEFT OUTER JOIN temp_account_move as move_before ON move_before.id = (SELECT m.id FROM temp_account_move m WHERE m.asset_id = asset.id AND m.date = max_date_before.date ORDER BY m.id DESC LIMIT 1)
+                LEFT OUTER JOIN temp_account_move as first_move ON first_move.id = (SELECT m.id FROM temp_account_move m WHERE m.asset_id = asset.id AND m.date = min_date_in.date AND state <> 'cancel' ORDER BY m.id ASC LIMIT 1)
+                LEFT OUTER JOIN temp_account_move as last_move ON last_move.id = (SELECT m.id FROM temp_account_move m WHERE m.asset_id = asset.id AND m.date = max_date_in.date AND state <> 'cancel' ORDER BY m.id DESC LIMIT 1)
+                LEFT OUTER JOIN temp_account_move as move_before ON move_before.id = (SELECT m.id FROM temp_account_move m WHERE m.asset_id = asset.id AND m.date = max_date_before.date AND state <> 'cancel' ORDER BY m.id DESC LIMIT 1)
                 WHERE asset.company_id in %(company_ids)s
                 AND asset.acquisition_date <= %(date_to)s
                 AND (asset.disposal_date >= %(date_from)s OR asset.disposal_date IS NULL)
                 AND asset.state not in ('model', 'draft')
-                AND asset.asset_type = 'purchase'
+                AND asset.asset_type = %(asset_type)s
                 AND asset.active = 't'
 
                 ORDER BY account.code;
@@ -120,7 +128,7 @@ class assets_report(models.AbstractModel):
         company_ids = tuple(t['id'] for t in self._get_options_companies(options))
 
         self.flush()
-        self.env.cr.execute(sql, {'date_to': date_to, 'date_from': date_from, 'company_ids': company_ids})
+        self.env.cr.execute(sql, {'date_to': date_to, 'date_from': date_from, 'company_ids': company_ids, 'asset_type': asset_type})
         results = self.env.cr.dictfetchall()
         self.env.cr.execute("DROP TABLE temp_account_move")  # Because tests are run in the same transaction, we need to clean here the SQL INHERITS
         return results

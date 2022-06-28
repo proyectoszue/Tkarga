@@ -9,6 +9,5 @@
             <menuitem name="Informe Formatos" id="zue_account.zue_menu_format_encab" sequence="3" parent="zue_account.zue_menu_exogenous_information" action="action_format_encab"/>
             <menuitem name="Generar Medios Magnético" id="zue_account.zue_menu_generate_media_magnetic" sequence="4" parent="zue_account.zue_menu_exogenous_information" action="action_generate_media_magnetic"/>
             <menuitem name="Cierre contable" id="zue_account.menu_accounting_closing" sequence="30" parent="account.menu_finance_entries_actions" action="action_annual_accounting_closing"/>
-
     </data>
 </odoo>
