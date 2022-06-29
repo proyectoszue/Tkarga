@@ -238,7 +238,7 @@ class Hr_payslip(models.Model):
                 'result_qty': 1.0,
                 'result_rate': 100})
             if rule._satisfy_condition(localdict):
-                if rule.code == 'VACDISFRUTADAS' and self.get_pay_vacations_in_payroll() == False:
+                if rule.code == 'VACDISFRUTADAS' and (self.get_pay_vacations_in_payroll() == False or inherit_nomina!=0):
                     initial_accrual_date = False
                     final_accrual_date = False                    
                     for leaves in leaves_time:

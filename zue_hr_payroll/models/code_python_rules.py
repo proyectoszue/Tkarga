@@ -192,7 +192,7 @@ if obj_salary_rule:
         aplicar = 0 if obj_concept.aplicar=='30' and inherit_contrato!=0 else int(obj_concept.aplicar)        
         if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
             salario_minimo = annual_parameters.smmlv_monthly/2 if aplicar == 0 else annual_parameters.smmlv_monthly
-            total = categories.DEV_SALARIAL if aplicar == 0 else categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from, payslip.date_to)
+            total = categories.DEV_SALARIAL + categories.SSOCIAL if aplicar == 0 else categories.DEV_SALARIAL + categories.SSOCIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from, payslip.date_to) + payslip.sum_mount('SSOCIAL', payslip.date_from, payslip.date_to)
             val = round((total - salario_minimo)/5)
             result = val*-1 if val > 0 else val
             result_qty = obj_concept.amount if obj_concept.amount != 0 else 0 
