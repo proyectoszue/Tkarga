@@ -144,7 +144,10 @@ class Hr_payslip(models.Model):
                     dias_liquidacion = dias_trabajados - dias_ausencias
 
                     #Acumulados
-                    acumulados_promedio = (amount / dias_trabajados) * 30  # dias_liquidacion
+                    if dias_trabajados != 0:
+                        acumulados_promedio = (amount / dias_trabajados) * 30  # dias_liquidacion
+                    else:
+                        acumulados_promedio = 0
                     #Salario - Se toma el salario correspondiente a la fecha de liquidación
                     wage = 0
                     obj_wage = self.env['hr.contract.change.wage'].search([('contract_id','=',contract.id),('date_start','<',self.date_to)])
