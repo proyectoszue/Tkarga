@@ -29,6 +29,7 @@
         'views/update_personal_data.xml',
         'views/labor_certification.xml',
         'views/application_permit.xml',
+        'views/hr_permit_application.xml',
         'reports/laboral_certification.xml',
         'reports/books_reports.xml',
         'reports/book_vacation_portal_template.xml',
@@ -37,7 +38,8 @@
         'reports/payslip_header_footer_template.xml',
         'reports/portal_payslip.xml',
         'security/ir.model.access.csv',
-        'data/hr_permissions_portal.xml'
+        'data/hr_permissions_portal.xml',
+        'views/menus.xml',
     ],
     'bootstrap': True,
 }

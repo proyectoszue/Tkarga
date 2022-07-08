@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.act_window" id="action_hr_permit_application">
+            <field name="name">Solicitud Permisos Portal</field>
+            <field name="res_model">hr.permit.application</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record id="hr_permit_application_tree" model="ir.ui.view">
+            <field name="name">Solicitud Permisos Portal</field>
+            <field name="model">hr.permit.application</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="employee_id"/>
+                    <field name="department_id"/>
+                    <field name="branch_id"/>
+                    <field name="permit_date"/>
+                    <field name="reason"/>
+                    <field name="state"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- Crear record rule para filtrar las compañias-->
+        <record id="rule_hr_permit_application_company" model="ir.rule">
+            <field name="name">Permisos compañia Solicitud Permisos Portal</field>
+            <field name="model_id" ref="model_hr_permit_application"/>
+            <field name="domain_force">['|',('employee_id.company_id','=',False),('employee_id.company_id', 'in', company_ids)]</field>
+        </record>
+
+        <!-- Crear record rule para filtrar las sucursales - Horas extra -->
+        <record id="rule_hr_permit_application_zue_res_branch" model="ir.rule">
+            <field name="name">Permisos sucursales Solicitud Permisos Portal</field>
+            <field name="model_id" ref="model_hr_permit_application"/>
+            <field name="domain_force">['|',('branch_id','in',user.branch_ids.ids),('branch_id','=',False)]</field>
+        </record>
+
+        <record id="hr_permit_application_form" model="ir.ui.view">
+            <field name="name">Solicitud Permisos Portal</field>
+            <field name="model">hr.permit.application</field>
+            <field name="arch" type="xml">
+                <form>
+                     <header>
+                        <button name="action_validate" type="object" string="Aprobar" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'confirm')]}"/>
+                        <button name="action_refuse" type="object" string="Rechazar" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'confirm')]}"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="employee_id"/>
+                                <field name="department_id"/>
+                                <field name="branch_id"/>
+                                <field name="reason"/>
+                                <field name="text_other" attrs="{'invisible': [('reason','!=', 'other')]}"/>
+                            </group>
+                            <group>
+                                <field name="permit_date"/>
+                                <field name="leave_requested_more_day"/>
+                                <field name="permit_days"/>
+                                <field name="initial_hour" widget="float_time"/>
+                                <field name="final_hour" widget="float_time"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="observation"/>
+                        </group>
+                    </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

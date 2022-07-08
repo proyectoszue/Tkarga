@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <menuitem name="Portal" id="zue_payroll_self_management_portal.menu_portal_hr_permit_application" parent="hr_holidays.menu_hr_holidays_approvals"/>
+            <menuitem name="Permisos" id="zue_payroll_self_management_portal.menu_hr_permit_application" parent="zue_payroll_self_management_portal.menu_portal_hr_permit_application" action="action_hr_permit_application" sequence="1"/>
+    </data>
+</odoo>

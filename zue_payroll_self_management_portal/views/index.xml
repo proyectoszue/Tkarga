@@ -45,6 +45,12 @@
                       </li>
                       <br/>
                       <li>
+                        <a class="btn btn-outline-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/my_application_permits">
+                      Ver mis Permisos
+                        </a>
+                      </li>
+                      <br/>
+                      <li>
                         <a class="btn btn-outline-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/labor_certification">
                       Certificado Laboral
                         </a>
