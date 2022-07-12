@@ -226,7 +226,7 @@ class Payslips(BrowsableObject):
         else:
             date = from_date
         res = self.env['hr.overtime'].search([('employee_id', '=', employee_id),('date','>=',date),('date_end','<=',to_date)])
-        return res and res[0] or 0.0
+        return res #and res[0] or 0.0
     
     #Retorna el objeto del tipo de ausencia
     def get_leave_type(self, code):
