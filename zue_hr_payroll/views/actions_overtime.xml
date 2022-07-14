@@ -11,7 +11,7 @@
             <field name="name">Tipos de horas extra</field>
             <field name="model">hr.type.overtime</field>
             <field name="arch" type="xml">
-                <tree editable="bottom">
+                <tree editable="top">
                     <field name="name"/>
                     <field name="salary_rule"/>
                     <field name="type_overtime"/>
@@ -46,7 +46,7 @@
             <field name="name">Horas extra</field>
             <field name="model">hr.overtime</field>
             <field name="arch" type="xml">
-                <tree editable="bottom">
+                <tree editable="top">
                     <field name="branch_id"/>
                     <field name="date"/>
                     <field name="date_end"/>
