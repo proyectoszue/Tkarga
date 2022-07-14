@@ -234,10 +234,13 @@ if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_pa
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
         obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
-        if obj_overtime:
-            if obj_type_overtime.type_overtime == 'overtime_ext_d' and obj_overtime.overtime_ext_d > 0:
-                result = round((contract.wage /240)*1.25)
-                result_qty = obj_overtime.overtime_ext_d
+        if len(obj_overtime) > 0:
+            r_qty = 0
+            for overtime in obj_overtime:
+                if obj_type_overtime.type_overtime == 'overtime_ext_d' and overtime.overtime_ext_d > 0:
+                    r_qty += overtime.overtime_ext_d
+            result = round((contract.wage /240)*1.25)  if r_qty > 0 else 0
+            result_qty = r_qty
 #---------------------------------------Horas extra diurnas dominical / festiva (200%)--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('HEYREC002',employee.type_employee.id)
@@ -248,10 +251,13 @@ if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_pa
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
         obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
-        if obj_overtime:
-            if obj_type_overtime.type_overtime == 'overtime_eddf' and obj_overtime.overtime_eddf > 0:
-                result = round((contract.wage /240)*2)
-                result_qty = obj_overtime.overtime_eddf
+        if len(obj_overtime) > 0:
+            r_qty = 0
+            for overtime in obj_overtime:
+                if obj_type_overtime.type_overtime == 'overtime_eddf' and overtime.overtime_eddf > 0:
+                    r_qty += overtime.overtime_eddf
+            result = round((contract.wage /240)*2)  if r_qty > 0 else 0
+            result_qty = r_qty
 #---------------------------------------Horas extra nocturna (175%)--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('HEYREC003',employee.type_employee.id)
@@ -262,10 +268,13 @@ if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_pa
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
         obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
-        if obj_overtime:
-            if obj_type_overtime.type_overtime == 'overtime_ext_n' and obj_overtime.overtime_ext_n > 0:
-                result = round((contract.wage /240)*1.75)
-                result_qty = obj_overtime.overtime_ext_n
+        if len(obj_overtime) > 0:
+            r_qty = 0
+            for overtime in obj_overtime:
+                if obj_type_overtime.type_overtime == 'overtime_ext_n' and overtime.overtime_ext_n > 0:
+                    r_qty += overtime.overtime_ext_n
+            result = round((contract.wage /240)*1.75)  if r_qty > 0 else 0
+            result_qty = r_qty
 #---------------------------------------Horas recargo festivo (110%)--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('HEYREC004',employee.type_employee.id)
@@ -276,10 +285,47 @@ if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_pa
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
         obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
-        if obj_overtime:
-            if obj_type_overtime.type_overtime == 'overtime_rndf' and obj_overtime.overtime_rndf > 0:
-                result = round((contract.wage /240)*1.1)
-                result_qty = obj_overtime.overtime_rndf
+        if len(obj_overtime) > 0:
+            r_qty = 0
+            for overtime in obj_overtime:
+                if obj_type_overtime.type_overtime == 'overtime_rndf' and overtime.overtime_rndf > 0:
+                    r_qty += overtime.overtime_rndf
+            result = round((contract.wage /240)*1.1)  if r_qty > 0 else 0
+            result_qty = r_qty
+#---------------------------------------Recargos dominicales (0.75%)--------------------------------------------------------
+result = 0.0
+obj_salary_rule = payslip.get_salary_rule('HEYREC008',employee.type_employee.id)
+aplicar = int(obj_salary_rule.aplicar_cobro)
+day_initial_payrroll = payslip.date_from.day
+day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
+if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
+    if obj_salary_rule:
+        obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
+        obj_overtime = payslip.get_overtime(employee.id, payslip.date_from, payslip.date_to, inherit_contrato, aplicar)
+        if len(obj_overtime) > 0:
+            r_qty = 0
+            for overtime in obj_overtime:
+                if obj_type_overtime.type_overtime == 'overtime_rdf' and overtime.overtime_rdf > 0:
+                    r_qty += overtime.overtime_rdf
+            result = round((contract.wage / 240) * 0.75)  if r_qty > 0 else 0
+            result_qty = r_qty
+#---------------------------------------Horas Dominicales (175%)--------------------------------------------------------
+result = 0.0
+obj_salary_rule = payslip.get_salary_rule('HEYREC007',employee.type_employee.id)
+aplicar = int(obj_salary_rule.aplicar_cobro)
+day_initial_payrroll = payslip.date_from.day
+day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
+if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll)) or (inherit_contrato!=0):
+    if obj_salary_rule:
+        obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
+        obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
+        if len(obj_overtime) > 0:
+            r_qty = 0
+            for overtime in obj_overtime:
+                if obj_type_overtime.type_overtime == 'overtime_dof' and overtime.overtime_dof > 0:
+                    r_qty += overtime.overtime_dof
+            result = round((contract.wage /240)*1.75)  if r_qty > 0 else 0
+            result_qty = r_qty
 #---------------------------------------Horas Recargo Nocturno (35%)--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('HEYREC005',employee.type_employee.id)
@@ -290,10 +336,13 @@ if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_pa
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
         obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
-        if obj_overtime:
-            if obj_type_overtime.type_overtime == 'overtime_rn' and obj_overtime.overtime_rn > 0:
-                result = round((contract.wage /240)*0.35)
-                result_qty = obj_overtime.overtime_rn
+        if len(obj_overtime) > 0:
+            r_qty = 0
+            for overtime in obj_overtime:
+                if obj_type_overtime.type_overtime == 'overtime_rn' and overtime.overtime_rn > 0:
+                    r_qty += overtime.overtime_rn
+            result = round((contract.wage /240)*0.35)  if r_qty > 0 else 0
+            result_qty = r_qty
 #---------------------------------------Horas extra nocturna dominical / festiva (250%)--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('HEYREC006',employee.type_employee.id)
@@ -304,10 +353,13 @@ if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_pa
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
         obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
-        if obj_overtime:
-            if obj_type_overtime.type_overtime == 'overtime_endf' and obj_overtime.overtime_endf > 0:
-                result = round((contract.wage /240)*2.5)
-                result_qty = obj_overtime.overtime_endf
+        if len(obj_overtime) > 0:
+            r_qty = 0
+            for overtime in obj_overtime:
+                if obj_type_overtime.type_overtime == 'overtime_endf' and overtime.overtime_endf > 0:
+                    r_qty += overtime.overtime_endf
+            result = round((contract.wage /240)*2.5) if r_qty > 0 else 0
+            result_qty = r_qty
 #---------------------------------------Horas dominicales--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('HEYREC007',employee.type_employee.id)
@@ -318,10 +370,13 @@ if ((aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_pa
     if obj_salary_rule:
         obj_type_overtime = payslip.get_type_overtime(obj_salary_rule.id)
         obj_overtime = payslip.get_overtime(employee.id,payslip.date_from, payslip.date_to, inherit_contrato,aplicar)
-        if obj_overtime:
-            if obj_type_overtime.type_overtime == 'overtime_dof' and obj_overtime.overtime_dof > 0:
-                result = round((contract.wage /240)*0.75)
-                result_qty = obj_overtime.overtime_dof
+        if len(obj_overtime) > 0:
+            r_qty = 0
+            for overtime in obj_overtime:
+                if obj_type_overtime.type_overtime == 'overtime_dof' and overtime.overtime_dof > 0:
+                    r_qty += overtime.overtime_dof
+            result = round((contract.wage /240)*0.75)  if r_qty > 0 else 0
+            result_qty = r_qty
 #---------------------------------------Dias efectivamente laborados--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('AUX005',employee.type_employee.id)
