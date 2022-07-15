@@ -92,7 +92,7 @@ class hr_payroll_flat_file(models.TransientModel):
             tipo_transaccion = ''
             for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
                 if bank.is_main:
-                    banco = right(9*'0'+bank.bank_id.bic,9)
+                    banco = right(9*'0'+str(bank.bank_id.bic),9)
                     cuenta_beneficiario = right(17*'0'+str(bank.acc_number).replace("-",""),17)
                     indicador_lugar_pago = 'S'
                     tipo_transaccion = '37' if bank.type_account == 'A' else '27' # 27: Abono a cuenta corriente / 37: Abono a cuenta ahorros 
