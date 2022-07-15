@@ -406,7 +406,10 @@ class Hr_payslip(models.Model):
                         dias_liquidacion = dias_trabajados - dias_ausencias
 
                         if (self.date_liquidacion - contract.date_start).days <= 365:
-                            acumulados_promedio = (amount_base/dias_liquidacion)*30
+                            if dias_liquidacion > 0:
+                                acumulados_promedio = (amount_base/dias_liquidacion)*30
+                            else:
+                                acumulados_promedio = 0
                         else:
                             acumulados_promedio = amount_base/12
 
