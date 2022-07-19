@@ -205,7 +205,7 @@
                             </thead>
                             <tbody>
                                 <tr t-foreach="o.resume_line_ids" t-as="r">
-                                 <t t-if="r.line_type_id.name == 'Experience'">
+                                 <t t-if="r.line_type_id.name == 'Experience' or r.line_type_id.name == 'Experiencia'">
                                     <td>
                                         <span t-field="r.name"/>
                                     </td>
