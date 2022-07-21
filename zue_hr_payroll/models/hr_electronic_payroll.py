@@ -521,31 +521,34 @@ class hr_electronic_payroll(models.Model):
 
         item = 0
         for employee in obj_employee:
-            item += 1
+            obj_contracts = self.env['hr.contract']
             # Obtener contrato activo
-            obj_contract = self.env['hr.contract'].search([('state', '=', 'open'), ('employee_id', '=', employee.id), ('date_start','<=',date_end)])
-            if not obj_contract:
-                obj_contract = self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id', '=', employee.id), ('retirement_date', '>=', date_start)],limit=1)
+            obj_contracts += self.env['hr.contract'].search([('state', '=', 'open'), ('employee_id', '=', employee.id), ('date_start','<=',date_end)])
+            # Obtener contratos finalizados en el mes
+            obj_contracts += self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id', '=', employee.id), ('retirement_date', '>=', date_start), ('retirement_date', '<=', date_end)])
+
+            for obj_contract in obj_contracts:
+                item += 1
                 # Obtener nóminas en ese rango de fechas
-            obj_payslip = self.env['hr.payslip'].search(
-                [('state', '=', 'done'), ('employee_id', '=', employee.id), ('contract_id', '=', obj_contract.id),
-                 ('date_from', '>=', date_start), ('date_from', '<=', date_end)])
-            obj_payslip += self.env['hr.payslip'].search(
-                [('state', '=', 'done'), ('employee_id', '=', employee.id), ('contract_id', '=', obj_contract.id),
-                 ('id', 'not in', obj_payslip.ids),('struct_id.process', 'in', ['cesantias', 'intereses_cesantias', 'prima']),
-                 ('date_to', '>=', date_start), ('date_to', '<=', date_end)])
+                obj_payslip = self.env['hr.payslip'].search(
+                    [('state', '=', 'done'), ('employee_id', '=', employee.id), ('contract_id', '=', obj_contract.id),
+                     ('date_from', '>=', date_start), ('date_from', '<=', date_end)])
+                obj_payslip += self.env['hr.payslip'].search(
+                    [('state', '=', 'done'), ('employee_id', '=', employee.id), ('contract_id', '=', obj_contract.id),
+                     ('id', 'not in', obj_payslip.ids),('struct_id.process', 'in', ['cesantias', 'intereses_cesantias', 'prima']),
+                     ('date_to', '>=', date_start), ('date_to', '<=', date_end)])
 
-            value_detail = {
-                'electronic_payroll_id':self.id,
-                'employee_id':employee.id,
-                'contract_id':obj_contract.id,
-                'item':item+max_item,
-                'sequence': self.prefix+''+str(item+max_item),
-                'nonce': 'ZUE_NOMINAELECTRONICA_'+self.prefix+''+str(item+max_item),
-                'payslip_ids':[(6, 0, obj_payslip.ids)]
-            }
+                value_detail = {
+                    'electronic_payroll_id':self.id,
+                    'employee_id':employee.id,
+                    'contract_id':obj_contract.id,
+                    'item':item+max_item,
+                    'sequence': self.prefix+''+str(item+max_item),
+                    'nonce': 'ZUE_NOMINAELECTRONICA_'+self.prefix+''+str(item+max_item),
+                    'payslip_ids':[(6, 0, obj_payslip.ids)]
+                }
 
-            self.env['hr.electronic.payroll.detail'].create(value_detail)
+                self.env['hr.electronic.payroll.detail'].create(value_detail)
 
         for detail in self.executing_electronic_payroll_ids:
             detail.get_xml()
