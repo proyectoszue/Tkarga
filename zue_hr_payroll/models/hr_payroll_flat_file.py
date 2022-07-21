@@ -81,7 +81,7 @@ class hr_payroll_flat_file(models.TransientModel):
         
         for payslip in obj_payslip:
             cant_detalle = cant_detalle + 1
-
+            self.validation_values(payslip.contract_id.employee_id)
             tipo_registro = '6'
             if payslip.contract_id.employee_id.permit_no:
                 nit_beneficiario = right(15 * '0' + payslip.contract_id.employee_id.permit_no, 15)
@@ -221,7 +221,7 @@ class hr_payroll_flat_file(models.TransientModel):
         
         for payslip in obj_payslip:
             cant_detalle = cant_detalle + 1
-
+            self.validation_values(payslip.contract_id.employee_id)
             tipo_registro = '6'
             if payslip.contract_id.employee_id.permit_no:
                 nit_beneficiario = left(payslip.contract_id.employee_id.permit_no+15*' ',15)
@@ -371,7 +371,7 @@ class hr_payroll_flat_file(models.TransientModel):
             cant_detalle = cant_detalle + 1
             consecutivo = right('0000'+str(cant_detalle),4)
             forma_de_pago = '3' # 1: Pago en Cheque  2: Pago abono a cuenta  - Banco de Occidente  3: Abono a cuenta otras entidades
-            
+            self.validation_values(payslip.contract_id.employee_id)
             #Inf Bancaria
             tipo_transaccion = ''
             banco_destino = ''
@@ -490,7 +490,22 @@ class hr_payroll_flat_file(models.TransientModel):
                     'target': 'self',
                 }
         return action       
-        
+
+    def validation_values(self,obj_employee):
+        if not obj_employee.identification_id:
+            raise ValidationError(_('El empleado ' + obj_employee.name + ' no tiene configurado un número de identificación, por favor verificar.'))
+        if not obj_employee.work_email:
+            raise ValidationError(_('El empleado ' + obj_employee.name + ' no tiene configurado el correo electronico, por favor verificar.'))
+        for bank in obj_employee.address_home_id.bank_ids:
+            if bank.is_main:
+                if not bank.type_account:
+                    raise ValidationError(_('El empleado ' + obj_employee.name + ' no tiene configurado un tipo de cuenta bancaria, por favor verificar.'))
+                if not bank.bank_id:
+                    raise ValidationError(_('El empleado ' + obj_employee.name + ' no tiene configurado banco, por favor verificar.'))
+                if not bank.bank_id.bic:
+                    raise ValidationError(_('El banco ' + bank.bank_id.name + ' no tiene configurado código, por favor verificar.'))
+                if not bank.acc_number:
+                    raise ValidationError(_('El empleado ' + obj_employee.name + ' no tiene configurado un número de cuenta bancaria, por favor verificar.'))
 
     def generate_flat_file(self):
         if self.type_flat_file == 'sap':
