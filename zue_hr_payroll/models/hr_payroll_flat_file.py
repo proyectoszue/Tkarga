@@ -83,7 +83,10 @@ class hr_payroll_flat_file(models.TransientModel):
             cant_detalle = cant_detalle + 1
 
             tipo_registro = '6'
-            nit_beneficiario = nit_entidad = right(15*'0'+payslip.contract_id.employee_id.identification_id,15)
+            if payslip.contract_id.employee_id.permit_no:
+                nit_beneficiario = right(15 * '0' + payslip.contract_id.employee_id.permit_no, 15)
+            else:
+                nit_beneficiario = right(15*'0'+payslip.contract_id.employee_id.identification_id,15)
             nombre_beneficiario = left(payslip.contract_id.employee_id.name+18*filler,18) 
             #Inf Bancaria
             banco = ''
@@ -220,7 +223,10 @@ class hr_payroll_flat_file(models.TransientModel):
             cant_detalle = cant_detalle + 1
 
             tipo_registro = '6'
-            nit_beneficiario = left(payslip.contract_id.employee_id.identification_id+15*' ',15)
+            if payslip.contract_id.employee_id.permit_no:
+                nit_beneficiario = left(payslip.contract_id.employee_id.permit_no+15*' ',15)
+            else:
+                nit_beneficiario = left(payslip.contract_id.employee_id.identification_id+15*' ',15)
             nombre_beneficiario = left(payslip.contract_id.employee_id.name+30*' ',30) 
             #Inf Bancaria
             banco = ''
@@ -378,8 +384,10 @@ class hr_payroll_flat_file(models.TransientModel):
                     no_cuenta_beneficiario = right(16*'0'+str(bank.acc_number).replace("-",""),16)  
             if no_cuenta_beneficiario == '':
                 raise ValidationError(_('El empleado '+payslip.contract_id.employee_id.name+' no tiene configurada la información bancaria, por favor verificar.'))
-            
-            nit_beneficiario = right(11*'0'+payslip.contract_id.employee_id.identification_id,11)        
+            if payslip.contract_id.employee_id.permit_no:
+                nit_beneficiario = right(11*'0'+payslip.contract_id.employee_id.permit_no,11)
+            else:
+                nit_beneficiario = right(11*'0'+payslip.contract_id.employee_id.identification_id,11)
             nombre_beneficiario = left(payslip.contract_id.employee_id.name+30*' ',30)
             fecha_pago = str(self.application_date.year)+right('00'+str(self.application_date.month),2)+right('00'+str(self.application_date.day),2) 
             
