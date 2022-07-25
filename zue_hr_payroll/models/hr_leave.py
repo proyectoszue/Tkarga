@@ -10,6 +10,7 @@ class HrWorkEntryType(models.Model):
     deduct_deductions = fields.Selection([('all', 'Todas las deducciones'),
                                           ('law', 'Solo las deducciones de ley')],'Tener en cuenta al descontar', default='all')    #Vacaciones
     not_contribution_base = fields.Boolean(string='No es base de aportes',help='Este tipo de ausencia no es base para seguridad social')
+    short_name = fields.Char(string='Nombre corto/reportes')
 
 class HolidaysRequest(models.Model):    
     _inherit = "hr.leave"

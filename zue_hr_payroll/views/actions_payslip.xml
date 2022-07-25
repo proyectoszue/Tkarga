@@ -168,6 +168,7 @@
             <field name="inherit_id" ref="hr_work_entry.hr_work_entry_type_view_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='sequence']" position="after">
+                    <field name="short_name"/>
                     <field name="deduct_deductions" widget="radio" attrs="{'invisible':[('is_leave', '=', False)]}"/>
                     <field name="not_contribution_base" attrs="{'invisible':[('is_leave', '=', False)]}"/>
                 </xpath>

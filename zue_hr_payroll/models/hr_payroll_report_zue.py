@@ -28,7 +28,8 @@ class HrPayrollReportZueFilter(models.TransientModel):
     not_show_rule_entity = fields.Boolean(string="No mostrar las reglas + entidad", default= False)
     not_show_quantity= fields.Boolean(string="No mostrar cantidades horas extra y prestaciones", default=False)
     excel_file = fields.Binary('Excel file')
-    excel_file_name = fields.Char('Excel name', size=64)
+    excel_file_name = fields.Char('Excel name')
+    pdf_report_payroll = fields.Html('Reporte en PDF')
 
     def name_get(self):
         result = []
@@ -150,7 +151,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
                     COALESCE(e.name,'') as "Seccional",COALESCE(f.name,'') as "Cuenta Analítica",
                     COALESCE(g.name,'') as "Cargo",COALESCE(d.code_sena,'') as "Código SENA",COALESCE(rp.name,'') as "Ubicación Laboral",COALESCE(dt.name,'') as "Departamento",
                     COALESCE(d.wage,0) as "Salario Base",'' as "Novedades",
-                    COALESCE(wt.name,'') as "Regla Salarial",COALESCE(wt.name,'') as "Reglas Salariales + Entidad",
+                    COALESCE(wt.short_name,COALESCE(wt.name,'')) as "Regla Salarial",COALESCE(wt.short_name,COALESCE(wt.name,'')) as "Reglas Salariales + Entidad",
                     'Días' as "Categoría",0 as "Secuencia",COALESCE(Sum(b.number_of_days),0) as "Monto"
             From hr_payslip as a 
             --Info Empleado
@@ -170,7 +171,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
             Left Join res_partner rp on c.address_id = rp.id
             Where a.id in (%s)     
             Group By c.item,c.identification_id,c.name,d.date_start,e.name,
-                        f.name,g.name,d.code_sena,rp.name,dt.name,d.wage,wt.name
+                        f.name,g.name,d.code_sena,rp.name,dt.name,d.wage,wt.name,wt.short_name
         ''' % (str_ids,str_ids)
 
         query_amount_rules ='''
@@ -267,7 +268,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
                     0 as "Salario Base",'' as "Novedades",
                     "Regla Salarial","Reglas Salariales + Entidad","Categoría","Secuencia",Sum("Monto") as "Monto"
             From(
-                Select  c.name,wt.name as "Regla Salarial",wt.name as "Reglas Salariales + Entidad",
+                Select  c.name,COALESCE(wt.short_name,COALESCE(wt.name,'')) as "Regla Salarial",COALESCE(wt.short_name,COALESCE(wt.name,'')) as "Reglas Salariales + Entidad",
                         'Días' as "Categoría",0 as "Secuencia",COALESCE(Sum(b.number_of_days),0) as "Monto"
                 From hr_payslip as a 
                 Inner Join hr_payslip_worked_days as b on a.id = b.payslip_id 
@@ -276,7 +277,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
                 Inner Join hr_employee  as c on a.employee_id = c.id                
                 Inner Join hr_contract as d on a.contract_id = d.id
                 Where a.id in (%s)
-                Group By c.name,wt.name
+                Group By c.name,wt.name,wt.short_name
                 Union
                 Select  c.name,COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Regla Salarial",COALESCE(hr.short_name,COALESCE(hr.name,'')) ||' '|| case when hc.code = 'SSOCIAL' then '' else COALESCE(COALESCE(rp_et.x_business_name,rp_et.name),'') end as "Reglas Salariales + Entidad",
                         hc.name as "Categoría",b.sequence as "Secuencia",COALESCE(Sum(b.total),0) as "Monto"
@@ -465,3 +466,260 @@ class HrPayrollReportZueFilter(models.TransientModel):
                     'target': 'self',
                 }
         return action
+
+    def generate_pdf(self):
+        #Crear información
+        obj_payslips = self.env['hr.payslip']
+        min_date = ''
+        max_date = ''
+
+        if len(self.payslip_ids) == 0 and len(self.liquidations_ids) == 0:
+            raise ValidationError(_('Debe seleccionar algún filtro.'))
+
+        # Obtener las liquidaciones de los lotes seleccionados
+        if len(self.payslip_ids) > 0:
+            ids = self.payslip_ids.ids
+            for payslip in self.payslip_ids:
+                if min_date == '' and max_date == '':
+                    min_date = payslip.date_start
+                    max_date = payslip.date_end
+                else:
+                    if payslip.date_start < min_date:
+                        min_date = payslip.date_start
+                    if payslip.date_end > max_date:
+                        max_date = payslip.date_end
+
+            obj_payslips += self.env['hr.payslip'].search([('payslip_run_id', 'in', ids)])
+
+        # Obtener las liquidaciones seleccionadas
+        if len(self.liquidations_ids) > 0:
+            obj_payslips += self.liquidations_ids
+
+            for payslip in self.liquidations_ids:
+                if min_date == '' and max_date == '':
+                    min_date = payslip.date_from
+                    max_date = payslip.date_to
+                else:
+                    if payslip.date_from < min_date:
+                        min_date = payslip.date_from
+                    if payslip.date_to > max_date:
+                        max_date = payslip.date_to
+
+        # Obtener ids a filtrar
+        str_ids = ''
+        for i in obj_payslips:
+            if str_ids == '':
+                str_ids = str(i.id)
+            else:
+                str_ids = str_ids + ',' + str(i.id)
+
+        min_date = min_date.strftime('%Y-%m-%d')
+        max_date = max_date.strftime('%Y-%m-%d')
+
+        query_days = '''
+                    Select  c.item as "Item",
+                            COALESCE(c.identification_id,'') as "Identificación",COALESCE(c.name,'') as "Empleado",                            
+                            COALESCE(wt.short_name,COALESCE(wt.name,'')) as "Regla Salarial",0 as "Secuencia",COALESCE(Sum(b.number_of_days),0) as "Monto"
+                    From hr_payslip as a 
+                    --Info Empleado
+                    Inner Join (Select distinct row_number() over(order by a.name) as item,
+                                a.id,identification_id,a.name,a.branch_id,a.analytic_account_id,a.job_id,
+                                address_id,a.department_id
+                                From hr_employee as a
+                                inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)
+                                group by a.id,identification_id,a.name,a.branch_id,a.analytic_account_id,a.job_id,address_id,a.department_id) as c on a.employee_id = c.id
+                    Inner Join hr_contract as d on a.contract_id = d.id
+                    Inner Join hr_payslip_worked_days as b on a.id = b.payslip_id
+                    inner join hr_work_entry_type as wt on b.work_entry_type_id = wt.id
+                    Left join zue_res_branch as e on c.branch_id = e.id
+                    Left join account_analytic_account as f on c.analytic_account_id = f.id
+                    Left join hr_job g on c.job_id = g.id
+                    Left Join hr_department dt on c.department_id = dt.id
+                    Left Join res_partner rp on c.address_id = rp.id
+                    Where a.id in (%s)     
+                    Group By c.item,c.identification_id,c.name,d.date_start,e.name,
+                                f.name,g.name,d.code_sena,rp.name,dt.name,d.wage,wt.name,wt.short_name
+                ''' % (str_ids, str_ids)
+
+        query_amount_rules = '''
+                    Select  c.item as "Item",
+                            COALESCE(c.identification_id,'') as "Identificación",COALESCE(c.name,'') as "Empleado",
+                            COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Regla Salarial",
+                            COALESCE(b.sequence,0) as "Secuencia",COALESCE(Sum(b.total),0) as "Monto"
+                    From hr_payslip as a 
+                    --Info Empleado
+                    Inner Join (Select distinct row_number() over(order by a.name) as item,
+                                a.id,identification_id,a.name,a.branch_id,a.analytic_account_id,a.job_id,
+                                address_id,a.department_id
+                                From hr_employee as a
+                                inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)
+                                group by a.id,identification_id,a.name,a.branch_id,a.analytic_account_id,a.job_id,address_id,a.department_id) as c on a.employee_id = c.id
+                    Inner Join hr_contract as d on a.contract_id = d.id
+                    Left Join hr_payslip_line as b on a.id = b.slip_id
+                    Left Join hr_salary_rule as hr on b.salary_rule_id = hr.id and hr.code in ('TOTALDEV','TOTALDED','NET')
+                    Left Join hr_salary_rule_category as hc on b.category_id = hc.id
+                    Left join zue_res_branch as e on c.branch_id = e.id
+                    Left join account_analytic_account as f on c.analytic_account_id = f.id
+                    Left join hr_job g on c.job_id = g.id
+                    Left Join hr_department dt on c.department_id = dt.id
+                    Left Join res_partner rp on c.address_id = rp.id
+                    --Entidad
+                    Left Join hr_employee_entities et on b.entity_id = et.id
+                    Left Join res_partner rp_et on et.partner_id = rp_et.id            
+                    Where a.id in (%s) and hr.code in ('TOTALDEV','TOTALDED','NET')      
+                    Group By c.item,c.identification_id,c.name,d.date_start,e.name,
+                                f.name,g.name,d.code_sena,rp.name,dt.name,d.wage,hr.short_name,hr.name,hc.code,
+                                rp_et.x_business_name,rp_et.name,hc.name,b.sequence
+                ''' % (str_ids, str_ids)
+
+        query = f"""
+                            Select * from
+                            (
+                                --DIAS INVOLUCRADOS EN LA LIQUIDACIÓN
+                                {query_days}
+                                Union
+                                --VALORES LIQUIDADOS
+                                {query_amount_rules}                                
+                            ) as a 
+                        """
+
+        query_totales = '''
+                    Select 500000 as "Item",'' as "Identificación", '' as "Empleado", 
+                            "Regla Salarial","Secuencia",Sum("Monto") as "Monto"
+                    From(
+                        Select  c.name,COALESCE(wt.short_name,COALESCE(wt.name,'')) as "Regla Salarial",0 as "Secuencia",
+                                COALESCE(Sum(b.number_of_days),0) as "Monto"
+                        From hr_payslip as a 
+                        Inner Join hr_payslip_worked_days as b on a.id = b.payslip_id 
+                        Inner Join hr_work_entry_type as wt on b.work_entry_type_id = wt.id
+                        --Info Empleado
+                        Inner Join hr_employee  as c on a.employee_id = c.id                
+                        Inner Join hr_contract as d on a.contract_id = d.id
+                        Where a.id in (%s)
+                        Group By c.name,wt.name,wt.short_name
+                        Union
+                        Select  c.name,COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Regla Salarial",
+                                b.sequence as "Secuencia",COALESCE(Sum(b.total),0) as "Monto"
+                        From hr_payslip as a 
+                        Inner Join hr_payslip_line as b on a.id = b.slip_id
+                        Inner Join hr_salary_rule as hr on b.salary_rule_id = hr.id and hr.code in ('TOTALDEV','TOTALDED','NET')
+                        Inner Join hr_salary_rule_category as hc on b.category_id = hc.id
+                        --Info Empleados
+                        Inner Join hr_employee  as c on a.employee_id = c.id                
+                        Inner Join hr_contract as d on a.contract_id = d.id
+                        --Entidad
+                        Left Join hr_employee_entities et on b.entity_id = et.id
+                        Left Join res_partner rp_et on et.partner_id = rp_et.id
+                        Where a.id in (%s) and hr.code in ('TOTALDEV','TOTALDED','NET')
+                        Group By c.name,hr.short_name,hr.name,hc.code,rp_et.x_business_name,rp_et.name,hc.name,b.sequence                        
+                    ) as a 
+                    Group By "Regla Salarial","Secuencia"
+                    order by "Item","Secuencia"
+                ''' % (str_ids, str_ids)
+
+        # Finalizar query principal
+        query = '''
+                    %s
+                    union
+                    %s
+                ''' % (query, query_totales)
+
+        # Ejecutar query principal
+        self.env.cr.execute(query)
+        result_query = self.env.cr.dictfetchall()
+
+        df_report = pd.DataFrame(result_query)
+
+        if len(df_report) == 0:
+            raise ValidationError(_('No se ha encontrado información con el lote seleccionado, por favor verificar.'))
+
+        columns_index = ['Item', 'Identificación', 'Empleado']
+        # Pivotear consulta final
+        columns_pivot_final = ['Secuencia','Regla Salarial']
+
+        pivot_report = pd.pivot_table(df_report, values='Monto', index=columns_index,
+                                      columns=columns_pivot_final, aggfunc=np.sum)
+
+        # Obtener titulo y fechas de liquidación
+        text_title = 'Informe de Liquidación'
+        text_dates = 'Fechas Liquidación: %s a %s' % (min_date, max_date)
+        text_generate = 'Informe generado el %s' % (datetime.now(timezone(self.env.user.tz)))
+
+        #Crear HTML reporte
+        html = '''                                        
+            <center>
+                <p style="font-size: medium;margin:0px;padding:0px;">%s</p>
+                <p style="font-size: small;margin:0px;padding:0px;">%s</p>
+                <p style="font-size: small;margin:0px;padding:0px;">%s</p>                        
+            </center>
+        ''' % (text_title,text_dates,text_generate)
+
+        html += pivot_report.to_html(float_format='{:,.0f}'.format, na_rep='0', classes=['table','table-bordered','table-sm'], table_id='table-report')
+
+        html = html.replace('''<th></th>
+      <th></th>
+      <th>Regla Salarial</th>''', '''<th>Item</th>
+      <th>Identificación</th>
+      <th>Empleado</th>''')
+
+        qty_type_days = str(len(pivot_report.columns)-3) # Todas las columnas menos Total devengo, Total deducción y Neto
+        sequence_total_dev = str(self.env['hr.salary.rule'].search([('code','=','TOTALDEV')],limit=1).sequence)
+        sequence_total_ded = str(self.env['hr.salary.rule'].search([('code','=','TOTALDED')],limit=1).sequence)
+        sequence_total_net = str(self.env['hr.salary.rule'].search([('code','=','NET')],limit=1).sequence)
+
+        html = html.replace('''<tr>
+      <th></th>
+      <th></th>
+      <th>Secuencia</th>
+      <th colspan="'''+qty_type_days+'''" halign="left">0</th>
+      <th>'''+sequence_total_dev+'''</th>
+      <th>'''+sequence_total_ded+'''</th>
+      <th>'''+sequence_total_net+'''</th>
+    </tr>''', '')
+
+        html = html.replace('''<th>500000</th>
+      <th></th>
+      <th></th>''', '''<th colspan='3' halign="right">TOTALES</th>''')
+
+        html = html.replace('      <th></th>', '')
+        html = html.replace('\n'*len(pivot_report.columns), '')
+
+        html = html.replace('''<tr>
+      <th>Item</th>
+      <th>Identificación</th>
+      <th>Empleado</th>
+    </tr>''', '')
+
+        html += '''
+        <br/><br/>
+        <table class="table table-striped">
+            <tr class="text-center">
+                <td style="width: 30%;font-size: small;">
+                    ELABORÓ
+                </td>
+                <td style="width: 5%;background-color:white;border:none;"/>
+                <td style="width: 30%;font-size: small;">
+                    REVISÓ
+                </td>
+                <td style="width: 5%;background-color:white;border:none;"/>
+                <td style="width: 30%;font-size: small;">
+                    APROBÓ
+                </td>
+            </tr>
+        </table>        
+        '''
+
+        self.pdf_report_payroll = html
+
+        # Descargar PDF
+        datas = {
+            'id': self.id,
+            'model': 'hr.payroll.report.zue.filter'
+        }
+
+        return {
+            'type': 'ir.actions.report',
+            'report_name': 'zue_hr_payroll.report_payroll_zue',
+            'report_type': 'qweb-pdf',
+            'datas': datas
+        }
