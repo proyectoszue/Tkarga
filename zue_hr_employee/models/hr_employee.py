@@ -115,6 +115,7 @@ class hr_employee_dependents(models.Model):
                                ('padre', 'Padre'),
                                ('madre', 'Madre'),
                                ('conyuge', 'Cónyuge'),
+                               ('hermano', 'Hermano(a)'),
                                ('otro', 'Otro')],'Tipo')
 
 class hr_employee_labor_union(models.Model):
