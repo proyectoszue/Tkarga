@@ -66,6 +66,7 @@
         'reports/hr_report_absenteeism_history_template.xml',
         'reports/hr_report_income_and_withholdings.xml',
         'reports/hr_report_income_and_withholdings_template.xml',
+        'reports/report_payroll_zue.xml',
         'views/actions_vacation_book_reports.xml',
         'views/actions_account_journal.xml',
         'views/actions_hr_absenteeism_history.xml',
