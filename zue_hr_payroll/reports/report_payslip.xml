@@ -229,13 +229,13 @@
                                 <td style="width: 30%;border:none;">
                                     <table class="table table-condensed">
                                         <tr class="border-black">
-                                            <td><strong>DEVANGOS</strong></td>
+                                            <td><strong>DEVENGOS</strong></td>
                                             <td class="text-right">
                                                 <span t-field="o.line_ids.filtered(lambda line: line.code == 'TOTALDEV').total" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td>DEDUCCIONES</td>
+                                            <td><strong>DEDUCCIONES</strong></td>
                                             <td class="text-right">
                                                 <span t-field="o.line_ids.filtered(lambda line: line.code == 'TOTALDED').total" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
                                             </td>
@@ -258,7 +258,6 @@
                                 </td>
                             </tr>
                         </table>
-                        <br/>
                         <t t-if="o.not_line_ids">
                             <p>Por favor tener en cuenta las siguientes deducciones no aplicadas en esta liquidación:
                             </p>
