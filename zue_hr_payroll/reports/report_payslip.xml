@@ -228,18 +228,18 @@
                                 </td>
                                 <td style="width: 30%;border:none;">
                                     <table class="table table-condensed">
-                                        <!-- <tr class="border-black">
-                                            <td><strong>Devengos</strong></td>
+                                        <tr class="border-black">
+                                            <td><strong>DEVANGOS</strong></td>
                                             <td class="text-right">
                                                 <span t-field="o.line_ids.filtered(lambda line: line.code == 'TOTALDEV').total" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td>Deducciones</td>
+                                            <td>DEDUCCIONES</td>
                                             <td class="text-right">
                                                 <span t-field="o.line_ids.filtered(lambda line: line.code == 'TOTALDED').total" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
                                             </td>
-                                        </tr> -->
+                                        </tr>
                                         <tr class="border-black">
                                             <td>
                                                 <strong>NETO A PAGAR</strong>
