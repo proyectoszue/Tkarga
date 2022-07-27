@@ -29,7 +29,6 @@
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult cesantias</b> :<span t-field="o.date_cesantias"/></p>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult prima</b>     :<span t-field="o.date_prima"/></p>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult vacaciones</b>:<span t-field="o.date_vacaciones"/></p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Vacaciones Pendientes</b>:<span t-esc="'%.2f'% o.contract_id.get_accumulated_vacation_days(o.id)"/></p>
                             </td>
                             <td>
                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Sucursal</b>            :<span t-field="o.employee_id.branch_id.name"/></p>
@@ -87,6 +86,9 @@
                                 <td>
                                     <t t-if="l.salary_rule_id.display_days_worked == True">
                                         <span t-esc="sum([i.number_of_days for i in o.worked_days_line_ids.filtered(lambda x: x.code == 'WORK100')])"/>
+                                    </t>
+                                    <t t-elif="l.code == 'VACCONTRATO'">
+                                        <span t-esc="'%.2f'% o.contract_id.get_accumulated_vacation_days(o.id)"/>
                                     </t>
                                     <t t-else="">
                                         <span t-field="l.quantity"/>
