@@ -690,6 +690,8 @@ class HrPayrollReportZueFilter(models.TransientModel):
       <th>Empleado</th>
     </tr>''', '')
 
+        html = html.replace('nan', '0')
+
         html += '''
         <br/><br/>
         <table class="table table-striped">
