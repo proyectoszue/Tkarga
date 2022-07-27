@@ -31,7 +31,7 @@ class libro_diario_report(models.TransientModel):
     _name = 'zue.libro_diario.report'
     _description = 'Reporte Libro Diario ZUE'
     
-    company_id = fields.Many2one('res.company', string='Compañia', required=True)
+    company_id = fields.Many2one('res.company', string='Compañia', required=True, default=lambda self: self.env.company)
     ano_filter = fields.Integer(string='Año', required=True)      
     month_filter = fields.Selection([
                                         ('1', 'Enero'),
@@ -49,7 +49,7 @@ class libro_diario_report(models.TransientModel):
                                     ], string='Mes', required=True)
     num_page_initial = fields.Integer(string='Último consecutivo paginación')
     pdf_file = fields.Binary('PDF file')
-    pdf_file_name = fields.Char('PDF name', size=64)
+    pdf_file_name = fields.Char('PDF name')
     
     def name_get(self):
         result = []
@@ -270,20 +270,16 @@ class libro_diario_report(models.TransientModel):
                 %s
                 union
                 %s
-                union
-                %s
             ) As A
             Order By A.code_cuenta,A.code_documento
-        ''' % (query_account_levelone,query_account_leveltwo,query_account_levelthree,query_account_levelfour,query_account,query_journal)
+        ''' % (query_account_leveltwo,query_account_levelthree,query_account_levelfour,query_account,query_journal) # query_account_levelone
         
         #raise ValidationError(_(query))       
         
         self._cr.execute(query)
         _res = self._cr.dictfetchall()
         return _res
-    
-    
-    
+
     def get_pdf(self):        
         
         filename= 'LD '+str(self.ano_filter)+'-'+str(self.month_filter)+' '+self.company_id.name+'.pdf'
@@ -332,7 +328,7 @@ class libro_diario_report(models.TransientModel):
             canvas.restoreState()
             
         #doc = SimpleDocTemplate(pdf, pagesize=letter,rightMargin=72,leftMargin=72,topMargin=18,bottomMargin=18)
-        doc = BaseDocTemplate(pdf, pagesize=letter,rightMargin=70,leftMargin=70,topMargin=20,bottomMargin=20)
+        doc = BaseDocTemplate(pdf, pagesize=letter,rightMargin=50,leftMargin=50,topMargin=10,bottomMargin=10)
         frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height-2*cm,id='normal')
         template = PageTemplate(id='test', frames=frame, onPage=header)
         doc.addPageTemplates([template])
@@ -369,7 +365,7 @@ class libro_diario_report(models.TransientModel):
         styles = TableStyle([
             ('ALIGN',(0,0),(-1,-1),'RIGHT'),
             ('ALIGN',(0,0),(-5,-1),'LEFT'),
-            ('FONTSIZE',(0,0),(-1,-1),7),
+            ('FONTSIZE',(0,0),(-1,-1),6),
             ('FONTSIZE',(0,0),(6,0),8),
             ('TOPPADDING',(0,0),(-1,0),10),
             ('LINEABOVE', (0,0), (-1, 0), 2, colors.black),
@@ -401,7 +397,7 @@ class libro_mayor_report(models.TransientModel):
     _name = 'zue.libro_mayor.report'
     _description = 'Reporte Libro Mayor ZUE'
     
-    company_id = fields.Many2one('res.company', string='Compañia', required=True)
+    company_id = fields.Many2one('res.company', string='Compañia', required=True, default=lambda self: self.env.company)
     ano_filter = fields.Integer(string='Año', required=True)      
     month_filter = fields.Selection([
                                         ('1', 'Enero'),
@@ -417,9 +413,12 @@ class libro_mayor_report(models.TransientModel):
                                         ('11', 'Noviembre'),
                                         ('12', 'Diciembre')        
                                     ], string='Mes', required=True)
+    show_level = fields.Selection([('n2', 'Cuenta a nivel 2'),
+                                   ('n3', 'Cuentas a nivel 3'),
+                                   ('un3', 'Unicamente cuentas a nivel 3')], string='Nivel Presentación', default='n2',required=True)
     num_page_initial = fields.Integer(string='Último consecutivo paginación')
     pdf_file = fields.Binary('PDF file')
-    pdf_file_name = fields.Char('PDF name', size=64)
+    pdf_file_name = fields.Char('PDF name')
     
     def name_get(self):
         result = []
@@ -448,30 +447,19 @@ class libro_mayor_report(models.TransientModel):
             x_month = str(int(x_month) + 1)
 
         date_filter_next = str(x_ano)+'-'+str(x_month)+'-01'
-        
-        
-        
+
         query_account_levelone = '''
             SELECT code_cuenta,name_cuenta,Sum(initial_balance) as initial_balance,Sum(debit) as debit,Sum(credit) as credit,Sum(new_balance) as new_balance 
             From (
             Select
-                A.code,LevelAccount.LevelOne as Code_Cuenta,
-                Case when LevelAccount.LevelOne = '1' then 'ACTIVO'
-                     when LevelAccount.LevelOne = '2' then 'PASIVO'
-                     when LevelAccount.LevelOne = '3' then 'PATRIMONIO'
-                     when LevelAccount.LevelOne = '4' then 'INGRESOS'
-                     when LevelAccount.LevelOne = '5' then 'GASTOS'
-                     when LevelAccount.LevelOne = '6' then 'COSTO DE VENTAS'
-                     when LevelAccount.LevelOne = '7' then 'COSTO DE PRODUCCION'
-                     when LevelAccount.LevelOne = '8' then 'CUENTAS DE ORDEN DEUDORAS'
-                     when LevelAccount.LevelOne = '9' then 'CUENTAS DE ORDEN ACREEDORAS'
-                else '' end as Name_Cuenta,
+                A.code,LevelAccount.LevelOne as Code_Cuenta,LevelAccount.LevelOneName as Name_Cuenta,
                 COALESCE(D.saldo_ant,0) as initial_balance,
                 SUM(case when B."date" >= '%s' then B.debit else 0 end) as debit,
                 SUM(case when B."date" >= '%s' then B.credit else 0 end) as credit,
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
-                        select distinct substring(A.code_prefix for 1) as LevelOne
+                        select distinct 
+                                A.code_prefix as LevelOne,A."name" as LevelOneName					
                         From account_group A
                         left join account_group b on a.id = b.parent_id
                         where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix is not null    
@@ -486,7 +474,7 @@ class libro_mayor_report(models.TransientModel):
                             WHERE "date" < '%s' and parent_state = 'posted' group by account_id
                       ) as D on B.account_id = D.account_id
                 WHERE  B.parent_state = 'posted' and B."date" < '%s' 
-                GROUP by A.code,LevelAccount.LevelOne,D.saldo_ant
+                GROUP by A.code,LevelAccount.LevelOne,LevelAccount.LevelOneName,D.saldo_ant
                 ) as a
             Group by code_cuenta,name_cuenta
         ''' % (date_filter,date_filter,date_filter,date_filter,'%',self.company_id.id,date_filter,date_filter_next)
@@ -502,7 +490,7 @@ class libro_mayor_report(models.TransientModel):
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
                         select distinct 
-                                A.code_prefix as LevelTwo,A."name" as LevelTwoName					
+                                coalesce(B.code_prefix,'') as LevelTwo,coalesce(B."name",'') as LevelTwoName
                         From account_group A
                         left join account_group b on a.id = b.parent_id
                         where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix is not null    
@@ -519,6 +507,7 @@ class libro_mayor_report(models.TransientModel):
                 WHERE  B.parent_state = 'posted' and B."date" < '%s' 
                 GROUP by A.code,LevelAccount.LevelTwo,LevelAccount.LevelTwoName,D.saldo_ant
                 ) as a
+            Where code_cuenta != ''
             Group by code_cuenta,name_cuenta
         ''' % (date_filter,date_filter,date_filter,date_filter,'%',self.company_id.id,date_filter,date_filter_next)
         
@@ -533,9 +522,10 @@ class libro_mayor_report(models.TransientModel):
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
                         select distinct 
-                                coalesce(B.code_prefix,'') as LevelThree,coalesce(B."name",'') as LevelThreeName
+                                coalesce(c.code_prefix,'') as LevelThree,coalesce(c."name",'') as LevelThreeName
                         From account_group A
                         left join account_group b on a.id = b.parent_id
+                        left join account_group c on b.id = c.parent_id
                         where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix is not null    
                 ) as LevelAccount
                 INNER JOIN account_account A on A.code like LevelAccount.LevelThree || '%s' 
@@ -555,27 +545,66 @@ class libro_mayor_report(models.TransientModel):
         ''' % (date_filter,date_filter,date_filter,date_filter,'%',self.company_id.id,date_filter,date_filter_next)
         
          #Consulta final
-        query = '''
-            Select code_cuenta,name_cuenta,initial_balance,debit,credit,new_balance 
-            From
-            (
-                %s
-                union
-                %s
-                union
-                %s
-            ) As A
-            Order By Code_Cuenta
-        ''' % (query_account_levelone,query_account_leveltwo,query_account_levelthree)
-        
-        #raise ValidationError(_(query))       
+        if self.show_level == 'n2':
+            query = '''
+                Select code_cuenta,name_cuenta,initial_balance,debit,credit,new_balance 
+                From
+                (
+                    %s
+                    union
+                    %s                    
+                ) As A
+                Order By Code_Cuenta
+            ''' % (query_account_levelone,query_account_leveltwo)
+        elif self.show_level == 'n3':
+            query = '''
+                Select code_cuenta,name_cuenta,initial_balance,debit,credit,new_balance 
+                From
+                (
+                    %s
+                    union
+                    %s
+                    union
+                    %s
+                ) As A
+                Order By Code_Cuenta
+            ''' % (query_account_levelone, query_account_leveltwo, query_account_levelthree)
+        elif self.show_level == 'un3':
+            query_content = '''
+                Select code_cuenta,name_cuenta,initial_balance,debit,credit,new_balance 
+                From
+                (
+                    %s
+                ) As A                
+            ''' % (query_account_levelthree)
+
+            query_total = '''
+                Select ' ' as code_cuenta,'SUMAS IGUALES' as name_cuenta,
+                        sum(initial_balance) as initial_balance,sum(debit) as debit,sum(credit) as credit,
+                        sum(new_balance) as new_balance
+                From
+                (
+                    %s
+                ) As A                
+            ''' % (query_account_levelthree)
+
+            query = '''
+                Select code_cuenta,name_cuenta,initial_balance,debit,credit,new_balance 
+                From
+                (
+                    %s
+                    union
+                    %s
+                ) As A
+                Order By Code_Cuenta
+            ''' % (query_content,query_total)
+        else:
+            raise ValidationError(_('Debe seleccionar un nivel de presentación, por favor verificar.'))
         
         self._cr.execute(query)
         _res = self._cr.dictfetchall()
         return _res
-    
-    
-    
+
     def get_pdf(self):        
         
         filename= 'LM '+str(self.ano_filter)+'-'+str(self.month_filter)+' '+self.company_id.name+'.pdf'
@@ -624,7 +653,7 @@ class libro_mayor_report(models.TransientModel):
             canvas.restoreState()
             
         #doc = SimpleDocTemplate(pdf, pagesize=letter,rightMargin=72,leftMargin=72,topMargin=18,bottomMargin=18)
-        doc = BaseDocTemplate(pdf, pagesize=letter,rightMargin=70,leftMargin=70,topMargin=20,bottomMargin=20)
+        doc = BaseDocTemplate(pdf, pagesize=letter,rightMargin=50,leftMargin=50,topMargin=10,bottomMargin=10)
         frame = Frame(doc.leftMargin, doc.bottomMargin, doc.width, doc.height-2*cm,id='normal')
         template = PageTemplate(id='test', frames=frame, onPage=header)
         doc.addPageTemplates([template])
@@ -644,8 +673,8 @@ class libro_mayor_report(models.TransientModel):
             line_blank = []
             num_row = 1            
             for row in query.values(): 
-                if num_row == 1 and account_code != row[0:2]:
-                    line_blank.append('')
+                #if num_row == 1 and account_code != row[0:2]:
+                    #line_blank.append('')
                 if num_row > 2:
                     format_num = '{:,.2f}'.format(row)
                     file.append(format_num)                    
