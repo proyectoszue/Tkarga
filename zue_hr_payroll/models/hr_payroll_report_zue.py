@@ -657,15 +657,14 @@ class HrPayrollReportZueFilter(models.TransientModel):
         html = '''  
             <table class="table table-borderless table-sm" style="margin:0px;padding:0px;">
                 <tr>
-                    <td colspan="2">  
-                        <img src="data:image/jpg;base64,'''+obj_company.logo.decode("utf-8") +'''">       
+                    <td>  
+                        <img src="data:image/jpg;base64,'''+obj_company.logo.decode("utf-8") +'''" 
+                            style="height: 50px; width:100px">       
                     </td>
-                    <td colspan="10">                             
-                        <center>
-                            <p style="font-size: small;margin:0px;padding:0px;">%s</p>
-                            <p style="font-size: x-small;margin:0px;padding:0px;">%s</p>
-                            <p style="font-size: x-small;margin:0px;padding:0px;">%s</p>                        
-                        </center>
+                    <td colspan="6" style="text-align:center;padding-right:260px;">                             
+                        <p style="font-size: small;margin:0px;padding:0px;">%s</p>
+                        <p style="font-size: x-small;margin:0px;padding:0px;">%s</p>
+                        <p style="font-size: x-small;margin:0px;padding:0px;">%s</p>                        
                     </td>
                 </tr>
             </table>
