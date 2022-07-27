@@ -15,7 +15,7 @@
                     <t t-call="web.basic_layout">
                         <style>
                             #table-report {
-                                font-size: 8px;
+                                font-size: 6px;
                             }
                         </style>
                         <div class="page">
