@@ -1,0 +1,13 @@
+<odoo>
+    <data>
+        <menuitem name="Reportes Financieros CO" id="zue_erp_reports_accounting.menu_account_report_zue" parent="account.menu_finance_reports"/>
+            <!-- Menu Balance de prueba -->
+            <menuitem name="Balance de Prueba" id="zue_erp_reports_accounting.menu_balance_report" parent="zue_erp_reports_accounting.menu_account_report_zue" action="action_account_balance_report_filters" sequence="1"/>
+            <!-- Menu Libros Oficiales -->
+            <menuitem name="Libros Oficiales" id="zue_erp_reports_accounting.menu_account_books_report_zue" parent="zue_erp_reports_accounting.menu_account_report_zue" sequence="2"/>
+                <!-- Menu Libro mayor -->
+                <menuitem name="Libro mayor" id="zue_erp_reports_accounting.menu_libro_mayor" parent="zue_erp_reports_accounting.menu_account_books_report_zue" action="action_account_libro_mayor_filters" sequence="1"/>
+                <!-- Menu Libro diario -->
+                <menuitem name="Libro diario" id="zue_erp_reports_accounting.menu_libro_diario" parent="zue_erp_reports_accounting.menu_account_books_report_zue" action="action_account_libro_diario_filters" sequence="2"/>
+    </data>
+</odoo>
