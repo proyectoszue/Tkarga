@@ -3,17 +3,25 @@
     <template id="report_personal_data_form_document">
         <t t-call="web.html_container">
             <t t-foreach="inside_foreach_docs or docs" t-as="o">
-                <t t-call="web.external_layout">
-                    <div class="col-md-12">
-                        <div class="col-md-8 text-left">
-                            <h1>
-                                <strong>Formulario Datos Personales</strong>
-                            </h1>
-                        </div>
-                        <div class="col-md-4" align="right">
-                            <img t-if="o.image_1920" t-att-src="image_data_uri(o.image_1920)" align="right" style="max-height: 120px; "/>
-                        </div>
-                    </div>
+                <t t-call="web.basic_layout">
+                    <table class="table table-borderless">
+                        <tr>
+                            <td colspan="3">
+                                <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)"
+                                     style="height: 80px; width:150px" alt="Logo"/>
+                            </td>
+                            <td colspan="6">
+                                <br/><br/>
+                                <h1>
+                                    <strong>Formulario Datos Personales</strong>
+                                </h1>
+                            </td>
+                            <td colspan="3">
+                                <img t-if="o.image_1920" t-att-src="image_data_uri(o.image_1920)"
+                                     style="max-height: 120px;" />
+                            </td>
+                        </tr>
+                    </table>
                     <br/>
                     <div class="table-responsive">
                         <table class="table table-borderless table-sm" style="font-size: 13px">
@@ -151,7 +159,9 @@
                                         <span t-esc="o.study_field"/>
                                     </td>
                                 </tr>
-                                <tr><td colspan="4"/></tr>
+                                <tr>
+                                    <td colspan="4"/>
+                                </tr>
                                 <tr>
                                     <td style="width: 35%;">NOMBRE</td>
                                     <td style="width: 15%;">FECHA INICIAL</td>
@@ -162,18 +172,18 @@
                             <tbody>
                                 <tr t-foreach="o.resume_line_ids" t-as="e">
                                     <t t-if="e.line_type_id.name == 'Educación' or e.line_type_id.name == 'Education'">
-                                     <td>
-                                        <span t-field="e.name"/>
-                                    </td>
-                                    <td>
-                                        <span t-esc="e.date_start"/>
-                                    </td>
-                                    <td>
-                                        <span t-esc="e.date_end"/>
-                                    </td>
-                                    <td>
-                                        <span t-esc="e.description"/>
-                                    </td>
+                                        <td>
+                                            <span t-field="e.name"/>
+                                        </td>
+                                        <td>
+                                            <span t-esc="e.date_start"/>
+                                        </td>
+                                        <td>
+                                            <span t-esc="e.date_end"/>
+                                        </td>
+                                        <td>
+                                            <span t-esc="e.description"/>
+                                        </td>
                                     </t>
                                 </tr>
                             </tbody>
