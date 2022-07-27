@@ -643,15 +643,32 @@ class HrPayrollReportZueFilter(models.TransientModel):
         # Obtener titulo y fechas de liquidación
         text_title = 'Informe de Liquidación'
         text_dates = 'Fechas Liquidación: %s a %s' % (min_date, max_date)
-        text_generate = 'Informe generado el %s' % (datetime.now(timezone(self.env.user.tz)))
+        #'Informe generado el %s' % (datetime.now(timezone(self.env.user.tz)))
+        text_generate = ''
+        obj_company = self.env['res.company']
+        for lote in self.payslip_ids:
+            text_generate += lote.name if text_generate == '' else ', '+lote.name
+            obj_company = lote.company_id
 
+        for liq in self.liquidations_ids:
+            text_generate += liq.name if text_generate == '' else ', ' + liq.name
+            obj_company = liq.company_id
         #Crear HTML reporte
-        html = '''                                        
-            <center>
-                <p style="font-size: medium;margin:0px;padding:0px;">%s</p>
-                <p style="font-size: small;margin:0px;padding:0px;">%s</p>
-                <p style="font-size: small;margin:0px;padding:0px;">%s</p>                        
-            </center>
+        html = '''  
+            <table class="table table-borderless table-sm" style="margin:0px;padding:0px;">
+                <tr>
+                    <td colspan="2">  
+                        <img src="data:image/jpg;base64,'''+obj_company.logo.decode("utf-8") +'''">       
+                    </td>
+                    <td colspan="10">                             
+                        <center>
+                            <p style="font-size: small;margin:0px;padding:0px;">%s</p>
+                            <p style="font-size: x-small;margin:0px;padding:0px;">%s</p>
+                            <p style="font-size: x-small;margin:0px;padding:0px;">%s</p>                        
+                        </center>
+                    </td>
+                </tr>
+            </table>
         ''' % (text_title,text_dates,text_generate)
 
         html += pivot_report.to_html(float_format='{:,.0f}'.format, na_rep='0', classes=['table','table-bordered','table-sm'], table_id='table-report')
@@ -693,18 +710,18 @@ class HrPayrollReportZueFilter(models.TransientModel):
         html = html.replace('nan', '0')
 
         html += '''
-        <br/><br/>
-        <table class="table table-striped">
+        <br/>
+        <table class="table table-striped table-sm">
             <tr class="text-center">
-                <td style="width: 30%;font-size: small;">
+                <td style="width: 30%;font-size: x-small;">
                     ELABORÓ
                 </td>
                 <td style="width: 5%;background-color:white;border:none;"/>
-                <td style="width: 30%;font-size: small;">
+                <td style="width: 30%;font-size: x-small;">
                     REVISÓ
                 </td>
                 <td style="width: 5%;background-color:white;border:none;"/>
-                <td style="width: 30%;font-size: small;">
+                <td style="width: 30%;font-size: x-small;">
                     APROBÓ
                 </td>
             </tr>
