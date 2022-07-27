@@ -44,7 +44,10 @@ class hr_contract(models.Model):
         else:
             # ------------------ NUEVO CALCULO------------------------------------
             date_vacation = date_start
-            obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee_id), ('contract_id', '=', self.id)])
+            if ignore_payslip_id == 0:
+                obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee_id), ('contract_id', '=', self.id)])
+            else:
+                obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee_id), ('contract_id', '=', self.id),('payslip','!=',ignore_payslip_id)])
             if obj_vacation:
                 for history in sorted(obj_vacation, key=lambda x: x.final_accrual_date):
                     if history.leave_id:
