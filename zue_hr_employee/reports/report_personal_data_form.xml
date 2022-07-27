@@ -1,11 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo>
+    <odoo>
         <report
-            id="report_personal_data_form_action"
-            model="hr.employee"
-            string="Formato Datos Personales"
-            report_type="qweb-pdf"
-            name="zue_hr_employee.report_personal_data_form_template"
-            file="zue_hr_employee.report_personal_data_form_template"
+                id="report_personal_data_form_action"
+                model="hr.employee"
+                string="Formato Datos Personales"
+                report_type="qweb-pdf"
+                name="zue_hr_employee.report_personal_data_form_template"
+                file="zue_hr_employee.report_personal_data_form_template"
         />
-</odoo>
+
+        <record id="report_personal_data_form_paperformat" model="report.paperformat">
+            <field name="name">Formato Datos Personales</field>
+            <field name="default" eval="True"/>
+            <field name="format">A4</field>
+            <field name="page_height">0</field>
+            <field name="page_width">0</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">2</field>
+            <field name="margin_bottom">2</field>
+            <field name="margin_left">7</field>
+            <field name="margin_right">7</field>
+            <field name="header_line" eval="False"/>
+            <field name="header_spacing">35</field>
+            <field name="dpi">90</field>
+        </record>
+
+         <record id="report_personal_data_form_action" model="ir.actions.report">
+                <field name="paperformat_id" ref="zue_hr_employee.report_personal_data_form_paperformat" />
+         </record>
+    </odoo>
