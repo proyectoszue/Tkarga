@@ -14,7 +14,7 @@
                 <t t-foreach="docs" t-as="doc">
                     <t t-call="web.basic_layout">
                         <style>
-                            .table-report {
+                            #table-report {
                                 font-size: 8px;
                             }
                         </style>
