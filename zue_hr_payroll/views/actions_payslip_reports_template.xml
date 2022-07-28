@@ -34,6 +34,8 @@
                         <group>
                             <field name="company_id" required="1"/>
                             <field name="type_report" widget="radio"/>
+                            <p>*El tipo de comprobante Nómina, tambien es utilizado
+                                para las firmas (Elaboró,Revisó y Aprobó) en el reporte de liquidación.</p>
                             <field name="type_header_footer" widget="radio"/>
                         </group>
                         <group attrs="{'invisible':[('type_header_footer', '!=', 'custom')]}">
