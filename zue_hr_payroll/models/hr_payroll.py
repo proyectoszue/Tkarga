@@ -629,7 +629,7 @@ class Hr_payslip(models.Model):
         #worked_days_vac += worked_days_dict.get('VACREMUNERADAS').number_of_days  if worked_days_dict.get('VACREMUNERADAS') != None else 0
 
         #Ejecutar vacaciones dentro de la nómina - 16/02/2022
-        if pay_vacations_in_payroll == True and inherit_vacation == 0 and inherit_contrato_ded+inherit_contrato_dev == 0:
+        if pay_vacations_in_payroll == True and inherit_vacation == 0 and inherit_contrato_ded+inherit_contrato_dev == 0 and inherit_prima == 0:
             struct_original = self.struct_id.id
             #Vacaciones
             obj_struct_vacation = self.env['hr.payroll.structure'].search([('process', '=', 'vacaciones')])
