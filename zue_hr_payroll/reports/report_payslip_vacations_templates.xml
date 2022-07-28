@@ -20,9 +20,9 @@
                                     <span t-field="o.employee_id.name"/>
                                 </p>
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
-                                    <b>Nit/Ced</b>
+                                    <b>Tipo contrato</b>
                                     :
-                                    <span t-field="o.employee_id.identification_id"/>
+                                    <span t-field="o.contract_id.contract_type"/>
                                 </p>
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
                                     <b>Cargo</b>
@@ -30,21 +30,22 @@
                                     <span t-field="o.employee_id.job_id.name"/>
                                 </p>
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
-                                    <b>Basico</b>
+                                    <b>Salario básico</b>
                                     :
                                     <span t-field="o.contract_id.wage"/>
                                 </p>
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
-                                    <b>Ingreso</b>
+                                    <b>Fecha ingreso</b>
                                     :
                                     <span t-field="o.contract_id.date_start"/>
                                 </p>
-                                <p style="line-height:15px;margin:10px;font-size: 100%;"
-                                   t-if="o.get_pay_vacations_in_payroll() == False"><b>Reintegro</b>:
-                                    <span t-field="o.refund_date"/>
-                                </p>
                             </td>
                             <td>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Nit/Ced</b>
+                                    :
+                                    <span t-field="o.employee_id.identification_id"/>
+                                </p>
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
                                     <b>Centro</b>
                                     :
@@ -59,6 +60,10 @@
                                     <b>Cuenta</b>
                                     :
                                     <span t-field="o.employee_id.address_home_id.bank_ids.filtered(lambda bank: bank.is_main == True and bank.company_id == o.employee_id.company_id).acc_number"/>
+                                </p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;"
+                                   t-if="o.get_pay_vacations_in_payroll() == False"><b>Reintegro</b>:
+                                    <span t-field="o.refund_date"/>
                                 </p>
                                 <!-- <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Placa</b>    :  <span t-field="o.employee_id.department_id.store_id.placa.name"/></p> -->
                             </td>
@@ -79,10 +84,10 @@
                                 </t>
                                 <th>Dias</th>
                                 <th>Base</th>
-                                <th>C. Inicio</th>
-                                <th>C. Fin</th>
+                                <th>Causación Inicio</th>
+                                <th>Causación Fin</th>
                                 <th class="text-right">Devengos</th>
-                                <th class="text-right">Descuentos</th>
+                                <th class="text-right">Deducciones</th>
                             </tr>
                         </thead>
                         <tbody class="invoice_tbody">
@@ -157,7 +162,9 @@
                                         </td>
                                     </tr>
                                     <tr>
-                                        <td>Deducciones</td>
+                                        <td>
+                                            <strong>Deducciones</strong>
+                                        </td>
                                         <td class="text-right">
                                             <span t-field="o.line_ids.filtered(lambda line: line.code == 'TOTALDED').total"
                                                   t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
