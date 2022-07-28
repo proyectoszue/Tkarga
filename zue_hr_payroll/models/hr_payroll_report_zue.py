@@ -75,6 +75,17 @@ class HrPayrollReportZueFilter(models.TransientModel):
             'target': 'new',
         }
 
+    def get_hr_payslip_template_signature(self):
+        obj_company = self.env['res.company']
+        for lote in self.payslip_ids:
+            obj_company = lote.company_id
+
+        for liq in self.liquidations_ids:
+            obj_company = liq.company_id
+
+        obj = self.env['hr.payslip.reports.template'].search([('company_id','=',obj_company.id),('type_report','=','nomina')])
+        return obj
+
     def generate_excel(self):
         obj_payslips = self.env['hr.payslip']
         min_date = ''
@@ -447,10 +458,26 @@ class HrPayrollReportZueFilter(models.TransientModel):
         worksheet.set_zoom(80)
         #worksheet.set_column('M:M', 0, None, {'hidden': 1})
         #Firmas
+        obj_signature = self.get_hr_payslip_template_signature()
         cell_format_firma = writer.book.add_format({'bold': True, 'align': 'center', 'top': 1})
-        worksheet.merge_range(cant_filas + 5, 1, cant_filas + 5, 2, 'ELABORO', cell_format_firma)
-        worksheet.merge_range(cant_filas + 5, 4, cant_filas + 5, 5, 'REVISO', cell_format_firma)
-        worksheet.merge_range(cant_filas + 5, 7, cant_filas + 5, 8, 'APROBO', cell_format_firma)
+        cell_format_txt_firma = writer.book.add_format({'bold': True, 'align': 'center'})
+        if len(obj_signature) == 1:
+            if obj_signature.signature_prepared:
+                worksheet.merge_range(cant_filas + 5, 1, cant_filas + 5, 2, 'ELABORO', cell_format_firma)
+                if obj_signature.txt_signature_prepared:
+                    worksheet.merge_range(cant_filas + 6, 1, cant_filas + 6, 2, obj_signature.txt_signature_prepared, cell_format_txt_firma)
+            if obj_signature.signature_reviewed:
+                worksheet.merge_range(cant_filas + 5, 4, cant_filas + 5, 5, 'REVISO', cell_format_firma)
+                if obj_signature.txt_signature_reviewed:
+                    worksheet.merge_range(cant_filas + 6, 4, cant_filas + 6, 5, obj_signature.txt_signature_reviewed, cell_format_txt_firma)
+            if obj_signature.signature_approved:
+                worksheet.merge_range(cant_filas + 5, 7, cant_filas + 5, 8, 'APROBO', cell_format_firma)
+                if obj_signature.txt_signature_approved:
+                    worksheet.merge_range(cant_filas + 6, 7, cant_filas + 6, 8, obj_signature.txt_signature_approved, cell_format_txt_firma)
+        else:
+            worksheet.merge_range(cant_filas + 5, 1, cant_filas + 5, 2, 'ELABORO', cell_format_firma)
+            worksheet.merge_range(cant_filas + 5, 4, cant_filas + 5, 5, 'REVISO', cell_format_firma)
+            worksheet.merge_range(cant_filas + 5, 7, cant_filas + 5, 8, 'APROBO', cell_format_firma)
         # Guardar excel
         writer.save()
 
@@ -708,24 +735,75 @@ class HrPayrollReportZueFilter(models.TransientModel):
 
         html = html.replace('nan', '0')
 
-        html += '''
-        <br/>
-        <table class="table table-striped table-sm">
-            <tr class="text-center">
-                <td style="width: 30%;font-size: x-small;">
-                    ELABORÓ
-                </td>
-                <td style="width: 5%;background-color:white;border:none;"/>
-                <td style="width: 30%;font-size: x-small;">
-                    REVISÓ
-                </td>
-                <td style="width: 5%;background-color:white;border:none;"/>
-                <td style="width: 30%;font-size: x-small;">
-                    APROBÓ
-                </td>
-            </tr>
-        </table>        
-        '''
+        obj_signature = self.get_hr_payslip_template_signature()
+        if len(obj_signature) == 1:
+            signatures = ''
+            if obj_signature.signature_prepared:
+                if signatures != '':
+                    signatures += '<td style="width: 5%;background-color:white;border:none;"/>'
+                txt_signature_prepared = obj_signature.txt_signature_prepared if obj_signature.txt_signature_prepared else ''
+                signatures += '''
+                    <td style="width: 30%;font-size: x-small;">
+                        ELABORÓ <br/>
+                        '''+txt_signature_prepared+'''
+                    </td>
+                '''
+            else:
+                signatures += '<td style="width: 30%;background-color:white;border:none;"/>'
+
+            if obj_signature.signature_reviewed:
+                if signatures != '':
+                    signatures += '<td style="width: 5%;background-color:white;border:none;"/>'
+                txt_signature_reviewed = obj_signature.txt_signature_reviewed if obj_signature.txt_signature_reviewed else ''
+                signatures += '''
+                    <td style="width: 30%;font-size: x-small;">
+                        REVISÓ <br/>
+                        '''+txt_signature_reviewed+'''
+                    </td>
+                '''
+            else:
+                signatures += '<td style="width: 30%;background-color:white;border:none;"/>'
+
+            if obj_signature.signature_approved:
+                if signatures != '':
+                    signatures += '<td style="width: 5%;background-color:white;border:none;"/>'
+                txt_signature_approved = obj_signature.txt_signature_approved if obj_signature.txt_signature_approved else ''
+                signatures += '''
+                    <td style="width: 30%;font-size: x-small;">
+                        APROBÓ <br/>
+                        '''+txt_signature_approved+'''
+                    </td>
+                '''
+            else:
+                signatures += '<td style="width: 30%;background-color:white;border:none;"/>'
+
+            html += '''
+            <br/>
+            <table class="table table-striped table-sm">
+                <tr class="text-center">
+                    '''+signatures+'''
+                </tr>
+            </table>        
+            '''
+        else:
+            html += '''
+            <br/>
+            <table class="table table-striped table-sm">
+                <tr class="text-center">
+                    <td style="width: 30%;font-size: x-small;">
+                        ELABORÓ
+                    </td>
+                    <td style="width: 5%;background-color:white;border:none;"/>
+                    <td style="width: 30%;font-size: x-small;">
+                        REVISÓ
+                    </td>
+                    <td style="width: 5%;background-color:white;border:none;"/>
+                    <td style="width: 30%;font-size: x-small;">
+                        APROBÓ
+                    </td>
+                </tr>
+            </table>        
+            '''
 
         self.pdf_report_payroll = html
 
