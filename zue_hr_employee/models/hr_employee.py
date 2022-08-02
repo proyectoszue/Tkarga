@@ -111,7 +111,7 @@ class hr_employee_dependents(models.Model):
                                ('femenino', 'Femenino'),
                                ('otro', 'Otro')],'Genero')
     date_birthday = fields.Date('Fecha de nacimiento')
-    dependents_type = fields.Selection([('hijo', 'Hijo'),
+    dependents_type = fields.Selection([('hijo', 'Hijo(a)'),
                                ('padre', 'Padre'),
                                ('madre', 'Madre'),
                                ('conyuge', 'Cónyuge'),

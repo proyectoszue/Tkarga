@@ -73,7 +73,7 @@ class hr_salary_history_report(models.TransientModel):
         book = xlsxwriter.Workbook(stream, {'in_memory': True})
 
         # Columnas
-        columns = ['Contrato', 'Fecha Ingreso', 'Estado Contrato', 'Empleado', 'Compañia', 'Sucursal' , 'Fecha Incio Salario','Salario']
+        columns = ['Contrato', 'Fecha Ingreso', 'Estado Contrato', 'Empleado', 'Compañia', 'Sucursal' , 'Fecha Inicio Salario','Salario']
         sheet = book.add_worksheet('Historico salarial')
 
         # Agregar textos al excel
