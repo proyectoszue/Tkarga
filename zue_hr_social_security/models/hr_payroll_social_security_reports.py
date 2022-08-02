@@ -206,7 +206,7 @@ class hr_payroll_social_security(models.Model):
     def info_totals(self):
         dict_totals = {}
         for record in self:
-            total_amount_employees = sum([i.nValorSaludEmpleado+i.nValorPensionEmpleado for i in record.executing_social_security_ids])
+            total_amount_employees = sum([i.nValorSaludEmpleadoNomina+i.nValorPensionEmpleadoNomina for i in record.executing_social_security_ids])
             total_amount_company = sum([i.nValorSaludEmpresa+i.nValorPensionEmpresa+i.nValorFondoSolidaridad+i.nValorFondoSubsistencia+i.nValorARP+i.nValorCajaCom+i.nValorSENA+i.nValorICBF for i in record.executing_social_security_ids])
             dict_totals = {'total_employees':len(record.executing_social_security_ids.employee_id),
                            'total_amount_employees': float("{:.2f}".format(total_amount_employees)),
