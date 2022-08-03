@@ -22,8 +22,16 @@ class HrPayslipRun(models.Model):
     definitive_plan = fields.Boolean(string='Plano definitivo generado')
 
     def action_validate(self):
-        self.mapped('slip_ids').filtered(lambda slip: slip.state != 'cancel').action_payslip_done()
-        self.action_close()
+        settings_batch_account = self.env['ir.config_parameter'].sudo().get_param(
+            'zue_hr_payroll.module_hr_payroll_batch_account') or False
+        slips_original = self.mapped('slip_ids').filtered(lambda slip: slip.state != 'cancel')
+        if settings_batch_account == '1':  # Si en ajustes tiene configurado 'Crear movimiento contable por empleado' ejecutar maximo 200 por envio
+            slips = slips_original.filtered(lambda x: len(x.move_id) == 0 or x.move_id == False)[0:200]
+        else:
+            slips = slips_original
+        slips.action_payslip_done()
+        if len(slips_original.filtered(lambda x: len(x.move_id) == 0 or x.move_id == False)) == 0:
+            self.action_close()
 
     def restart_payroll_batch(self):
         self.mapped('slip_ids').action_payslip_cancel()

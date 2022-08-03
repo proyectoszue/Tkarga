@@ -145,8 +145,8 @@
             <field name="arch" type="xml">
                 <xpath expr="//form[1]/header[1]/button[2]" position="after">
                     <button name="restart_payroll_batch" type="object" string="Reiniciar" states="verify,draft"/>
-                    <button name="restart_payroll_account_batch" type="object" string="Reversar contabilización" states="close"/>
-                    <button name="restart_full_payroll_batch" type="object" string="Reversar totalmente" states="close"/>
+                    <button name="restart_payroll_account_batch" type="object" string="Reversar contabilización" states="verify,close"/>
+                    <button name="restart_full_payroll_batch" type="object" string="Reversar totalmente" states="verify,close"/>
                     <button name="generate_settlement_report_entity" type="object" string="Reporte por entidad" states="verify,close"/>
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/group[1]" position="after">
