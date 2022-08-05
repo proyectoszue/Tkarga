@@ -153,7 +153,11 @@ class hr_payroll_social_security(models.Model):
         else:
             details = self.executing_social_security_ids
             
-        for item in details: 
+        for item in details:
+            # Obtener parametrización de cotizantes
+            obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
+                [('type_of_contributor', '=', item.employee_id.tipo_coti_id.id),
+                 ('contributor_subtype', '=', item.employee_id.subtipo_coti_id.id)], limit=1)
             #Obtener entidades del empleado
             entity_eps = False
             entity_pension = False
@@ -170,12 +174,15 @@ class hr_payroll_social_security(models.Model):
                 if entity.contrib_id.type_entities == 'riesgo': # ARP
                     entity_arp = entity.partner_id
 
-            if not entity_eps or not entity_eps.code_pila_eps:
-                raise ValidationError(_('El empleado '+item.employee_id.name+' no tiene EPS o falta configurar código PILA, por favor verificar.'))               
-            if (not entity_pension or not entity_pension.code_pila_eps) and item.contract_id.contract_type != 'aprendizaje' and item.employee_id.subtipo_coti_id.not_contribute_pension == False:
-                raise ValidationError(_('El empleado '+item.employee_id.name+' no tiene entidad de pensión o falta configurar código PILA, por favor verificar.'))               
-            if (not entity_ccf or not entity_ccf.code_pila_ccf) and item.contract_id.contract_type != 'aprendizaje':
-                raise ValidationError(_('El empleado '+item.employee_id.name+' no tiene caja de compensación o falta configurar código PILA, por favor verificar.'))               
+            if obj_parameterization_contributors.liquidates_eps_company or obj_parameterization_contributors.liquidated_eps_employee:
+                if not entity_eps or not entity_eps.code_pila_eps:
+                    raise ValidationError(_('El empleado ' + item.employee_id.name + ' no tiene EPS o falta configurar código PILA, por favor verificar.'))
+            if obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidates_solidarity_fund:
+                if (not entity_pension or not entity_pension.code_pila_eps) and item.contract_id.contract_type != 'aprendizaje' and item.employee_id.subtipo_coti_id.not_contribute_pension == False:
+                    raise ValidationError(_('El empleado ' + item.employee_id.name + ' no tiene entidad de pensión o falta configurar código PILA, por favor verificar.'))
+            if obj_parameterization_contributors.liquidated_compensation_fund:
+                if (not entity_ccf or not entity_ccf.code_pila_ccf) and item.contract_id.contract_type != 'aprendizaje':
+                    raise ValidationError(_('El empleado ' + item.employee_id.name + ' no tiene caja de compensación o falta configurar código PILA, por favor verificar.'))
 
             #-------------Inf. Basica
             cSecuencia = right('00000'+str(cant_detalle),5)
@@ -285,20 +292,37 @@ class hr_payroll_social_security(models.Model):
             part_line_two = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s' % (cIngreso,cRetiro,cTDE,cTAE,cTDP,cTAP,cVSP,cCorrecciones,cVST,cSLN,cIGE,cLMA,cVAC,cAVP,cVCT,IRL)
 
             #-----------------Valores Parte 1
-            cCodigoEntidadFondoPension = left(entity_pension_history.code_pila_eps+' '*6,6) if entity_pension_history else left(entity_pension.code_pila_eps+' '*6 if entity_pension else ' '*6,6)
-            cCodigoEntidadFondoPensionTraslado = left(entity_pension.code_pila_eps+' '*6 if entity_pension else ' '*6,6) if entity_pension_history else ' '*6
-            cCodigoEntidadEPS = left(entity_eps_history.code_pila_eps+' '*6,6) if entity_eps_history else left(entity_eps.code_pila_eps+' '*6,6)
-            cCodigoEntidadEPSTraslado = left(entity_eps.code_pila_eps+' '*6,6) if entity_eps_history else ' '*6
-            cCodigoEntidadCCF = left(entity_ccf.code_pila_ccf+' '*6 if entity_ccf else ' '*6,6)
-
-            if item.employee_id.subtipo_coti_id.not_contribute_pension != True:
-                cDiasCotizadosPension = '00' if item.nValorBaseFondoPension <= 0 else right( '00' + str( item.nDiasLiquidados + item.nDiasVacaciones + item.nDiasIncapacidadEPS + item.nDiasLicencia + item.nDiasLicenciaRenumerada + item.nDiasMaternidad + item.nDiasIncapacidadARP), 2 )
+            if obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidates_solidarity_fund:
+                cCodigoEntidadFondoPension = left(entity_pension_history.code_pila_eps+' '*6,6) if entity_pension_history else left(entity_pension.code_pila_eps+' '*6 if entity_pension else ' '*6,6)
+                cCodigoEntidadFondoPensionTraslado = left(entity_pension.code_pila_eps+' '*6 if entity_pension else ' '*6,6) if entity_pension_history else ' '*6
+                if item.employee_id.subtipo_coti_id.not_contribute_pension != True:
+                    cDiasCotizadosPension = '00' if item.nValorBaseFondoPension <= 0 else right('00' + str(
+                        item.nDiasLiquidados + item.nDiasVacaciones + item.nDiasIncapacidadEPS + item.nDiasLicencia + item.nDiasLicenciaRenumerada + item.nDiasMaternidad + item.nDiasIncapacidadARP),2)
+                else:
+                    cDiasCotizadosPension = '00'
             else:
+                cCodigoEntidadFondoPension = ' '*6
+                cCodigoEntidadFondoPensionTraslado = ' '*6
                 cDiasCotizadosPension = '00'
-            cDiasCotizadosSalud = '00' if item.nValorBaseSalud <= 0 else right( '00' + str( item.nDiasLiquidados + item.nDiasVacaciones + item.nDiasIncapacidadEPS + item.nDiasLicencia + item.nDiasLicenciaRenumerada + item.nDiasMaternidad + item.nDiasIncapacidadARP), 2 )
+            if obj_parameterization_contributors.liquidates_eps_company or obj_parameterization_contributors.liquidated_eps_employee:
+                cCodigoEntidadEPS = left(entity_eps_history.code_pila_eps+' '*6,6) if entity_eps_history else left(entity_eps.code_pila_eps+' '*6,6)
+                cCodigoEntidadEPSTraslado = left(entity_eps.code_pila_eps + ' ' * 6,6) if entity_eps_history else ' ' * 6
+                cDiasCotizadosSalud = '00' if item.nValorBaseSalud <= 0 else right('00' + str(
+                    item.nDiasLiquidados + item.nDiasVacaciones + item.nDiasIncapacidadEPS + item.nDiasLicencia + item.nDiasLicenciaRenumerada + item.nDiasMaternidad + item.nDiasIncapacidadARP),2)
+            else:
+                cCodigoEntidadEPS = ' ' * 6
+                cCodigoEntidadEPSTraslado = ' ' * 6
+                cDiasCotizadosSalud = '00'
+            if obj_parameterization_contributors.liquidated_compensation_fund:
+                cCodigoEntidadCCF = left(entity_ccf.code_pila_ccf+' '*6 if entity_ccf else ' '*6,6)
+                cDiasCotizadosCajaCom = '00' if item.nValorBaseCajaCom <= 0 else right('00' + str(
+                    item.nDiasLiquidados + item.nDiasVacaciones + item.nDiasIncapacidadEPS + item.nDiasLicencia + item.nDiasLicenciaRenumerada + item.nDiasMaternidad + item.nDiasIncapacidadARP),2)
+            else:
+                cCodigoEntidadCCF = ' ' * 6
+                cDiasCotizadosCajaCom = '00'
+
             cDiasCotizadosARP = '00' if item.nValorBaseARP <= 0 else right( '00' + str( item.nDiasLiquidados + item.nDiasVacaciones + item.nDiasIncapacidadEPS + item.nDiasLicencia + item.nDiasLicenciaRenumerada + item.nDiasMaternidad + item.nDiasIncapacidadARP), 2 )
-            cDiasCotizadosCajaCom = '00' if item.nValorBaseCajaCom <= 0 else right( '00' + str( item.nDiasLiquidados + item.nDiasVacaciones + item.nDiasIncapacidadEPS + item.nDiasLicencia + item.nDiasLicenciaRenumerada + item.nDiasMaternidad + item.nDiasIncapacidadARP), 2 )
-            
+
             cSalarioBasico = right('0'*9+ str(item.nSueldo if item.nSueldo>=annual_parameters.smmlv_monthly else annual_parameters.smmlv_monthly).split('.')[0],9) 
             cSalarioIntegral = ' ' if item.contract_id.modality_salary != 'basico' else 'F'
             cSalarioIntegral = cSalarioIntegral if item.contract_id.modality_salary != 'integral' else 'X'
