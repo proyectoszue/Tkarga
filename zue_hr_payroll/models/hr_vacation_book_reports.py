@@ -90,7 +90,7 @@ class hr_vacation_book(models.TransientModel):
                         from hr_employee as a 
                         inner join res_company as b on a.company_id = b.id
                         inner join hr_contract as hc on a.id = hc.employee_id and hc.active = true and hc.date_start <= '{date_to}'
-                                                and (hc.state = 'open' or (hc.retirement_date >= '{date_from}' and hc.retirement_date <= '{date_to}'))
+                                                and (hc.state = 'open' or ('{date_to}' <= hc.retirement_date)) --hc.retirement_date >= '{date_from}' and
                         left join res_partner as c on a.address_id = c.id
                         left join zue_res_branch as d on a.branch_id = d.id
                         left join hr_department as e on a.department_id = e.id 
