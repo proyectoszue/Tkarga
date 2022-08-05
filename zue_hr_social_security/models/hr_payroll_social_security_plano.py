@@ -198,10 +198,10 @@ class hr_payroll_social_security(models.Model):
             cTipIdTercero = switch_cTipIdTercero.get(item.employee_id.address_home_id.x_document_type, '/')
             if cTipIdTercero == '/':
                 raise ValidationError(_('El tipo de documento del empleado '+item.employee_id.name+' es invalido, por favor verificar.'))           
-            if item.employee_id.permit_no:
-                cNumIdTercero = left(item.employee_id.permit_no+16*' ',16)
-            else:
-                cNumIdTercero = left(item.employee_id.identification_id+16*' ',16)
+            #if item.employee_id.permit_no:
+            #    cNumIdTercero = left(item.employee_id.permit_no+16*' ',16)
+            #else:
+            cNumIdTercero = left(item.employee_id.identification_id+16*' ',16)
             if not item.employee_id.tipo_coti_id.code:
                 raise ValidationError(_('El empleado '+item.employee_id.name+' no tiene tipo de cotizante, por favor verificar.'))           
             cTipoCotizante = right('00'+item.employee_id.tipo_coti_id.code,2)
@@ -327,7 +327,10 @@ class hr_payroll_social_security(models.Model):
             cSalarioIntegral = ' ' if item.contract_id.modality_salary != 'basico' else 'F'
             cSalarioIntegral = cSalarioIntegral if item.contract_id.modality_salary != 'integral' else 'X'
 
-            cIBCPension = right('0'*9+str(item.nValorBaseFondoPension).split('.')[0],9)
+            if obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidates_solidarity_fund:
+                cIBCPension = right('0'*9+str(item.nValorBaseFondoPension).split('.')[0],9)
+            else:
+                cIBCPension = '0' * 9
             cIBCSalud = right('0'*9+str(item.nValorBaseSalud).split('.')[0],9)
             cIBCARP = right('0'*9+str(item.nValorBaseARP).split('.')[0],9)
             cIBCCajaCom = right('0'*9+str(item.nValorBaseCajaCom).split('.')[0],9)
