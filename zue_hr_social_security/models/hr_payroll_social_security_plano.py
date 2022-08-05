@@ -191,7 +191,10 @@ class hr_payroll_social_security(models.Model):
             cTipIdTercero = switch_cTipIdTercero.get(item.employee_id.address_home_id.x_document_type, '/')
             if cTipIdTercero == '/':
                 raise ValidationError(_('El tipo de documento del empleado '+item.employee_id.name+' es invalido, por favor verificar.'))           
-            cNumIdTercero = left(item.employee_id.identification_id+16*' ',16)
+            if item.employee_id.permit_no:
+                cNumIdTercero = left(item.employee_id.permit_no+16*' ',16)
+            else:
+                cNumIdTercero = left(item.employee_id.identification_id+16*' ',16)
             if not item.employee_id.tipo_coti_id.code:
                 raise ValidationError(_('El empleado '+item.employee_id.name+' no tiene tipo de cotizante, por favor verificar.'))           
             cTipoCotizante = right('00'+item.employee_id.tipo_coti_id.code,2)
