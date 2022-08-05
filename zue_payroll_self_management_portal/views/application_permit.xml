@@ -45,12 +45,21 @@
                                                id="text_other" name="text_other"
                                                placeholder="¿Cual?"/>
                                     </div>
-                                    <div class="form-check">
-                                        <input class="form-check-input" type="checkbox" value="" id="severalDays"
-                                               name="leave_requested_more_day"/>
-                                        <label class="form-check-label" for="severalDays">Permiso solicitado superior a
-                                            un dia.
-                                        </label>
+                                    <div class="form-group col-md-4">
+                                        <label for="empty" class="form-label"/>
+                                        <div class="form-check col-md-12">
+                                            <input class="form-check-input" type="checkbox" value="" id="severalDays"
+                                                   name="leave_requested_more_day"/>
+                                            <label class="form-check-label" for="severalDays">Permiso superior a
+                                                un dia.
+                                            </label>
+                                        </div>
+                                        <div class="form-check col-md-12">
+                                             <input class="form-check-input" type="checkbox" value="" id="compensatedCheck"
+                                                   name="leave_compensated"/>
+                                            <label class="form-check-label" for="compensatedCheck">Permiso compensado.
+                                            </label>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="form-row">

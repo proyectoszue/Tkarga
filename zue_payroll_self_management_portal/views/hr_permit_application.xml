@@ -54,6 +54,7 @@
                                 <field name="branch_id"/>
                                 <field name="reason"/>
                                 <field name="text_other" attrs="{'invisible': [('reason','!=', 'other')]}"/>
+                                <field name="compensated"/>
                             </group>
                             <group>
                                 <field name="permit_date"/>

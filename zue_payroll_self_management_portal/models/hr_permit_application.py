@@ -21,7 +21,7 @@ class hr_permit_application(models.Model):
     initial_hour = fields.Float('Hora de salida', track_visibility='onchange')
     final_hour = fields.Float('Hora llegada', track_visibility='onchange')
     observation = fields.Char('Observacion', track_visibility='onchange')
-    #compensated = fields.Boolean(string='Compensado')
+    compensated = fields.Boolean(string='Compensado')
     state = fields.Selection([('confirm', 'Para Aprobar'),
                                 ('validate', 'Aprobado'),
                                 ('refuse', 'Rechazado'),

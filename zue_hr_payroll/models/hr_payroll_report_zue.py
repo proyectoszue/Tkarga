@@ -399,6 +399,14 @@ class HrPayrollReportZueFilter(models.TransientModel):
         text_title = 'Informe de Liquidación'
         text_dates = 'Fechas Liquidación: %s a %s' % (min_date,max_date)
         text_generate = 'Informe generado el %s' % (datetime.now(timezone(self.env.user.tz)))
+        text_liquidation = ''
+        for lote in self.payslip_ids:
+            text_liquidation += lote.name if text_liquidation == '' else ', ' + lote.name
+
+        for liq in self.liquidations_ids:
+            text_liquidation += liq.name if text_liquidation == '' else ', ' + liq.name
+
+        text_liquidation += ' | ' + text_generate
         #Obtener info
         cant_filas = pivot_report.shape[0]+3 # + 3 de los registros pertenencientes al encabezado
         cant_columnas = pivot_report.shape[1]+len(columns_index) # + las columnas fijas
@@ -425,11 +433,11 @@ class HrPayrollReportZueFilter(models.TransientModel):
         if len(columns_index)-2 != 2:
             worksheet.merge_range(0,2,0,len(columns_index)-2, text_title, cell_format_title)
             worksheet.merge_range(1,2,1,len(columns_index)-2, text_dates, cell_format_title)
-            worksheet.merge_range(2,2,2,len(columns_index)-2, text_generate, cell_format_text_generate)
+            worksheet.merge_range(2,2,2,len(columns_index)-2, text_liquidation, cell_format_text_generate)
         else:
             worksheet.write(0, 2, text_title, cell_format_title)
             worksheet.write(1, 2, text_dates, cell_format_title)
-            worksheet.write(2, 2, text_generate, cell_format_text_generate)
+            worksheet.write(2, 2, text_liquidation, cell_format_text_generate)
         if self.env.company.logo:
             logo_company = io.BytesIO(base64.b64decode(self.env.company.logo))
             worksheet.insert_image('A1', "logo_company.png", {'image_data': logo_company,'x_scale': 0.6, 'y_scale': 0.4})
