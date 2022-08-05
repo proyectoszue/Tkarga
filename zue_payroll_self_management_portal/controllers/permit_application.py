@@ -47,6 +47,7 @@ class ZuePermitApplicationPortal(Controller):
             'reason': post['reason'],
             'text_other': post.get('text_other',''),
             'leave_requested_more_day': True if post.get('leave_requested_more_day',False) == '' else False,
+            'compensated': True if post.get('leave_compensated', False) == '' else False,
             'permit_days' : int(post.get('permit_days',0)),
             'initial_hour' : initial_hour,
             'final_hour' : final_hour,
