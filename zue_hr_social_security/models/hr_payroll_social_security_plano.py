@@ -335,18 +335,28 @@ class hr_payroll_social_security(models.Model):
             part_line_three = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s' % (cCodigoEntidadFondoPension,cCodigoEntidadFondoPensionTraslado,cCodigoEntidadEPS,cCodigoEntidadEPSTraslado,cCodigoEntidadCCF,cDiasCotizadosPension,cDiasCotizadosSalud,cDiasCotizadosARP,cDiasCotizadosCajaCom,cSalarioBasico,cSalarioIntegral,cIBCPension,cIBCSalud,cIBCARP,cIBCCajaCom)
 
             #-----------------Valores Parte 2
-            cTarifaPension = left(str((item.nPorcAportePensionEmpleado + item.nPorcAportePensionEmpresa) / 100 ) + '0'*7, 7 )
+            if obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidates_solidarity_fund:
+                cTarifaPension = left(str((item.nPorcAportePensionEmpleado + item.nPorcAportePensionEmpresa) / 100 ) + '0'*7, 7 )
 
-            cValorAportePension = right('0'*9+str(roundup100(item.nValorPensionEmpresa + item.nValorPensionEmpleado)).split('.')[0],9)
-            cAporteVoluntarioPension = '0'*9
-            cCotizacionVoluntariaEmpresaPension = '0'*9
-            
-            cValorAportePensionTotal = right('0'*9+str(roundup100(item.nValorPensionEmpresa + item.nValorPensionEmpleado)).split('.')[0],9)
+                cValorAportePension = right('0'*9+str(roundup100(item.nValorPensionEmpresa + item.nValorPensionEmpleado)).split('.')[0],9)
+                cAporteVoluntarioPension = '0'*9
+                cCotizacionVoluntariaEmpresaPension = '0'*9
 
-            cValorFondoSolidaridad = right('0'*9+str(item.nValorFondoSolidaridad).split('.')[0],9)
-            cValorFondoSubsistencia = right('0'*9+str(item.nValorFondoSubsistencia).split('.')[0],9)
-            cValorRetenidoAportesVoluntarios = '0'*9
-            
+                cValorAportePensionTotal = right('0'*9+str(roundup100(item.nValorPensionEmpresa + item.nValorPensionEmpleado)).split('.')[0],9)
+
+                cValorFondoSolidaridad = right('0'*9+str(item.nValorFondoSolidaridad).split('.')[0],9)
+                cValorFondoSubsistencia = right('0'*9+str(item.nValorFondoSubsistencia).split('.')[0],9)
+                cValorRetenidoAportesVoluntarios = '0'*9
+            else:
+                cTarifaPension = '0'*7
+                cValorAportePension = '0'*9
+                cAporteVoluntarioPension = '0' * 9
+                cCotizacionVoluntariaEmpresaPension = '0' * 9
+                cValorAportePensionTotal = '0'*9
+                cValorFondoSolidaridad = '0' * 9
+                cValorFondoSubsistencia = '0' * 9
+                cValorRetenidoAportesVoluntarios = '0' * 9
+
             cTarifaSalud = left(str( (item.nPorcAporteSaludEmpleado + item.nPorcAporteSaludEmpresa ) / 100 ) +'0'*7, 7 )
             cValorAporteSalud = right('0'*9+str(roundup100(item.nValorSaludEmpresa + item.nValorSaludEmpleado)).split('.')[0], 9 )
             cValorUPC = '0'*9 #right('0'*9+str( item.nValorUPC ), 9 )
