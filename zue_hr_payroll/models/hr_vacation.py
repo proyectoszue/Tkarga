@@ -113,6 +113,7 @@ class Hr_payslip(models.Model):
         rules_dict = {}
         worked_days_dict = {line.code: line for line in self.worked_days_line_ids if line.code}
         inputs_dict = {line.code: line for line in self.input_line_ids if line.code}
+        pay_vacations_in_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.pay_vacations_in_payroll')) or False
         round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
 
         employee = self.employee_id
@@ -175,15 +176,41 @@ class Hr_payslip(models.Model):
 
                 #Días pertenecientes a la liquidación de nómina
                 if inherit_nomina != 0:
-                    vac_days_in_payslip = 0
+                    # Obtener si el dia sabado es habil | Guardar dias fines de semana 5=Sabado & 6=Domingo
+                    lst_days = [5, 6] if employee.sabado == False else [6]
+                    #Obtener fechas
                     initial_date = leave.leave_id.request_date_from if leave.leave_id.request_date_from >= self.date_from else self.date_from
                     end_date = leave.leave_id.request_date_to if leave.leave_id.request_date_to <= self.date_to else self.date_to
+                    #Dias
+                    vac_days_in_payslip = 0
+                    holidays = 0
+                    business_days = 0
+                    days_31_b = 0
+                    days_31_h = 0
                     while initial_date <= end_date:
                         vac_days_in_payslip += 1
+                        if not initial_date.weekday() in lst_days:
+                            # Obtener dias festivos parametrizados
+                            obj_holidays = self.env['zue.holidays'].search([('date', '=', initial_date)])
+                            if obj_holidays:
+                                holidays += 1
+                                days_31_h += 1 if initial_date.day == 31 else 0
+                            else:
+                                business_days += 1
+                                days_31_b += 1 if initial_date.day == 31 else 0
+                        else:
+                            holidays += 1
+                            days_31_h += 1 if initial_date.day == 31 else 0
                         initial_date = initial_date + timedelta(days=1)
 
                     leaves['ORIGINAL_'+leave.work_entry_type_id.code] = leave_number_of_days
+                    leaves['ORIGINAL_HOLIDAYS' + leave.work_entry_type_id.code] = leaves['HOLIDAYS' + leave.work_entry_type_id.code]
+                    leaves['ORIGINAL_BUSINESS' + leave.work_entry_type_id.code] = leaves['BUSINESS' + leave.work_entry_type_id.code]
                     leaves[leave.work_entry_type_id.code] = vac_days_in_payslip
+                    leaves['HOLIDAYS' + leave.work_entry_type_id.code] = holidays
+                    leaves['BUSINESS' + leave.work_entry_type_id.code] = business_days
+                    leaves['31HOLIDAYS' + leave.work_entry_type_id.code] = days_31_h
+                    leaves['31BUSINESS' + leave.work_entry_type_id.code] = days_31_b
 
                 leaves_time.append(leaves)
 
@@ -242,25 +269,34 @@ class Hr_payslip(models.Model):
                     initial_accrual_date = False
                     final_accrual_date = False                    
                     for leaves in leaves_time:
-                        id_leave = leaves.get('IDLEAVE')
-                        obj_leave = self.env['hr.leave'].search([('id', '=', id_leave)])  
-                        obj_leave_equals = self.env['hr.leave'].search([('state','=','validate'),('employee_id','=',employee.id),('id','!=',id_leave),('is_vacation','=',True),('request_date_from', '>=', obj_leave.request_date_from),('request_date_to', '<=', obj_leave.request_date_to)])  
-                        days_vacations = obj_leave.number_of_days if obj_leave.business_days + obj_leave.days_31_business == 0 else obj_leave.business_days + obj_leave.days_31_business
-                        days_vacations_business = obj_leave.business_days
-                        days_vacations_31_business = obj_leave.days_31_business
-                        days_vacations_holidays = obj_leave.holidays
-                        days_vacations_31_holidays = obj_leave.days_31_holidays
-                        for leave_equals in obj_leave_equals:
-                            days_vacations += leave_equals.number_of_days if leave_equals.business_days + leave_equals.days_31_business == 0 else leave_equals.business_days + leave_equals.days_31_business
-                            days_vacations_business += leave_equals.business_days
-                            days_vacations_31_business += leave_equals.days_31_business
-                            days_vacations_holidays += leave_equals.holidays
-                            days_vacations_31_holidays += leave_equals.days_31_holidays
-                        #Remuneradas
-                        for paid_vacation in self.paid_vacation_ids:
-                            if obj_leave.request_date_from:
-                                if paid_vacation.start_date_paid_vacation >= obj_leave.request_date_from and paid_vacation.end_date_paid_vacation <= obj_leave.request_date_to:
-                                    days_vacations += paid_vacation.paid_vacation_days
+                        if inherit_nomina != 0:
+                            id_leave = leaves.get('IDLEAVE')
+                            obj_leave = self.env['hr.leave'].search([('id', '=', id_leave)])
+                            days_vacations = leaves.get('VACDISFRUTADAS',0)
+                            days_vacations_business = leaves.get('BUSINESSVACDISFRUTADAS',0)
+                            days_vacations_31_business = leaves.get('31BUSINESSVACDISFRUTADAS',0)
+                            days_vacations_holidays = leaves.get('HOLIDAYSVACDISFRUTADAS',0)
+                            days_vacations_31_holidays = leaves.get('31HOLIDAYSVACDISFRUTADAS',0)
+                        else:
+                            id_leave = leaves.get('IDLEAVE')
+                            obj_leave = self.env['hr.leave'].search([('id', '=', id_leave)])
+                            obj_leave_equals = self.env['hr.leave'].search([('state','=','validate'),('employee_id','=',employee.id),('id','!=',id_leave),('is_vacation','=',True),('request_date_from', '>=', obj_leave.request_date_from),('request_date_to', '<=', obj_leave.request_date_to)])
+                            days_vacations = obj_leave.number_of_days if obj_leave.business_days + obj_leave.days_31_business == 0 else obj_leave.business_days + obj_leave.days_31_business
+                            days_vacations_business = obj_leave.business_days
+                            days_vacations_31_business = obj_leave.days_31_business
+                            days_vacations_holidays = obj_leave.holidays
+                            days_vacations_31_holidays = obj_leave.days_31_holidays
+                            for leave_equals in obj_leave_equals:
+                                days_vacations += leave_equals.number_of_days if leave_equals.business_days + leave_equals.days_31_business == 0 else leave_equals.business_days + leave_equals.days_31_business
+                                days_vacations_business += leave_equals.business_days
+                                days_vacations_31_business += leave_equals.days_31_business
+                                days_vacations_holidays += leave_equals.holidays
+                                days_vacations_31_holidays += leave_equals.days_31_holidays
+                            #Remuneradas
+                            for paid_vacation in self.paid_vacation_ids:
+                                if obj_leave.request_date_from:
+                                    if paid_vacation.start_date_paid_vacation >= obj_leave.request_date_from and paid_vacation.end_date_paid_vacation <= obj_leave.request_date_to:
+                                        days_vacations += paid_vacation.paid_vacation_days
 
                         localdict.update({'leaves':  BrowsableObject(employee.id, leaves, self.env)})
                         amount, qty, rate = rule._compute_rule(localdict)
@@ -331,8 +367,9 @@ class Hr_payslip(models.Model):
                         id_leave = leaves.get('IDPAID')
                         obj_leave_equals = self.env['hr.leave'].search([('state','=','validate'),('employee_id','=',employee.id),('is_vacation','=',True),('request_date_from', '=', leaves.get('DATE'))])  #('request_date_to', '<=', obj_leave.request_date_to)
                         days_vacations = leaves.get('VACREMUNERADAS')
-                        for leave_equals in obj_leave_equals:
-                            days_vacations += leave_equals.number_of_days if leave_equals.business_days + leave_equals.days_31_business == 0 else leave_equals.business_days + leave_equals.days_31_business
+                        if pay_vacations_in_payroll == False:
+                            for leave_equals in obj_leave_equals:
+                                days_vacations += leave_equals.number_of_days if leave_equals.business_days + leave_equals.days_31_business == 0 else leave_equals.business_days + leave_equals.days_31_business
 
                         localdict.update({'leaves':  BrowsableObject(employee.id, leaves, self.env)})
                         amount, qty, rate = rule._compute_rule(localdict)

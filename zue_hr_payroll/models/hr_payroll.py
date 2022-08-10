@@ -1126,7 +1126,7 @@ class Hr_payslip(models.Model):
                             'final_accrual_date': line.final_accrual_date,
                             'departure_date': record.date_liquidacion,
                             'return_date': record.date_liquidacion,                            
-                            'units_of_money': line.quantity,
+                            'units_of_money': round((line.quantity*15)/360),
                             'money_value': line.total,
                             'base_value_money': line.amount_base,
                             'total': line.total,
