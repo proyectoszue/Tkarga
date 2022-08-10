@@ -136,6 +136,10 @@ class hr_payroll_social_security(models.Model):
                                 ]
                             )
 
+                            # Obtener parametrización de cotizantes
+                            obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
+                                [('type_of_contributor', '=', employee.tipo_coti_id.id),
+                                 ('contributor_subtype', '=', employee.subtipo_coti_id.id)], limit=1)
                             #Variables
                             bEsAprendiz = True if obj_contract.contract_type == 'aprendizaje' else False
                             nDiasLiquidados = 0
@@ -388,7 +392,7 @@ class hr_payroll_social_security(models.Model):
                                             nValorBaseSalud = nValorDiario * executing.nDiasLiquidados
                                             nValorBaseFondoPension = nValorDiario * executing.nDiasLiquidados
                                             nValorBaseARP = nValorDiario * executing.nDiasLiquidados
-
+                                        if dict_social_security['BaseParafiscales'].dict.get('BASE', 0) > 0:
                                             nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['BASE']) / Decimal(executing.nDiasLiquidados))
                                             nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseCajaCom = nValorDiario * executing.nDiasLiquidados
@@ -402,7 +406,7 @@ class hr_payroll_social_security(models.Model):
                                             nValorBaseSalud = nValorDiario * executing.nDiasIncapacidadEPS
                                             nValorBaseFondoPension = nValorDiario * executing.nDiasIncapacidadEPS
                                             nValorBaseARP = nValorDiario * executing.nDiasIncapacidadEPS
-
+                                        if dict_social_security['BaseParafiscales'].dict.get('INCAPACIDAD',0) > 0:
                                             nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['INCAPACIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadEPS']))
                                             nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseCajaCom = nValorDiario * executing.nDiasIncapacidadEPS
@@ -414,7 +418,7 @@ class hr_payroll_social_security(models.Model):
                                             nValorBaseSalud = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
                                             nValorBaseFondoPension = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
                                             nValorBaseARP = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
-
+                                        if dict_social_security['BaseParafiscales'].dict.get('LICENCIA_NO_REMUNERADA', 0) > 0:
                                             nValorBaseCajaCom = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
                                             nValorBaseSENA = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
                                             nValorBaseICBF = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
@@ -426,7 +430,7 @@ class hr_payroll_social_security(models.Model):
                                             nValorBaseSalud = nValorDiario * executing.nDiasLicenciaRenumerada
                                             nValorBaseFondoPension = nValorDiario * executing.nDiasLicenciaRenumerada
                                             nValorBaseARP = nValorDiario * executing.nDiasLicenciaRenumerada
-
+                                        if dict_social_security['BaseParafiscales'].dict.get('LICENCIA_REMUNERADA', 0) > 0:
                                             nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicenciaRenumerada']))
                                             nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseCajaCom = nValorDiario * executing.nDiasLicenciaRenumerada
@@ -440,7 +444,7 @@ class hr_payroll_social_security(models.Model):
                                             nValorBaseSalud = nValorDiario * executing.nDiasMaternidad
                                             nValorBaseFondoPension = nValorDiario * executing.nDiasMaternidad
                                             nValorBaseARP = nValorDiario * executing.nDiasMaternidad
-
+                                        if dict_social_security['BaseParafiscales'].dict.get('LICENCIA_MATERNIDAD', 0) > 0:
                                             nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_MATERNIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasMaternidad']))
                                             nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseCajaCom = nValorDiario * executing.nDiasMaternidad
@@ -454,7 +458,7 @@ class hr_payroll_social_security(models.Model):
                                             nValorBaseSalud = nValorDiario * executing.nDiasVacaciones
                                             nValorBaseFondoPension = nValorDiario * executing.nDiasVacaciones
                                             nValorBaseARP = nValorDiario * executing.nDiasVacaciones
-
+                                        if dict_social_security['BaseParafiscales'].dict.get('VACACIONES',0) > 0:
                                             nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['VACACIONES']) / Decimal(dict_social_security['BaseParafiscales'].dict['DIAS_VACACIONES']))
                                             nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseCajaCom = nValorDiario * executing.nDiasVacaciones
@@ -468,7 +472,7 @@ class hr_payroll_social_security(models.Model):
                                             nValorBaseSalud = nValorDiario * executing.nDiasIncapacidadARP
                                             nValorBaseFondoPension = nValorDiario * executing.nDiasIncapacidadARP
                                             nValorBaseARP = nValorDiario * executing.nDiasIncapacidadARP
-
+                                        if dict_social_security['BaseParafiscales'].dict.get('ACCIDENTE_TRABAJO',0) > 0:
                                             nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['ACCIDENTE_TRABAJO']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadARP']))
                                             nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseCajaCom = nValorDiario * executing.nDiasIncapacidadARP
@@ -477,27 +481,30 @@ class hr_payroll_social_security(models.Model):
 
                                     valor_base_sueldo =(Decimal(executing.nSueldo) / Decimal(30)) * Decimal(nDias)
                                     #----------------CALCULOS SALUD
-                                    if nValorBaseSalud == 0:
-                                        nValorBaseSalud = float(roundupdecimal(valor_base_sueldo))
+                                    if obj_parameterization_contributors.liquidated_eps_employee or obj_parameterization_contributors.liquidates_eps_company:
+                                        if nValorBaseSalud == 0:
+                                            nValorBaseSalud = float(roundupdecimal(valor_base_sueldo))
+                                        else:
+                                            nValorBaseSalud = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseSalud) < nRedondeoDecimalesDif else nValorBaseSalud)
+                                        #nValorBaseSalud = (valor_base_sueldo) if nValorBaseSalud == 0 else (nValorBaseSalud)
+                                        if nValorBaseSalud > 0:
+                                            if bEsAprendiz == False:
+                                                nPorcAporteSaludEmpleado = annual_parameters.value_porc_health_employee
+                                                nValorSaludEmpleado = nValorBaseSalud*(nPorcAporteSaludEmpleado/100) if nDiasLicencia==0 else 0
+                                            else:
+                                                nValorSaludEmpleado = 0
+                                            if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and nSueldo >= (annual_parameters.smmlv_monthly*10)) or bEsAprendiz == True:
+                                                nPorcAporteSaludEmpresa = annual_parameters.value_porc_health_company if not bEsAprendiz else annual_parameters.value_porc_health_employee+annual_parameters.value_porc_health_company
+                                                nValorSaludEmpresa = nValorBaseSalud*(nPorcAporteSaludEmpresa/100)
+                                            else:
+                                                nPorcAporteSaludEmpresa,nValorSaludEmpresa = 0,0
+                                            nValorSaludTotal += (nValorSaludEmpleado+nValorSaludEmpresa)
+                                            nValorSaludTotalEmpleado += nValorSaludEmpleado
+                                            nValorSaludTotalEmpresa += nValorSaludEmpresa
                                     else:
-                                        nValorBaseSalud = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseSalud) < nRedondeoDecimalesDif else nValorBaseSalud)
-                                    #nValorBaseSalud = (valor_base_sueldo) if nValorBaseSalud == 0 else (nValorBaseSalud)
-                                    if nValorBaseSalud > 0:
-                                        if bEsAprendiz == False:
-                                            nPorcAporteSaludEmpleado = annual_parameters.value_porc_health_employee
-                                            nValorSaludEmpleado = nValorBaseSalud*(nPorcAporteSaludEmpleado/100) if nDiasLicencia==0 else 0
-                                        else:
-                                            nValorSaludEmpleado = 0
-                                        if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and nSueldo >= (annual_parameters.smmlv_monthly*10)) or bEsAprendiz == True:
-                                            nPorcAporteSaludEmpresa = annual_parameters.value_porc_health_company if not bEsAprendiz else annual_parameters.value_porc_health_employee+annual_parameters.value_porc_health_company
-                                            nValorSaludEmpresa = nValorBaseSalud*(nPorcAporteSaludEmpresa/100)
-                                        else:
-                                            nPorcAporteSaludEmpresa,nValorSaludEmpresa = 0,0
-                                        nValorSaludTotal += (nValorSaludEmpleado+nValorSaludEmpresa)
-                                        nValorSaludTotalEmpleado += nValorSaludEmpleado
-                                        nValorSaludTotalEmpresa += nValorSaludEmpresa
+                                        nValorBaseSalud = 0
                                     #----------------CALCULOS PENSION
-                                    if bEsAprendiz == False and employee.subtipo_coti_id.not_contribute_pension == False:
+                                    if bEsAprendiz == False and employee.subtipo_coti_id.not_contribute_pension == False and (obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidates_solidarity_fund):
                                         if nValorBaseFondoPension == 0:
                                             nValorBaseFondoPension = float(roundupdecimal(valor_base_sueldo))
                                         else:
@@ -516,6 +523,9 @@ class hr_payroll_social_security(models.Model):
                                             if contract_id.modality_salary == 'integral':
                                                 porc_integral_salary = annual_parameters.porc_integral_salary / 100
                                                 nValorBaseFondoPensionTotal = nValorBaseFondoPensionTotal * porc_integral_salary
+                                                nValorBaseFondoPensionTotal = annual_parameters.top_twenty_five_smmlv if nValorBaseFondoPensionTotal >= annual_parameters.top_twenty_five_smmlv else nValorBaseFondoPensionTotal
+                                            else:
+                                                nValorBaseFondoPensionTotal = annual_parameters.top_twenty_five_smmlv if nValorBaseFondoPensionTotal >= annual_parameters.top_twenty_five_smmlv else nValorBaseFondoPensionTotal
                                             if (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) > 4 and (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) < 16:
                                                 nPorcFondoSolidaridad = 1
                                             if  (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) >= 16 and (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) <= 17:
@@ -529,22 +539,30 @@ class hr_payroll_social_security(models.Model):
                                             if  (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) > 20:
                                                 nPorcFondoSolidaridad = 2
                                             if nPorcFondoSolidaridad > 0:
-                                                nPorcFondoSolidaridadCalculo = (nPorcFondoSolidaridad/100)/2
-                                                nValorFondoSolidaridad = roundup100(nValorBaseFondoPensionTotal*nPorcFondoSolidaridadCalculo)
-                                                nValorFondoSubsistencia = roundup100(nValorBaseFondoPensionTotal*nPorcFondoSolidaridadCalculo)
-                                                nValorTotalFondos += (nValorFondoSolidaridad + nValorFondoSubsistencia)
+                                                if contract_id.modality_salary == 'integral' and nPorcFondoSolidaridad == 2:
+                                                    nValorFondoSolidaridad = roundup100(nValorBaseFondoPensionTotal * 0.005)
+                                                    nValorFondoSubsistencia = roundup100(nValorBaseFondoPensionTotal * 0.015)
+                                                    nValorTotalFondos += (nValorFondoSolidaridad + nValorFondoSubsistencia)
+                                                else:
+                                                    nPorcFondoSolidaridadCalculo = (nPorcFondoSolidaridad/100)/2
+                                                    nValorFondoSolidaridad = roundup100(nValorBaseFondoPensionTotal*nPorcFondoSolidaridadCalculo)
+                                                    nValorFondoSubsistencia = roundup100(nValorBaseFondoPensionTotal*nPorcFondoSolidaridadCalculo)
+                                                    nValorTotalFondos += (nValorFondoSolidaridad + nValorFondoSubsistencia)
                                     else:
                                         nValorBaseFondoPension = 0
                                     #----------------CALCULOS ARP
-                                    if nValorBaseARP == 0:
-                                        nValorBaseARP = float(roundupdecimal(valor_base_sueldo))
+                                    if obj_parameterization_contributors.liquidated_arl:
+                                        if nValorBaseARP == 0:
+                                            nValorBaseARP = float(roundupdecimal(valor_base_sueldo))
+                                        else:
+                                            nValorBaseARP = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseARP) < nRedondeoDecimalesDif else nValorBaseARP)
+                                        #nValorBaseARP = (valor_base_sueldo) if nValorBaseARP == 0 else (nValorBaseARP)
+                                        if nValorBaseARP > 0 and nDiasAusencias == 0 and nDiasVacaciones == 0:
+                                            nValorARP = roundup100(nValorBaseARP * nPorcAporteARP / 100)
                                     else:
-                                        nValorBaseARP = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseARP) < nRedondeoDecimalesDif else nValorBaseARP)
-                                    #nValorBaseARP = (valor_base_sueldo) if nValorBaseARP == 0 else (nValorBaseARP)
-                                    if nValorBaseARP > 0 and nDiasAusencias == 0 and nDiasVacaciones == 0:
-                                        nValorARP = roundup100(nValorBaseARP * nPorcAporteARP / 100)
+                                        nValorBaseARP = 0
                                     #----------------CALCULOS CAJA DE COMPENSACIÓN
-                                    if bEsAprendiz == False:
+                                    if bEsAprendiz == False and obj_parameterization_contributors.liquidated_compensation_fund:
                                         if nValorBaseCajaCom == 0:
                                             nValorBaseCajaCom = float(roundupdecimal(valor_base_sueldo))
                                         else:
@@ -556,7 +574,7 @@ class hr_payroll_social_security(models.Model):
                                     else:
                                         nValorBaseCajaCom = 0
                                     #----------------CALCULOS SENA & ICBF
-                                    if bEsAprendiz == False:
+                                    if bEsAprendiz == False and obj_parameterization_contributors.liquidated_sena and obj_parameterization_contributors.liquidated_icbf:
                                         if nValorBaseSENA == 0:
                                             nValorBaseSENA = float(roundupdecimal(valor_base_sueldo))
                                         else:
