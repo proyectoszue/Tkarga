@@ -259,6 +259,17 @@ class Hr_payslip(models.Model):
                                 _('Verificar la dinamica contable de las reglas salariales, debido a que existe una diferencia de ' + str(
                                     abs(debit_sum - credit_sum)) + ' pesos - Liquidación '+str(slip.display_name)+'.'))
 
+                        #Descripción ajuste al peso
+                        addref_work_address_account_moves = self.env['ir.config_parameter'].sudo().get_param(
+                            'zue_hr_payroll.addref_work_address_account_moves') or False
+                        if addref_work_address_account_moves and slip.employee_id.address_id:
+                            if slip.employee_id.address_id.parent_id:
+                                adjustment_entry_name = f"{lslip.employee_id.address_id.parent_id.vat} {slip.employee_id.address_id.display_name}|Ajuste al peso"
+                            else:
+                                adjustment_entry_name = f"{slip.employee_id.address_id.vat} {slip.employee_id.address_id.display_name}|Ajuste al peso"
+                        else:
+                            adjustment_entry_name = 'Ajuste al peso'
+
                         if float_compare(credit_sum, debit_sum, precision_digits=precision) == -1:
                             acc_id = slip.journal_id.default_credit_account_id.id
                             if not acc_id:
@@ -266,13 +277,13 @@ class Hr_payslip(models.Model):
                                     _('The Expense Journal "%s" has not properly configured the Credit Account!') % (
                                         slip.journal_id.name))
                             existing_adjustment_line = (
-                                line_id for line_id in line_ids if line_id['name'] == _('Adjustment Entry')
+                                line_id for line_id in line_ids if line_id['name'] == adjustment_entry_name#_('Adjustment Entry')
                             )
                             adjust_credit = next(existing_adjustment_line, False)
 
                             if not adjust_credit:
                                 adjust_credit = {
-                                    'name': _('Adjustment Entry'),
+                                    'name': adjustment_entry_name,#_('Adjustment Entry'),
                                     'partner_id': slip.employee_id.address_home_id.id,
                                     'account_id': acc_id,
                                     'journal_id': slip.journal_id.id,
@@ -292,13 +303,13 @@ class Hr_payslip(models.Model):
                                     _('The Expense Journal "%s" has not properly configured the Debit Account!') % (
                                         slip.journal_id.name))
                             existing_adjustment_line = (
-                                line_id for line_id in line_ids if line_id['name'] == _('Adjustment Entry')
+                                line_id for line_id in line_ids if line_id['name'] == adjustment_entry_name#_('Adjustment Entry')
                             )
                             adjust_debit = next(existing_adjustment_line, False)
 
                             if not adjust_debit:
                                 adjust_debit = {
-                                    'name': _('Adjustment Entry'),
+                                    'name': adjustment_entry_name,#_('Adjustment Entry'),
                                     'partner_id': slip.employee_id.address_home_id.id,
                                     'account_id': acc_id,
                                     'journal_id': slip.journal_id.id,
