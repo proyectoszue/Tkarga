@@ -7,7 +7,7 @@ class hr_tipo_cotizante(models.Model):
     _name = 'hr.tipo.cotizante'
     _description = 'Tipos de cotizante'
     _order = 'code,name'
-    
+
     code = fields.Char('Código', required=True)
     name = fields.Char('Nombre', required=True)
 
@@ -48,11 +48,11 @@ class hr_parameterization_of_contributors(models.Model):
 
 class hr_indicador_especial_pila(models.Model):
     _name = 'hr.indicador.especial.pila'
-    _description = 'Indicadores especiales para PILA'    
-    
+    _description = 'Indicadores especiales para PILA'
+
     name = fields.Char("Nombre")
     code = fields.Char('Codigo')
-                
+
 class hr_contract_setting(models.Model):
     _name = 'hr.contract.setting'
     _description = 'Configuracion nomina entidades'
@@ -68,13 +68,13 @@ class hr_contract_setting(models.Model):
     _sql_constraints = [('emp_type_entity_uniq', 'unique(employee_id,contrib_id)', 'El empleado ya tiene una entidad de este tipo, por favor verifique.')]
 
     @api.constrains('employee_id','contrib_id')
-    def _check_duplicate_entitites(self):  
+    def _check_duplicate_entitites(self):
         for record in self:
             obj_duplicate = self.env['hr.contract.setting'].search([('id','!=',record.id),('employee_id','=',record.employee_id.id),('contrib_id','=',record.contrib_id.id)])
 
-            if len(obj_duplicate) > 0:   
-                raise ValidationError(_('El empleado ya tiene una entidad de este tipo, por favor verifique.'))  
-    
+            if len(obj_duplicate) > 0:
+                raise ValidationError(_('El empleado ya tiene una entidad de este tipo, por favor verifique.'))
+
     def write(self, vals):
         for record in self:
             vals_history = {
@@ -104,7 +104,7 @@ class hr_contract_setting_history(models.Model):
 class hr_employee_dependents(models.Model):
     _name = 'hr.employee.dependents'
     _description = 'Dependientes de los empleados'
-    
+
     employee_id = fields.Many2one('hr.employee', 'Empleado', required=True, ondelete='cascade')
     name = fields.Char('Nombre completo', required=True)
     genero = fields.Selection([('masculino', 'Masculino'),
@@ -121,7 +121,7 @@ class hr_employee_dependents(models.Model):
 class hr_employee_labor_union(models.Model):
     _name = 'hr.employee.labor.union'
     _description = 'Sindicato de empleados'
-    
+
     employee_id = fields.Many2one('hr.employee', 'Empleado', required=True, ondelete='cascade')
     name_labor_union = fields.Char('Nombre del sindicato', required=True)
     afiliado = fields.Boolean('Afiliado', help='Indica si el empelado esta afiliado a un sindicato')
@@ -241,14 +241,14 @@ class hr_employee(models.Model):
     def _onchange_partner_encab(self):
         for record in self:
             for partner in record.partner_encab_id:
-                self.address_home_id = partner.id                
+                self.address_home_id = partner.id
 
     @api.onchange('address_home_id')
     def _onchange_tercero_asociado(self):
         for record in self:
             for partner in record.address_home_id:
                 if record.address_home_id.id != record.partner_encab_id.id:
-                    self.partner_encab_id = partner.id  
+                    self.partner_encab_id = partner.id
                 self.name = partner.name
                 self.country_id = partner.country_id
                 self.identification_id = partner.vat
@@ -268,7 +268,7 @@ class hr_employee(models.Model):
                     raise UserError(_('Los porcentajes de la distribución de costos no suman un 100%, por favor verificar.'))
 
     @api.constrains('identification_id')
-    def _check_identification(self):  
+    def _check_identification(self):
         for record in self:
             if record.identification_id != record.address_home_id.vat:
                 raise UserError(_('El número de identificación debe ser igual al tercero seleccionado.'))
@@ -330,8 +330,8 @@ class hr_employee(models.Model):
         if vals.get('address_home_id') and not vals.get('partner_encab_id'):
             vals['partner_encab_id'] = vals.get('address_home_id')
         if not vals.get('address_home_id') and vals.get('partner_encab_id'):
-            vals['address_home_id'] = vals.get('partner_encab_id')         
-        
+            vals['address_home_id'] = vals.get('partner_encab_id')
+
         res = super(hr_employee, self).create(vals)
         return res
 
@@ -350,6 +350,6 @@ class hr_employee(models.Model):
             return 0
 
 
-            
-                
-                    
+
+
+
