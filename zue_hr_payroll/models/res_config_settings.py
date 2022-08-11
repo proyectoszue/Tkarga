@@ -25,6 +25,8 @@ class ResConfigSettings(models.TransientModel):
     round_payroll = fields.Boolean('NO redondear decimales en procesos de liquidación')
     pay_vacations_in_payroll = fields.Boolean('¿Liquidar vacaciones en nómina?')
     vacation_days_calculate_absences = fields.Char('Días de vacaciones para calcular deducciones')
+    cesantias_salary_take = fields.Boolean('Promediar salario de los últimos 3 meses, si ahí variación en cesantías')
+    prima_salary_take = fields.Boolean('Promediar salario de los últimos 6 meses, si ahí variación en prima')
     #Nómina electronica
     payroll_electronic_operator = fields.Selection(related='company_id.payroll_electronic_operator', string='Operador',readonly=False)
     payroll_electronic_username_ws = fields.Char(related='company_id.payroll_electronic_username_ws',string='Usuario WS', readonly=False)
@@ -41,6 +43,8 @@ class ResConfigSettings(models.TransientModel):
         set_param('zue_hr_payroll.round_payroll', self.round_payroll)
         set_param('zue_hr_payroll.pay_vacations_in_payroll', self.pay_vacations_in_payroll)
         set_param('zue_hr_payroll.vacation_days_calculate_absences', self.vacation_days_calculate_absences)
+        set_param('zue_hr_payroll.cesantias_salary_take', self.cesantias_salary_take)
+        set_param('zue_hr_payroll.prima_salary_take', self.prima_salary_take)
 
     def get_values(self):
         res = super(ResConfigSettings, self).get_values()
@@ -50,4 +54,6 @@ class ResConfigSettings(models.TransientModel):
         res['round_payroll'] = get_param('zue_hr_payroll.round_payroll')
         res['pay_vacations_in_payroll'] = get_param('zue_hr_payroll.pay_vacations_in_payroll')
         res['vacation_days_calculate_absences'] = get_param('zue_hr_payroll.vacation_days_calculate_absences')
+        res['cesantias_salary_take'] = get_param('zue_hr_payroll.cesantias_salary_take')
+        res['prima_salary_take'] = get_param('zue_hr_payroll.prima_salary_take')
         return res

@@ -141,7 +141,6 @@ class hr_contract_deductions_rtf(models.Model):
 
     _sql_constraints = [('change_deductionsrtf_uniq', 'unique(input_id, contract_id)', 'Ya existe esta deducción para este contrato, por favor verficar.')]
 
-
 class hr_type_of_jurisdiction(models.Model):
     _name = 'hr.type.of.jurisdiction'
     _description = 'Tipo de Fuero'
@@ -274,6 +273,14 @@ class hr_contract(models.Model):
         vals['sequence'] = self.env['ir.sequence'].get('hr.contract.seq') or ' '
         obj_contract = super(hr_contract, self).create(vals)
         return obj_contract
+
+    #Verificar historico de salario
+    def get_wage_in_date(self,process_date):
+        wage_in_date = self.wage
+        for change in sorted(self.change_wage_ids, key=lambda x: x.date_start):
+            if process_date >= change.date_start:
+                wage_in_date = change.wage
+        return wage_in_date
 
     #Metodos para el reporte de certificado laboral
 
