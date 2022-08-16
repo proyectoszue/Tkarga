@@ -137,7 +137,7 @@ class hr_payroll_social_security(models.Model):
                             )
 
                             # Obtener parametrización de cotizantes
-                            obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
+                            obj_parameterization_contributors = env['hr.parameterization.of.contributors'].search(
                                 [('type_of_contributor', '=', employee.tipo_coti_id.id),
                                  ('contributor_subtype', '=', employee.subtipo_coti_id.id)], limit=1)
                             #Variables
