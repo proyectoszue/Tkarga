@@ -70,6 +70,7 @@ class Hr_payslip(models.Model):
         worked_days_dict = {line.code: line for line in self.worked_days_line_ids if line.code}
         inputs_dict = {line.code: line for line in self.input_line_ids if line.code}
         round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
+        prima_salary_take = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.prima_salary_take')) or False
         
         employee = self.employee_id
         contract = self.contract_id
@@ -127,6 +128,24 @@ class Hr_payslip(models.Model):
                     else:
                         acumulados_promedio = 0
                     wage = contract.wage
+                    initial_process_date = self.date_prima if inherit_contrato != 0 else self.date_from
+                    end_process_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
+                    obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '>=', initial_process_date), ('date_start', '<=', end_process_date)])
+                    if prima_salary_take and len(obj_wage) > 0:
+                        wage_average = 0
+                        while initial_process_date <= end_process_date:
+                            if initial_process_date.day != 31:
+                                if initial_process_date.month == 2 and  initial_process_date.day == 28 and (initial_process_date + timedelta(days=1)).day != 29:
+                                    wage_average += (contract.get_wage_in_date(initial_process_date) / 30)*3
+                                elif initial_process_date.month == 2 and initial_process_date.day == 29:
+                                    wage_average += (contract.get_wage_in_date(initial_process_date) / 30)*2
+                                else:
+                                    wage_average += contract.get_wage_in_date(initial_process_date)/30
+                            initial_process_date = initial_process_date + timedelta(days=1)
+                        if dias_trabajados != 0:
+                            wage = contract.wage if wage_average == 0 else (wage_average/dias_trabajados)*30
+                        else:
+                            wage = 0
                     auxtransporte = annual_parameters.transportation_assistance_monthly
                     auxtransporte_tope = annual_parameters.top_max_transportation_assistance
                     if wage <= auxtransporte_tope:

@@ -91,6 +91,42 @@
                         </div>
                     </div>
                 </div>
+                <h2>Cesantías</h2>
+                <div class="row mt16 o_settings_container" id="attributes_cesantias">
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane">
+                            <field name="cesantias_salary_take"/>
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <span class="o_form_label">Promediar salario</span>
+                            <div class="text-muted">
+                                Si NO esta marcado:
+                                    Se tomara el salario vigente del empleado.
+                                <br/>
+                                Si esta marcado:
+                                    Se promedia el salario de los últimos 3 meses.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <h2>Prima</h2>
+                <div class="row mt16 o_settings_container" id="attributes_prima">
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane">
+                            <field name="prima_salary_take"/>
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <span class="o_form_label">Promediar salario</span>
+                            <div class="text-muted">
+                                Si NO esta marcado:
+                                    Se tomara el salario vigente del empleado.
+                                <br/>
+                                Si esta marcado:
+                                    Se promedia el salario de los últimos 6 meses.
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </xpath>
         </field>
     </record>
