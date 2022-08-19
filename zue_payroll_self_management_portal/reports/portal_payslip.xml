@@ -223,13 +223,13 @@
                                         <tr class="border-black">
                                             <td><strong>DEVENGOS</strong></td>
                                             <td class="text-right">
-                                                <span t-field="o.line_ids.filtered(lambda line: line.code == 'TOTALDEV').total" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
+                                                <span t-field="o.line_ids().filtered(lambda line: line.code == 'TOTALDEV').total" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
                                             </td>
                                         </tr>
                                         <tr>
                                             <td><strong>DEDUCCIONES</strong></td>
                                             <td class="text-right">
-                                                <span t-field="o.line_ids.filtered(lambda line: line.code == 'TOTALDED').total" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
+                                                <span t-field="o.line_ids().filtered(lambda line: line.code == 'TOTALDED').total" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
                                             </td>
                                         </tr>
                                         <tr class="border-black">
