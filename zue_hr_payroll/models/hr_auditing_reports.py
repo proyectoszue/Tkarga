@@ -61,18 +61,20 @@ class hr_auditing_reports(models.TransientModel):
             Select a.identification_id, a."name" as name_employee,b.date_start ,b."name" as name_contract,b.state,coalesce(b.retirement_date,'1900-01-01') as retirement_date
                 from hr_employee as a
                 inner join hr_contract as b on a.id = b.employee_id and b.date_start <= '{date_to}' and (b.state = 'open' or ('{date_to}' <= b.retirement_date))
-                left join hr_executing_social_security as c on a.id = c.employee_id
-                left join hr_payroll_social_security as d on c.executing_social_security_id = d.id and d."year" = {self.year} and d."month" = '{self.month}' 
-                where a.company_id = {self.env.company.id} and d.id is null
+                left join (select distinct employee_id from hr_payroll_social_security as c
+                            inner join hr_executing_social_security as d on c.id = d.executing_social_security_id
+                            where c."year" = {self.year} and c."month" = '{self.month}' ) as p on a.id = p.employee_id
+                where a.company_id = {self.env.company.id} and p.employee_id is null
             '''
         if self.type_process == '3': #No incluidos en Nómina Electrónica
             query_report = f'''
             Select a.identification_id, a."name" as name_employee,b.date_start ,b."name" as name_contract,b.state,coalesce(b.retirement_date,'1900-01-01') as retirement_date
                 from hr_employee as a
                 inner join hr_contract as b on a.id = b.employee_id and b.date_start <= '{date_to}' and (b.state = 'open' or ('{date_to}' <= b.retirement_date))
-                left join hr_electronic_payroll_detail as c on a.id = c.employee_id
-                left join hr_electronic_payroll as d on c.electronic_payroll_id = d.id and d."year" = {self.year} and d."month" = '{self.month}' 
-                where a.company_id = {self.env.company.id} and d.id is null
+                left join (select distinct employee_id from hr_electronic_payroll as c
+                			inner join hr_electronic_payroll_detail as d on c.id = d.electronic_payroll_id
+                			where c."year" = {self.year} and c."month" = '{self.month}' ) as p on a.id = p.employee_id
+                where a.company_id = {self.env.company.id} and p.employee_id is null
             '''
 
         self._cr.execute(query_report)
