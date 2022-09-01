@@ -816,9 +816,9 @@ class Hr_payslip(models.Model):
                                 result_item = rule.code+'-'+str(concept.id) if concept.id else rule.code
                                 if rule.dev_or_ded == 'deduccion' and inherit_prima == 0:
                                     if rule.type_concept == 'ley':
-                                        value_tmp_neto = localdict['categories'].dict.get('DEV_SALARIAL',0) + localdict['categories'].dict.get('DEV_NO_SALARIAL',0) + localdict['categories'].dict.get('DEDUCCIONES',0) 
+                                        value_tmp_neto = localdict['categories'].dict.get('DEV_SALARIAL',0) + localdict['categories'].dict.get('DEV_NO_SALARIAL',0) + localdict['categories'].dict.get('PRESTACIONES_SOCIALES',0) + localdict['categories'].dict.get('DEDUCCIONES',0)
                                     else:
-                                        value_tmp_neto = (localdict['categories'].dict.get('DEV_SALARIAL',0) + localdict['categories'].dict.get('DEV_NO_SALARIAL',0) + localdict['categories'].dict.get('DEDUCCIONES',0)) - localdict['values_leaves_law']
+                                        value_tmp_neto = (localdict['categories'].dict.get('DEV_SALARIAL',0) + localdict['categories'].dict.get('DEV_NO_SALARIAL',0) + localdict['categories'].dict.get('PRESTACIONES_SOCIALES',0) + localdict['categories'].dict.get('DEDUCCIONES',0)) - localdict['values_leaves_law']
                                 else:
                                     value_tmp_neto = 1                            
                                 if value_tmp_neto >= 0:
@@ -899,9 +899,9 @@ class Hr_payslip(models.Model):
                     if amount != 0:
                         if rule.dev_or_ded == 'deduccion' and inherit_prima == 0:
                             if rule.type_concept == 'ley':
-                                value_tmp_neto = localdict['categories'].dict.get('DEV_SALARIAL',0) + localdict['categories'].dict.get('DEV_NO_SALARIAL',0) + localdict['categories'].dict.get('DEDUCCIONES',0) 
+                                value_tmp_neto = localdict['categories'].dict.get('DEV_SALARIAL',0) + localdict['categories'].dict.get('DEV_NO_SALARIAL',0) + localdict['categories'].dict.get('PRESTACIONES_SOCIALES',0) + localdict['categories'].dict.get('DEDUCCIONES',0)
                             else:
-                                value_tmp_neto = (localdict['categories'].dict.get('DEV_SALARIAL',0) + localdict['categories'].dict.get('DEV_NO_SALARIAL',0) + localdict['categories'].dict.get('DEDUCCIONES',0)) - localdict['values_leaves_law']
+                                value_tmp_neto = (localdict['categories'].dict.get('DEV_SALARIAL',0) + localdict['categories'].dict.get('DEV_NO_SALARIAL',0) + localdict['categories'].dict.get('PRESTACIONES_SOCIALES',0) + localdict['categories'].dict.get('DEDUCCIONES',0)) - localdict['values_leaves_law']
                         else:
                             value_tmp_neto = 1
                         if value_tmp_neto >= 0:
