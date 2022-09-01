@@ -102,6 +102,37 @@
             </field>
         </record>
 
+        <!--CODIGO POSTAL VIEWS -->
+        <record id="zue_menu_action_zip_code" model="ir.actions.act_window">
+            <field name="name">Código postal</field>
+            <field name="res_model">zue.zip.code</field>
+            <field name="view_mode">tree</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">Crear código postal
+                </p>
+            </field>
+        </record>
+
+        <record id="zue_erp_search" model="ir.ui.view">
+            <field name="name">zue zip code</field>
+            <field name="model">zue.zip.code</field>
+            <field name="arch" type="xml">
+                <search string="">
+                    <field name="code" string="Código" filter_domain="[('code', 'ilike', self)]"/>
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_erp.zip_postal">
+            <field name="name">zue zip postal</field>
+            <field name="model">zue.zip.code</field>
+            <field name="arch" type="xml">
+                <tree editable="top">
+                    <field name="code"/>
+                </tree>
+            </field>
+        </record>
+
         <!-- CITY VIEWS -->    
         <record id="zue_menu_action_city" model="ir.actions.act_window">
             <field name="name">Ciudad</field>

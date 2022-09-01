@@ -43,8 +43,7 @@ class ResPartner(models.Model):
                                         ('41', 'Pasaporte'),
                                         ('42', 'Tipo de documento extranjero'),
                                         ('43', 'Sin identificación del exterior o para uso definido por la DIAN'),
-                                        ('44', 'Documento de identificación extranjero persona jurídica'),
-                                        ('PE', 'Permiso especial de permanencia')
+                                        ('44', 'Documento de identificación extranjero persona jurídica')
                                     ], string='Tipo de documento', track_visibility='onchange')
     x_digit_verification = fields.Integer(string='Digito de verificación', track_visibility='onchange',compute='_compute_verification_digit', store=True)
     x_business_name = fields.Char(string='Nombre de negocio', track_visibility='onchange')
@@ -55,6 +54,8 @@ class ResPartner(models.Model):
     
     #UBICACIÓN PRINCIPAL
     x_city = fields.Many2one('zue.city', string='Ciudad', track_visibility='onchange', ondelete='restrict')
+    x_city_code = fields.Char(related='x_city.code', string='Código ciudad')
+    x_zip_id = fields.Many2one('zue.zip.code', string='Código postal', track_visibility='onchange', ondelete='restrict') #domain="[('code','like',x_city_code)]"
 
     #CLASIFICACION
     x_organization_type = fields.Selection([('1', 'Empresa'),
@@ -117,6 +118,20 @@ class ResPartner(models.Model):
     #MANTENIMIENTO
     #is_work_place = fields.Boolean('Is Work Place?')
 
+    @api.onchange('x_city')
+    @api.depends('x_city')
+    def _city_update_zue(self):
+        for record in self:
+            if record.x_city:
+                record.city = record.x_city.name
+
+    @api.onchange('x_zip_id')
+    @api.depends('x_zip_id')
+    def _zip_update_zue(self):
+        for record in self:
+            if record.x_zip_id:
+                record.zip = record.x_zip_id.code
+
     @api.depends('x_asset_range')
     def _date_update_asset(self):
         for record in self:
@@ -127,13 +142,15 @@ class ResPartner(models.Model):
         for partner in self:
             partner.same_vat_partner_id = ""
 
-    @api.depends('vat')
-    def _compute_verification_digit(self):
-        #Logica para calcular digito de verificación
+    @api.depends('vat','x_document_type')
+    def _compute_verification_digit(self, return_digit=0):
+        # Logica para calcular digito de verificación
         multiplication_factors = [71, 67, 59, 53, 47, 43, 41, 37, 29, 23, 19, 17, 13, 7, 3]
+        digit = 0
 
         for partner in self:
-            if partner.vat and partner.x_document_type == '31' and len(partner.vat) <= len(multiplication_factors):
+            if (partner.vat and partner.x_document_type == '31' and len(partner.vat) <= len(
+                    multiplication_factors)) or return_digit:
                 number = 0
                 padded_vat = partner.vat
 
@@ -148,9 +165,15 @@ class ResPartner(models.Model):
                     number %= 11
 
                     if number < 2:
-                        partner.x_digit_verification = number
+                        digit = number
                     else:
-                        partner.x_digit_verification = 11 - number
+                        digit = 11 - number
+
+                    if not return_digit:
+                        partner.x_digit_verification = digit
+                    else:
+                        return digit
+
                 except ValueError:
                     partner.x_digit_verification = False
             else:
