@@ -20,3 +20,4 @@ access_zue_request_ws,zue.request.ws,model_zue_request_ws,,1,1,1,1
 access_zue_xml_generator_details,zue.xml.generator.details,model_zue_xml_generator_details,,1,1,1,1
 access_zue_xml_generator_header,zue.xml.generator.header,model_zue_xml_generator_header,,1,1,1,1
 access_zue_dates_commemorated,zue.dates.commemorated,model_zue_dates_commemorated,,1,1,1,1
+access_zue_zip_code,zue.zip.code,model_zue_zip_code,,1,1,1,1
