@@ -26,6 +26,22 @@ class ZueHolidays(models.Model):
 
     _sql_constraints = [('date_holiday_uniq', 'unique(date)', 'Ya existe un día festivo en esta fecha, por favor verificar.')]
 
+#Codigo postal
+class ZueZipCode(models.Model):
+    _name = 'zue.zip.code'
+    _rec_name = 'code'
+    _description = 'Código postal'
+
+    code = fields.Char('Código', required=True)
+
+    _sql_constraints = [('zip_postal_uniq', 'unique(code)', 'Ya existe ese código postal, por favor verificar.')]
+
+    def name_get(self):
+        result = []
+        for record in self:
+            result.append((record.id, "{}".format(record.code)))
+        return result
+
 # CIIU
 class Ciiu(models.Model):
     _name = 'zue.ciiu'
