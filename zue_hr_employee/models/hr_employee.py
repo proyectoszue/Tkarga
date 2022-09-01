@@ -349,6 +349,16 @@ class hr_employee(models.Model):
         else:
             return 0
 
+    def _sync_user(self, user):
+        vals = dict(
+            image_1920=user.image_1920 if user.image_1920 else self.image_1920,
+            work_email=user.email,
+            user_id=user.id,
+        )
+        if user.tz:
+            vals['tz'] = user.tz
+        return vals
+
 
 
 
