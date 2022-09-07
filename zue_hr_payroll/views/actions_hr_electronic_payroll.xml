@@ -75,9 +75,11 @@
                                     <form>
                                         <sheet>
                                             <group>
-                                                <field name="employee_id" readonly="1"/>
-                                                <field name="contract_id" readonly="1"/>
-                                                <field name="sequence" readonly="1"/>
+                                                <field name="employee_id" attrs="{'readonly':[('status', '=', 'ACCEPTED')]}"/>
+                                                <field name="contract_id" attrs="{'readonly': [('status', '=', 'ACCEPTED')]}"/>
+                                                <field name="item" attrs="{'readonly': [('status', '=', 'ACCEPTED')]}"/>
+                                                <field name="sequence" attrs="{'readonly': [('status', '=', 'ACCEPTED')]}"/>
+                                                <field name="nonce" attrs="{'readonly': [('status', '=', 'ACCEPTED')]}"/>
                                                 <field name="payslip_ids" widget="many2many_tags" force_save="1" attrs="{'readonly': [('status', '=', 'ACCEPTED')]}"/>
                                                 <field name="result_upload_xml" readonly="1"/>
                                                 <field name="status" readonly="1"/>
