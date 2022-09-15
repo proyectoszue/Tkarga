@@ -4,6 +4,7 @@ import re
 
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+from odoo.exceptions import UserError, ValidationError
 
 from PyPDF2 import  PdfFileReader, PdfFileWriter
 
@@ -19,6 +20,9 @@ class ZuePayrollSelfManagementPortal(Controller):
         
         obj_employee = request.env['hr.employee.public'].sudo().search([('user_id','=',request.env.user.id)])
         
+        if len(obj_employee) == 0:
+            raise ValidationError(('El usuario no tiene ningún empleado asociado, por favor verificar.'))
+
         for employee in obj_employee:
             obj_contract = request.env['hr.contract.public'].search([('employee_id','=',employee.id),('state','=','open')], limit=1)                           
 
