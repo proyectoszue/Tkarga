@@ -64,7 +64,7 @@ class Hr_payslip(models.Model):
             date_end = self.date_to
             query_cesantias = self.get_query('base_cesantias', date_start, date_end)
         elif self.struct_id.process == 'contrato':
-            date_start = self.date_vacaciones
+            date_start = self.date_liquidacion - relativedelta(years=1)
             date_end = self.date_liquidacion
             query_vacaciones_dinero = self.get_query('base_vacaciones_dinero', date_start, date_end)
             date_start = self.date_prima
