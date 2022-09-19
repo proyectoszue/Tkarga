@@ -30,6 +30,11 @@ class HolidaysRequest(models.Model):
     type_of_entity = fields.Many2one('hr.contribution.register', 'Tipo de Entidad')
     entity = fields.Many2one('hr.employee.entities', 'Entidad')
     diagnostic = fields.Many2one('hr.leave.diagnostic', 'Diagnóstico')
+    radicado = fields.Char('Radicado #')
+    is_recovery = fields.Boolean('Es recobro')
+    payroll_value = fields.Float('Valor pagado en nómina')
+    eps_value = fields.Float('Valor pagado por la EPS')
+    payment_date = fields.Date ('Fecha de pago')
 
     @api.onchange('date_from', 'date_to', 'employee_id')
     def _onchange_leave_dates(self):
@@ -192,11 +197,11 @@ class hr_leave_diagnostic(models.Model):
             result.append((record.id, "{} | {}".format(record.code,record.name)))
         return result
 
-    @api.model
-    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
-        args = args or []
-        domain = []
-        if name:
-            domain = ['|', ('name', operator, name), ('code', operator, name)]
-        diagnostic_interface = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
-        return diagnostic_interface#self.browse(contract_interface_id).name_get()
+    # @api.model
+    # def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+    #     args = args or []
+    #     domain = []
+    #     if name:
+    #         domain = ['|', ('name', operator, name), ('code', operator, name)]
+    #     diagnostic_interface = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
+    #     return diagnostic_interface#self.browse(contract_interface_id).name_get()
