@@ -21,6 +21,13 @@ class HrPayslipRun(models.Model):
     observations = fields.Text('Observaciones')
     definitive_plan = fields.Boolean(string='Plano definitivo generado')
 
+    def assign_status_verify(self):
+        for record in self:
+            if len(record.slip_ids) > 0:
+                record.write({'state':'verify'})
+            else:
+                raise ValidationError(_("No existen nóminas asociadas a este lote, no es posible pasar a estado verificar."))
+
     def action_validate(self):
         settings_batch_account = self.env['ir.config_parameter'].sudo().get_param(
             'zue_hr_payroll.module_hr_payroll_batch_account') or False

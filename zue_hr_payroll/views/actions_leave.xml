@@ -9,9 +9,14 @@
             <field name="arch" type="xml">
                 <xpath expr="//group[@name='col_right']" position="before">
                     <group name="entities" attrs="{'invisible': [('type_of_entity', '=', False)]}">
+                        <field name="is_recovery"/>
                         <field name="type_of_entity"/>
                         <field name="entity"/>
                         <field name="diagnostic"/>
+                        <field name="radicado"/>
+                        <field name="payroll_value"/>
+                        <field name="eps_value"/>
+                        <field name="payment_date"/>
                     </group>
                 </xpath>
                 <xpath expr="//group[@name='col_right']" position="before">
