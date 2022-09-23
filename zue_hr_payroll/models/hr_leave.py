@@ -169,6 +169,17 @@ class HolidaysRequest(models.Model):
             self.env['hr.vacation'].search([('leave_id','=',record.id)]).unlink()
         return obj
 
+    def action_validate(self):
+        # Validación adjunto
+        for holiday in self:
+            if holiday.holiday_status_id.obligatory_attachment:
+                attachment = self.env['ir.attachment'].search([('res_model', '=', 'hr.leave'), ('res_id', '=', holiday.id)])
+                if not attachment:
+                    raise ValidationError(_('Es obligatorio agregar un adjunto para la ausencia ' + holiday.display_name + '.'))
+        # Ejecución metodo estandar
+        obj = super(HolidaysRequest, self).action_validate()
+        return obj
+
     @api.model
     def create(self, vals):
         if vals.get('employee_identification'):
