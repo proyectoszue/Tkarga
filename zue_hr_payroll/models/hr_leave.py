@@ -27,14 +27,14 @@ class HolidaysRequest(models.Model):
     alert_days_vacation = fields.Boolean(string='Alerta días vacaciones')
     accumulated_vacation_days = fields.Float(string='Días acumulados de vacaciones')
     #Creación de ausencia
-    type_of_entity = fields.Many2one('hr.contribution.register', 'Tipo de Entidad')
-    entity = fields.Many2one('hr.employee.entities', 'Entidad')
-    diagnostic = fields.Many2one('hr.leave.diagnostic', 'Diagnóstico')
-    radicado = fields.Char('Radicado #')
-    is_recovery = fields.Boolean('Es recobro')
-    payroll_value = fields.Float('Valor pagado en nómina')
-    eps_value = fields.Float('Valor pagado por la EPS')
-    payment_date = fields.Date ('Fecha de pago')
+    type_of_entity = fields.Many2one('hr.contribution.register', 'Tipo de Entidad',track_visibility='onchange')
+    entity = fields.Many2one('hr.employee.entities', 'Entidad',track_visibility='onchange')
+    diagnostic = fields.Many2one('hr.leave.diagnostic', 'Diagnóstico',track_visibility='onchange')
+    radicado = fields.Char('Radicado #',track_visibility='onchange')
+    is_recovery = fields.Boolean('Es recobro',track_visibility='onchange')
+    payroll_value = fields.Float('Valor pagado en nómina',track_visibility='onchange')
+    eps_value = fields.Float('Valor pagado por la EPS',track_visibility='onchange')
+    payment_date = fields.Date ('Fecha de pago',track_visibility='onchange')
 
     @api.onchange('date_from', 'date_to', 'employee_id')
     def _onchange_leave_dates(self):
