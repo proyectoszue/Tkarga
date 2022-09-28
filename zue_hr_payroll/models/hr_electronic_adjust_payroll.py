@@ -24,6 +24,7 @@ class hr_electronic_adjust_payroll_detail(models.Model):
     sequence = fields.Char(string='Prefijo+Consecutivo')
     nonce = fields.Char(string='Nonce')
     transaction_id = fields.Char(string='Id Transacción')
+    cune = fields.Char(string='CUNE')
     return_file_dian = fields.Binary(string='Archivo DIAN')
     payslip_ids = fields.Many2many('hr.payslip',string='Nóminas', domain="[('employee_id','=',employee_id)]")
     # XML
@@ -46,7 +47,7 @@ class hr_electronic_adjust_payroll_detail(models.Model):
 
     def download_xml(self):
         action = {
-            'name': 'XMLNominaElectronicaAjusteCarvajal',
+            'name': 'XMLNominaElectronicaAjuste',
             'type': 'ir.actions.act_url',
             'url': "web/content/?model=hr.electronic.adjust.payroll.detail&id=" + str(
                 self.id) + "&filename_field=xml_file_name&field=xml_file&download=true&filename=" + self.xml_file_name,
@@ -55,83 +56,159 @@ class hr_electronic_adjust_payroll_detail(models.Model):
         return action
 
     def get_xml(self):
-        obj_xml = self.env['zue.xml.generator.header'].search([('code','=','NomElectronica_Ajuste_Carvajal')])
-        xml = obj_xml.xml_generator(self)
+        try:
+            identificador = 'NomElectronica_Ajuste_' + str(self.electronic_adjust_payroll_id.company_id.payroll_electronic_operator)
+            obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', identificador)])
+            xml = obj_xml.xml_generator(self)
 
-        filename = f'NominaElectronicaAjuste{str(self.electronic_adjust_payroll_id.electronic_payroll_id.year)}-{self.electronic_adjust_payroll_id.electronic_payroll_id.month}_{str(self.employee_id.identification_id)}.xml'
-        self.write({
-            'xml_file': base64.encodestring(xml),
-            'xml_file_name': filename,
-        })
+            if len(obj_xml) > 0:
+                xml = obj_xml.xml_generator(self)
+            else:
+                raise ValidationError(_("No ha configurado un XML con el identificador: '" + identificador + "', por favor verificar."))
+
+            if str(self.electronic_adjust_payroll_id.company_id.payroll_electronic_operator) == 'FacturaTech':
+                xml = xml.decode('utf-8').replace('SchemaLocation=""','SchemaLocation="" xsi:schemaLocation="dian:gov:co:facturaelectronica:NominaIndividualDeAjuste NominaIndividualDeAjusteElectronicaXSD.xsd"')
+                xml = xml.replace('<UBLExtensions> </UBLExtensions>', '<ext:UBLExtensions/>')
+                xml = bytes(xml, 'utf-8')
+
+            filename = f'NominaElectronicaAjuste{str(self.electronic_adjust_payroll_id.electronic_payroll_id.year)}-{self.electronic_adjust_payroll_id.electronic_payroll_id.month}_{str(self.employee_id.identification_id)}.xml'
+            self.write({
+                'xml_file': base64.encodestring(xml),
+                'xml_file_name': filename,
+                'status': False,
+                'result_status': False,
+            })
+        except Exception as e:
+            self.status = 'SIN XML'
+            self.result_status = 'Empleado %s Error: %s' % (self.employee_id.name, e)
 
         return True
 
     def consume_web_service_send_xml(self):
-        username = self.electronic_adjust_payroll_id.company_id.payroll_electronic_username_ws
-        password = self.electronic_adjust_payroll_id.company_id.payroll_electronic_password_ws
-        nonce = str(uuid.uuid4().hex) + str(uuid.uuid1().hex)
-        date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
-        time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
-        created = f'{str(date)}T{str(time)}-05:00'
-        filename = self.xml_file_name
-        filedata = str(self.xml_file).split("'")[1]
-        company_id = self.electronic_adjust_payroll_id.company_id.payroll_electronic_company_id_ws
-        account_id = self.electronic_adjust_payroll_id.company_id.payroll_electronic_account_id_ws
-        service = self.electronic_adjust_payroll_id.company_id.payroll_electronic_service_ws
+        try:
+            operator = str(self.electronic_adjust_payroll_id.company_id.payroll_electronic_operator)
+            username = self.electronic_adjust_payroll_id.company_id.payroll_electronic_username_ws
+            password = self.electronic_adjust_payroll_id.company_id.payroll_electronic_password_ws
+            nonce = str(uuid.uuid4().hex) + str(uuid.uuid1().hex)
+            date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
+            time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
+            created = f'{str(date)}T{str(time)}-05:00'
+            filename = self.xml_file_name
+            filedata = str(self.xml_file).split("'")[1]
+            company_id = self.electronic_adjust_payroll_id.company_id.payroll_electronic_company_id_ws
+            account_id = self.electronic_adjust_payroll_id.company_id.payroll_electronic_account_id_ws
+            service = self.electronic_adjust_payroll_id.company_id.payroll_electronic_service_ws
 
-        #Ejecutar ws
-        obj_ws = self.env['zue.request.ws'].search([('name', '=', 'ne_upload_xml')])
-        if not obj_ws:
-            raise ValidationError(_("Error! No ha configurado un web service con el nombre 'ne_upload_xml'"))
-        result = obj_ws.connection_requests(username,password,nonce,created,filename,filedata,company_id,account_id,service)
-        self.result_upload_xml = result
-        self.convert_result_send_xml(result)
+            # Ejecutar ws
+            obj_ws = self.env['zue.request.ws'].search([('name', '=', operator + '_ne_upload_xml')])
+            if not obj_ws:
+                raise ValidationError(_("Error! No ha configurado un web service con el nombre '" + operator + "_ne_upload_xml'"))
+                result = obj_ws.connection_requests(username, password, nonce, created, filename, filedata, company_id,account_id, service)
 
-    def convert_result_send_xml(self,result=''):
+            if operator == 'Carvajal':
+                result = obj_ws.connection_requests(username, password, nonce, created, filename, filedata, company_id,
+                                                    account_id, service, not_show_errors=1)
+            if operator == 'FacturaTech':
+                result = obj_ws.connection_requests(username, password, filedata, not_show_errors=1)
+            self.result_upload_xml = result
+            self.convert_result_send_xml(result)
+        except Exception as e:
+            self.status = 'ERROR AL ENVIAR XML'
+            self.result_status = 'Empleado %s Error: %s' % (self.employee_id.name, str(e))
+
+    def convert_result_send_xml(self, result=''):
+        operator = str(self.electronic_adjust_payroll_id.company_id.payroll_electronic_operator)
         if result == '':
             result = self.result_upload_xml
-
-        if result.find('<status>') > -1:
-            status = result[result.find('<status>') + len('<status>'):result.find('</status>')]
-            self.result_upload_xml = f'Status: {status}'
-        if result.find('<transactionId>') > -1:
-            transaction_id = result[result.find('<transactionId>') + len('<transactionId>'):result.find('</transactionId>')]
-            self.transaction_id = transaction_id
+        if operator == 'Carvajal':
+            if result.find('<status>') > -1:
+                status = result[result.find('<status>') + len('<status>'):result.find('</status>')]
+                self.result_upload_xml = f'Status: {status}'
+            if result.find('<transactionId>') > -1:
+                transaction_id = result[result.find('<transactionId>') + len('<transactionId>'):result.find('</transactionId>')]
+                self.transaction_id = transaction_id
+        if operator == 'FacturaTech':
+            if result.find('<transactionID xsi:type="xsd:string">') > -1:
+                transaction_id = result[result.find('<transactionID xsi:type="xsd:string">') + len('<transactionID xsi:type="xsd:string">'):result.find('</transactionID>')]
+                if transaction_id == '':
+                    if result.find('<error xsi:type="xsd:string">El comprobante  ya ha sido firmado previamente. TrasactionID ') > -1:
+                        transaction_id = result[result.find('<error xsi:type="xsd:string">El comprobante  ya ha sido firmado previamente. TrasactionID ') + len('<error xsi:type="xsd:string">El comprobante  ya ha sido firmado previamente. TrasactionID '):result.find('</error>')]
+                    if transaction_id == '':
+                        self.status = 'ERROR AL ENVIAR XML'
+                    else:
+                        self.status = 'XML ENVIADO'
+                        self.transaction_id = transaction_id
+                else:
+                    self.status = 'XML ENVIADO'
+                    self.transaction_id = transaction_id
 
     def consume_web_service_status_document(self):
-        username = self.electronic_adjust_payroll_id.company_id.payroll_electronic_username_ws
-        password = self.electronic_adjust_payroll_id.company_id.payroll_electronic_password_ws
-        nonce = str(uuid.uuid4().hex) + str(uuid.uuid1().hex)
-        date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
-        time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
-        created = f'{str(date)}T{str(time)}-05:00'
-        company_id = self.electronic_adjust_payroll_id.company_id.payroll_electronic_company_id_ws
-        account_id = self.electronic_adjust_payroll_id.company_id.payroll_electronic_account_id_ws
-        transaction_id = self.transaction_id
-        service = self.electronic_adjust_payroll_id.company_id.payroll_electronic_service_ws
-        # Ejecutar ws
-        obj_ws = self.env['zue.request.ws'].search([('name', '=', 'ne_status_document')])
-        if not obj_ws:
-            raise ValidationError(_("Error! No ha configurado un web service con el nombre 'ne_status_document'"))
-        result = obj_ws.connection_requests(username, password, nonce, created, company_id,
-                                            account_id, transaction_id, service)
+        try:
+            operator = str(self.electronic_adjust_payroll_id.company_id.payroll_electronic_operator)
+            username = self.electronic_adjust_payroll_id.company_id.payroll_electronic_username_ws
+            password = self.electronic_adjust_payroll_id.company_id.payroll_electronic_password_ws
+            nonce = str(uuid.uuid4().hex) + str(uuid.uuid1().hex)
+            date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
+            time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
+            created = f'{str(date)}T{str(time)}-05:00'
+            company_id = self.electronic_adjust_payroll_id.company_id.payroll_electronic_company_id_ws
+            account_id = self.electronic_adjust_payroll_id.company_id.payroll_electronic_account_id_ws
+            transaction_id = self.transaction_id
+            service = self.electronic_adjust_payroll_id.company_id.payroll_electronic_service_ws
+            # Ejecutar ws
+            result_status = ''
+            message = ''
+            obj_ws = self.env['zue.request.ws'].search([('name', '=', operator + '_ne_status_document')])
+            if not obj_ws:
+                raise ValidationError(_("Error! No ha configurado un web service con el nombre '" + operator + "_ne_status_document'"))
 
-        result_status = ''
-        if result.find('<processName>') > -1:
-            result_status = 'Último proceso realizado: '+result[result.find('<processName>') + len('<processName>'):result.find('</processName>')] +'\n'
-        if result.find('<processStatus>') > -1:
-            result_status = result_status + 'Estado último proceso realizado: '+result[result.find('<processStatus>') + len('<processStatus>'):result.find('</processStatus>')] +'\n'
-        if result.find('<processDate>') > -1:
-            result_status = result_status + 'Fecha último proceso realizado: '+result[result.find('<processDate>') + len('<processDate>'):result.find('</processDate>')] +'\n'
-        if result.find('<legalStatus>') > -1:
-            result_status = result_status + 'Estado legal del documento, con base a la información recibida por la DIAN: '+result[result.find('<legalStatus>') + len('<legalStatus>'):result.find('</legalStatus>')] +'\n'
-            self.status = result[result.find('<legalStatus>') + len('<legalStatus>'):result.find('</legalStatus>')]
-        if result.find('<governmentResponseDescription>') > -1:
-            result_status = result_status + 'Descripción: '+result[result.find('<governmentResponseDescription>') + len('<governmentResponseDescription>'):result.find('</governmentResponseDescription>')] +'\n'
+            if operator == 'Carvajal':
+                result = obj_ws.connection_requests(username, password, nonce, created, company_id,account_id, transaction_id, service)
+                if result.find('<processName>') > -1:
+                    result_status = 'Último proceso realizado: ' + result[result.find('<processName>') + len('<processName>'):result.find('</processName>')] + '\n'
+                if result.find('<processStatus>') > -1:
+                    result_status = result_status + 'Estado último proceso realizado: ' + result[result.find('<processStatus>') + len('<processStatus>'):result.find('</processStatus>')] + '\n'
+                if result.find('<processDate>') > -1:
+                    result_status = result_status + 'Fecha último proceso realizado: ' + result[result.find('<processDate>') + len('<processDate>'):result.find('</processDate>')] + '\n'
+                if result.find('<legalStatus>') > -1:
+                    result_status = result_status + 'Estado legal del documento, con base a la información recibida por la DIAN: ' + result[
+                                                                                                                                     result.find(
+                                                                                                                                         '<legalStatus>') + len(
+                                                                                                                                         '<legalStatus>'):result.find(
+                                                                                                                                         '</legalStatus>')] + '\n'
+                    self.status = result[result.find('<legalStatus>') + len('<legalStatus>'):result.find('</legalStatus>')]
+                if result.find('<governmentResponseDescription>') > -1:
+                    result_status = result_status + 'Descripción: ' + result[result.find(
+                        '<governmentResponseDescription>') + len('<governmentResponseDescription>'):result.find(
+                        '</governmentResponseDescription>')] + '\n'
+            if operator == 'FacturaTech':
+                result = obj_ws.connection_requests(username, password, transaction_id)
+                if result.find('<code xsi:type="xsd:string">') > -1:
+                    result_status = 'Code: ' + result[result.find('<code xsi:type="xsd:string">') + len(
+                        '<code xsi:type="xsd:string">'):result.find('</code>')] + '\n'
+                if result.find('<message xsi:type="xsd:string">') > -1:
+                    result_status = result_status + 'Mensaje: ' + result[
+                                                                  result.find('<message xsi:type="xsd:string">') + len(
+                                                                      '<message xsi:type="xsd:string">'):result.find(
+                                                                      '</message>')] + '\n'
+                    message = result[result.find('<message xsi:type="xsd:string">') + len(
+                        '<message xsi:type="xsd:string">'):result.find('</message>')]
+                if result.find('<messageError xsi:type="xsd:string">') > -1:
+                    result_status = result_status + 'Mensaje Error: ' + result[result.find(
+                        '<messageError xsi:type="xsd:string">') + len(
+                        '<messageError xsi:type="xsd:string">'):result.find('</messageError>')] + '\n'
+                if message == f'El comprobante {str(self.sequence)} ha sido autorizado':
+                    self.status = 'ACCEPTED'
+                else:
+                    self.status = 'REJECTED'
 
-        self.result_status = result_status
+            self.result_status = result_status
+        except Exception as e:
+            self.status = 'REJECTED'
+            self.result_status = 'Empleado %s Error: %s' % (self.employee_id.name, str(e))
 
     def consume_web_service_download_files(self):
+        operator = str(self.electronic_adjust_payroll_id.company_id.payroll_electronic_operator)
         username = self.electronic_adjust_payroll_id.company_id.payroll_electronic_username_ws
         password = self.electronic_adjust_payroll_id.company_id.payroll_electronic_password_ws
         nonce = str(uuid.uuid4().hex) + str(uuid.uuid1().hex)
@@ -145,34 +222,93 @@ class hr_electronic_adjust_payroll_detail(models.Model):
         resource_type = self.resource_type_document
         service = self.electronic_adjust_payroll_id.company_id.payroll_electronic_service_ws
         # Ejecutar ws
-        obj_ws = self.env['zue.request.ws'].search([('name', '=', 'ne_download_file_document')])
+        obj_ws = self.env['zue.request.ws'].search([('name', '=', operator + '_ne_download_file_document')])
         if not obj_ws:
-            raise ValidationError(_("Error! No ha configurado un web service con el nombre 'ne_download_file_document'"))
-        result = obj_ws.connection_requests(username, password, nonce, created, company_id,
-                                            account_id, document_type, document_number, resource_type, service)
-        if result.find('<downloadData>') > -1:
-            download_data = result[result.find('<downloadData>') + len('<downloadData>'):result.find('</downloadData>')]
+            raise ValidationError(_("Error! No ha configurado un web service con el nombre '" + operator + "_ne_download_file_document'"))
+        if operator == 'Carvajal':
+            result = obj_ws.connection_requests(username, password, nonce, created, company_id,
+                                                account_id, document_type, document_number, resource_type, service)
+            if result.find('<downloadData>') > -1:
+                download_data = result[
+                                result.find('<downloadData>') + len('<downloadData>'):result.find('</downloadData>')]
 
-            filename = f'{self.resource_type_document}_{str(self.electronic_adjust_payroll_id.electronic_payroll_id.year)}-{self.electronic_adjust_payroll_id.electronic_payroll_id.month}_{str(self.employee_id.identification_id)}'
-            filename = filename+'.pdf' if self.resource_type_document == 'PDF' else filename+'.xml'
+                filename = f'{self.resource_type_document}_{str(self.electronic_adjust_payroll_id.electronic_payroll_id.year)}-{self.electronic_adjust_payroll_id.electronic_payroll_id.month}_{str(self.employee_id.identification_id)}'
+                filename = filename + '.pdf' if self.resource_type_document == 'PDF' else filename + '.xml'
 
-            self.write({
-                'data_file': download_data,
-                'data_file_name': filename,
-            })
+                self.write({
+                    'data_file': download_data,
+                    'data_file_name': filename,
+                })
+            else:
+                raise ValidationError(_('Error al descargar el archivo, intente mas tarde.'))
+        elif operator == 'FacturaTech':
+            if self.resource_type_document == 'PDF':
+                result = obj_ws.connection_requests(username, password,
+                                                    self.electronic_adjust_payroll_id.electronic_payroll_id.prefix,
+                                                    self.item)
+                if result.find('<documentBase64 xsi:type="xsd:string">') > -1:
+                    download_data = result[result.find('<documentBase64 xsi:type="xsd:string">') + len(
+                        '<documentBase64 xsi:type="xsd:string">'):result.find('</documentBase64>')]
 
-            action = {
-                'name': self.resource_type_document,
-                'type': 'ir.actions.act_url',
-                'url': "web/content/?model=hr.electronic.adjust.payroll.detail&id=" + str(
-                    self.id) + "&filename_field=data_file_name&field=data_file&download=true&filename=" + self.data_file_name,
-                'target': 'self',
-            }
-            return action
+                    filename = f'{self.resource_type_document}_{str(self.electronic_adjust_payroll_id.electronic_payroll_id.year)}-{self.electronic_adjust_payroll_id.electronic_payroll_id.month}_{str(self.employee_id.identification_id)}'
+                    filename = filename + '.pdf' if self.resource_type_document == 'PDF' else filename + '.xml'
+
+                    self.write({
+                        'data_file': download_data,
+                        'data_file_name': filename,
+                    })
+                else:
+                    raise ValidationError(_('Error al descargar el archivo, intente mas tarde.'))
+            else:
+                raise ValidationError(_("Solo es posible descargar el Archivo PDF"))
         else:
             raise ValidationError(_('Error al descargar el archivo, intente mas tarde.'))
 
+        action = {
+            'name': self.resource_type_document,
+            'type': 'ir.actions.act_url',
+            'url': "web/content/?model=hr.electronic.payroll.detail&id=" + str(
+                self.id) + "&filename_field=data_file_name&field=data_file&download=true&filename=" + self.data_file_name,
+            'target': 'self',
+        }
+        return action
+
+    def consume_web_service_get_cune(self):
+        try:
+            operator = str(self.electronic_adjust_payroll_id.company_id.payroll_electronic_operator)
+            username = self.electronic_adjust_payroll_id.company_id.payroll_electronic_username_ws
+            password = self.electronic_adjust_payroll_id.company_id.payroll_electronic_password_ws
+            nonce = self.nonce + '_' + str(uuid.uuid4())
+            date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
+            time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
+            created = f'{str(date)}T{str(time)}-05:00'
+            company_id = self.electronic_adjust_payroll_id.company_id.payroll_electronic_company_id_ws
+            account_id = self.electronic_adjust_payroll_id.company_id.payroll_electronic_account_id_ws
+            document_type = 'NM'
+            document_number = self.sequence
+            resource_type = self.resource_type_document
+            service = self.electronic_adjust_payroll_id.company_id.payroll_electronic_service_ws
+            # Ejecutar ws
+            obj_ws = self.env['zue.request.ws'].search([('name', '=', operator + '_ne_get_cune')])
+            if not obj_ws:
+                raise ValidationError(_("Error! No ha configurado un web service con el nombre '" + operator + "_ne_get_cune'"))
+            if operator == 'Carvajal':
+                raise ValidationError(_('Carvajal no tiene esta funcionalidad.'))
+            elif operator == 'FacturaTech':
+                result = obj_ws.connection_requests(username, password,
+                                                    self.electronic_adjust_payroll_id.electronic_payroll_id.prefix,
+                                                    self.item, not_show_errors=1)
+                if result.find('<resourceData xsi:type="xsd:string">') > -1:
+                    cune = result[result.find('<resourceData xsi:type="xsd:string">') + len(
+                        '<resourceData xsi:type="xsd:string">'):result.find('</resourceData>')]
+                    self.cune = cune
+        except Exception as e:
+            print('Empleado %s Error: %s' % (self.employee_id.name, str(e)))
+
     def get_cune_parent_document(self):
+        operator = str(self.electronic_adjust_payroll_id.company_id.payroll_electronic_operator)
+        if operator == 'FacturaTech':
+            raise ValidationError(_("FacturaTech no tiene disponible el método get_cune_parent_document, comuníquese con el desarrollador."))
         username = self.electronic_adjust_payroll_id.company_id.payroll_electronic_username_ws
         password = self.electronic_adjust_payroll_id.company_id.payroll_electronic_password_ws
         nonce = str(uuid.uuid4().hex) + str(uuid.uuid1().hex)
@@ -186,10 +322,9 @@ class hr_electronic_adjust_payroll_detail(models.Model):
         resource_type = 'DIAN_RESULT'
         service = self.electronic_adjust_payroll_id.company_id.payroll_electronic_service_ws
         # Ejecutar ws
-        obj_ws = self.env['zue.request.ws'].search([('name', '=', 'ne_download_file_document')])
+        obj_ws = self.env['zue.request.ws'].search([('name', '=', operator + '_ne_download_file_document')])
         if not obj_ws:
-            raise ValidationError(
-                _("Error! No ha configurado un web service con el nombre 'ne_download_file_document'"))
+            raise ValidationError(_("Error! No ha configurado un web service con el nombre '" + operator + "_ne_download_file_document'"))
         result = obj_ws.connection_requests(username, password, nonce, created, company_id,
                                             account_id, document_type, document_number, resource_type, service)
         if result.find('<downloadData>') > -1:
@@ -204,13 +339,13 @@ class hr_electronic_adjust_payroll_detail(models.Model):
     def get_type_contract(self):
         type = self.contract_id.contract_type
         if type == 'fijo':
-            type = '1' # Contrato de Trabajo a Término Fijo
+            type = '1'  # Contrato de Trabajo a Término Fijo
         elif type == 'indefinido':
-            type = '2' # Contrato de Trabajo a Término Indefinido
+            type = '2'  # Contrato de Trabajo a Término Indefinido
         elif type == 'obra' or type == 'temporal':
-            type = '3' # Contrato por Obra o Labor
+            type = '3'  # Contrato por Obra o Labor
         elif type == 'aprendizaje':
-            type = '4' # Aprendizaje
+            type = '4'  # Aprendizaje
         else:
             type = '0'
         # type = 5 | Practicante
@@ -221,7 +356,7 @@ class hr_electronic_adjust_payroll_detail(models.Model):
 
     def get_time_now(self):
         time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
-        return time+'-05:00' # https://24timezones.com/es/difference/gmt/bogota
+        return time + '-05:00'  # https://24timezones.com/es/difference/gmt/bogota
 
     def get_dates_process(self,end=0): #Si se envia el parametro end en 1 retornara la fecha final del periodo sino retornara fecha inicial.
         try:
@@ -347,8 +482,7 @@ class hr_electronic_adjust_payroll(models.Model):
     prefix = fields.Char(related='electronic_payroll_id.prefix',string='Prefijo', store=True)
     qty_failed = fields.Integer(string='Cantidad Fallidos / Sin Respuesta', default=0, copy=False)
     qty_done = fields.Integer(string='Cantidad Aceptados', default=0, copy=False)
-    executing_electronic_adjust_payroll_ids = fields.One2many('hr.electronic.adjust.payroll.detail', 'electronic_adjust_payroll_id',
-                                                       string='Ejecución', ondelete='cascade')
+    executing_electronic_adjust_payroll_ids = fields.One2many('hr.electronic.adjust.payroll.detail', 'electronic_adjust_payroll_id', string='Ejecución')
     time_process = fields.Char(string='Tiempo ejecución', copy=False)
 
     def name_get(self):
@@ -374,21 +508,25 @@ class hr_electronic_adjust_payroll(models.Model):
         except:
             raise UserError(_('El año digitado es invalido, por favor verificar.'))
 
-        #Validar que todas las reglas salariales sean usadas en el proceso de Nómina electronica
+        # Validar que todas las reglas salariales sean usadas en el proceso de Nómina electronica
+        identificador = 'NomElectronica_Ajuste_' + str(self.company_id.payroll_electronic_operator)
         obj_salary_rules_value_zero = self.env['hr.salary.rule'].search([('active', '=', True), ('amount_select', '=', 'fix'), ('amount_fix', '=', 0.00)])
         obj_salary_rules_value_null = self.env['hr.salary.rule'].search([('active', '=', True), ('amount_select', '=', 'fix'), ('amount_fix', '=', False)])
         obj_salary_rules = self.env['hr.salary.rule'].search(
             [('active', '=', True), ('type_concept', '!=', 'tributaria'), ('category_id.code', '!=', 'HEYREC'),
-             ('id', 'not in', obj_salary_rules_value_zero.ids),('id', 'not in', obj_salary_rules_value_null.ids)])
-        obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', 'NomElectronica_Ajuste_Carvajal')])
+             ('id', 'not in', obj_salary_rules_value_zero.ids), ('id', 'not in', obj_salary_rules_value_null.ids)])
+        obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', identificador)])
+
+        if len(obj_xml) == 0:
+            raise ValidationError(_("No ha configurado un XML con el identificador: '" + identificador + "', por favor verificar."))
 
         lst_rule_not_include = []
         for rule in obj_salary_rules:
             lst_rule_include = []
             for tags_xml in obj_xml.details_ids:
-                 if tags_xml.code_python:
-                     if tags_xml.code_python.find(rule.code) != -1:
-                         lst_rule_include.append(rule.code)
+                if tags_xml.code_python or tags_xml.attributes_code_python:
+                    if str(tags_xml.code_python).find(rule.code) != -1 or str(tags_xml.attributes_code_python).find(rule.code) != -1:
+                        lst_rule_include.append(rule.code)
             if len(lst_rule_include) == 0:
                 lst_rule_not_include.append(rule.code)
 
@@ -418,7 +556,7 @@ class hr_electronic_adjust_payroll(models.Model):
             # Obtener contrato activo
             obj_contracts += self.env['hr.contract'].search([('state', '=', 'open'), ('employee_id', '=', employee.id), ('date_start','<=',date_end)])
             # Obtener contratos finalizados en el mes
-            obj_contracts = self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id', '=', employee.id), ('retirement_date', '>=', date_start), ('retirement_date', '<=', date_end)])
+            obj_contracts += self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id', '=', employee.id), ('retirement_date', '>=', date_start),('retirement_date', '<=', date_end)])
 
             for obj_contract in obj_contracts:
                 item += 1
@@ -452,32 +590,83 @@ class hr_electronic_adjust_payroll(models.Model):
     def executing_electronic_payroll_failed(self):
         for record in self.executing_electronic_adjust_payroll_ids:
             if record.status:
-                if record.status != 'ACCEPTED' and record.status != '':
+                if record.status != 'ACCEPTED':  # and record.status != ''
                     record.get_xml()
             else:
-                if not record.transaction_id:
-                    record.get_xml()
+                # if not record.transaction_id:
+                record.get_xml()
 
     def consume_ws(self):
+        count = 1
+        count_all = 1
         for record in self.executing_electronic_adjust_payroll_ids:
-            record.consume_web_service_send_xml()
+            if record.status:
+                if record.status != 'ACCEPTED':
+                    record.consume_web_service_send_xml()
+                    # Tiempo de espera de 10 segundos por cada 15 envios
+                    count += 1
+                    count_all += 1
+                    if count == 15:
+                        time.sleep(10)
+                        count = 1
+                    if count_all == 450:
+                        break
+            else:
+                # if not record.transaction_id:
+                record.consume_web_service_send_xml()
+                # Tiempo de espera de 10 segundos por cada 15 envios
+                count += 1
+                count_all += 1
+                if count == 15:
+                    time.sleep(10)
+                    count = 1
+                if count_all == 450:
+                    break
         self.write({'state': 'ws'})
 
     def consume_ws_failed(self):
+        count = 1
+        count_all = 1
         for record in self.executing_electronic_adjust_payroll_ids:
             if record.status:
-                if record.status != 'ACCEPTED' and record.status != '':
+                if record.status != 'ACCEPTED':  # and record.status != ''
                     record.consume_web_service_send_xml()
+                    # Tiempo de espera de 10 segundos por cada 15 envios
+                    count += 1
+                    count_all += 1
+                    if count == 15:
+                        time.sleep(10)
+                        count = 1
+                    if count_all == 450:
+                        break
             else:
-                if not record.transaction_id:
-                    record.consume_web_service_send_xml()
+                # if not record.transaction_id:
+                record.consume_web_service_send_xml()
+                # Tiempo de espera de 10 segundos por cada 15 envios
+                count += 1
+                count_all += 1
+                if count == 15:
+                    time.sleep(10)
+                    count = 1
+                if count_all == 450:
+                    break
 
     def consume_web_service_status_document_all(self):
         qty_failed = 0
         qty_done = 0
+        count = 1
+        count_all = 1
         for record in self.executing_electronic_adjust_payroll_ids:
             if record.status != 'ACCEPTED' and record.transaction_id:
                 record.consume_web_service_status_document()
+                # Tiempo de espera de 10 segundos por cada 15 envios
+                count += 1
+                count_all += 1
+                if count == 15:
+                    time.sleep(10)
+                    count = 1
+                if count_all == 450:
+                    break
             if record.status != 'ACCEPTED':
                 qty_failed += 1
             else:
@@ -489,6 +678,20 @@ class hr_electronic_adjust_payroll(models.Model):
         if qty_failed == 0:
             self.write({'state': 'close'})
 
+    def consume_web_service_get_cune_all(self):
+        count = 1
+        count_all = 1
+        for record in self.executing_electronic_adjust_payroll_ids:
+            if not record.cune:
+                record.consume_web_service_get_cune()
+                # Tiempo de espera de 10 segundos por cada 15 envios
+                count += 1
+                count_all += 1
+                if count == 15:
+                    time.sleep(10)
+                    count = 1
+                if count_all == 450:
+                    break
 
     def convert_result_send_xml_all(self):
         for record in self.executing_electronic_adjust_payroll_ids:
