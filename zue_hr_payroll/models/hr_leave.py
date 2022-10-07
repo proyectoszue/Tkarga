@@ -27,14 +27,14 @@ class HolidaysRequest(models.Model):
     alert_days_vacation = fields.Boolean(string='Alerta días vacaciones')
     accumulated_vacation_days = fields.Float(string='Días acumulados de vacaciones')
     #Creación de ausencia
-    type_of_entity = fields.Many2one('hr.contribution.register', 'Tipo de Entidad')
-    entity = fields.Many2one('hr.employee.entities', 'Entidad')
-    diagnostic = fields.Many2one('hr.leave.diagnostic', 'Diagnóstico')
-    radicado = fields.Char('Radicado #')
-    is_recovery = fields.Boolean('Es recobro')
-    payroll_value = fields.Float('Valor pagado en nómina')
-    eps_value = fields.Float('Valor pagado por la EPS')
-    payment_date = fields.Date ('Fecha de pago')
+    type_of_entity = fields.Many2one('hr.contribution.register', 'Tipo de Entidad',track_visibility='onchange')
+    entity = fields.Many2one('hr.employee.entities', 'Entidad',track_visibility='onchange')
+    diagnostic = fields.Many2one('hr.leave.diagnostic', 'Diagnóstico',track_visibility='onchange')
+    radicado = fields.Char('Radicado #',track_visibility='onchange')
+    is_recovery = fields.Boolean('Es recobro',track_visibility='onchange')
+    payroll_value = fields.Float('Valor pagado en nómina',track_visibility='onchange')
+    eps_value = fields.Float('Valor pagado por la EPS',track_visibility='onchange')
+    payment_date = fields.Date ('Fecha de pago',track_visibility='onchange')
 
     @api.onchange('date_from', 'date_to', 'employee_id')
     def _onchange_leave_dates(self):
@@ -167,6 +167,17 @@ class HolidaysRequest(models.Model):
         obj = super(HolidaysRequest, self).action_refuse()
         for record in self:
             self.env['hr.vacation'].search([('leave_id','=',record.id)]).unlink()
+        return obj
+
+    def action_validate(self):
+        # Validación adjunto
+        for holiday in self:
+            if holiday.holiday_status_id.obligatory_attachment:
+                attachment = self.env['ir.attachment'].search([('res_model', '=', 'hr.leave'), ('res_id', '=', holiday.id)])
+                if not attachment:
+                    raise ValidationError(_('Es obligatorio agregar un adjunto para la ausencia ' + holiday.display_name + '.'))
+        # Ejecución metodo estandar
+        obj = super(HolidaysRequest, self).action_validate()
         return obj
 
     @api.model

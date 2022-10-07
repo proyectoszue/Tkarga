@@ -368,6 +368,14 @@ class hr_payroll_social_security(models.Model):
                                 nValorPensioTotalEmpleado,nValorPensionTotalEmpresa,nValorTotalFondos = 0,0,0
                                 nValorSaludTotal,nValorPensionTotal = 0,0
                                 nRedondeoDecimalesDif = 5 # Max diferencia de decimales
+                                #Verificar si existe retiro sin tener dias trabajados
+                                if nRetiro == True:
+                                    for executing_ret in sorted(obj_executing, key=lambda x: (x.nDiasLiquidados, x.nDiasIncapacidadEPS, x.nDiasVacaciones, x.nDiasMaternidad,x.nDiasIncapacidadARP, x.nDiasLicenciaRenumerada, x.nDiasLicencia)):
+                                        if executing_ret.nDiasLiquidados == 0 and executing_ret.nDiasIncapacidadEPS == 0 and executing_ret.nDiasLicencia == 0 and executing_ret.nDiasLicenciaRenumerada == 0 and executing_ret.nDiasMaternidad == 0 and executing_ret.nDiasVacaciones == 0 and executing_ret.nDiasIncapacidadARP == 0:
+                                            nDiasLiquidados_totales = sum([x.nDiasLiquidados for x in obj_executing])
+                                            if nDiasLiquidados_totales == 0:
+                                                executing_ret.write({'nDiasLiquidados': 1})
+                                #Ejecución de valores
                                 for executing in sorted(obj_executing,key=lambda x: (x.nDiasLiquidados,x.nDiasIncapacidadEPS,x.nDiasVacaciones,x.nDiasMaternidad,x.nDiasIncapacidadARP,x.nDiasLicenciaRenumerada,x.nDiasLicencia)):
                                     #Valores
                                     nPorcAporteSaludEmpleado,nPorcAporteSaludEmpresa,nValorBaseSalud,nValorSaludEmpleado,nValorSaludEmpresa = 0,0,0,0,0

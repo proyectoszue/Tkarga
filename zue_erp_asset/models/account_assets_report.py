@@ -49,13 +49,19 @@ class assets_report(models.AbstractModel):
             ],
         ]
 
+    @api.model
+    def _get_options(self, previous_options=None):
+        options = super(assets_report, self)._get_options(previous_options)
+        options['expenses'] = self.env.context.get('expenses', False)
+        return options
+
     def _get_assets_lines(self, options):
         "Get the data from the database"
 
         self.env['account.move.line'].check_access_rights('read')
         self.env['account.asset'].check_access_rights('read')
 
-        get_expenses = self.env.context.get('expenses', False)
+        get_expenses = options.get('expenses', False)
         asset_type = ''
 
         if get_expenses:

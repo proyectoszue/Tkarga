@@ -51,6 +51,14 @@
                     <attribute name="attrs">{"invisible": ["|",["request_unit_half","=",True],["request_unit_hours","=",True]], "readonly": ["|",["state","not in",["draft","confirm"]],["is_vacation","=",True]]}</attribute>
                     <attribute name="force_save">True</attribute>
                 </xpath>
+                 <xpath expr="//field[@name='number_of_days']" position="attributes">
+                    <attribute name="attrs">{"readonly": [('state', 'not in', ('draft', 'confirm'))]}</attribute>
+                    <attribute name="force_save">True</attribute>
+                </xpath>
+                <xpath expr="//field[@name='name']" position="attributes">
+                    <attribute name="attrs">{"readonly": [('state', 'not in', ('draft', 'confirm'))]}</attribute>
+                    <attribute name="force_save">True</attribute>
+                </xpath>
             </field>
         </record>
 
