@@ -43,7 +43,8 @@ class ResPartner(models.Model):
                                         ('41', 'Pasaporte'),
                                         ('42', 'Tipo de documento extranjero'),
                                         ('43', 'Sin identificación del exterior o para uso definido por la DIAN'),
-                                        ('44', 'Documento de identificación extranjero persona jurídica')
+                                        ('44', 'Documento de identificación extranjero persona jurídica'),
+                                        ('PE', 'Permiso especial de permanencia')
                                     ], string='Tipo de documento', track_visibility='onchange')
     x_digit_verification = fields.Integer(string='Digito de verificación', track_visibility='onchange',compute='_compute_verification_digit', store=True)
     x_business_name = fields.Char(string='Nombre de negocio', track_visibility='onchange')
