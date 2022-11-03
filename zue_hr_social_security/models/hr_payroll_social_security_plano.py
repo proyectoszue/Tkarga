@@ -194,7 +194,8 @@ class hr_payroll_social_security(models.Model):
                 '22': 'CE',
                 '31': 'NI',
                 '41': 'PA',
-                'PE': 'PE'
+                'PE': 'PT',
+                'PT': 'PT'
             }             
             cTipIdTercero = switch_cTipIdTercero.get(item.employee_id.address_home_id.x_document_type, '/')
             if cTipIdTercero == '/':
