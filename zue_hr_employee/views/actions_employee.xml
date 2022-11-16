@@ -258,5 +258,41 @@
                 </xpath>
             </field>
         </record>
+
+        		<record model="ir.actions.act_window" id="action_report_print_badge_template">
+            <field name="name">Configuración plantilla carnet</field>
+            <field name="res_model">report.print.badge.template</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record model="ir.ui.view" id="report_print_badge_template_list">
+            <field name="name">report print badge template list</field>
+            <field name="model">report.print.badge.template</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="company_id"/>
+                    <field name="img_header_filename"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="report_print_badge_template_form" model="ir.ui.view">
+            <field name="name">report print badge template form</field>
+            <field name="model">report.print.badge.template</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="company_id" required="1"/>
+                            <field name="img_header_filename" invisible="1"/>
+                            <field name="img_header_file" filename="img_header_filename"/>
+                            <field name="with_extra_space"/>
+                            <field name="orientation" widget="radio"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
     </data>
 </odoo>

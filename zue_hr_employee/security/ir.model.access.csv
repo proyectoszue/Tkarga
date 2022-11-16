@@ -25,3 +25,4 @@ access_hr_contractual_modifications, access_hr_contractual_modifications,model_h
 access_hr_parameterization_of_contributors, access_hr_parameterization_of_contributors,model_hr_parameterization_of_contributors,,1,1,1,1
 access_hr_employee_endowment,access_hr_employee_endowment,model_hr_employee_endowment,,1,1,1,1
 access_hr_labor_certificate_template_detail,hr.labor.certificate.template.detail,model_hr_labor_certificate_template_detail,,1,1,1,1
+access_report_print_badge_template,report.print.badge.template,model_report_print_badge_template,,1,1,1,1
