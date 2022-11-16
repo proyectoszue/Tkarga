@@ -41,6 +41,8 @@
         'reports/report_birthday_list_template.xml',
         'reports/report_personal_data_form_template.xml', 
         'reports/report_personal_data_form.xml',
+        'reports/report_print_badge_template.xml',
+        'reports/report_print_badge.xml',
         'views/menus.xml',
     ],
 
