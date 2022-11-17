@@ -349,17 +349,49 @@ class hr_employee(models.Model):
         else:
             return 0
 
-    def _sync_user(self, user):
+    # Metodos reportes
+    def get_report_print_badge_template(self):
+        obj = self.env['report.print.badge.template'].search([('company_id', '=', self.company_id.id)])
+        if len(obj) == 0:
+            raise ValidationError(_('No tiene configurada plantilla de identificación. Por favor verifique!'))
+        return obj
+
+    def get_name_rh(self):
+        rh = dict(self._fields['licencia_rh'].selection).get(self.licencia_rh, '')
+        return rh
+
+    def get_name_type_document(self):
+        obj_partner = self.env['res.partner']
+        type_documet = dict(obj_partner._fields['x_document_type'].selection).get(
+            self.address_home_id.x_document_type, '')
+        return type_documet
+
+    def _sync_user(self, user, employee_has_image=False):
         vals = dict(
-            image_1920=user.image_1920 if user.image_1920 else self.image_1920,
             work_email=user.email,
             user_id=user.id,
         )
+        if not employee_has_image:
+            vals['image_1920'] = user.image_1920 if user.image_1920 else self.image_1920
         if user.tz:
             vals['tz'] = user.tz
         return vals
 
+class report_print_badge_template(models.Model):
+    _name = 'report.print.badge.template'
+    _description = 'Imprimir Identificación'
+    _rec_name = 'company_id'
 
+    company_id = fields.Many2one('res.company', string='Compañía', default=lambda self: self.env.company)
+    with_extra_space = fields.Boolean('Con espacio extra')
+    img_header_file = fields.Binary('Plantilla del identificación')
+    img_header_filename = fields.Char('Plantilla del identificación filename')
+    orientation = fields.Selection([('horizontal', 'Horizontal'),
+                              ('vertical', 'Vertical')], string='Orientación', default="horizontal")
+
+    _sql_constraints = [
+        ('company_report_print_badge_template', 'UNIQUE (company_id)','Ya existe una configuración de plantilla de identificación para esta compañía, por favor verificar')
+    ]
 
 
 
