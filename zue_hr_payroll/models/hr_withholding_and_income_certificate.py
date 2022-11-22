@@ -77,13 +77,19 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                     if conf.calculation == 'info':
                         if conf.type_partner == 'employee':
                             if conf.information_fields_id.model_id.model == 'hr.employee':
-                                code_python = 'value = employee.' + str(conf.information_fields_id.name)
+                                if conf.information_fields_id.ttype == 'many2one':
+                                    code_python = 'value = employee.' + str(conf.information_fields_id.name) + '.display_name'
+                                else:
+                                    code_python = 'value = employee.' + str(conf.information_fields_id.name)
                                 exec(code_python, ldict)
                                 value = ldict.get('value')
                             elif conf.information_fields_id.model_id.model == 'hr.contract':
                                 raise UserError(_('No se puede traer información del empleado de un campo de la tabla contratos, EN DESARROLLO.'))
                             elif conf.information_fields_id.model_id.model == 'res.partner':
-                                code_python = 'value = employee.address_home_id.'+str(conf.information_fields_id.name)
+                                if conf.information_fields_id.ttype == 'many2one':
+                                    code_python = 'value = employee.address_home_id.' + str(conf.information_fields_id.name) + '.display_name'
+                                else:
+                                    code_python = 'value = employee.address_home_id.'+str(conf.information_fields_id.name)
                                 exec(code_python, ldict)
                                 value = ldict.get('value')
                         if conf.type_partner == 'company':
@@ -92,7 +98,10 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                             elif conf.information_fields_id.model_id.model == 'hr.contract':
                                 raise UserError(_('No se puede traer información de la compañía de un campo de la tabla contratos, por favor verificar.'))
                             elif conf.information_fields_id.model_id.model == 'res.partner':
-                                code_python = 'value = employee.company_id.partner_id.'+str(conf.information_fields_id.name)
+                                if conf.information_fields_id.ttype == 'many2one':
+                                    code_python = 'value = employee.company_id.partner_id.' + str(conf.information_fields_id.name) + '.display_name'
+                                else:
+                                    code_python = 'value = employee.company_id.partner_id.'+str(conf.information_fields_id.name)
                                 exec(code_python, ldict)
                                 value = ldict.get('value')
                     # Tipo de Calculo ---------------------- SUMATORIA REGLAS
