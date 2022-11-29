@@ -53,6 +53,7 @@
                 </xpath>
                 <xpath expr="//field[@name='job_id']" position="after">
                     <field name="risk_id" required="1"/>
+                    <field name="z_economic_activity_level_risk_id" domain="[('z_risk_class_id','=',risk_id)]"/>
                 </xpath>
                 <xpath expr="//field[@name='trial_date_end']" position="after">
                     <field name="retirement_date"/>

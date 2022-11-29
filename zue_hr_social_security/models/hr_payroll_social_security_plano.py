@@ -415,8 +415,11 @@ class hr_payroll_social_security(models.Model):
             cIBCOtrosParafiscales = right('0'*9+str(item.nValorBaseSENA).split('.')[0],9)
             cNumeroHorasLaboradas = right('000'+str(item.nNumeroHorasLaboradas),3)
             cFechaRadicaciónExterior = item.employee_id.date_of_residence_abroad.strftime('%Y-%m-%d') if cResidenteExterior == 'X' and item.employee_id.date_of_residence_abroad else ' '*10
+            cActividadEconomicaNivelRiesgo = right(
+                '0000000' + item.contract_id.z_economic_activity_level_risk_id.z_risk_class_id.code + item.contract_id.z_economic_activity_level_risk_id.z_code_ciiu_id.code + item.contract_id.z_economic_activity_level_risk_id.z_code,
+                7) if item.contract_id.z_economic_activity_level_risk_id else '0' * 7
             
-            part_line_six = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s' % (cFechaIngreso,cFechaRetiro,cFechaInicioVSP,cFechaInicioSLN,cFechaFinSLN,cFechaInicioIGE,cFechaFinIGE,cFechaInicioLMA,cFechaFinLMA,cFechaInicioVACLR,cFechaFinVACLR,cFechaInicioVCT,cFechaFinVCT,cFechaInicioIRL,cFechaFinIRL,cIBCOtrosParafiscales,cNumeroHorasLaboradas,cFechaRadicaciónExterior)
+            part_line_six = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s' % (cFechaIngreso,cFechaRetiro,cFechaInicioVSP,cFechaInicioSLN,cFechaFinSLN,cFechaInicioIGE,cFechaFinIGE,cFechaInicioLMA,cFechaFinLMA,cFechaInicioVACLR,cFechaFinVACLR,cFechaInicioVCT,cFechaFinVCT,cFechaInicioIRL,cFechaFinIRL,cIBCOtrosParafiscales,cNumeroHorasLaboradas,cFechaRadicaciónExterior,cActividadEconomicaNivelRiesgo)
 
             #Concatenar detalle total
             part_line = '%s%s%s%s%s%s' % (part_line_one,part_line_two,part_line_three,part_line_four,part_line_five,part_line_six)
