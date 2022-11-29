@@ -186,6 +186,7 @@ class hr_contract(models.Model):
     contract_modification_history = fields.One2many('hr.contractual.modifications', 'contract_id','Modificaciones contractuales')
     deductions_rtf_ids = fields.One2many('hr.contract.deductions.rtf', 'contract_id', 'Deducciones retención en la fuente', default=_get_default_deductions_rtf_ids, track_visibility='onchange')
     risk_id = fields.Many2one('hr.contract.risk', string='Riesgo profesional', track_visibility='onchange')
+    z_economic_activity_level_risk_id = fields.Many2one('zue.economic.activity.level.risk', string='Actividad económica por nivel de riesgo', track_visibility='onchange')
     contract_type = fields.Selection([('obra', 'Contrato por Obra o Labor'), 
                                       ('fijo', 'Contrato de Trabajo a Término Fijo'),
                                       ('fijo_parcial', 'Contrato de Trabajo a Término Fijo Tiempo Parcial'),

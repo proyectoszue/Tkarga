@@ -26,3 +26,4 @@ access_hr_parameterization_of_contributors, access_hr_parameterization_of_contri
 access_hr_employee_endowment,access_hr_employee_endowment,model_hr_employee_endowment,,1,1,1,1
 access_hr_labor_certificate_template_detail,hr.labor.certificate.template.detail,model_hr_labor_certificate_template_detail,,1,1,1,1
 access_report_print_badge_template,report.print.badge.template,model_report_print_badge_template,,1,1,1,1
+access_zue_economic_activity_level_risk,zue.economic.activity.level.risk,model_zue_economic_activity_level_risk,,1,1,1,1

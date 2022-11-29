@@ -49,6 +49,25 @@
                 </tree>
             </field>
         </record>
+        <!-- Actividad económica por nivel de riesgo -->
+        <record id="zue_menu_action_zue_economic_activity_level_risk" model="ir.actions.act_window">
+            <field name="name">Actividad económica por nivel de riesgo</field>
+            <field name="res_model">zue.economic.activity.level.risk</field>
+            <field name="view_mode">tree</field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_hr_employee.list_zue_economic_activity_level_risk">
+            <field name="name">Actividad económica por nivel de riesgo list</field>
+            <field name="model">zue.economic.activity.level.risk</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom">
+                    <field name="z_risk_class_id"/>
+                    <field name="z_code_ciiu_id"/>
+                    <field name="z_code"/>
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
         <!-- Formulario de tipos de ausencia - ajustes -->
         <record id="view_zue_hr_employee_form_leave_type" model="ir.ui.view">
             <field name="name">hr.leave.type.zue.hr.employee.form.inherit</field>
