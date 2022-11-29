@@ -24,7 +24,18 @@ class hr_contract_risk(models.Model):
     percent = fields.Float('Porcentaje', required=True, help='porcentaje del riesgo profesional')
     date = fields.Date('Fecha vigencia')
 
-    _sql_constraints = [('change_code_uniq', 'unique(code)', 'Ya existe un riesgo con este código, por favor verificar')]         
+    _sql_constraints = [('change_code_uniq', 'unique(code)', 'Ya existe un riesgo con este código, por favor verificar')]
+
+class zue_economic_activity_level_risk(models.Model):
+    _name = 'zue.economic.activity.level.risk'
+    _description = 'Actividad económica por nivel de riesgo'
+
+    z_risk_class_id = fields.Many2one('hr.contract.risk','Clase de riesgo', required=True)
+    z_code_ciiu_id = fields.Many2one('zue.ciiu','CIIU', required=True)
+    z_code = fields.Char('Código', required=True)
+    name = fields.Char('Descripción', required=True)
+
+    _sql_constraints = [('economic_activity_level_risk_uniq', 'unique(z_risk_class_id,z_code_ciiu_id,z_code)', 'Ya existe un riesgo con este código, por favor verificar')]
 
 #Tabla tipos de entidades
 class hr_contrib_register(models.Model):

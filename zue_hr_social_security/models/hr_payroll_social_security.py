@@ -323,11 +323,11 @@ class hr_payroll_social_security(models.Model):
                                     result['dFechaInicioIGE'] = leave['date_start'] if leave['type'] in ('EGA','EGH') else False
                                     result['dFechaFinIGE'] = leave['date_end'] if leave['type'] in ('EGA','EGH') else False
                                     #Licencia
-                                    nDiasLicencia = leave['days'] if leave['type'] in ('LICENCIA_NO_REMUNERADA','INAS_INJU','SANCION','SUSP_CONTRATO') else 0 # Categoria: LICENCIA_NO_REMUNERADA
+                                    nDiasLicencia = leave['days'] if leave['type'] in ('LICENCIA_NO_REMUNERADA','INAS_INJU','SANCION','SUSP_CONTRATO','DAYS_NO_WORK') else 0 # Categoria: LICENCIA_NO_REMUNERADA
                                     dict_social_security['Dias'].dict['nDiasLicencia'] = dict_social_security['Dias'].dict.get('nDiasLicencia', 0) + nDiasLicencia
                                     result['nDiasLicencia'] = nDiasLicencia
-                                    result['dFechaInicioSLN'] = leave['date_start'] if leave['type'] in ('LICENCIA_NO_REMUNERADA','INAS_INJU','SANCION','SUSP_CONTRATO') else False
-                                    result['dFechaFinSLN'] = leave['date_end'] if leave['type'] in ('LICENCIA_NO_REMUNERADA','INAS_INJU','SANCION','SUSP_CONTRATO') else False
+                                    result['dFechaInicioSLN'] = leave['date_start'] if leave['type'] in ('LICENCIA_NO_REMUNERADA','INAS_INJU','SANCION','SUSP_CONTRATO','DAYS_NO_WORK') else False
+                                    result['dFechaFinSLN'] = leave['date_end'] if leave['type'] in ('LICENCIA_NO_REMUNERADA','INAS_INJU','SANCION','SUSP_CONTRATO','DAYS_NO_WORK') else False
                                     #Licencia Remunerada
                                     nDiasLicenciaRenumerada = leave['days'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','REP_VACACIONES') else 0 # Categoria: LICENCIA_REMUNERADA
                                     dict_social_security['Dias'].dict['nDiasLicenciaRenumerada'] = dict_social_security['Dias'].dict.get('nDiasLicenciaRenumerada', 0) + nDiasLicenciaRenumerada
@@ -593,7 +593,7 @@ class hr_payroll_social_security(models.Model):
                                         else:
                                             nValorBaseICBF = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseICBF) < nRedondeoDecimalesDif else nValorBaseICBF)
                                         #nValorBaseICBF = ((executing.nValorBaseICBF / 30) * nDias) if nValorBaseICBF == 0 else (nValorBaseICBF)
-                                        if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and nSueldo >= (annual_parameters.smmlv_monthly*10)):
+                                        if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and (nValorBaseSENA >= (annual_parameters.smmlv_monthly*10) or nSueldo >= (annual_parameters.smmlv_monthly*10))):
                                             if nValorBaseSENA > 0 and nDiasAusencias == 0:
                                                 nPorcAporteSENA = annual_parameters.value_porc_sena_company
                                                 nValorSENA = roundup100(nValorBaseSENA * nPorcAporteSENA / 100)
