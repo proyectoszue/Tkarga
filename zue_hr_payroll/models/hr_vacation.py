@@ -313,7 +313,7 @@ class Hr_payslip(models.Model):
                         #Calculo fechas de causacion                        
                         if initial_accrual_date and final_accrual_date:
                             initial_accrual_date = final_accrual_date + timedelta(days=1)
-                            days = (days_vacations * 365) / 15
+                            days = ((days_vacations_business+days_vacations_31_business) * 365) / 15
                             final_accrual_date = initial_accrual_date + timedelta(days=days-1)
                         else:
                             obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee.id)])     
@@ -330,7 +330,7 @@ class Hr_payslip(models.Model):
                             #fecha inicial causación
                             initial_accrual_date = accrual_date
                             #fecha final causación
-                            days = (days_vacations * 365) / 15
+                            days = ((days_vacations_business+days_vacations_31_business) * 365) / 15
                             final_accrual_date = initial_accrual_date + timedelta(days=days-1)   
                             #dias360 = self.dias360(initial_accrual_date,final_accrual_date)
 
