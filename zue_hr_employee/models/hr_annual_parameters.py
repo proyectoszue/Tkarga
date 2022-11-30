@@ -20,6 +20,8 @@ class hr_conf_certificate_income(models.Model):
                                    default='info', required=True)
     type_partner = fields.Selection([('employee', 'Empleado'), ('company', 'Compañía')], string='Origen Información')
     information_fields_id = fields.Many2one('ir.model.fields', string="Información",domain="[('model_id.model', 'in', ['hr.employee','res.partner','hr.contract'])]")
+    information_fields_relation = fields.Char(related='information_fields_id.relation', string='Relación del objeto', store=True)
+    related_field_id = fields.Many2one('ir.model.fields', string='Campo Relación',domain="[('model_id.model', '=', information_fields_relation)]")
     salary_rule_id = fields.Many2many('hr.salary.rule', string='Regla Salarial')
     accumulated_previous_year = fields.Boolean(string='Acumulado año anterior')
     sequence_list_sum = fields.Char(string='Sum secuencias')
