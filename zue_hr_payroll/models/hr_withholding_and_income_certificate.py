@@ -78,7 +78,7 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                         if conf.type_partner == 'employee':
                             if conf.information_fields_id.model_id.model == 'hr.employee':
                                 if conf.information_fields_id.ttype == 'many2one':
-                                    code_python = 'value = employee.' + str(conf.information_fields_id.name) + '.display_name'
+                                    code_python = 'value = employee.' + str(conf.information_fields_id.name) + '.' + str(conf.related_field_id.name)
                                 else:
                                     code_python = 'value = employee.' + str(conf.information_fields_id.name)
                                 exec(code_python, ldict)
@@ -87,7 +87,7 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                                 raise UserError(_('No se puede traer información del empleado de un campo de la tabla contratos, EN DESARROLLO.'))
                             elif conf.information_fields_id.model_id.model == 'res.partner':
                                 if conf.information_fields_id.ttype == 'many2one':
-                                    code_python = 'value = employee.address_home_id.' + str(conf.information_fields_id.name) + '.display_name'
+                                    code_python = 'value = employee.address_home_id.' + str(conf.information_fields_id.name) + '.' + str(conf.related_field_id.name)
                                 else:
                                     code_python = 'value = employee.address_home_id.'+str(conf.information_fields_id.name)
                                 exec(code_python, ldict)
@@ -99,7 +99,7 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                                 raise UserError(_('No se puede traer información de la compañía de un campo de la tabla contratos, por favor verificar.'))
                             elif conf.information_fields_id.model_id.model == 'res.partner':
                                 if conf.information_fields_id.ttype == 'many2one':
-                                    code_python = 'value = employee.company_id.partner_id.' + str(conf.information_fields_id.name) + '.display_name'
+                                    code_python = 'value = employee.company_id.partner_id.' + str(conf.information_fields_id.name) + '.' + str(conf.related_field_id.name)
                                 else:
                                     code_python = 'value = employee.company_id.partner_id.'+str(conf.information_fields_id.name)
                                 exec(code_python, ldict)

@@ -241,6 +241,8 @@
                                                     <field name="calculation"/>
                                                     <field name="type_partner"/>
                                                     <field name="information_fields_id"/>
+                                                    <field name="information_fields_relation" invisible="1"/>
+                                                    <field name="related_field_id"/>
                                                     <field name="salary_rule_id" widget="many2many_tags"/>
                                                     <field name="accumulated_previous_year"/>
                                                     <field name="sequence_list_sum"/>
