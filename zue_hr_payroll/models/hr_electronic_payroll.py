@@ -261,25 +261,25 @@ class hr_electronic_payroll_detail(models.Model):
     def consume_web_service_get_cune(self):
         try:
             operator = str(self.electronic_payroll_id.company_id.payroll_electronic_operator)
-            username = self.electronic_payroll_id.company_id.payroll_electronic_username_ws
-            password = self.electronic_payroll_id.company_id.payroll_electronic_password_ws
-            nonce = self.nonce + '_' + str(uuid.uuid4())
-            date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
-            time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
-            created = f'{str(date)}T{str(time)}-05:00'
-            company_id = self.electronic_payroll_id.company_id.payroll_electronic_company_id_ws
-            account_id = self.electronic_payroll_id.company_id.payroll_electronic_account_id_ws
-            document_type = 'NM'
-            document_number = self.sequence
-            resource_type = self.resource_type_document
-            service = self.electronic_payroll_id.company_id.payroll_electronic_service_ws
-            # Ejecutar ws
-            obj_ws = self.env['zue.request.ws'].search([('name', '=', operator + '_ne_get_cune')])
-            if not obj_ws:
-                raise ValidationError(_("Error! No ha configurado un web service con el nombre '" + operator + "_ne_get_cune'"))
             if operator == 'Carvajal':
-                raise ValidationError(_('Carvajal no tiene esta funcionalidad.'))
-            elif operator == 'FacturaTech':
+                self.get_cune_document()
+            if operator == 'FacturaTech':
+                username = self.electronic_payroll_id.company_id.payroll_electronic_username_ws
+                password = self.electronic_payroll_id.company_id.payroll_electronic_password_ws
+                nonce = self.nonce + '_' + str(uuid.uuid4())
+                date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
+                time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
+                created = f'{str(date)}T{str(time)}-05:00'
+                company_id = self.electronic_payroll_id.company_id.payroll_electronic_company_id_ws
+                account_id = self.electronic_payroll_id.company_id.payroll_electronic_account_id_ws
+                document_type = 'NM'
+                document_number = self.sequence
+                resource_type = self.resource_type_document
+                service = self.electronic_payroll_id.company_id.payroll_electronic_service_ws
+                # Ejecutar ws
+                obj_ws = self.env['zue.request.ws'].search([('name', '=', operator + '_ne_get_cune')])
+                if not obj_ws:
+                    raise ValidationError(_("Error! No ha configurado un web service con el nombre '" + operator + "_ne_get_cune'"))
                 result = obj_ws.connection_requests(username, password, self.electronic_payroll_id.prefix, self.item,
                                                     not_show_errors=1)
                 if result.find('<resourceData xsi:type="xsd:string">') > -1:
@@ -287,6 +287,39 @@ class hr_electronic_payroll_detail(models.Model):
                     self.cune = cune
         except Exception as e:
             print('Empleado %s Error: %s' % (self.employee_id.name, str(e)))
+
+    def get_cune_document(self):
+        operator = str(self.electronic_payroll_id.company_id.payroll_electronic_operator)
+        if operator == 'FacturaTech':
+            raise ValidationError(_("FacturaTech no tiene disponible el método get_cune_parent_document, comuníquese con el desarrollador."))
+        username = self.electronic_payroll_id.company_id.payroll_electronic_username_ws
+        password = self.electronic_payroll_id.company_id.payroll_electronic_password_ws
+        nonce = str(uuid.uuid4().hex) + str(uuid.uuid1().hex)
+        date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
+        time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
+        created = f'{str(date)}T{str(time)}-05:00'
+        company_id = self.electronic_payroll_id.company_id.payroll_electronic_company_id_ws
+        account_id = self.electronic_payroll_id.company_id.payroll_electronic_account_id_ws
+        document_type = 'NM'
+        document_number = self.sequence
+        resource_type = 'DIAN_RESULT'
+        service = self.electronic_payroll_id.company_id.payroll_electronic_service_ws
+        # Ejecutar ws
+        obj_ws = self.env['zue.request.ws'].search([('name', '=', operator + '_ne_download_file_document')])
+        if not obj_ws:
+            raise ValidationError(_("Error! No ha configurado un web service con el nombre '" + operator + "_ne_download_file_document'"))
+        result = obj_ws.connection_requests(username, password, nonce, created, company_id,
+                                            account_id, document_type, document_number, resource_type, service)
+        if result.find('<downloadData>') > -1:
+            download_data = result[result.find('<downloadData>') + len('<downloadData>'):result.find('</downloadData>')]
+
+            text_data = str(base64.b64decode(download_data))
+            cune = str(text_data[text_data.find('<b:XmlDocumentKey>') + len('<b:XmlDocumentKey>'):text_data.find('</b:XmlDocumentKey>')])
+            self.cune = cune
+            if self.cune:
+                self.status = 'ACCEPTED'
+        else:
+            raise ValidationError(_('Error al obtener el CUNE, intente mas tarde.'))
 
     def get_type_contract(self):
         type = self.contract_id.contract_type
@@ -572,27 +605,27 @@ class hr_electronic_payroll(models.Model):
             if record.status:
                 if record.status != 'ACCEPTED':
                     record.consume_web_service_send_xml()
-                    if operator == 'FacturaTech':
-                        # Tiempo de espera de 10 segundos por cada 15 envios
-                        count += 1
-                        count_all += 1
-                        if count == 15:
-                            time.sleep(10)
-                            count = 1
-                        if count_all == 450:
-                            break
-            else:
-                # if not record.transaction_id:
-                record.consume_web_service_send_xml()
-                if operator == 'FacturaTech':
+                    #if operator == 'FacturaTech':
                     # Tiempo de espera de 10 segundos por cada 15 envios
                     count += 1
                     count_all += 1
                     if count == 15:
                         time.sleep(10)
                         count = 1
-                    if count_all == 450:
+                    if count_all == 300:
                         break
+            else:
+                # if not record.transaction_id:
+                record.consume_web_service_send_xml()
+                #if operator == 'FacturaTech':
+                # Tiempo de espera de 10 segundos por cada 15 envios
+                count += 1
+                count_all += 1
+                if count == 15:
+                    time.sleep(10)
+                    count = 1
+                if count_all == 300:
+                    break
         self.write({'state': 'ws'})
 
     def consume_ws_failed(self):
@@ -603,27 +636,27 @@ class hr_electronic_payroll(models.Model):
             if record.status:
                 if record.status != 'ACCEPTED': #and record.status != ''
                     record.consume_web_service_send_xml()
-                    if operator == 'FacturaTech':
-                        # Tiempo de espera de 10 segundos por cada 15 envios
-                        count += 1
-                        count_all += 1
-                        if count == 15:
-                            time.sleep(10)
-                            count = 1
-                        if count_all == 450:
-                            break
-            else:
-                #if not record.transaction_id:
-                record.consume_web_service_send_xml()
-                if operator == 'FacturaTech':
+                    #if operator == 'FacturaTech':
                     # Tiempo de espera de 10 segundos por cada 15 envios
                     count += 1
                     count_all += 1
                     if count == 15:
                         time.sleep(10)
                         count = 1
-                    if count_all == 450:
+                    if count_all == 300:
                         break
+            else:
+                #if not record.transaction_id:
+                record.consume_web_service_send_xml()
+                #if operator == 'FacturaTech':
+                # Tiempo de espera de 10 segundos por cada 15 envios
+                count += 1
+                count_all += 1
+                if count == 15:
+                    time.sleep(10)
+                    count = 1
+                if count_all == 300:
+                    break
 
     def consume_web_service_status_document_all(self):
         qty_failed = 0
@@ -634,15 +667,15 @@ class hr_electronic_payroll(models.Model):
         for record in self.executing_electronic_payroll_ids:
             if record.status != 'ACCEPTED' and record.transaction_id:
                 record.consume_web_service_status_document()
-                if operator == 'FacturaTech':
-                    # Tiempo de espera de 10 segundos por cada 15 envios
-                    count += 1
-                    count_all += 1
-                    if count == 15:
-                        time.sleep(10)
-                        count = 1
-                    if count_all == 450:
-                        break
+                #if operator == 'FacturaTech':
+                # Tiempo de espera de 10 segundos por cada 15 envios
+                count += 1
+                count_all += 1
+                if count == 15:
+                    time.sleep(10)
+                    count = 1
+                if count_all == 300:
+                    break
             if record.status != 'ACCEPTED':
                 qty_failed += 1
             else:
@@ -661,15 +694,15 @@ class hr_electronic_payroll(models.Model):
         for record in self.executing_electronic_payroll_ids:
             if not record.cune:
                 record.consume_web_service_get_cune()
-                if operator == 'FacturaTech':
-                    # Tiempo de espera de 10 segundos por cada 15 envios
-                    count += 1
-                    count_all += 1
-                    if count == 15:
-                        time.sleep(10)
-                        count = 1
-                    if count_all == 450:
-                        break
+                #if operator == 'FacturaTech':
+                # Tiempo de espera de 10 segundos por cada 15 envios
+                count += 1
+                count_all += 1
+                if count == 15:
+                    time.sleep(10)
+                    count = 1
+                if count_all == 300:
+                    break
 
     def convert_result_send_xml_all(self):
         for record in self.executing_electronic_payroll_ids:
@@ -678,6 +711,9 @@ class hr_electronic_payroll(models.Model):
     def cancel_process(self):
         self.env['hr.electronic.payroll.detail'].search([('electronic_payroll_id', '=', self.id)]).unlink()
         self.write({'state': 'draft'})
+
+    def confirm_send_ws(self):
+        self.write({'state': 'ws'})
 
     def unlink(self):
         for record in self:
