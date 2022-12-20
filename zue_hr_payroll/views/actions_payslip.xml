@@ -159,6 +159,13 @@
                 <xpath expr="//field[@name='company_id']" position="before">
                     <field name="definitive_plan" readonly="0"/>
                 </xpath>
+                <xpath expr="//form[1]/sheet[1]" position="before">
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </xpath>
             </field>
         </record>
         <!-- Formulario tipos de entradas de trabajo -->
