@@ -15,7 +15,8 @@ import logging
 _logger = logging.getLogger(__name__)
 #---------------------------LIQUIDACIÓN DE NÓMINA-------------------------------#
 class HrPayslipRun(models.Model):
-    _inherit = 'hr.payslip.run'
+    _name = 'hr.payslip.run'
+    _inherit = ['hr.payslip.run', 'mail.thread', 'mail.activity.mixin']
 
     time_process = fields.Char(string='Tiempo ejecución')
     observations = fields.Text('Observaciones')
