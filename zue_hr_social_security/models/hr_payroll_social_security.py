@@ -548,13 +548,13 @@ class hr_payroll_social_security(models.Model):
                                                 nPorcFondoSolidaridad = 2
                                             if nPorcFondoSolidaridad > 0:
                                                 if contract_id.modality_salary == 'integral' and nPorcFondoSolidaridad == 2:
-                                                    nValorFondoSolidaridad = roundup100(nValorBaseFondoPensionTotal * 0.005)
-                                                    nValorFondoSubsistencia = roundup100(nValorBaseFondoPensionTotal * 0.015)
+                                                    nValorFondoSolidaridad = roundup100(nValorBaseFondoPension * 0.005)
+                                                    nValorFondoSubsistencia = roundup100(nValorBaseFondoPension * 0.015)
                                                     nValorTotalFondos += (nValorFondoSolidaridad + nValorFondoSubsistencia)
                                                 else:
                                                     nPorcFondoSolidaridadCalculo = (nPorcFondoSolidaridad/100)/2
-                                                    nValorFondoSolidaridad = roundup100(nValorBaseFondoPensionTotal*nPorcFondoSolidaridadCalculo)
-                                                    nValorFondoSubsistencia = roundup100(nValorBaseFondoPensionTotal*nPorcFondoSolidaridadCalculo)
+                                                    nValorFondoSolidaridad = roundup100(nValorBaseFondoPension*nPorcFondoSolidaridadCalculo)
+                                                    nValorFondoSubsistencia = roundup100(nValorBaseFondoPension*nPorcFondoSolidaridadCalculo)
                                                     nValorTotalFondos += (nValorFondoSolidaridad + nValorFondoSubsistencia)
                                     else:
                                         nValorBaseFondoPension = 0
