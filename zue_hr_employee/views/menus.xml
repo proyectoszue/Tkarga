@@ -29,6 +29,6 @@
         <!-- Tipo de carnet según compañia -->
         <menuitem name="Configuración plantilla carnet" id="zue_hr_employee.menu_report_print_badge_template" parent="hr.menu_human_resources_configuration_employee" action="action_report_print_badge_template" sequence="80"/>
         <!-- Actividad económica por nivel de riesgo -->
-        <menuitem name="Actividad económica por nivel de riesgo" id="zue_hr_employee.menu_zue_economic_activity_level_risk" parent="hr.menu_human_resources_configuration_employee" action="zue_menu_action_zue_economic_activity_level_risk" sequence="4"/>
+        <menuitem name="Actividad económica por nivel de riesgo" id="zue_hr_employee.menu_zue_economic_activity_level_risk" parent="hr.menu_human_resources_configuration" action="zue_menu_action_zue_economic_activity_level_risk" sequence="4"/>
     </data>
 </odoo>
