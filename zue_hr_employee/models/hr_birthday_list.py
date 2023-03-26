@@ -30,6 +30,7 @@ class hr_birthday_list(models.TransientModel):
 
     excel_file = fields.Binary('Excel')
     excel_file_name = fields.Char('Excel filename')
+    show_dependent = fields.Boolean(string='Mostrar dependientes')
 
     def name_get(self):
         result = []
@@ -112,10 +113,13 @@ class hr_birthday_list(models.TransientModel):
 
     def generate_birthday_excel(self):
         query_where = ''
+        query_where_dependent = ''
         if self.month == '0':
             query_where = "where a.company_id in (" + str(self.company.ids).replace('[','').replace(']','') + ") "
+            query_where_dependent = "where a.company_id in (" + str(self.company.ids).replace('[','').replace(']','') + ") "
         else:
             query_where = "where a.company_id in (" + str(self.company.ids).replace('[','').replace(']','') + ") and date_part('month',a.birthday) = " + self.month
+            query_where_dependent = "where a.company_id in (" + str(self.company.ids).replace('[', '').replace(']','') + ") and date_part('month',hed.date_birthday) = " + self.month
         # Filtro Sucursal
         str_ids_branch = ''
         for i in self.branch:
@@ -125,17 +129,38 @@ class hr_birthday_list(models.TransientModel):
                 str_ids_branch = str(i) if str_ids_branch == '' else str_ids_branch + ',' + str(i)
         if str_ids_branch != '':
             query_where = query_where + f"and zrb.id in ({str_ids_branch}) "
+            query_where_dependent = query_where_dependent + f"and zrb.id in ({str_ids_branch}) "
+
+        if self.show_dependent:
+            query_dependent = ' and 1=1 '
+        else:
+            query_dependent = ' and 1=2 '
         # ----------------------------------Ejecutar consulta
         query_report = f'''
-                    select c.name,b.vat,b.name as name_employee,zrb."name" as branch,a.birthday
-                    from hr_employee as a
-                    Inner join res_partner as b on b.id = a.partner_encab_id
-                    Inner join res_company c on c.id = a.company_id 
-                    inner join res_partner d on d.id = c.partner_id
-                    inner join zue_res_branch as zrb on a.branch_id = zrb.id
-                    %s
-					order by date_part('month',a.birthday),date_part('day',a.birthday)
-                    '''%(query_where)
+                    select * from
+                    (
+                        select c.name,b.vat,b.name as name_employee,'' as name_dependet, '' as dependents_type,
+                        zrb."name" as branch,a.birthday, date_part('year',age(a.birthday)) as edad
+                        from hr_employee as a
+                        Inner join res_partner as b on b.id = a.partner_encab_id
+                        Inner join res_company c on c.id = a.company_id 
+                        inner join res_partner d on d.id = c.partner_id
+                        inner join zue_res_branch as zrb on a.branch_id = zrb.id
+                        %s
+                        union                    
+                        select c."name" ,'' as vat,b.name as name_employee,hed.name as name_dependet,
+                                upper(hed.dependents_type) as dependents_type,zrb."name" as branch,
+                                hed.date_birthday, date_part('year',age(hed.date_birthday)) as edad
+                        from hr_employee as a
+                        inner join hr_employee_dependents hed on a.id = hed.employee_id %s
+                        Inner join res_partner as b on b.id = a.partner_encab_id
+                        Inner join res_company c on c.id = a.company_id 
+                        inner join res_partner d on d.id = c.partner_id
+                        inner join zue_res_branch as zrb on a.branch_id = zrb.id
+                        %s
+                    ) as a
+                    order by name_employee,date_part('month',birthday),date_part('day',birthday)
+                    '''%(query_where,query_dependent,query_where_dependent)
 
         self._cr.execute(query_report)
         result_query = self._cr.dictfetchall()
@@ -147,7 +172,7 @@ class hr_birthday_list(models.TransientModel):
         book = xlsxwriter.Workbook(stream, {'in_memory': True})
 
         # Columnas
-        columns = ['Compañia', 'Identificación', 'Nombres','Sucursal','Fecha de cumpleaños']
+        columns = ['Compañia', 'Identificación', 'Empleado', 'Dependiente', 'Tipo dependiente', 'Sucursal','Fecha de cumpleaños', 'Edad']
         sheet = book.add_worksheet('Listado de Cumpleaños')
 
         # Agregar textos al excel
@@ -159,14 +184,14 @@ class hr_birthday_list(models.TransientModel):
         cell_format_title.set_bottom(5)
         cell_format_title.set_bottom_color('#1F497D')
         cell_format_title.set_font_color('#1F497D')
-        sheet.merge_range('A1:E1', text_title, cell_format_title)
+        sheet.merge_range('A1:H1', text_title, cell_format_title)
         cell_format_text_generate = book.add_format({'bold': False, 'align': 'left'})
         cell_format_text_generate.set_font_name('Calibri')
         cell_format_text_generate.set_font_size(10)
         cell_format_text_generate.set_bottom(5)
         cell_format_text_generate.set_bottom_color('#1F497D')
         cell_format_text_generate.set_font_color('#1F497D')
-        sheet.merge_range('A2:E2', text_generate, cell_format_text_generate)
+        sheet.merge_range('A2:H2', text_generate, cell_format_text_generate)
         # Formato para fechas
         date_format = book.add_format({'num_format': 'dd/mm/yyyy'})
 
@@ -176,42 +201,43 @@ class hr_birthday_list(models.TransientModel):
             sheet.write(2, aument_columns, column)
             aument_columns = aument_columns + 1
 
-            # Agregar query
+        # Agregar query
+        aument_columns = 0
+        aument_rows = 3
+        for query in result_query:
+            for row in query.values():
+                width = len(str(row)) + 10
+                width = 40 if width == 10 else width
+                if str(type(row)).find('date') > -1:
+                    sheet.write_datetime(aument_rows, aument_columns, row, date_format)
+                else:
+                    sheet.write(aument_rows, aument_columns, row)
+                # Ajustar tamaño columna
+                sheet.set_column(aument_columns, aument_columns, width)
+                aument_columns = aument_columns + 1
+            aument_rows = aument_rows + 1
             aument_columns = 0
-            aument_rows = 3
-            for query in result_query:
-                for row in query.values():
-                    width = len(str(row)) + 10
-                    if str(type(row)).find('date') > -1:
-                        sheet.write_datetime(aument_rows, aument_columns, row, date_format)
-                    else:
-                        sheet.write(aument_rows, aument_columns, row)
-                    # Ajustar tamaño columna
-                    sheet.set_column(aument_columns, aument_columns, width)
-                    aument_columns = aument_columns + 1
-                aument_rows = aument_rows + 1
-                aument_columns = 0
 
-            # Convertir en tabla
-            array_header_table = []
-            for i in columns:
-                dict = {'header': i}
-                array_header_table.append(dict)
+        # Convertir en tabla
+        array_header_table = []
+        for i in columns:
+            dict = {'header': i}
+            array_header_table.append(dict)
 
-            sheet.add_table(2, 0, aument_rows-1, len(columns)-1, {'style': 'Table Style Medium 2', 'columns': array_header_table})
-            # Guadar Excel
-            book.close()
+        sheet.add_table(2, 0, aument_rows-1, len(columns)-1, {'style': 'Table Style Medium 2', 'columns': array_header_table})
+        # Guadar Excel
+        book.close()
 
-            self.write({
-                'excel_file': base64.encodestring(stream.getvalue()),
-                'excel_file_name': filename,
-            })
+        self.write({
+            'excel_file': base64.encodestring(stream.getvalue()),
+            'excel_file_name': filename,
+        })
 
-            action = {
-                'name': 'Listado de Cumpleaños',
-                'type': 'ir.actions.act_url',
-                'url': "web/content/?model=hr.birthday.list&id=" + str(
-                    self.id) + "&filename_field=excel_file_name&field=excel_file&download=true&filename=" + self.excel_file_name,
-                'target': 'self',
-            }
-            return action
+        action = {
+            'name': 'Listado de Cumpleaños',
+            'type': 'ir.actions.act_url',
+            'url': "web/content/?model=hr.birthday.list&id=" + str(
+                self.id) + "&filename_field=excel_file_name&field=excel_file&download=true&filename=" + self.excel_file_name,
+            'target': 'self',
+        }
+        return action
