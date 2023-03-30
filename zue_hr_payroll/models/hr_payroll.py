@@ -76,8 +76,11 @@ class HrPayslipRun(models.Model):
         return self.write({'state': 'draft'})
 
 class HrPayslipEmployees(models.TransientModel):
-    _inherit = 'hr.payslip.employees'	
-    
+    _inherit = 'hr.payslip.employees'
+
+    struct_process = fields.Selection(related='structure_id.process', string='Proceso', store=True)
+    prima_run_reverse_id = fields.Many2one('hr.payslip.run', string='Lote de prima a ajustar')
+
     def _get_available_contracts_domain(self):
         return [('contract_ids.state', '=', 'open'), ('company_id', '=', self.env.company.id)]
 
@@ -128,6 +131,13 @@ class HrPayslipEmployees(models.TransientModel):
                             'contract_id': contract.id,
                             'struct_id': structure_id.id or contract.structure_type_id.default_struct_id.id,
                         })
+                        if structure_id.process == 'prima' and self.prima_run_reverse_id:
+                            prima_payslip_reverse_obj = self.env['hr.payslip'].search([('payslip_run_id','=',self.prima_run_reverse_id.id),
+                                                           ('employee_id','=',contract.employee_id.id)],limit=1)
+                            if len(prima_payslip_reverse_obj) == 1:
+                                values = dict(values, **{
+                                    'prima_payslip_reverse_id': prima_payslip_reverse_obj.id,
+                                })
                         payslip = env['hr.payslip'].new(values)
                         payslip._onchange_employee()
                         values = payslip._convert_to_write(payslip._cache)

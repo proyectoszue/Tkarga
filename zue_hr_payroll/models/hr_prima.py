@@ -40,8 +40,10 @@ class hr_history_prima(models.Model):
         res = super(hr_history_prima, self).create(vals)
         return res
 class Hr_payslip(models.Model):
-    _inherit = 'hr.payslip'    
-    
+    _inherit = 'hr.payslip'
+
+    prima_payslip_reverse_id = fields.Many2one('hr.payslip', string='Prima a ajustar', domain="[('employee_id', '=', employee_id)]")
+
     #--------------------------------------------------LIQUIDACIÓN DE PRIMA---------------------------------------------------------#
 
     def _get_payslip_lines_prima(self,inherit_contrato=0,localdict=None):
@@ -61,7 +63,8 @@ class Hr_payslip(models.Model):
             obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', self.employee_id.id),('contract_id', '=', self.contract_id.id)])
             if obj_prima:
                 for history in sorted(obj_prima, key=lambda x: x.final_accrual_date):
-                    date_prima = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_prima else date_prima             
+                    if history.payslip != self.prima_payslip_reverse_id:
+                        date_prima = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_prima else date_prima
             self.date_from = date_prima if self.date_from < date_prima else self.date_from
 
         self.ensure_one()
@@ -159,6 +162,9 @@ class Hr_payslip(models.Model):
 
                     #amount = round(amount_base * dias_liquidacion / 360, 0)
                     amount = round(amount_base / 360,0) if round_payroll == False else amount_base / 360
+                    if self.prima_payslip_reverse_id:
+                        value_reverse = self.prima_payslip_reverse_id.line_ids.filtered(lambda line: line.code == 'PRIMA').amount
+                        amount = amount-value_reverse
                     qty = dias_liquidacion
 
                 #amount = round(amount,0) #Se redondean los decimales de todas las reglas
