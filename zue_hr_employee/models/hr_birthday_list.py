@@ -31,6 +31,7 @@ class hr_birthday_list(models.TransientModel):
     excel_file = fields.Binary('Excel')
     excel_file_name = fields.Char('Excel filename')
     show_dependent = fields.Boolean(string='Mostrar dependientes')
+    active_employee = fields.Boolean(string='Solo empleados con contrato activo', default=True)
 
     def name_get(self):
         result = []
@@ -135,6 +136,11 @@ class hr_birthday_list(models.TransientModel):
             query_dependent = ' and 1=1 '
         else:
             query_dependent = ' and 1=2 '
+
+        if self.active_employee:
+            query_active_employee = "Inner join hr_contract as hc on a.id = hc.employee_id and hc.state='open' "
+        else:
+            query_active_employee = '-- Todos los empleados'
         # ----------------------------------Ejecutar consulta
         query_report = f'''
                     select * from
@@ -142,6 +148,7 @@ class hr_birthday_list(models.TransientModel):
                         select c.name,b.vat,b.name as name_employee,'' as name_dependet, '' as dependents_type,
                         zrb."name" as branch,a.birthday, date_part('year',age(a.birthday)) as edad
                         from hr_employee as a
+                        %s
                         Inner join res_partner as b on b.id = a.partner_encab_id
                         Inner join res_company c on c.id = a.company_id 
                         inner join res_partner d on d.id = c.partner_id
@@ -152,6 +159,7 @@ class hr_birthday_list(models.TransientModel):
                                 upper(hed.dependents_type) as dependents_type,zrb."name" as branch,
                                 hed.date_birthday, date_part('year',age(hed.date_birthday)) as edad
                         from hr_employee as a
+                        %s
                         inner join hr_employee_dependents hed on a.id = hed.employee_id %s
                         Inner join res_partner as b on b.id = a.partner_encab_id
                         Inner join res_company c on c.id = a.company_id 
@@ -160,7 +168,7 @@ class hr_birthday_list(models.TransientModel):
                         %s
                     ) as a
                     order by name_employee,date_part('month',birthday),date_part('day',birthday)
-                    '''%(query_where,query_dependent,query_where_dependent)
+                    '''%(query_active_employee,query_where,query_active_employee,query_dependent,query_where_dependent)
 
         self._cr.execute(query_report)
         result_query = self._cr.dictfetchall()
