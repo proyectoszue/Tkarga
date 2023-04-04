@@ -49,6 +49,9 @@
                     <group attrs="{'invisible':[('struct_process', 'not in', ['cesantias','intereses_cesantias','contrato'])]}">
                         <field name="severance_payments_reverse" attrs="{'invisible':[('struct_process', 'not in', ['cesantias','intereses_cesantias','contrato'])]}" widget="many2many_tags"/>
                     </group>
+                    <group attrs="{'invisible':[('struct_process', 'not in', ['prima'])]}">
+                        <field name="prima_payslip_reverse_id" attrs="{'invisible':[('struct_process', 'not in', ['prima'])]}"/>
+                    </group>
                     <group attrs="{'invisible':[('struct_process', '!=', 'vacaciones')]}" style="border-style:solid; padding:10px">
                         <group colspan="4">
                             <field name="paid_vacation_ids" attrs="{'invisible':[('struct_process', '!=', 'vacaciones')], 'readonly':[('state', '=', 'done')]}">
@@ -123,6 +126,10 @@
             <field name="inherit_id" ref="hr_payroll.view_hr_payslip_by_employees"/>
             <field name="arch" type="xml">
                 <xpath expr="//form[1]/group[3]/field[@name='employee_ids']" position="replace">
+                    <field name="struct_process" invisible="1"/>
+                    <group attrs="{'invisible':[('struct_process', '!=', 'prima')]}">
+                        <field name="prima_run_reverse_id"/>
+                    </group>
                     <button string="Limpiar" name="clean_employees" type="object"/>
                     <newline/>
                     <field name="employee_ids" nolabel="1">
