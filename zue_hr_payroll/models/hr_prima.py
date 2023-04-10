@@ -42,6 +42,7 @@ class hr_history_prima(models.Model):
 class Hr_payslip(models.Model):
     _inherit = 'hr.payslip'
 
+    prima_run_reverse_id = fields.Many2one('hr.payslip.run', string='Lote de prima a ajustar')
     prima_payslip_reverse_id = fields.Many2one('hr.payslip', string='Prima a ajustar', domain="[('employee_id', '=', employee_id)]")
 
     #--------------------------------------------------LIQUIDACIÓN DE PRIMA---------------------------------------------------------#
@@ -56,6 +57,14 @@ class Hr_payslip(models.Model):
         def _sum_salary_rule(localdict, rule, amount):
             localdict['rules_computed'].dict[rule.code] = localdict['rules_computed'].dict.get(rule.code, 0) + amount
             return localdict
+
+        #Validar si es ajuste de prima
+        if self.prima_run_reverse_id and not self.prima_payslip_reverse_id:
+            prima_payslip_reverse_obj = self.env['hr.payslip'].search(
+                [('payslip_run_id', '=', self.prima_run_reverse_id.id),
+                 ('employee_id', '=', self.employee_id.id)], limit=1)
+            if len(prima_payslip_reverse_obj) == 1:
+                self.prima_payslip_reverse_id = prima_payslip_reverse_obj.id
 
         #Validar fecha inicial de causación
         if inherit_contrato==0:
@@ -164,7 +173,7 @@ class Hr_payslip(models.Model):
                     amount = round(amount_base / 360,0) if round_payroll == False else amount_base / 360
                     if self.prima_payslip_reverse_id:
                         value_reverse = self.prima_payslip_reverse_id.line_ids.filtered(lambda line: line.code == 'PRIMA').amount
-                        amount = amount-value_reverse
+                        amount = round(amount-value_reverse,0)
                     qty = dias_liquidacion
 
                 #amount = round(amount,0) #Se redondean los decimales de todas las reglas

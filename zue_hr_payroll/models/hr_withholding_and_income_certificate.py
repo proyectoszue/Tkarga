@@ -1,8 +1,11 @@
+import io
+import base64
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError,UserError
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from pytz import timezone
+from PyPDF2 import  PdfFileReader, PdfFileWriter
 #---------------------------Certificado ingreso y retenciones-------------------------------#
 
 class hr_withholding_and_income_certificate(models.TransientModel):
@@ -11,6 +14,7 @@ class hr_withholding_and_income_certificate(models.TransientModel):
 
     employee_ids = fields.Many2many('hr.employee', string="Empleado",)
     year = fields.Integer('Año', required=True)
+    z_save_documents = fields.Boolean(string="Guardar en documentos")
     struct_report_income_and_withholdings = fields.Html('Estructura Certificado ingresos y retenciones')
 
     def generate_certificate(self):
@@ -87,9 +91,9 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                                 raise UserError(_('No se puede traer información del empleado de un campo de la tabla contratos, EN DESARROLLO.'))
                             elif conf.information_fields_id.model_id.model == 'res.partner':
                                 if conf.information_fields_id.ttype == 'many2one':
-                                    code_python = 'value = employee.address_home_id.' + str(conf.information_fields_id.name) + '.' + str(conf.related_field_id.name)
+                                    code_python = 'value = employee.address_home_id.'+str(conf.information_fields_id.name) + '.' + str(conf.related_field_id.name)
                                 else:
-                                    code_python = 'value = employee.address_home_id.'+str(conf.information_fields_id.name)
+                                    code_python = 'value = employee.address_home_id.' + str(conf.information_fields_id.name)
                                 exec(code_python, ldict)
                                 value = ldict.get('value')
                         if conf.type_partner == 'company':
@@ -99,26 +103,48 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                                 raise UserError(_('No se puede traer información de la compañía de un campo de la tabla contratos, por favor verificar.'))
                             elif conf.information_fields_id.model_id.model == 'res.partner':
                                 if conf.information_fields_id.ttype == 'many2one':
-                                    code_python = 'value = employee.company_id.partner_id.' + str(conf.information_fields_id.name) + '.' + str(conf.related_field_id.name)
+                                    code_python = 'value = employee.company_id.partner_id.'+str(conf.information_fields_id.name) + '.' + str(conf.related_field_id.name)
                                 else:
-                                    code_python = 'value = employee.company_id.partner_id.'+str(conf.information_fields_id.name)
+                                    code_python = 'value = employee.company_id.partner_id.' + str( conf.information_fields_id.name)
                                 exec(code_python, ldict)
                                 value = ldict.get('value')
                     # Tipo de Calculo ---------------------- SUMATORIA REGLAS
                     elif conf.calculation == 'sum_rule':
                         amount = 0
                         if conf.accumulated_previous_year == True:
-                            # Nóminas
-                            for payslip_ant in obj_payslip_ant:
-                                amount += abs(sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
-                            # Acumulados
-                            amount += abs(sum([i.amount for i in obj_payslip_accumulated_ant.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                            if conf.origin_severance_pay:
+                                # Nóminas
+                                for payslip_ant in obj_payslip_ant:
+                                    if conf.origin_severance_pay == 'employee':
+                                        amount += abs(sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
+                                    else:
+                                        amount += abs(sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == False)]))
+                                if conf.origin_severance_pay != 'employee':
+                                    # Acumulados
+                                    amount += abs(sum([i.amount for i in obj_payslip_accumulated_ant.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                            else:
+                                # Nóminas
+                                for payslip_ant in obj_payslip_ant:
+                                    amount += abs(sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                                # Acumulados
+                                amount += abs(sum([i.amount for i in obj_payslip_accumulated_ant.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
                         else:
-                            #Nóminas
-                            for payslip in obj_payslip:
-                                amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
-                            #Acumulados
-                            amount += abs(sum([i.amount for i in obj_payslip_accumulated.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                            if conf.origin_severance_pay:
+                                # Nóminas
+                                for payslip in obj_payslip:
+                                    if conf.origin_severance_pay == 'employee':
+                                        amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
+                                    else:
+                                        amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == False)]))
+                                if conf.origin_severance_pay != 'employee':
+                                    # Acumulados
+                                    amount += abs(sum([i.amount for i in obj_payslip_accumulated.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                            else:
+                                #Nóminas
+                                for payslip in obj_payslip:
+                                    amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                                #Acumulados
+                                amount += abs(sum([i.amount for i in obj_payslip_accumulated.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
                         value = amount
                     # Tipo de Calculo ---------------------- SUMATORIA SECUENCIAS ANTERIORES
                     elif conf.calculation == 'sum_sequence':
@@ -148,7 +174,7 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                 if struct_report_income_and_withholdings_finally == '':
                     struct_report_income_and_withholdings_finally = struct_report_income_and_withholdings
                 else:
-                    struct_report_income_and_withholdings_finally += '\n <div style="page-break-after: always;"/> \n'
+                    # struct_report_income_and_withholdings_finally += '\n <div style="page-break-after: always;"/> \n'
                     struct_report_income_and_withholdings_finally += struct_report_income_and_withholdings
 
         #Limpiar vals no calculados
@@ -162,6 +188,51 @@ class hr_withholding_and_income_certificate(models.TransientModel):
              'id': self.id,
              'model': 'hr.withholding.and.income.certificate'
             }
+
+        if self.z_save_documents:
+            pdf_writer = PdfFileWriter()
+
+            for employee in self.employee_ids:
+                obj_report = self.env['hr.withholding.and.income.certificate'].create(
+                    {
+                        'year':self.year,
+                        'employee_ids':employee.ids,
+                    }
+                )
+                report = self.env.ref('zue_hr_payroll.hr_report_income_and_withholdings_action', False)
+                pdf_content, _ = report.render_qweb_pdf(obj_report.id)
+                reader = PdfFileReader(io.BytesIO(pdf_content), strict=False, overwriteWarnings=False)
+                for page in range(reader.getNumPages()):
+                    pdf_writer.addPage(reader.getPage(page))
+                _buffer = io.BytesIO()
+                pdf_writer.write(_buffer)
+                merged_pdf = _buffer.getvalue()
+                _buffer.close()
+
+                # Crear adjunto
+                name = 'Certificado Ingreso y Retenciones año gravable ' + str(self.year-1) + '.pdf'
+                obj_attachment = self.env['ir.attachment'].create({
+                    'name': name,
+                    'store_fname': name,
+                    'res_name': name,
+                    'type': 'binary',
+                    'res_model': 'res.partner',
+                    'res_id': employee.address_home_id.id,
+                    'datas': base64.b64encode(merged_pdf),
+                })
+                # Asociar adjunto a documento de Odoo
+                doc_vals = {
+                    'name': name,
+                    'owner_id': self.env.user.id,
+                    'partner_id': employee.address_home_id.id,
+                    'folder_id': self.env.user.company_id.documents_hr_folder.id,
+                    #'tag_ids': self.env.user.company_id.z_validated_certificate.ids, # Atributo solo de V15
+                    'type': 'binary',
+                    'attachment_id': obj_attachment.id
+                }
+                self.env['documents.document'].sudo().create(doc_vals)
+            return True
+
         return {
             'type': 'ir.actions.report',
             'report_name': 'zue_hr_payroll.hr_report_income_and_withholdings',

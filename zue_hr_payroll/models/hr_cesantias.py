@@ -242,7 +242,7 @@ class Hr_payslip(models.Model):
                         localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount)
                         localdict = _sum_salary_rule(localdict, rule, tot_rule)
                         # create/overwrite the rule in the temporary results
-                        if amount != 0:
+                        if amount != 0 or payments.severance_value != 0:
                             result['His_'+str(payments.id)+'_'+rule.code] = {
                                 'sequence': rule.sequence,
                                 'code': rule.code,
@@ -269,7 +269,7 @@ class Hr_payslip(models.Model):
                         localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount)
                         localdict = _sum_salary_rule(localdict, rule, tot_rule)
                         # create/overwrite the rule in the temporary results
-                        if amount != 0:
+                        if amount != 0 or payments.severance_interest_value != 0:
                             result['His_' + str(payments.id) + '_' + rule.code] = {
                                 'sequence': rule.sequence,
                                 'code': rule.code,
