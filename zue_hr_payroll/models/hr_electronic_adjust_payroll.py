@@ -414,11 +414,10 @@ class hr_electronic_adjust_payroll_detail(models.Model):
 
     def get_value_total_dev(self):
         value = 0
-        lst_codes = ['TOTALDEV', 'TOTALDED', 'NET']
+        lst_codes = ['TOTALDEV','TOTALDED','NET']
         for payslip in self.payslip_ids:
             for line in payslip.line_ids:
-                value += abs(
-                    line.total) if line.salary_rule_id.dev_or_ded == 'devengo' and line.salary_rule_id.code not in lst_codes else 0
+                value += abs(line.total) if line.salary_rule_id.dev_or_ded == 'devengo' and line.salary_rule_id.code not in lst_codes else 0
         return value
 
     def get_value_total_ded(self):
@@ -426,8 +425,7 @@ class hr_electronic_adjust_payroll_detail(models.Model):
         lst_codes = ['TOTALDEV', 'TOTALDED', 'NET']
         for payslip in self.payslip_ids:
             for line in payslip.line_ids:
-                value += abs(
-                    line.total) if line.salary_rule_id.dev_or_ded == 'deduccion' and line.salary_rule_id.code not in lst_codes else 0
+                value += abs(line.total) if line.salary_rule_id.dev_or_ded == 'deduccion' and line.salary_rule_id.code not in lst_codes else 0
         return value
 
     def get_quantity_salary_rules(self,lst_codes):

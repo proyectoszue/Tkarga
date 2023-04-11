@@ -48,6 +48,7 @@ class hr_history_cesantias(models.Model):
 class Hr_payslip(models.Model):
     _inherit = 'hr.payslip'
 
+    employee_severance_pay = fields.Boolean(string='Pago cesantías al empleado')
     severance_payments_reverse = fields.Many2many('hr.history.cesantias',
                                                   string='Historico de cesantias/int.cesantias a tener encuenta',
                                                   domain="[('employee_id', '=', employee_id)]")
@@ -242,7 +243,7 @@ class Hr_payslip(models.Model):
                         localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount)
                         localdict = _sum_salary_rule(localdict, rule, tot_rule)
                         # create/overwrite the rule in the temporary results
-                        if amount != 0:
+                        if amount != 0 or payments.severance_value != 0:
                             result['His_'+str(payments.id)+'_'+rule.code] = {
                                 'sequence': rule.sequence,
                                 'code': rule.code,
@@ -269,7 +270,7 @@ class Hr_payslip(models.Model):
                         localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount)
                         localdict = _sum_salary_rule(localdict, rule, tot_rule)
                         # create/overwrite the rule in the temporary results
-                        if amount != 0:
+                        if amount != 0 or payments.severance_interest_value != 0:
                             result['His_' + str(payments.id) + '_' + rule.code] = {
                                 'sequence': rule.sequence,
                                 'code': rule.code,

@@ -82,7 +82,15 @@ class HrPayslipEmployees(models.TransientModel):
     prima_run_reverse_id = fields.Many2one('hr.payslip.run', string='Lote de prima a ajustar')
 
     def _get_available_contracts_domain(self):
-        return [('contract_ids.state', '=', 'open'), ('company_id', '=', self.env.company.id)]
+        domain = [('contract_ids.state', '=', 'open'), ('company_id', '=', self.env.company.id)]
+        if self.prima_run_reverse_id:
+            employee_ids = self.env['hr.payslip'].search([('payslip_run_id', '=', self.prima_run_reverse_id.id)]).employee_id.ids
+            domain.append(('id','in',employee_ids))
+        return domain
+
+    @api.onchange('prima_run_reverse_id')
+    def _compute_employee_prima_run_reverse(self):
+        self.employee_ids = self.env['hr.employee'].search(self._get_available_contracts_domain())
 
     def _check_undefined_slots(self, work_entries, payslip_run):
         """
@@ -130,6 +138,7 @@ class HrPayslipEmployees(models.TransientModel):
                             'date_to': payslip_run.date_end,
                             'contract_id': contract.id,
                             'struct_id': structure_id.id or contract.structure_type_id.default_struct_id.id,
+                            'prima_run_reverse_id': self.prima_run_reverse_id,
                         })
                         if structure_id.process == 'prima' and self.prima_run_reverse_id:
                             prima_payslip_reverse_obj = self.env['hr.payslip'].search([('payslip_run_id','=',self.prima_run_reverse_id.id),
