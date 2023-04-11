@@ -47,6 +47,7 @@
                         </group>
                     </group>
                     <group attrs="{'invisible':[('struct_process', 'not in', ['cesantias','intereses_cesantias','contrato'])]}">
+                        <field name="employee_severance_pay" attrs="{'invisible':[('struct_process', 'not in', ['cesantias','intereses_cesantias','contrato'])]}"/>
                         <field name="severance_payments_reverse" attrs="{'invisible':[('struct_process', 'not in', ['cesantias','intereses_cesantias','contrato'])]}" widget="many2many_tags"/>
                     </group>
                     <group attrs="{'invisible':[('struct_process', 'not in', ['prima'])]}">
