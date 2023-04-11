@@ -48,6 +48,7 @@ class hr_history_cesantias(models.Model):
 class Hr_payslip(models.Model):
     _inherit = 'hr.payslip'
 
+    employee_severance_pay = fields.Boolean(string='Pago cesantías al empleado')
     severance_payments_reverse = fields.Many2many('hr.history.cesantias',
                                                   string='Historico de cesantias/int.cesantias a tener encuenta',
                                                   domain="[('employee_id', '=', employee_id)]")
