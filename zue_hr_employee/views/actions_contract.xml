@@ -36,6 +36,7 @@
                     <button string="Finalizar por liquidar" name="action_state_finished" type="object" states="open"/>
                     <button string="Cancelar" name="action_state_cancel" type="object"/>
                     <button string="Certificado Laboral" name="generate_labor_certificate" type="object"/>
+                    <button name="generate_report_severance" type="object" string="Carta retiro de cesantías"/>
                 </xpath>
                 <xpath expr="//form[1]/header[1]/field[@name='state']" position="attributes">
                     <attribute name="attrs">{}</attribute>
