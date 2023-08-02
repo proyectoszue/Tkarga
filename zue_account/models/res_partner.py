@@ -12,6 +12,11 @@ class ResPartner(models.Model):
     #Operaciones Recíprocas
     z_partner_with_reciprocal_operations = fields.Boolean(string='Maneja operación recíproca')
     z_code_partner_reciprocal_operations = fields.Char(string='Código del tercero')
+    # CAMPOS FACTURACIÓN ELECTRONICA
+    zue_electronic_invoice_fiscal_regimen = fields.Selection([('48', 'Impuestos sobre la venta del IVA'),
+                                                              ('49', 'No responsables del IVA')],
+                                                             string='Regimen Fiscal')
+    zue_electronic_invoice_responsable_iva = fields.Boolean(string='Responsable de IVA')
 
 class res_company(models.Model):
     _inherit = 'res.company'
