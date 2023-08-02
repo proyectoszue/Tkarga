@@ -36,12 +36,6 @@ class ZueZipCode(models.Model):
 
     _sql_constraints = [('zip_postal_uniq', 'unique(code)', 'Ya existe ese código postal, por favor verificar.')]
 
-    def name_get(self):
-        result = []
-        for record in self:
-            result.append((record.id, "{}".format(record.code)))
-        return result
-
 # CIIU
 class Ciiu(models.Model):
     _name = 'zue.ciiu'
@@ -67,7 +61,7 @@ class Sectors(models.Model):
     _name = 'zue.sectors'
     _description = 'Sectores'
 
-    code = fields.Char(string='Código', size=10,required=True)
+    code = fields.Char(string='Código', required=True)
     name = fields.Char(string='Nombre', required=True)
 
     def name_get(self):
@@ -81,8 +75,8 @@ class x_vinculation_types(models.Model):
     _name = 'zue.vinculation_types'
     _description = 'Tipos de vinculación'
 
-    code = fields.Char(string='Código', size=10, required=True)
-    name = fields.Char(string='Nombre', size=100, required=True)
+    code = fields.Char(string='Código', required=True)
+    name = fields.Char(string='Nombre', required=True)
     active = fields.Boolean(string='Activo')
     
     def name_get(self):
@@ -91,27 +85,12 @@ class x_vinculation_types(models.Model):
             result.append((record.id, "{} | {}".format(record.code, record.name)))
         return result
 
-# RESPONSABILIDADES RUT
-class x_responsibilities_rut(models.Model):
-    _name = 'zue.responsibilities_rut'
-    _description = 'Responsabilidades RUT'
-
-    code = fields.Char(string='Identificador', size=10, required=True)
-    description = fields.Char(string='Descripción', size=100, required=True)
-    valid_for_fe = fields.Boolean(string='Valido para facturación electrónica')
-    
-    def name_get(self):
-        result = []
-        for record in self:
-            result.append((record.id, "{} | {}".format(record.code, record.description)))
-        return result
-
 # TIPOS DE CONTACTO
 class x_contact_types(models.Model):
     _name = 'zue.contact_types'
     _description = 'Tipos de contacto'
     
-    code = fields.Char(string='Código', size=10, required=True)
+    code = fields.Char(string='Código', required=True)
     name = fields.Char(string='Nombre', required=True)
 
     def name_get(self):
@@ -125,15 +104,19 @@ class x_type_thirdparty(models.Model):
     _name = 'zue.type_thirdparty'
     _description = 'Tipos de tercero'
     
-    code = fields.Char(string='Código', size=10, required=True)
+    code = fields.Char(string='Código', required=True)
     name = fields.Char(string='Nombre', required=True)
     is_company = fields.Boolean('¿Es un tipo de tercero compañia?')
     is_individual = fields.Boolean('¿Es un tipo de tercero individual?')
     types = fields.Selection([('1', 'Cliente / Cuenta'),
                               ('2', 'Contacto'),
                               ('3', 'Proveedor'),
-                              ('4', 'Funcionario / Contratista')], string='Tipo', required=True)
+                              ('4', 'Funcionario / Contratista'),
+                              ('5', 'Candidato')], string='Tipo', required=True)
+    fields_mandatory = fields.Many2many('ir.model.fields', domain="[('model', '=', 'res.partner'),('ttype', 'not in', ['many2many','one2many'])]", string='Campos obligatorios')
 
+    _sql_constraints = [('type_thirdparty_uniq', 'unique(types)',
+                         'Ya existe un tipo de tercero de este tipo, por favor verificar.')]
 
     def name_get(self):
         result = []
@@ -162,7 +145,7 @@ class x_budget_group(models.Model):
     _name = 'zue.budget_group'
     _description = 'Grupos presupuestal'
 
-    code = fields.Char(string='Código', size=10, required=True)
+    code = fields.Char(string='Código', required=True)
     name = fields.Char(string='Nombre', required=True)
      
     def name_get(self):

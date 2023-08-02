@@ -24,7 +24,7 @@ class ZuePayrollBooksReportsPortal(Controller):
 
         for contract in obj_contract:
             report = request.env.ref('zue_payroll_self_management_portal.report_book_vacation_portal_action', False)
-            pdf_content, _ = report.render_qweb_pdf(contract.id)
+            pdf_content, _ = report._render_qweb_pdf(contract.id)
             reader = PdfFileReader(io.BytesIO(pdf_content), strict=False, overwriteWarnings=False)
 
             for page in range(reader.getNumPages()):
@@ -57,7 +57,7 @@ class ZuePayrollBooksReportsPortal(Controller):
 
         for contract in obj_contract:
             report = request.env.ref('zue_payroll_self_management_portal.report_book_cesantias_portal_action', False)
-            pdf_content, _ = report.render_qweb_pdf(contract.id)
+            pdf_content, _ = report._render_qweb_pdf(contract.id)
             reader = PdfFileReader(io.BytesIO(pdf_content), strict=False, overwriteWarnings=False)
 
             for page in range(reader.getNumPages()):

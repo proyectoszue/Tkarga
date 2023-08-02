@@ -25,9 +25,9 @@
                     <button name="restart_payroll" type="object" string="Reiniciar" states="done"/>
                 </xpath>
                 <xpath expr="//field[@name='journal_id']" position="before">
-                    <field name="analytic_account_id"/>
+                    <field name="analytic_account_id" readonly="1" force_save="1"/>
                 </xpath>
-                <xpath expr="//field[@name='name']" position="after">
+                <xpath expr="//field[@name='struct_id']" position="after">
                     <field name="struct_process" invisible="1"/>
                     <field name="refund_date" attrs="{'invisible':[('struct_process', '!=', 'vacaciones')]}"/>
                 </xpath>
@@ -83,9 +83,11 @@
                     <group class="oe_subtotal_footer oe_right" colspan="2" attrs="{'invisible':[('struct_process', '=', 'nomina')]}">
                         <button string="Excel acumulados valores variables" name="base_values_export_excel" type="object"/>
                     </group>
-
+                    <group class="d-flex justify-content-end" colspan="12">
+                        <button string="Excel Líneas de recibo de nómina" name="get_excel_lines" type="object"/>
+                    </group>
                 </xpath>
-                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[1]/field[@name='worked_days_line_ids']/tree[1]/field[@name='amount'][2]" position="attributes">
+                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[1]/field[@name='worked_days_line_ids']/tree[1]/field[@name='amount']" position="attributes">
                     <attribute name="attrs">{}</attribute>
                     <attribute name="invisible">1</attribute>
                 </xpath>
@@ -126,10 +128,19 @@
             <field name="priority">1</field>
             <field name="inherit_id" ref="hr_payroll.view_hr_payslip_by_employees"/>
             <field name="arch" type="xml">
-                <xpath expr="//form[1]/group[3]/field[@name='employee_ids']" position="replace">
+                <xpath expr="//form[1]/group[4]/field[@name='employee_ids']" position="replace">
                     <field name="struct_process" invisible="1"/>
+                    <group>
+                        <field name="method_schedule_pay" widget="radio"/>
+                        <field name="analytic_account_ids" widget="many2many_tags"/>
+                        <field name="state_contract" widget="radio"/>
+                    </group>
                     <group attrs="{'invisible':[('struct_process', '!=', 'prima')]}">
                         <field name="prima_run_reverse_id"/>
+                    </group>
+                    <group attrs="{'invisible':[('struct_process', '!=', 'contrato')]}">
+                        <field name="settle_payroll_concepts"/>
+                        <field name="novelties_payroll_concepts"/>
                     </group>
                     <button string="Limpiar" name="clean_employees" type="object"/>
                     <newline/>
@@ -167,6 +178,13 @@
                 <xpath expr="//field[@name='company_id']" position="before">
                     <field name="definitive_plan" readonly="0"/>
                 </xpath>
+                <xpath expr="//form[1]/sheet[1]" position="after">
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids"/>
+                        <field name="activity_ids"/>
+                        <field name="message_ids"/>
+                    </div>
+                </xpath>
             </field>
         </record>
         <!-- Formulario tipos de entradas de trabajo -->
@@ -176,7 +194,7 @@
             <field name="priority">20</field>
             <field name="inherit_id" ref="hr_work_entry.hr_work_entry_type_view_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='sequence']" position="after">
+                <xpath expr="//field[@name='is_leave']" position="after">
                     <field name="short_name"/>
                     <field name="deduct_deductions" widget="radio" attrs="{'invisible':[('is_leave', '=', False)]}"/>
                     <field name="not_contribution_base" attrs="{'invisible':[('is_leave', '=', False)]}"/>

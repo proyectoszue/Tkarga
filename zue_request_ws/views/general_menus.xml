@@ -1,0 +1,5 @@
+<odoo>
+    <data>
+        <menuitem name="Consumir/Solicitud WS" id="zue_request_ws.menu_request_ws" sequence="10" parent="base.menu_automation" action="zue_request_ws.action_request_ws"/>
+    </data>
+</odoo>

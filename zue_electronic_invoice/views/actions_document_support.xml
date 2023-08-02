@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="view_document_support_fe" model="ir.ui.view">
+            <field name="name">support.document.zue.electronic.invoice.form.inherit</field>
+            <field name="model">sending.support.document</field>
+            <field name="priority">50</field>
+            <field name="inherit_id" ref="zue_account_support_document.documents_support_view_form"/>
+            <field name="arch" type="xml">
+<!--                <xpath expr="//field[@name='amount']" position="after">-->
+<!--                    <button name="download_xml" type="object" string="XML" attrs="{'invisible': [('xml_file', '=', False)]}"/>-->
+<!--                    <button name="download_pdf" type="object" string="PDF" attrs="{'invisible': [('pdf_file', '=', False)]}"/>-->
+<!--                </xpath>-->
+                <xpath expr="//button[@name='consecutive_assignment']" position="after">
+                    <button name="get_xmls" type="object" string="Generar Archivo" class="oe_highlight" states="ac"/>
+                    <button name="upload_ds" type="object" string="Enviar Archivo" class="oe_highlight" states="xml"/>
+                    <button name="check_document_status_ds" type="object" string="Comprobar Estado Envio" class="oe_highlight" states="ws"/>
+                    <button name="download_pdf_ds" type="object" string="Generar PDF" class="oe_highlight" states="ws"/>
+                    <button name="get_xmls_rejected" type="object" string="GENERAR XML RECHAZADOS" class="oe_link" states="ws"/>
+                    <button name="upload_ds_rejected" type="object" string="ENVIAR XML RECHAZADOS" class="oe_link" states="ws"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_document_support_detail_fe" model="ir.ui.view">
+            <field name="name">support.document.detail.zue.electronic.invoice.form.inherit</field>
+            <field name="model">sending.support.document.detail</field>
+            <field name="priority">50</field>
+            <field name="inherit_id" ref="zue_account_support_document.documents_support_detail_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form/*" position="before">
+                    <header>
+                        <field name="state" invisible="1"/>
+                        <field name="status" invisible="1"/>
+                        <button name="update_data_move" type="object" string="Actualizar Datos" class="oe_highlight" attrs="{'invisible': [('status', '=', 'ACCEPTED')]}"/>
+                        <button name="get_xml" type="object" string="Generar Archivo" class="oe_highlight" attrs="{'invisible': [('status', '=', 'ACCEPTED')]}"/>
+                        <button name="consume_web_service_send_xml" type="object" string="Enviar Archivo" class="oe_highlight" attrs="{'invisible': [('status', '=', 'ACCEPTED')]}"/>
+                        <button name="consume_web_service_status_document" type="object" string="Comprobar Estado Envio" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'ws')]}"/>
+                        <button name="consume_web_service_download_files" type="object" string="Generar PDF" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'ws')]}"/>
+                    </header>
+                </xpath>
+                <xpath expr="//field[@name='result_status']" position="after">
+                    <group>
+                        <field name="xml_file" invisible="1"/>
+                        <field name="pdf_file" invisible="1"/>
+                        <group>
+                            <button name="download_xml" type="object" string="XML" attrs="{'invisible': [('xml_file', '=', False)]}"/>
+                        </group>
+                        <group>
+                            <button name="download_pdf" type="object" string="PDF" attrs="{'invisible': [('pdf_file', '=', False)]}"/>
+                        </group>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+
+<!--        Nota Credito Soporte        -->
+
+        <record id="view_notes_document_support" model="ir.ui.view">
+            <field name="name">notes.support.document.zue.electronic.invoice.form.inherit</field>
+            <field name="model">notes.documents.support</field>
+            <field name="priority">50</field>
+            <field name="inherit_id" ref="zue_account_support_document.notes_documents_support_view_form"/>
+            <field name="arch" type="xml">
+<!--                <xpath expr="//field[@name='amount']" position="after">-->
+<!--                    <button name="download_xml" type="object" string="XML" attrs="{'invisible': [('xml_file', '=', False)]}"/>-->
+<!--                    <button name="download_pdf" type="object" string="PDF" attrs="{'invisible': [('pdf_file', '=', False)]}"/>-->
+<!--                </xpath>-->
+                <xpath expr="//button[@name='consecutive_assignment']" position="after">
+                    <button name="get_xmls" type="object" string="Generar Archivo" class="oe_highlight" states="ac"/>
+                    <button name="upload_ds" type="object" string="Enviar Archivo" class="oe_highlight" states="xml"/>
+                    <button name="check_document_status_ds" type="object" string="Comprobar Estado Envio" class="oe_highlight" states="ws"/>
+                    <button name="download_pdf_ds" type="object" string="Generar PDF" class="oe_highlight" states="ws"/>
+                    <button name="get_xmls_rejected" type="object" string="GENERAR XML RECHAZADOS" class="oe_link" states="ws"/>
+                    <button name="upload_ds_rejected" type="object" string="ENVIAR XML RECHAZADOS" class="oe_link" states="ws"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_notes_document_support_detail_fe" model="ir.ui.view">
+            <field name="name">notes.support.document.detail.zue.electronic.invoice.form.inherit</field>
+            <field name="model">sending.notes.document.support.detail</field>
+            <field name="priority">50</field>
+            <field name="inherit_id" ref="zue_account_support_document.notes_documents_support_detail_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="/form/*" position="before">
+                    <header>
+                        <field name="state" invisible="1"/>
+                        <field name="status" invisible="1"/>
+                        <button name="update_data_move" type="object" string="Actualizar Datos" class="oe_highlight" attrs="{'invisible': [('status', '=', 'ACCEPTED')]}"/>
+                        <button name="get_xml" type="object" string="Generar Archivo" class="oe_highlight" attrs="{'invisible': [('status', '=', 'ACCEPTED')]}"/>
+                        <button name="consume_web_service_send_xml" type="object" string="Enviar Archivo" class="oe_highlight" attrs="{'invisible': [('status', '=', 'ACCEPTED')]}"/>
+                        <button name="consume_web_service_status_document" type="object" string="Comprobar Estado Envio" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'ws')]}"/>
+                        <button name="consume_web_service_download_files" type="object" string="Generar PDF" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'ws')]}"/>
+                    </header>
+                </xpath>
+                <xpath expr="//field[@name='result_status']" position="after">
+                    <group>
+                        <field name="xml_file" invisible="1"/>
+                        <field name="pdf_file" invisible="1"/>
+                        <group>
+                            <button name="download_xml" type="object" string="XML" attrs="{'invisible': [('xml_file', '=', False)]}"/>
+                        </group>
+                        <group>
+                            <button name="download_pdf" type="object" string="PDF" attrs="{'invisible': [('pdf_file', '=', False)]}"/>
+                        </group>
+                    </group>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>
+

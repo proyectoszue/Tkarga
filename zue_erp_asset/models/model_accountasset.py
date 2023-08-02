@@ -12,7 +12,7 @@ class AccountAsset(models.Model):
     _inherit = 'account.asset'
     
     move_ids = fields.Many2one(related='original_move_line_ids.move_id', string='Movimiento Original', readonly=True, copy=False)
-    x_partner = fields.Many2one('res.partner', string='Asociado', track_visibility='onchange')
+    x_partner = fields.Many2one('res.partner', string='Asociado', tracking=True)
     x_accumulated_depreciation = fields.Float(string='Depreciación acumulada')
     x_asset_plate = fields.Char(string='Placa del activo')
     x_date_depreciation = fields.Date(string='Fecha depreciación total')

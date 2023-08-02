@@ -15,7 +15,8 @@ class HrPayslipPublic(models.Model):
     date_to = fields.Date(string='Fecha fin')
     contract_id = fields.Many2one('hr.contract.public',string='Contrato')
     company_id = fields.Many2one('res.company',string='Compañia')
-    observation  = fields.Char(string='Observacion')
+    observation = fields.Char(string='Observacion')
+    number = fields.Char(string='Referencia')
     # worked_days_line_ids = fields.One2many('hr.payslip.worked_days', 'payslip_id',
     #     string='Payslip Worked Days', copy=True, readonly=True)
 

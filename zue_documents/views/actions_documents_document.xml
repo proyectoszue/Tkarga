@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record id="documents_document_form_inherit" model="ir.ui.view">
+            <field name="name">documents_document.form.inherit</field>
+            <field name="model">documents.document</field>
+            <field name="inherit_id" ref="documents.documents_view_list"/>
+            <field name="priority" eval="8"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='name']" position="after">
+                    <field name="expiration_date"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="zue_documents_document_form_inherit" model="ir.ui.view">
+            <field name="name">zue_documents_document.form.inherit</field>
+            <field name="model">documents.document</field>
+            <field name="inherit_id" ref="documents.document_view_kanban"/>
+            <field name="priority" eval="8"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='url']" position="before">
+                    <field name="expiration_date"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="view_zue_documents_form" model="ir.ui.view">
+            <field name="name">zue.documents.form.inherit</field>
+            <field name="model">documents.document</field>
+            <field name="inherit_id" ref="documents.document_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='partner_id']" position="after">
+                    <field name="expiration_date"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

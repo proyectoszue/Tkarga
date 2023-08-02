@@ -5,4 +5,6 @@ access_hr_payslip_worked_days_public,hr_payslip_worked_days_public,model_hr_pays
 access_hr_payslip_line_public,hr_payslip_line_public,model_hr_payslip_line_public,,1,1,1,1
 access_hr_permit_application,hr_permit_application,model_hr_permit_application,,1,1,1,1
 access_hr_labor_certificate_history_public,hr_labor_certificate_history_public,model_hr_labor_certificate_history_public,,1,1,1,1
-
+access_hr_employee_update_tmp,hr_employee_update_tmp,model_hr_employee_update_tmp,,1,1,1,1
+access_hr_portal_news,hr_portal_news,model_hr_portal_news,,1,1,1,1
+access_zue_hr_employee_portal_design,zue_hr_employee_portal_design,model_zue_hr_employee_portal_design,,1,1,1,1

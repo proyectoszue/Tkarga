@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <report
-            id="report_book_vacation_portal_action"
-            model="hr.contract.public"
-            string="Libro de Vacaciones Portal Web"
-            report_type="qweb-pdf"
-            name="zue_payroll_self_management_portal.report_book_vacation_portal"
-            file="zue_payroll_self_management_portal.report_book_vacation_portal"
-        />
+        <record id="report_book_vacation_portal_action" model="ir.actions.report">
+           <field name="name">Libro de Vacaciones Portal Web</field>
+           <field name="model">hr.contract.public</field>
+           <field name="report_type">qweb-pdf</field>
+           <field name="report_name">zue_payroll_self_management_portal.report_book_vacation_portal</field>
+           <field name="report_file">zue_payroll_self_management_portal.report_book_vacation_portal</field>
+           <field name="binding_model_id" ref="model_hr_contract_public"/>
+        </record>
 
-         <report
-            id="report_book_cesantias_portal_action"
-            model="hr.contract.public"
-            string="Libro de Cesantías Portal Web"
-            report_type="qweb-pdf"
-            name="zue_payroll_self_management_portal.report_book_cesantias_portal"
-            file="zue_payroll_self_management_portal.report_book_cesantias_portal"
-        />
+        <record id="report_book_cesantias_portal_action" model="ir.actions.report">
+           <field name="name">Libro de Cesantías Portal Web</field>
+           <field name="model">hr.contract.public</field>
+           <field name="report_type">qweb-pdf</field>
+           <field name="report_name">zue_payroll_self_management_portal.report_book_cesantias_portal</field>
+           <field name="report_file">zue_payroll_self_management_portal.report_book_cesantias_portal</field>
+           <field name="binding_model_id" ref="model_hr_contract_public"/>
+        </record>
 
         <!-- <record id="report_book_vacation_portal_action" model="ir.actions.report">
             <field name="paperformat_id" ref="zue_hr_payroll.book_vacation"/>

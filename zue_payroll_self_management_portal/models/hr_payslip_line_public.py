@@ -20,6 +20,7 @@ class HrPayslipWorkedDaysPublic(models.Model):
     total = fields.Float(string='Valor Total')
     entity_id = fields.Many2one('hr.employee.entities',string='Entidad')
     salary_rule_id = fields.Many2one('hr.salary.rule',string='Regla Salarial')
+    loan_id = fields.Many2one('hr.loans', string='Prestamo')
 
     @api.model
     def _get_fields(self):

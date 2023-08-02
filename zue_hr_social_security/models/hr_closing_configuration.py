@@ -6,18 +6,18 @@ class hr_closing_configuration_detail(models.Model):
     _name ='hr.closing.configuration.detail'
     _description = 'Configuración contabilización cierre de nómina (Seguridad social & Provisiones)'
 
-    process_id = fields.Many2one('hr.closing.configuration.header', string = 'Proceso', track_visibility='onchange')
-    department = fields.Many2one('hr.department', string = 'Departamento', track_visibility='onchange')
-    company = fields.Many2one('res.company', string = 'Compañía', track_visibility='onchange', required=True)
-    work_location = fields.Many2one('res.partner', string = 'Ubicación de trabajo', track_visibility='onchange')
+    process_id = fields.Many2one('hr.closing.configuration.header', string = 'Proceso')
+    department = fields.Many2one('hr.department', string = 'Departamento')
+    company = fields.Many2one('res.company', string = 'Compañía', required=True)
+    work_location = fields.Many2one('res.partner', string = 'Ubicación de trabajo')
     third_debit = fields.Selection([('entidad', 'Entidad'),
                                     ('compañia', 'Compañia'),
-                                    ('empleado', 'Empleado')], string='Tercero débito', track_visibility='onchange')
+                                    ('empleado', 'Empleado')], string='Tercero débito')
     third_credit = fields.Selection([('entidad', 'Entidad'),
                                     ('compañia', 'Compañia'),
-                                    ('empleado', 'Empleado')], string='Tercero crédito', track_visibility='onchange')
-    debit_account = fields.Many2one('account.account', string = 'Cuenta débito', company_dependent=True, track_visibility='onchange')
-    credit_account = fields.Many2one('account.account', string = 'Cuenta crédito', company_dependent=True, track_visibility='onchange')
+                                    ('empleado', 'Empleado')], string='Tercero crédito')
+    debit_account = fields.Many2one('account.account', string = 'Cuenta débito', company_dependent=True)
+    credit_account = fields.Many2one('account.account', string = 'Cuenta crédito', company_dependent=True)
 
 #Configuración parametrización contabilización cierre de nómina (Seguridad social & Provisiones)
 class hr_closing_configuration_header(models.Model):
@@ -38,6 +38,8 @@ class hr_closing_configuration_header(models.Model):
     description = fields.Text(string='Descripción')
     journal_id = fields.Many2one('account.journal',string='Diario', company_dependent=True)
     detail_ids = fields.One2many('hr.closing.configuration.detail','process_id',string='Contabilización')
+    debit_account_difference = fields.Many2one('account.account', string='Cuenta débito diferencia', company_dependent=True)
+    credit_account_difference = fields.Many2one('account.account', string='Cuenta crédito diferencia', company_dependent=True)
 
     _sql_constraints = [('closing_process_uniq', 'unique(process)',
                          'El proceso seleccionado ya esta registrado, por favor verificar.')]

@@ -28,7 +28,7 @@ styleH = styles['Heading1']
 
 #---------------------------------- LIBRO DIARIO
 class libro_diario_report(models.TransientModel):
-    _name = 'zue.libro_diario.report'
+    _name = 'zue.libro.diario.report'
     _description = 'Reporte Libro Diario ZUE'
     
     company_id = fields.Many2one('res.company', string='Compañia', required=True, default=lambda self: self.env.company)
@@ -99,10 +99,10 @@ class libro_diario_report(models.TransientModel):
                 SUM(case when B."date" >= '%s' then B.credit else 0 end) as credit,
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
-                        select distinct substring(A.code_prefix for 1) as LevelOne
+                        select distinct substring(A.code_prefix_start for 1) as LevelOne
                         From account_group A
                         left join account_group b on a.id = b.parent_id
-                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix is not null    
+                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix_start is not null    
                 ) as LevelAccount
                 INNER JOIN account_account A on A.code like LevelAccount.LevelOne || '%s' 
                 INNER JOIN account_move_line B on A.id = B.account_id 
@@ -130,10 +130,10 @@ class libro_diario_report(models.TransientModel):
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
                         select distinct 
-                                A.code_prefix as LevelTwo,A."name" as LevelTwoName					
+                                A.code_prefix_start as LevelTwo,A."name" as LevelTwoName					
                         From account_group A
                         left join account_group b on a.id = b.parent_id
-                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix is not null    
+                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix_start is not null    
                 ) as LevelAccount
                 INNER JOIN account_account A on A.code like LevelAccount.LevelTwo || '%s' 
                 INNER JOIN account_move_line B on A.id = B.account_id 
@@ -161,10 +161,10 @@ class libro_diario_report(models.TransientModel):
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
                         select distinct 
-                                coalesce(B.code_prefix,'') as LevelThree,coalesce(B."name",'') as LevelThreeName
+                                coalesce(B.code_prefix_start,'') as LevelThree,coalesce(B."name",'') as LevelThreeName
                         From account_group A
                         left join account_group b on a.id = b.parent_id
-                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix is not null    
+                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix_start is not null    
                 ) as LevelAccount
                 INNER JOIN account_account A on A.code like LevelAccount.LevelThree || '%s' 
                 INNER JOIN account_move_line B on A.id = B.account_id 
@@ -193,10 +193,10 @@ class libro_diario_report(models.TransientModel):
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
                         select distinct 
-                                coalesce(B.code_prefix,'') as LevelFour,coalesce(B."name",'') as LevelFourName
+                                coalesce(B.code_prefix_start,'') as LevelFour,coalesce(B."name",'') as LevelFourName
                         From account_group A
                         left join account_group b on a.id = b.parent_id
-                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 2)  = 1 and a.code_prefix is not null    
+                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 2)  = 1 and a.code_prefix_start is not null    
                 ) as LevelAccount
                 INNER JOIN account_account A on A.code like LevelAccount.LevelFour || '%s' 
                 INNER JOIN account_move_line B on A.id = B.account_id 
@@ -387,14 +387,14 @@ class libro_diario_report(models.TransientModel):
         action = {
                     'name': 'ReporteLibroDiario',
                     'type': 'ir.actions.act_url',
-                    'url': "web/content/?model=zue.libro_diario.report&id=" + str(self.id) + "&filename_field=pdf_file_name&field=pdf_file&download=true&filename=" + self.pdf_file_name,
+                    'url': "web/content/?model=zue.libro.diario.report&id=" + str(self.id) + "&filename_field=pdf_file_name&field=pdf_file&download=true&filename=" + self.pdf_file_name,
                     'target': 'self',
                 }
         return action
         
 #---------------------------------- LIBRO MAYOR
 class libro_mayor_report(models.TransientModel):
-    _name = 'zue.libro_mayor.report'
+    _name = 'zue.libro.mayor.report'
     _description = 'Reporte Libro Mayor ZUE'
     
     company_id = fields.Many2one('res.company', string='Compañia', required=True, default=lambda self: self.env.company)
@@ -459,10 +459,10 @@ class libro_mayor_report(models.TransientModel):
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
                         select distinct 
-                                A.code_prefix as LevelOne,A."name" as LevelOneName					
+                                A.code_prefix_start as LevelOne,A."name" as LevelOneName					
                         From account_group A
                         left join account_group b on a.id = b.parent_id
-                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix is not null    
+                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix_start is not null    
                 ) as LevelAccount
                 INNER JOIN account_account A on A.code like LevelAccount.LevelOne || '%s' 
                 INNER JOIN account_move_line B on A.id = B.account_id 
@@ -490,10 +490,10 @@ class libro_mayor_report(models.TransientModel):
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
                         select distinct 
-                                coalesce(B.code_prefix,'') as LevelTwo,coalesce(B."name",'') as LevelTwoName
+                                coalesce(B.code_prefix_start,'') as LevelTwo,coalesce(B."name",'') as LevelTwoName
                         From account_group A
                         left join account_group b on a.id = b.parent_id
-                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix is not null    
+                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix_start is not null    
                 ) as LevelAccount
                 INNER JOIN account_account A on A.code like LevelAccount.LevelTwo || '%s' 
                 INNER JOIN account_move_line B on A.id = B.account_id 
@@ -522,11 +522,11 @@ class libro_mayor_report(models.TransientModel):
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
                         select distinct 
-                                coalesce(c.code_prefix,'') as LevelThree,coalesce(c."name",'') as LevelThreeName
+                                coalesce(c.code_prefix_start,'') as LevelThree,coalesce(c."name",'') as LevelThreeName
                         From account_group A
                         left join account_group b on a.id = b.parent_id
                         left join account_group c on b.id = c.parent_id
-                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix is not null    
+                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix_start is not null    
                 ) as LevelAccount
                 INNER JOIN account_account A on A.code like LevelAccount.LevelThree || '%s' 
                 INNER JOIN account_move_line B on A.id = B.account_id 
@@ -722,7 +722,7 @@ class libro_mayor_report(models.TransientModel):
         action = {
                     'name': 'ReporteLibroMayor',
                     'type': 'ir.actions.act_url',
-                    'url': "web/content/?model=zue.libro_mayor.report&id=" + str(self.id) + "&filename_field=pdf_file_name&field=pdf_file&download=true&filename=" + self.pdf_file_name,
+                    'url': "web/content/?model=zue.libro.mayor.report&id=" + str(self.id) + "&filename_field=pdf_file_name&field=pdf_file&download=true&filename=" + self.pdf_file_name,
                     'target': 'self',
                 }
         return action

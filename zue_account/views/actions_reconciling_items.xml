@@ -1,0 +1,68 @@
+<odoo>
+    <data>
+        <record model="ir.actions.act_window" id="action_zue_reconciling_items_encab">
+            <field name="name">Conciliación partidas conciliatorias</field>
+            <field name="res_model">zue.reconciling.items.encab</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_reconciling_items_encab_list">
+            <field name="name">zue reconciling items encab list</field>
+            <field name="model">zue.reconciling.items.encab</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="z_year"/>
+                    <field name="z_month"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_reconciling_items_encab_form">
+            <field name="name">zue reconciling items encab form</field>
+            <field name="model">zue.reconciling.items.encab</field>
+            <field name="arch" type="xml">
+                <form>
+                  <header>
+                      <button name="process" type="object" string="Procesar" states="draft" class="oe_highlight"/>
+                      <field name="state" widget="statusbar"/>
+                  </header>
+                <sheet>
+                    <div class="oe_right oe_button_box" name="buttons">
+                        <button name="return_action_to_open"
+                            class="oe_inline oe_stat_button" style="width: 200px !important;"
+                            icon="fa-list"
+                            attrs="{'invisible': [('z_counter_extract', '=', 0)]}"
+                            type="object">
+                            <field name="z_counter_extract" widget="statinfo"/>
+                        </button>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="name"/>
+                            <field name="z_year"/>
+                            <field name="z_month"/>
+                            <field name="z_search_all"/>
+                            <button name="search_reconciling_items" type="object" string="Buscar" icon="fa-search"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Partidas conciliatorias pendientes" name="ejecution">
+                            <field name="z_reconciling_detail" nolabel="1">
+                                <tree>
+                                    <field name="z_date" readonly="1" optional="show"/>
+                                    <field name="z_payment_ref" readonly="1" optional="show"/>
+                                    <field name="z_partner_id" readonly="1" optional="show"/>
+                                    <field name="z_amount" readonly="1" optional="show"/>
+                                    <field name="z_statement_id" readonly="1" optional="show"/>
+                                    <field name="z_journal_id" readonly="1" optional="show"/>
+                                </tree>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

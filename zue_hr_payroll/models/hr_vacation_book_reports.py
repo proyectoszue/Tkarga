@@ -94,7 +94,7 @@ class hr_vacation_book(models.TransientModel):
                         left join res_partner as c on a.address_id = c.id
                         left join zue_res_branch as d on a.branch_id = d.id
                         left join hr_department as e on a.department_id = e.id 
-                        left join account_analytic_account as f on a.analytic_account_id = f.id   
+                        left join account_analytic_account as f on hc.analytic_account_id = f.id   
                         --Provision
                         left join ( 
                                     select c.employee_id,c.contract_id,c.value_wage,c.value_base,c."time",c.value_balance,c.value_payments,c.amount,c.current_payable_value 
@@ -234,7 +234,7 @@ class hr_vacation_book(models.TransientModel):
                         left join res_partner as c on a.address_id = c.id
                         left join zue_res_branch as d on a.branch_id = d.id
                         left join hr_department as e on a.department_id = e.id 
-                        left join account_analytic_account as f on a.analytic_account_id = f.id
+                        left join account_analytic_account as f on hc.analytic_account_id = f.id
                         {query_where} 
                         group by a.identification_id,a."name",b."name",hv.initial_accrual_date,
                         hv.final_accrual_date,hv.departure_date,hv.return_date

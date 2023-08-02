@@ -97,7 +97,7 @@ class hr_entities_reports(models.TransientModel):
                             inner join res_partner as e on d.partner_id = e.id
                             left join hr_contract_risk as f on hc.risk_id = f.id 
                             left join zue_res_branch as rb on a.branch_id = rb.id
-                            left join account_analytic_account as aaa on a.analytic_account_id = aaa.id 
+                            left join account_analytic_account as aaa on hc.analytic_account_id = aaa.id 
                             left join res_company as rc on rc.id = a.company_id
                             left join hr_social_security_branches as hssb on a.branch_social_security_id = hssb.id
                             left join hr_social_security_work_center as hsswc on a.work_center_social_security_id = hsswc.id
@@ -114,7 +114,7 @@ class hr_entities_reports(models.TransientModel):
                             inner join res_partner as e on d.partner_id = e.id
                             left join hr_contract_risk as f on hc.risk_id = f.id 
                             left join zue_res_branch as rb on a.branch_id = rb.id
-                            left join account_analytic_account as aaa on a.analytic_account_id = aaa.id 
+                            left join account_analytic_account as aaa on hc.analytic_account_id = aaa.id 
                             left join res_company as rc on rc.id = a.company_id
                             left join hr_social_security_branches as hssb on a.branch_social_security_id = hssb.id
                             left join hr_social_security_work_center as hsswc on a.work_center_social_security_id = hsswc.id

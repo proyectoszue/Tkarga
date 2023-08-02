@@ -1,14 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-        <report
-            id="report_payslip_portal_action"
-            model="hr.payslip.public"
-            string="Payrrol Vouchers Portal"
-            report_type="qweb-pdf"
-            name="zue_payroll_self_management_portal.reports_payslip_header_footer_template_final"
-            file="zue_payroll_self_management_portal.reports_payslip_header_footer_template_final"
-            print_report_name="'Payslip - %s' % (object.employee_id.name)"
-        />
+        <record id="report_payslip_portal_action" model="ir.actions.report">
+           <field name="name">Payrrol Vouchers Portal</field>
+           <field name="model">hr.payslip.public</field>
+           <field name="report_type">qweb-pdf</field>
+           <field name="report_name">zue_payroll_self_management_portal.reports_payslip_header_footer_template_final</field>
+           <field name="report_file">zue_payroll_self_management_portal.reports_payslip_header_footer_template_final</field>
+           <field name="binding_model_id" ref="model_hr_payslip_public"/>
+        </record>
     </data>
 </odoo>

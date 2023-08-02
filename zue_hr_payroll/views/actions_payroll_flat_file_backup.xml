@@ -35,13 +35,14 @@
                                     <field name="payment_type" />
                                     <field name="company_id" />
                                     <field name="payslip_id" />
+                                    <field name="liquidations_ids" widget="many2many_tags"/>
                                     <field name="transmission_date" />
                                     <field name="application_date" />
                                     <field name="description" />
                                 </group>   
                                 <group>
-                                    <field name="txt_file_name" />
-                                    <field name="txt_file" />                        
+                                    <field name="txt_file_name" invisible="1"/>
+                                    <field name="txt_file" filename="txt_file_name"/>
                                 </group>                                                   
                             </group>    
                         </sheet>                    

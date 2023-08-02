@@ -38,7 +38,7 @@
                         margin-right: -10em;
                         }
                     </style>
-                    <span t-raw="o.struct_report_income_and_withholdings"/>
+                    <span t-esc="o.struct_report_income_and_withholdings"/>
                 </t>
             </t>
         </t>

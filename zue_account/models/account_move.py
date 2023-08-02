@@ -1,3 +1,5 @@
+
+
 from odoo import models, fields, api, _, SUPERUSER_ID
 from odoo.exceptions import UserError, ValidationError
 
@@ -18,9 +20,21 @@ class account_move(models.Model):
                                         ('4', 'Factura de contingencia'),
                                         ], string='Tipo de Documento')
     accounting_closing_id = fields.Many2one('annual.accounting.closing', string='Cierre contable anual', ondelete='cascade')
+    is_invoice_ref = fields.Boolean('No referencia factura', default=False)
+    move_ref_id = fields.Many2one('account.move', string='Factura a rectificar', domain="[('state', '=', 'posted'),('move_type', '=', 'out_invoice')]")
 
-    #supplier_invoice_attachment_name = fields.Char(string="Soporte Filename")
-    @api.depends('line_ids','invoice_line_ids')
+    @api.onchange('move_ref_id')
+    def _get_entities(self):
+        for record in self:
+            if record.move_ref_id.name:
+                record.ref = 'Reversión de: ' + record.move_ref_id.name
+
+    # # Borrar
+    # def button_process_edi_web_services(self):
+    #     return
+
+    # supplier_invoice_attachment_name = fields.Char(string="Soporte Filename")
+    @api.depends('line_ids', 'invoice_line_ids')
     def _compute_amount_iva(self):
         iva_amount = 0
 
@@ -46,10 +60,10 @@ class account_move(models.Model):
                     if tax_base_amount > 0:
                         break
 
-                    for taxes in lines.tax_ids:
-                        if not taxes.l10n_co_edi_type.retention:
-                            tax_base_amount = record.amount_untaxed
-                            break
+                    # for taxes in lines.tax_ids:
+                    #     if not taxes.l10n_co_edi_type.retention:
+                    #         tax_base_amount = record.amount_untaxed
+                    #         break
 
             record.tax_base_amount = tax_base_amount
 
@@ -57,34 +71,121 @@ class account_move(models.Model):
     def _check_line_ids(self):
         for record in self:
             for lines in record.line_ids:
-                if lines.required_partner and not lines.partner_id:
-                    raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga un tercero y este no ha sido digitado. Por favor verifique!'))
+                # if lines.required_partner and not lines.partner_id:
+                    # raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga un tercero y este no ha sido digitado. Por favor verifique!'))
 
                 if 'stock_move_id' in self.env['account.move']._fields:
                     if lines.required_analytic_account and not lines.analytic_account_id and not record.stock_move_id.picking_id:
-                        raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
+                        if lines.price_total > 0:
+                            raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
                 else:
                     if lines.required_analytic_account and not lines.analytic_account_id:
-                        raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
+                        if lines.price_total > 0:
+                            raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
 
-            for lines in record.invoice_line_ids:
-                if lines.required_partner and not lines.partner_id:
-                    raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga un tercero y este no ha sido digitado. Por favor verifique!'))
+            # for lines in record.invoice_line_ids:
+            #     if lines.required_partner and not lines.partner_id:
+            #         raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga un tercero y este no ha sido digitado. Por favor verifique!'))
 
                 if 'stock_move_id' in self.env['account.move']._fields:
                     if lines.required_analytic_account and not lines.analytic_account_id and not record.stock_move_id.picking_id:
-                        raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
+                        if lines.price_total > 0:
+                            raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
                 else:
                     if lines.required_analytic_account and not lines.analytic_account_id:
-                        raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
+                        if lines.price_total > 0:
+                            raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
 
     @api.constrains('supplier_invoice_number')
     def _check_supplier_invoice(self):
         for record in self:
-            if record.type == 'in_invoice':
-                obj_move = self.env['account.move'].search([('supplier_invoice_number','=',record.supplier_invoice_number),('id','!=',record.id)])
+            if record.move_type == 'in_invoice' and record.is_rcm == False:
+                obj_move = self.env['account.move'].search([('supplier_invoice_number', '=', record.supplier_invoice_number),('id','!=',record.id)])
                 if len(obj_move) > 0:
                     raise ValidationError('El número de factura digitado ya existe, por favor verificar.')
+
+    # @api.constrains('line_ids','invoice_line_ids') # SE COMENTA DEBIDO A QUE AHORA SE HACE EN LA TABLA DE IMPUESTOS ACCOUNT.TAX
+    # def _check_minimum_base(self):
+    #     for record in self:
+    #         for line in record.invoice_line_ids:
+    #             if line.tax_ids:
+    #                 for tax in line.tax_ids:
+    #                     if record.amount_untaxed < tax.minimum_base and tax.has_minimum_base:
+    #                         line.tax_ids -= tax
+    #                         value_tax_debit,value_tax_credit = 0,0
+    #                         for line_tax in record.line_ids.filtered(lambda line: line.tax_ids):
+    #                             if len(line_tax.tax_ids) > 0:
+    #                                 if tax.id in line_tax.tax_ids.ids:# or tax_line.name == tax.name:
+    #                                     try:
+    #                                         line_tax.tax_ids -= tax
+    #                                         #record._onchange_recompute_dynamic_lines()
+    #                                     except Exception as e:
+    #                                         pass
+    #                                         #record._onchange_recompute_dynamic_lines()
+    #                         for tax_line in record.line_ids.filtered(lambda line: line.tax_repartition_line_id):#record.line_ids.filtered(lambda line: line.tax_line_id):
+    #                             if tax_line.tax_repartition_line_id.tax_id.id == tax.id:# or tax.id in tax_line.tax_ids.ids:# or tax_line.name == tax.name:
+    #                                 value_tax_debit += tax_line.debit
+    #                                 value_tax_credit += tax_line.credit
+    #                                 try:
+    #                                     tax_line.unlink()
+    #                                 except Exception as e:
+    #                                     pass
+    #                         try:
+    #                             record._recompute_dynamic_lines(recompute_all_taxes=True)
+    #                         except Exception as e:
+    #                             obj_line_receivable = record.line_ids.filtered(lambda line: line.account_id.user_type_id.type == 'receivable')  # Cuenta por cobrar
+    #                             obj_line_payable = record.line_ids.filtered(lambda line: line.account_id.user_type_id.type == 'payable')  # Cuenta por pagar
+    #                             if len(obj_line_receivable) > 0:
+    #                                 obj_line_receivable.debit += value_tax_debit + value_tax_credit
+    #                                 #obj_line_receivable.debit -= value_tax_credit
+    #                             else:
+    #                                 if len(obj_line_payable) > 0:
+    #                                     #obj_line_payable.credit -= value_tax_debit
+    #                                     obj_line_payable.credit += value_tax_credit + value_tax_debit
+    #                             record._recompute_dynamic_lines(recompute_all_taxes=True)
+
+    @api.constrains('tax_totals_json','amount_untaxed_signed','amount_total_signed')
+    def _check_minimum_base(self):
+        for record in self:
+            #Revisar base minima
+            for line in record.line_ids.filtered('tax_repartition_line_id'):
+                try:
+                    if line.tax_line_id.has_minimum_base and line.tax_base_amount < line.tax_line_id.minimum_base and line.tax_base_amount > 0 and line.move_id.move_type not in ['out_refund', 'in_refund']:
+                        for item in record.invoice_line_ids:
+                            for tax in item.tax_ids:
+                                if line.tax_line_id.id in tax.ids:
+                                    item.tax_ids -= tax
+                        #record._recompute_tax_lines()
+                        record._recompute_dynamic_lines(recompute_all_taxes=True)
+                except:
+                    pass
+
+    # def _move_autocomplete_invoice_lines_values(self):
+    #     values = super(account_move, self)._move_autocomplete_invoice_lines_values()
+    #     self._check_minimum_base()
+    #     self.line_ids._onchange_price_subtotal()
+    #     self._recompute_dynamic_lines(recompute_all_taxes=True)
+    #     values = self._convert_to_write(self._cache)
+    #     values.pop('invoice_line_ids', None)
+    #     return values
+
+    @api.onchange('partner_id')
+    def _onchange_assign_invoice_user(self):
+        self.invoice_user_id = self.partner_id.user_id
+
+    @api.model
+    def create(self, vals):
+        invoice = super(account_move, self).create(vals)
+        if invoice.partner_id:
+            invoice.partner_id.validate_check_fields_required()
+        return invoice
+
+    def write(self, vals):
+        invoice = super(account_move, self).write(vals)
+        for record in self:
+            if record.partner_id:
+                record.partner_id.validate_check_fields_required()
+        return invoice
 
 class zue_confirm_wizard(models.TransientModel):
     _inherit = 'zue.confirm.wizard'
@@ -105,7 +206,7 @@ class annual_accounting_closing(models.Model):
 
     name = fields.Char('Nombre')
     balance = fields.Float('Saldo', readonly=True)
-    closing_year = fields.Integer('Año de cierre', size=4)
+    closing_year = fields.Integer('Año de cierre')
     counter_contab = fields.Integer(compute='compute_counter_contab', string='Movimientos')
     company_id = fields.Many2one('res.company', string='Compañía', readonly=True, required=True, default=lambda self: self.env.company)
     journal_id = fields.Many2one('account.journal', string='Diario destino', company_dependent=True, required=True)
@@ -174,17 +275,20 @@ class annual_accounting_closing(models.Model):
             if not self.counterparty_account:
                 raise ValidationError(_("No se han especificado la cuenta de contrapartida. Por favor verifique!"))
 
-        for account in self.filter_account_ids:
-            row_count += 1
-            if row_count == 1:
-                if row_count == len(self.filter_account_ids):
-                    accounts = '(' + account.code_prefix + '%)'
+        if self.filter_account_ids:
+            for account in self.filter_account_ids:
+                row_count += 1
+                if row_count == 1:
+                    if row_count == len(self.filter_account_ids):
+                        accounts = '(' + account.code_prefix_start + '%)'
+                    else:
+                        accounts = '(' + account.code_prefix_start + '%|'
+                elif row_count == len(self.filter_account_ids):
+                    accounts += account.code_prefix_start + '%)'
                 else:
-                    accounts = '(' + account.code_prefix + '%|'
-            elif row_count == len(self.filter_account_ids):
-                accounts += account.code_prefix + '%)'
-            else:
-                accounts += account.code_prefix + '%|'
+                    accounts += account.code_prefix_start + '%|'
+        else:
+            accounts = '4%|5%|6%|7%'
 
         d_start_date = datetime.strptime(start_date, '%d/%m/%Y')
         d_end_date = datetime.strptime(end_date, '%d/%m/%Y')
@@ -279,3 +383,39 @@ class annual_accounting_closing(models.Model):
         self.balance = total
 
         return True
+
+
+class AccountMoveLine(models.Model):
+    _inherit = "account.move.line"
+
+    @api.onchange('amount_currency')
+    def _onchange_amount_currency(self):
+        for line in self:
+            if not line.move_id.company_id:
+                company = self.env.company
+            else:
+                company = line.move_id.company_id
+            balance = line.currency_id._convert(line.amount_currency, company.currency_id, company, line.move_id.date or fields.Date.context_today(line))
+            line.debit = balance if balance > 0.0 else 0.0
+            line.credit = -balance if balance < 0.0 else 0.0
+
+            if not line.move_id.is_invoice(include_receipts=True):
+                continue
+
+            line.update(line._get_fields_onchange_balance())
+            line.update(line._get_price_total_and_subtotal())
+
+    @api.onchange('currency_id')
+    def _onchange_currency(self):
+        for line in self:
+            if not line.move_id.company_id:
+                company = self.env.company
+            else:
+                company = line.move_id.company_id
+
+            if line.move_id.is_invoice(include_receipts=True):
+                line._onchange_price_subtotal()
+            elif not line.move_id.reversed_entry_id:
+                balance = line.currency_id._convert(line.amount_currency, company.currency_id, company, line.move_id.date or fields.Date.context_today(line))
+                line.debit = balance if balance > 0.0 else 0.0
+                line.credit = -balance if balance < 0.0 else 0.0

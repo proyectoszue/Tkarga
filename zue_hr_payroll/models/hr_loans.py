@@ -37,17 +37,19 @@ class HrLoans(models.Model):
     department_id = fields.Many2one('hr.department', related="employee_id.department_id", readonly=True,
                                     string="Departamento")
     contract_id = fields.Many2one('hr.contract', string="Contrato", required=True, domain="[('employee_id','=', employee_id)]")
+    company_id = fields.Many2one(related='contract_id.company_id', string='Compañía')
     entity_id = fields.Many2one('hr.employee.entities', string="Entidad", required=True)
     type_installment = fields.Selection([('period', 'N° de Periodos'),
                                         ('counts', 'N° de Cuotas (Personalizadas)')], 'Calcular en base a', required=True, default='period')
     installment = fields.Integer(string="N° de Periodos", default=1)
+    final_settlement_contract = fields.Boolean(string='¿En la liquidación final del contrato se decuenta el saldo?')
     installment_count = fields.Integer(string="N° de Cuotas (Personalizadas)", default=0)
     payment_date = fields.Date(string="Fecha de Primera Cuota", required=True, default=fields.Date.today())
     apply_charge = fields.Selection([('15','Primera quincena'),
                                     ('30','Segunda quincena'),
                                     ('0','Siempre')],'Aplicar cobro',  required=True, help='Indica a que quincena se va a aplicar la deduccion')
     salary_rule = fields.Many2one('hr.salary.rule', string="Regla salarial", required=True)
-    prestamo_lines = fields.One2many('hr.loans.line', 'prestamo_id', string="Detalle", index=True, ondelete='cascade')    
+    prestamo_lines = fields.One2many('hr.loans.line', 'prestamo_id', string="Detalle", index=True)
     currency_id = fields.Many2one('res.currency', string='Moneda', required=True)
     prestamo_original_amount = fields.Float(string="Valor Original del Préstamo", required=True, default=0)
     prestamo_amount = fields.Float(string="Valor Préstamo", required=True)
@@ -66,7 +68,7 @@ class HrLoans(models.Model):
         ('approve', 'Aprobado'),
         ('refuse', 'Rechazado'),
         ('cancel', 'Cancelado'),
-    ], string="Estado", default='draft', track_visibility='onchange', copy=False)
+    ], string="Estado", default='draft', tracking=True, copy=False)
 
     @api.model
     def create(self, values):        
@@ -101,12 +103,12 @@ class HrLoans(models.Model):
             payment_date = str(year)+'-'+str(month)+'-15'
             self.payment_date = payment_date            
         if self.apply_charge == '30':
-            #if day > 30:
-            day = 30 if month != 2 else 28 
-            month = month + 1 if month != 12 else 1
-            year = year + 1 if month == 12 else year
-            # else:
-            #     day = 30 if month != 2 else 28 
+            if day > 30:
+                day = 30 if month != 2 else 28
+                month = month + 1 if month != 12 else 1
+                year = year + 1 if month == 12 else year
+            else:
+                 day = 30 if month != 2 else 28
             payment_date = str(year)+'-'+str(month)+'-'+str(day)
             self.payment_date = payment_date
         if self.apply_charge == '0':

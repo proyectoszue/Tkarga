@@ -1,0 +1,5 @@
+<odoo>
+    <data>
+        <menuitem name="XMLs" id="zue_xml_generator.menu_create_xml" sequence="10" parent="base.menu_automation" action="zue_xml_generator.action_xml_generator"/>
+    </data>
+</odoo>

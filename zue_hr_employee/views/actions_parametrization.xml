@@ -8,7 +8,7 @@
             <field name="inherit_id" ref="hr_payroll.view_hr_employee_grade_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='schedule_pay']" position="after">
-                    <field name="process" widget="radio" attrs="{'readonly': [('regular_pay', '=', True)]}"/>
+                    <field name="process" widget="radio"/>
                 </xpath>
             </field>
         </record>
@@ -22,6 +22,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='parent_id']" position="after">
                     <field name="group_payroll_voucher"/>
+                    <field name="sequence"/>
                 </xpath>
             </field>
         </record>
@@ -75,13 +76,20 @@
             <field name="priority">20</field>
             <field name="inherit_id" ref="hr_holidays.edit_holiday_status_form"/>
             <field name="arch" type="xml">
+                <xpath expr="//field[@name='leave_validation_type']" position="before">
+                    <field name="code" required="1"/>
+                </xpath>
                 <xpath expr="//field[@name='request_unit']" position="after">
                     <field name="unpaid_absences"/>
+                    <field name="discounting_bonus_days"/>
                     <field name="is_vacation"/>
+                </xpath>
+                <xpath expr="//field[@name='leave_validation_type']" position="after">
+                    <field name="obligatory_attachment"/>
                     <field name="type_of_entity_association"/>
                 </xpath>
-                <xpath expr="//field[@name='validation_type']" position="after">
-                    <field name="obligatory_attachment"/>
+                <xpath expr="//field[@name='color']" position="before">
+                    <field name="published_portal"/>
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/group[1]" position="after">
                     <group>
@@ -186,8 +194,7 @@
                                         <field name="value_porc_sena_company"/>
                                         <field name="value_porc_icbf_company"/>
                                     </group>
-                                    <group string="Provisiones prestaciones" name="provisiones_prestaciones"
-                                           priority="4">
+                                    <group string="Provisiones prestaciones" name="provisiones_prestaciones" priority="4">
                                         <field name="value_porc_provision_bonus"/>
                                         <field name="value_porc_provision_cesantias"/>
                                         <field name="value_porc_provision_intcesantias"/>
@@ -207,6 +214,20 @@
                                     <group string="Incrementos" name="incrementos" priority="2">
                                         <field name="value_porc_increment_smlv"/>
                                         <field name="value_porc_ipc"/>
+                                    </group>
+                                </group>
+                            </page>
+                            <page string="Públicos">
+                                <group>
+                                    <group string="Valores">
+                                        <field name="z_food_subsidy_amount"/>
+                                    </group>
+                                    <group string="Incrementos">
+                                        <field name="z_percentage_public"/>
+                                    </group>
+                                     <group string="Topes">
+                                        <field name="z_Bonus_services_rendered"/>
+                                        <field name="z_food_subsidy_tope"/>
                                     </group>
                                 </group>
                             </page>
@@ -234,24 +255,26 @@
                                                 <br/>
                                             </p>
                                         </group>
-                                        <field name="conf_certificate_income_ids" nolabel="1">
-                                            <tree editable="bottom" default_order='sequence'>
-                                                <field name="sequence"/>
-                                                <field name="calculation"/>
-                                                <field name="type_partner"/>
-                                                <field name="information_fields_id"/>
-                                                <field name="information_fields_relation" invisible="1"/>
-                                                <field name="related_field_id"/>
-                                                <field name="salary_rule_id" widget="many2many_tags"/>
-                                                <field name="origin_severance_pay"/>
-                                                <field name="accumulated_previous_year"/>
-                                                <field name="sequence_list_sum"/>
-                                            </tree>
-                                        </field>
+                                        <group>
+                                            <field name="conf_certificate_income_ids" nolabel="1">
+                                                <tree editable="bottom" default_order='sequence'>
+                                                    <field name="sequence"/>
+                                                    <field name="calculation"/>
+                                                    <field name="type_partner"/>
+                                                    <field name="information_fields_id"/>
+                                                    <field name="information_fields_relation" invisible="1"/>
+                                                    <field name="related_field_id"/>
+                                                    <field name="salary_rule_id" widget="many2many_tags"/>
+                                                    <field name="origin_severance_pay"/>
+                                                    <field name="accumulated_previous_year"/>
+                                                    <field name="sequence_list_sum"/>
+                                                </tree>
+                                            </field>
+                                        </group>
                                     </page>
                                     <page string="Estructura Certificado ingresos y retenciones">
                                         <group>
-                                            <field name="report_income_and_withholdings" nolabel="1" widget="html"/>
+                                            <field name="report_income_and_withholdings" nolabel="1" widget="html" options="{'style-inline': true, 'codeview': true }"/>
                                         </group>
                                     </page>
                                 </notebook>

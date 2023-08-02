@@ -81,5 +81,18 @@
       <field name="view_mode">tree,form</field>
     </record>
 
+    <!-- Campo en Pagos -->
+    <record id="view_zue_account_payment_form_check" model="ir.ui.view">
+        <field name="name">zue.account.payment.form.inherit.check</field>
+        <field name="model">account.payment</field>
+        <field name="priority">50</field>
+        <field name="inherit_id" ref="account.view_account_payment_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='ref']" position="after">
+              <field name="x_payment_file"/>
+            </xpath>
+        </field>
+    </record>
+
   </data>
 </odoo>

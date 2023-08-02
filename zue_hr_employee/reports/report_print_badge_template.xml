@@ -85,6 +85,21 @@
                                     </div>
                                 </div>
                             </t>
+                            <t t-if="template.imgback_header_file">
+                                <div style="page-break-after: always;"/>
+                                <t t-if="template.orientation == 'vertical'">
+                                    <div style="width:5.5cm !important;height:8.6cm !important;border:none;margin-left:-15px;">
+                                        <img t-att-src="image_data_uri(template.imgback_header_file)"
+                                             style="width:5.5cm;height:8.6cm;position: absolute;"/>
+                                    </div>
+                                </t>
+                                <t t-else="">
+                                    <div style="width:10.8cm !important;height:7cm !important;border:none;margin-left:-15px;">
+                                        <img t-att-src="image_data_uri(template.imgback_header_file)"
+                                             style="width:10.8cm;height:7cm;position: absolute;"/>
+                                    </div>
+                                </t>
+                            </t>
                         </t>
                     </t>
                 </t>

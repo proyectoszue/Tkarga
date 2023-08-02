@@ -47,7 +47,7 @@
                             <field name="email_from"/>
                             <field name="subject"/>
                             <separator/>
-                            <field name="body_html" nolabel="1" colspan="2" class="oe_read_only" widget="html"/>
+                            <field name="body_html" nolabel="1" colspan="2" class="oe_read_only" widget="html" options="{'style-inline': true, 'codeview': true }"/>
                             <field name="body_arch" nolabel="1" colspan="2" class="o_mail_body oe_edit_only" widget="mass_mailing_html"/>                            
                         </group>
                         <button name="send_alert" string="Enviar alerta" type="object"/>                         

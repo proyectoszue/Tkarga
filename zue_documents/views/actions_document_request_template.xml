@@ -1,0 +1,43 @@
+<odoo>
+    <data>
+
+        <record model="ir.actions.act_window" id="action_document_request_template">
+            <field name="name">Plantilla solicitud de documentos</field>
+            <field name="res_model">document.request.template</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record model="ir.ui.view" id="document_request_template_list">
+            <field name="name">document request template list</field>
+            <field name="model">document.request.template</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="document_request_template_form">
+            <field name="name">document request template form</field>
+            <field name="model">document.request.template</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                        <group>
+                            <field name="detail_ids" nolabel="1">
+                                <tree editable="bottom">
+                                    <field name="name"/>
+                                    <field name="folder_id"/>
+                                    <field name="tags_ids" widget="many2many_tags" domain="[('folder_id', '=', folder_id)]"/>
+                                </tree>
+                            </field>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

@@ -18,12 +18,14 @@ class ZuePayrollCertificationLaboralPortal(Controller):
             return request.not_found()
 
         obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)], limit=1)
+        obj_portal_design = request.env['zue.hr.employee.portal.design'].search(
+            [('z_company_design_id', '=', request.env.user.company_id.id)], limit=1)
         contract = obj_employee.contract_id.name
         generation_date = datetime.today()
         generation_date = generation_date.strftime('%d-%m-%Y')
         report_name = "Certificado Laboral"
 
-        return request.render('zue_payroll_self_management_portal.labor_certification',{'contract':contract,'report_name':report_name,'generation_date':generation_date})
+        return request.render('zue_payroll_self_management_portal.labor_certification',{'contract':contract,'report_name':report_name,'generation_date':generation_date, 'portal_design':obj_portal_design})
 
     @route(["/zue_payroll_self_management_portal/certification_print"], type='http', auth='user', website=True, csrf=False)
     def get_certification_print(self, **post):
@@ -44,7 +46,7 @@ class ZuePayrollCertificationLaboralPortal(Controller):
         pdf_writer = PdfFileWriter()
 
         report = request.env.ref('zue_payroll_self_management_portal.report_certificacion_laboral_portal_action', False)
-        pdf_content, _ = report.render_qweb_pdf(obj_history.id)
+        pdf_content, _ = report._render_qweb_pdf(obj_history.id)
         reader = PdfFileReader(io.BytesIO(pdf_content), strict=False, overwriteWarnings=False)
 
         for page in range(reader.getNumPages()):

@@ -8,16 +8,7 @@ odoo.define('zue_payroll_self_management_portal.javascript',function(require){
     
     var severalDays = $('#severalDays');
     var saveData = $('#SaveData');
-    var type_reason = $('#reason');
-
-    var _show_text_other = function(e){
-        if ($('#reason').val()=='other'){
-            $("#text_other").prop('hidden', false);
-        }else {
-            $("#text_other").prop('hidden', true);
-        }
-    }
-
+    
     var _validate_permit_days = function(e){
         if (severalDays.prop('checked')){
             $("#permit_days").prop('readonly', false);
@@ -63,8 +54,7 @@ odoo.define('zue_payroll_self_management_portal.javascript',function(require){
 
         return resp;
     }
-
-    type_reason.blur(_show_text_other);
+    
     severalDays.click(_validate_permit_days);
     saveData.click(_save_data);
 

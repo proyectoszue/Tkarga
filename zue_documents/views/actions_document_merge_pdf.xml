@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="action_merge_pdf_form" model="ir.actions.act_window">
+            <field name="name">Reporte documentos - Unir PDFs</field>
+            <field name="res_model">document.report.merge.pdf</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <record model="ir.ui.view" id="form_document_report_merge_pdf_wizard">
+            <field name="name">Reporte documentos - Unir PDFs</field>
+            <field name="model">document.report.merge.pdf</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet string="Reporte documentos - Unir PDFs">
+                        <group>
+                            <field name="favorite_id"/>
+                            <field name="domain_documents" widget="domain" options="{'model': 'documents.document', 'in_dialog': True}"/>
+                            <field name="order_fields" widget="many2many_tags"/>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="save_favorite"/>
+                            </group>
+                            <group>
+                                <field name="name" attrs="{'required': [('save_favorite', '=', True)],'invisible': [('save_favorite', '=', False)]}"/>
+                            </group>
+                        </group>
+                        <group string="Documentos">
+                            <field name="document_ids" nolabel="1" can_create="false">
+                                <tree>
+                                    <field name="sequence" widget="handle"/>
+                                    <field name="partner_id" readonly="1" force_save="1"/>
+                                    <field name="document_id" readonly="1" force_save="1"/>
+                                    <field name="folder_id" readonly="1" force_save="1"/>
+                                    <field name="tag_ids" readonly="1" force_save="1" widget="many2many_tags"/>
+                                </tree>
+                            </field>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="generate_pdf" class="oe_highlight" string="Generar" type="object"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+
+        <record id="action_document_merge_pdf_favorites" model="ir.actions.act_window">
+            <field name="name">Reporte documentos - Unir PDFs - Favoritos</field>
+            <field name="res_model">document.report.merge.pdf.favorites</field>
+            <field name="view_mode">tree,form</field>
+            <field name="target">current</field>
+        </record>
+
+        <record model="ir.ui.view" id="tree_document_report_merge_pdf_favorites">
+            <field name="name">tree document_report_merge_pdf_favorites</field>
+            <field name="model">document.report.merge.pdf.favorites</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="name"/>
+                    <field name="domain_documents"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="form_document_report_merge_pdf_favorites">
+            <field name="name">form document_report_merge_pdf_favorites</field>
+            <field name="model">document.report.merge.pdf.favorites</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet string="Reporte documentos - Unir PDFs - Favoritos">
+                        <group>
+                            <field name="name"/>
+                            <field name="domain_documents" widget="domain" options="{'model': 'documents.document', 'in_dialog': True}"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</odoo>
+
+

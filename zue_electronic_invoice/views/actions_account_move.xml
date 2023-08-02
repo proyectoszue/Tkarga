@@ -1,0 +1,100 @@
+<odoo>
+    <data>
+		<record id="view_zue_electronic_invoice_form_account_move" model="ir.ui.view">
+			<field name="name">zue_electronic_invoice.account_move_inherit</field>
+			<field name="model">account.move</field>
+			<field name="priority">60</field>
+			<field name="inherit_id" ref="account.view_move_form"/>
+			<field name="arch" type="xml">
+                <xpath expr="//button[@name='preview_invoice']" position="replace">
+<!--                    <button name="get_xml" type="object" string="FE - Generar Archivo" states="posted"/>-->
+                    <button name="send_all_process" type="object" string="ENVIO FE" states="posted"/>
+<!--                    <button name="get_xml_v2" type="object" string="FE v2 XML"/>-->
+<!--                    <button name="send_xml_FE" type="object" string="Enviar Archivo FE" states="posted"/>-->
+<!--                    <button name="check_status_FE" type="object" string="Comprobar Estado FE" states="posted"/>-->
+<!--                    <button name="download_pdf_file_FE" type="object" string="Descargar PDF FE" states="posted"/>-->
+<!--                    <button name="get_cufe_FE" type="object" string="Obtener CUFE" states="posted"/>-->
+                </xpath>
+                <xpath expr="//group[@id='header_right_group']" position="after">
+                    <group>
+                        <field name="z_purchase_order"/>
+                        <field name="description_code_credit" attrs="{'invisible': [('move_type', '!=', 'out_refund')]}"/>
+                        <field name="description_code_debit" attrs="{'invisible': [('move_type', '!=', 'in_refund')]}"/>
+                    </group>
+                    <group id="FE_ZUE" attrs="{'invisible': [('move_type', 'not in', ['out_invoice', 'out_refund'])]}">
+                        <field name="cufe_cude_ref" readonly="1" force_save="1"/>
+                        <field name="fe_status" readonly="1" force_save="1"/>
+                        <field name="fe_msg_result" invisible="1"/>
+                    </group>
+                </xpath>
+
+                <xpath expr="//group[@id='header_right_group']" position="after">
+                    <group name="fe_zue_fields" attrs="{'invisible': ['|', ('move_type', 'not in', ['out_invoice', 'out_refund']), ('country_code', '!=', 'CO')]}">
+                        <field name="fe_payment_option_id" attrs="{'readonly': [('state', '!=', 'draft')]}"/>
+                    </group>
+                </xpath>
+
+                <xpath expr="//field[@name='partner_id']" position="before">
+					<field name="x_fe_sent" invisible="1"/>
+                    <field name="x_support_document_sent" invisible="1"/>
+                </xpath>
+                <xpath expr="//button[@name='button_draft']" position="attributes">
+                    <attribute name="attrs">{"invisible": ["|", ["fe_status","=",'accepted'], ["x_support_document_sent","=",True]]}</attribute>
+                </xpath>
+			</field>
+		</record>
+
+<!--        Vista métodos de pago-->
+        <record model="ir.actions.act_window" id="fe_payment_options_action">
+            <field name="name">Métodos de pago</field>
+            <field name="res_model">fe.payment.options</field>
+            <field name="view_mode">tree,form</field>
+		</record>
+
+        <record model="ir.ui.view" id="fe_payment_options_list">
+            <field name="name">Lista métodos de pago</field>
+            <field name="model">fe.payment.options</field>
+            <field name="arch" type="xml">
+                <tree string="Métodos de pago" editable="bottom">
+                    <field name="code"/>
+                    <field name="name"/>
+                </tree>
+            </field>
+        </record>
+
+        <record id="view_partner_zue_electronic_invoice_form" model="ir.ui.view">
+            <field name="name">res.partner.zue.electronic.invoice.form.inherit</field>
+            <field name="model">res.partner</field>
+            <field name="priority">20</field>
+            <field name="inherit_id" ref="base.view_partner_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='website']" position="before">
+                    <field name="x_email_fe"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record model="ir.actions.server" id="zue_envio_masivo_fe">
+            <field name="name">Envío FE</field>
+            <field name="model_id" ref="model_account_move"/>
+            <field name="state">code</field>
+            <field name="code">
+                action = env['account.move'].browse(env.context['active_ids']).masive_send_fe()
+            </field>
+        </record>
+
+        <record id="zue_view_account_move_reversal_form" model="ir.ui.view">
+            <field name="name">zue_electronic_invoice.account_move_reversal_inherit</field>
+			<field name="model">account.move.reversal</field>
+			<field name="priority">60</field>
+			<field name="inherit_id" ref="account.view_account_move_reversal"/>
+			<field name="arch" type="xml">
+                <xpath expr="//field[@name='reason']" position="after">
+                    <field name="move_type" invisible="1"/>
+                    <field name="description_code_credit" attrs="{'invisible': [('move_type', 'not in', ['out_refund','out_invoice'])],'required':[('move_type', 'in', ['out_refund','out_invoice'])]}"/>
+                    <field name="description_code_debit" attrs="{'invisible': [('move_type', 'not in', ['in_refund','in_invoice'])],'required':[('move_type', 'in', ['in_refund','in_invoice'])]}"/>
+                </xpath>
+            </field>
+        </record>
+    </data>
+</odoo>

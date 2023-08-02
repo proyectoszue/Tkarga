@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_document_request_template,document.request.template,model_document_request_template,,1,1,1,1
+access_document_request_template_detail,document.request.template.detail,model_document_request_template_detail,,1,1,1,1
+access_documents_request_template_wizard,documents.request.template.wizard,model_documents_request_template_wizard,,1,1,1,1
+access_document_report_merge_pdf,document.report.merge.pdf,model_document_report_merge_pdf,,1,1,1,1
+access_document_report_merge_pdf_documents,document.report.merge.pdf.documents,model_document_report_merge_pdf_documents,,1,1,1,1
+access_document_report_merge_pdf_favorites,document.report.merge.pdf.favorites,model_document_report_merge_pdf_favorites,,1,1,1,1

@@ -1,0 +1,230 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="documents_data" name="Documentos">
+            <body t-att-style="'background-color:'+str(portal_design.z_background_color)+';font-family:'+str(portal_design.z_font)+';'">
+            <t t-call="web.basic_layout">
+                <link rel="stylesheet" href="/zue_payroll_self_management_portal/static/src/css/main.css"/>
+                <script type="text/javascript" src="/zue_payroll_self_management_portal/static/src/js/employee_documents.js"/>
+                <div t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                    <br/>
+                    <div class="row">
+                        <div class="col-md-12">
+                            <center>
+                                <h1>
+                                    <b>Documentos</b>
+                                </h1>
+                            </center>
+                        </div>
+                    </div>
+                    <hr/>
+                    <div class="row">
+                        <div class="col-md-2">
+                            <b>
+                                Filtro
+                            </b>
+                            <div class="form-check">
+                                <input class="filter_expired form-check-input" type="checkbox" value="" id="chk_filter_expired"/>
+                                <label class="form-check-label" for="Filtro">
+                                    Mostrar solo documentos expirados
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-9 d-flex justify-content-center align-items-end flex-column">
+                            <button class="fa fa-th-large" type="button" data-toggle="collapse"
+                                    t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_primary_color)+';color:'+str(portal_design.z_secondary_color)+';'"
+                                    data-target="#Kanban" aria-expanded="false"
+                                    aria-controls="Kanban">
+                            </button>
+                        </div>
+                        <div class="col-md-1 d-flex justify-content-center align-items-start flex-column">
+                            <button class="fa fa-th-list" type="button" data-toggle="collapse"
+                                    t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_primary_color)+';color:'+str(portal_design.z_secondary_color)+';'"
+                                    data-target="#List" aria-expanded="false"
+                                    aria-controls="List">
+                            </button>
+                        </div>
+                    </div>
+                    <hr/>
+                    <div class="row">
+                        <div class="full_iframe_div accordion" id="accordionViews" style="padding:1%">
+                            <!--                            Vista Kanban-->
+                            <div class="collapse multi-collapse show" id="Kanban" data-parent="#accordionViews">
+                                <div class="card-columns" id="div_view_kanban">
+                                    <t t-foreach="documents" t-as="dc">
+                                        <div t-att-class="'card mb-3' + (' text-white bg-secondary' if dc.get('document_request',False) else '')"
+                                             t-att-expired="dc.get('expired',False)"
+                                             t-att-style="'max-width: 540px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                            <div class="row no-gutters">
+                                                <t t-if="dc.get('document_request',False)">
+                                                    <div class="col-md-3 d-flex justify-content-center align-items-lg-center">
+                                                        <span class="fa fa-upload" title="Cargar archivo"
+                                                              t-att-style="'font-size: 4rem;border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
+                                                              ';color:'+str(portal_design.z_primary_color)+';'"/>
+                                                    </div>
+                                                </t>
+                                                <t t-else="">
+                                                    <t t-if="dc.get('name','').find('xlsx') > -1">
+                                                        <div class="col-md-3 d-flex justify-content-center align-items-lg-center">
+                                                            <span class="fa fa-file-excel-o" title="Excel"
+                                                                  style="font-size: 4rem;"/>
+                                                        </div>
+                                                    </t>
+                                                    <t t-elif="dc.get('name','').find('pdf') > -1">
+                                                        <div class="col-md-3 d-flex justify-content-center align-items-lg-center">
+                                                            <span class="fa fa-file-pdf-o" title="PDF"
+                                                                  style="font-size: 4rem;"/>
+                                                        </div>
+                                                    </t>
+                                                    <t t-elif="dc.get('name','').find('docx') > -1">
+                                                        <div class="col-md-3 d-flex justify-content-center align-items-lg-center">
+                                                            <span class="fa fa-file-word-o" title="Word"
+                                                                  style="font-size: 4rem;"/>
+                                                        </div>
+                                                    </t>
+                                                    <t t-elif="dc.get('name','').find('jpg') > -1 or dc.get('name','').find('png')> -1">
+                                                        <div class="col-md-3 d-flex justify-content-center align-items-lg-center">
+                                                            <span class="fa fa-file-image-o" title="Image"
+                                                                  style="font-size: 4rem;"/>
+                                                        </div>
+                                                    </t>
+                                                    <t t-elif="dc.get('name','').find('zip') > -1 or dc.get('name','').find('rar') > -1">
+                                                        <div class="col-md-3 d-flex justify-content-center align-items-lg-center">
+                                                            <span class="fa fa-file-archive-o" title="Zip"
+                                                                  style="font-size: 4rem;"/>
+                                                        </div>
+                                                    </t>
+                                                    <t t-else="">
+                                                        <div class="col-md-3 d-flex justify-content-center align-items-lg-center">
+                                                            <span class="fa fa-file" title="File" style="font-size: 4rem;"/>
+                                                        </div>
+                                                    </t>
+                                                </t>
+                                                <!--                                                <div class="col-md-3 d-flex justify-content-center align-items-lg-center">-->
+                                                <!--                                                    <span class="fa fa-file" title="File" style="font-size: 4rem;"/>-->
+                                                <!--                                                </div>-->
+                                                <div class="col-md-9">
+                                                    <div class="card-body" t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                        <b>
+                                                            <h6 class="card-title">
+                                                                <span t-esc="dc.get('name','')"/>
+                                                            </h6>
+                                                        </b>
+                                                        <p class="card-text">
+                                                            <span t-esc="dc.get('folder','')"/>
+                                                            <br/>
+                                                            <t t-foreach="dc.get('categories',[])" t-as="ct">
+                                                                <small>
+                                                                    <span t-esc="ct.name"/>
+                                                                </small>
+                                                            </t>
+                                                            <t t-if="dc.get('expiration_date',False)">
+                                                                <br/>
+                                                                Fecha de expiración:
+                                                                <t t-if="dc.get('to_expire',False)">
+                                                                    <small>
+                                                                        <span class="badge badge-pill badge-warning"
+                                                                              t-esc="dc.get('expiration_date','')"/>
+                                                                    </small>
+                                                                </t>
+                                                                <t t-elif="dc.get('expired',False)">
+                                                                    <small>
+                                                                        <span class="badge badge-pill badge-danger"
+                                                                              t-esc="dc.get('expiration_date','')"/>
+                                                                    </small>
+                                                                </t>
+                                                                <t t-else="">
+                                                                    <small>
+                                                                        <span class="badge badge-pill badge-light"
+                                                                              t-esc="dc.get('expiration_date','')"/>
+                                                                    </small>
+                                                                </t>
+                                                            </t>
+                                                        </p>
+                                                        <p class="card-text">
+                                                            <small class="text-muted">
+                                                                <span t-esc="dc.get('create_date','')"
+                                                                      t-att-style="'color:'+str(portal_design.z_primary_color)+';'"/>
+                                                            </small>
+                                                        </p>
+                                                        <t t-if="dc.get('document_request',False)">
+                                                            <a t-att-href="dc.get('document_link','')" target="_blank"
+                                                               class="btn"
+                                                               t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
+                                                               ';color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                                Cargar
+                                                            </a>
+                                                        </t>
+                                                        <t t-else="">
+                                                            <a t-attf-href="data:{{dc.get('mimetype','')}};base64,{{dc.get('attachment','')}}"
+                                                               t-att-download="dc.get('name','')" class="btn"
+                                                               t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
+                                                               ';color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                                Descargar
+                                                            </a>
+                                                        </t>
+                                                        <br/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </t>
+                                </div>
+                            </div>
+                            <!--                            Vista lista-->
+                            <div class="collapse multi-collapse" id="List" data-parent="#accordionViews">
+                                <table class="table table-responsive-md"
+                                       t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                    <thead t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                        <tr>
+                                            <th>Documento</th>
+                                            <th>Espacio de trabajo</th>
+                                            <th>Categorias</th>
+                                            <th>Fecha de creación</th>
+                                            <th>Fecha de expiración</th>
+                                            <th/>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="table_view_list">
+                                        <tr t-foreach="documents" t-as="dt" t-att-expired="dt.get('expired',False)"
+                                            t-att-class="'table-secondary' if dt.get('document_request',False) else ''">
+                                            <td>
+                                                <span t-esc="dt.get('name','')"/>
+                                            </td>
+                                            <td>
+                                                <span t-esc="dt.get('folder','')"/>
+                                            </td>
+                                            <td>
+                                                <t t-foreach="dt.get('categories',[])" t-as="ct">
+                                                    <span t-esc="ct.name"/>
+                                                </t>
+                                            </td>
+                                            <td>
+                                                <span t-esc="dt.get('create_date','')"/>
+                                            </td>
+                                            <td>
+                                                <span t-esc="dt.get('expiration_date','')"/>
+                                            </td>
+                                            <td>
+                                                <t t-if="dt.get('document_request',False)">
+                                                    <a t-att-href="dt.get('document_link','')" target="_blank" class="fa fa-upload"/>
+                                                </t>
+                                                <t t-else="">
+                                                    <a t-attf-href="data:{{dt.get('mimetype','')}};base64,{{dt.get('attachment','')}}"
+                                                       t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'"
+                                                       t-att-download="dt.get('name','')" class="fa fa-download"/>
+                                                </t>
+                                            </td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <br/>
+            </t>
+            </body>
+        </template>
+    </data>
+</odoo>

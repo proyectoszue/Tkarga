@@ -12,7 +12,7 @@ class x_areas(models.Model):
     _description = 'Áreas'
     _order = 'code,name'
 
-    code = fields.Char(string='Código', size=10, required=True)
+    code = fields.Char(string='Código', required=True)
     name = fields.Char(string='Nombre', required=True)
 
     def name_get(self):
@@ -28,7 +28,7 @@ class x_areas(models.Model):
         if name:
             domain = ['|', ('name', operator, name), ('code', operator, name)]
         areas_ids = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
-        return self.browse(areas_ids).name_get()
+        return areas_ids#self.browse(areas_ids).name_get()
 
 # CARGOS
 class x_job_title(models.Model):
@@ -37,7 +37,7 @@ class x_job_title(models.Model):
     _order = 'area_id,code,name'
 
     area_id = fields.Many2one('zue.areas', string='Área')
-    code = fields.Char(string='Código', size=10, required=True)
+    code = fields.Char(string='Código', required=True)
     name = fields.Char(string='Nombre', required=True)
 
     def name_get(self):
@@ -51,7 +51,7 @@ class x_work_groups(models.Model):
     _name = 'zue.work_groups'
     _description = 'Grupos de Trabajo'
 
-    code = fields.Char(string='Código', size=10, required=True)
+    code = fields.Char(string='Código', required=True)
     name = fields.Char(string='Nombre', required=True)
 
     def name_get(self):

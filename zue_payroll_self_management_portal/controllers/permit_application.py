@@ -1,15 +1,16 @@
 #-*- coding: utf-8 -*-
 import io
 import re
+import base64
 
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+from pytz import timezone
 
 from PyPDF2 import  PdfFileReader, PdfFileWriter
 
 from odoo.http import request, route, Controller
 from odoo.tools.safe_eval import safe_eval
-from odoo.tools import float_round
 
 
 class ZuePermitApplicationPortal(Controller):
@@ -18,53 +19,71 @@ class ZuePermitApplicationPortal(Controller):
         if not request.env.user:
             return request.not_found()
 
+        obj_portal_design = request.env['zue.hr.employee.portal.design'].search(
+            [('z_company_design_id', '=', request.env.user.company_id.id)], limit=1)
         obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)], limit=1)
+        lst_leave_types = []
+        leave_types = request.env['hr.leave.type'].sudo().search([('published_portal', '=', True)])
+        for line in leave_types:
+            lst_leave_types.append((line.id, line.name))
 
-        return request.render('zue_payroll_self_management_portal.application_permit',{'obj_employee':obj_employee})
+        return request.render('zue_payroll_self_management_portal.application_permit',{'absences_update':False,'obj_employee':obj_employee,'lst_leave_types': lst_leave_types, 'portal_design':obj_portal_design})
 
     @route(["/zue_payroll_self_management_portal/save_permit_application"], type='http', auth='user', website=True, csrf=False)
     def save_permit_application(self, **post):
         if not request.env.user:
             return request.not_found()
 
+        obj_portal_design = request.env['zue.hr.employee.portal.design'].search(
+            [('z_company_design_id', '=', request.env.user.company_id.id)], limit=1)
         obj_employee = request.env['hr.employee.public'].search([('user_id', '=', request.env.user.id)], limit=1)
+        lst_leave_types = []
+        leave_types = request.env['hr.leave.type'].sudo().search([('published_portal', '=', True)])
+        for line in leave_types:
+            lst_leave_types.append((line.id, line.name))
 
-        if post.get('initial_hour',False):
-            initial_hour_lst = post['initial_hour'].split(':')
-            initial_hour = float_round(int(initial_hour_lst[0]) + int(initial_hour_lst[1]) / 60 + 0 / 3600, precision_digits=2)
+        if not post.get('date_end',False):
+            date_start = datetime.strptime(post['date_start'], '%Y-%m-%d')
+            date_end = date_start + timedelta(days=int(post['number_of_days'])-1,hours=23,minutes=59,seconds=59)
         else:
-            initial_hour = 0
+            date_start = datetime.strptime(post['date_start'], '%Y-%m-%d')
+            date_end = datetime.strptime(post['date_end'] + ' 23:59:59', '%Y-%m-%d %H:%M:%S')
 
-        if post.get('final_hour',False):
-            final_hour_lst = post['final_hour'].split(':')
-            final_hour = float_round(int(final_hour_lst[0]) + int(final_hour_lst[1]) / 60 + 0 / 3600, precision_digits=2)
-        else:
-            final_hour = 0
-
-        permit = {
+        dict_leave = {
+            'holiday_status_id': int(post['holiday_status_id']) if post.get('holiday_status_id','0') != '0' else False,
+            'employee_ids': [obj_employee.id],
             'employee_id' : obj_employee.id,
-            'permit_date' : post['permit_date'],
-            'reason': post['reason'],
-            'text_other': post.get('text_other',''),
-            'leave_requested_more_day': True if post.get('leave_requested_more_day',False) == '' else False,
-            'compensated': True if post.get('leave_compensated', False) == '' else False,
-            'permit_days' : int(post.get('permit_days',0)),
-            'initial_hour' : initial_hour,
-            'final_hour' : final_hour,
-            'observation': post['observation'],
+            'request_date_from':  date_start.date(),
+            'request_date_to': date_end.date(),
+            'date_from': date_start,
+            'date_to': date_end,
+            'number_of_days': int(post['number_of_days']),
+            'name': post['observation'],
+            'holiday_type': 'employee',
             'state': 'confirm'
         }
 
-        request.env['hr.permit.application'].sudo().create(permit)
+        obj_leave = request.env['hr.leave'].sudo().create(dict_leave)
+        obj_leave.with_context(leave_skip_state_check=True)._compute_date_from_to()
+        obj_leave.with_context(leave_skip_state_check=True)._compute_department_id()
+        obj_leave.with_context(leave_skip_state_check=True)._onchange_info_entity()
+        obj_leave.with_context(leave_skip_state_check=True).onchange_number_of_days_vacations()
 
-        return request.redirect('/zue_payroll_self_management_portal')
+        #Adjunto
+        if post.get('attachment', False):
+            obj_attachment = request.env['ir.attachment']
+            name = post.get('attachment').filename
+            file = post.get('attachment')
+            leave_id = obj_leave.id
+            attachment = file.read()
+            attachment_id = obj_attachment.sudo().create({
+                'name': name,
+                'store_fname': name,
+                'res_name': name,
+                'type': 'binary',
+                'res_model': 'hr.leave',
+                'res_id': leave_id,
+                'datas': base64.b64encode(attachment),
+            })
 
-    @route(["/zue_payroll_self_management_portal/my_application_permits"], type='http', auth='user', website=True)
-    def my_application_permits(self, **kw):
-        if not request.env.user:
-            return request.not_found()
-
-        obj_employee = request.env['hr.employee.public'].search([('user_id', '=', request.env.user.id)], limit=1)
-        obj_permit_application = request.env['hr.permit.application'].search([('employee_id', '=', obj_employee.id)])
-
-        return request.render('zue_payroll_self_management_portal.my_application_permits', {'obj_employee': obj_employee,'obj_permit_application':obj_permit_application})
+        return request.render('zue_payroll_self_management_portal.application_permit',{'absences_update':True,'obj_employee':obj_employee,'lst_leave_types': lst_leave_types, 'portal_design':obj_portal_design})

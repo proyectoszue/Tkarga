@@ -1,26 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-
-		<report
-            id="report_certificacion_laboral_portal_action"
-            model="hr.labor.certificate.history.public"
-            string="Certificacion laboral portal"
-            report_type="qweb-pdf"
-            name="zue_hr_employee.report_certificacion_laboral"
-            file="zue_hr_employee.report_certificacion_laboral"
-        />
+        <record id="report_certificacion_laboral_portal_action" model="ir.actions.report">
+           <field name="name">Certificacion laboral portal</field>
+           <field name="model">hr.labor.certificate.history.public</field>
+           <field name="report_type">qweb-pdf</field>
+           <field name="report_name">zue_hr_employee.report_certificacion_laboral</field>
+           <field name="report_file">zue_hr_employee.report_certificacion_laboral</field>
+           <field name="binding_model_id" ref="model_hr_labor_certificate_history_public"/>
+        </record>
 
         <template id="report_certificacion_laboral_portal_document">
         <t t-call="web.html_container">
         <t t-foreach="inside_foreach_docs or docs" t-as="o">
-            <div class="header">
-                <div class="col-md-12 text-right" style="margin-top:5px;">
-                    <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)" style="max-height: 100px;"/>
-                    <b><p syle="line-height:0px"><b>NIT: </b><span t-field="o.company_id.company_registry"></span></p></b>
-                    <p syle="line-height:0px">La mejor opción en soluciones de transporte especial de pasajeros</p>
-                </div>
-            </div>
 
             <div class="page">
                 <div class="oe_structure"></div>
@@ -37,7 +29,7 @@
                     <span t-if="o.employee_id.gender == 'male'">El señor</span> <span t-if="o.employee_id.gender == 'female'">La señora</span> <b><span t-esc="o.employee_id.name"/></b>
                     , identificado con cédula de ciudadanía número <span t-esc="'{:20,.0f}'.format(int(o.employee_id.identification_id))"/>,
                     labora en nuestra compañía desde el <span t-esc="o.get_date_text(o.date_start)"/>, mediante un <b><span t-esc="o.get_contract_type()"/></b>
-                    , desempeñando el cargo de <b><span t-esc="o.job_id.name"/></b>
+                    , desempeñando el cargo de <b><span t-esc="o.sudo().job_id.name"/></b>
                     en la seccional <b><span t-esc="o.employee_id.branch_id.name"/></b>
                     , devengando un salario básico mensual de <b><span t-esc="o.get_amount_text(o.wage)"/> M/Cte.</b> (<span t-esc="o.wage" t-esc-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: &quot;o.company_id.currency_id&quot;}"/>),
                     <t t-set="promedio_heyrec" t-value="o.get_average_concept_heyrec()"/>
@@ -65,21 +57,8 @@
                     <img t-if="autorizado.get('firma')" t-att-src="image_data_uri(autorizado.get('firma'))" style="max-height: 150px;"/>
                     <p style="text-align:justify;line-height:0px"><strong><span t-esc="autorizado.get('nombre')"/></strong></p>
                     <p style="text-align:justify;line-height:0px"><strong><span t-esc="autorizado.get('cargo')"/></strong></p>
-                    <p style="text-align:justify">
-                        <strong>Importante:</strong>Certificado emitido automáticamente por el sistema de Información Odoo. Si desea verificar la veracidad de esta información puede
-                        comunicarse a la Dirección Nacional de Talento Humano, líneas autorizadas (1)6197256 en Bogotá D.C. 
-                    </p>
                 </div>
                 </div>
-            </div>
-
-            <div class="footer">
-                <t t-if="o.employee_id.company_id.name == 'GRUPO EMPRESARIAL ALIANZA T S.A.'">
-                    <img src="/zue_hr_employee/static/src/img/footer_alianza.png"/>
-                </t>
-                <t t-if="o.employee_id.company_id.name != 'GRUPO EMPRESARIAL ALIANZA T S.A.'">
-                    <img src="/zue_hr_employee/static/src/img/footer.png"/>
-                </t>
             </div>
         </t>
         </t>

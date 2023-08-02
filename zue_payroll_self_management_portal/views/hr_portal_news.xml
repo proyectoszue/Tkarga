@@ -1,0 +1,48 @@
+<odoo>
+    <data>
+
+        <record model="ir.actions.act_window" id="action_hr_portal_news">
+            <field name="name">Comunicados del portal</field>
+            <field name="res_model">hr.portal.news</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record model="ir.ui.view" id="hr_portal_news_list">
+            <field name="name">Comunicados del portal</field>
+            <field name="model">hr.portal.news</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="sequence" widget="handle"/>
+                    <field name="company_id"/>
+                    <field name="name"/>
+                    <field name="date_end"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="hr_portal_news_form">
+            <field name="name">Comunicados del portal</field>
+            <field name="model">hr.portal.news</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name"/>
+                        </group>
+                        <group>
+                            <group>
+                                <field name="company_id"/>
+                            </group>
+                            <group>
+                                <field name="date_end"/>
+                            </group>
+                        </group>
+                        <group string="Comunicados">
+                            <field name="news_html" nolabel="1" widget="html" options="{'style-inline': true, 'codeview': true }"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

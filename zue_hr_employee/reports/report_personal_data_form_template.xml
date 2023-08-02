@@ -8,7 +8,7 @@
                         <tr>
                             <td colspan="3">
                                 <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)"
-                                     style="height: 80px; width:150px" alt="Logo"/>
+                                     style="height: 90px; width:160px" alt="Logo"/>
                             </td>
                             <td colspan="6">
                                 <br/><br/>
@@ -171,7 +171,7 @@
                             </thead>
                             <tbody>
                                 <tr t-foreach="o.resume_line_ids" t-as="e">
-                                    <t t-if="e.line_type_id.name == 'Educación' or e.line_type_id.name == 'Education'">
+                                    <t t-if="e.line_type_id.type_resume == 'academic'">
                                         <td>
                                             <span t-field="e.name"/>
                                         </td>
@@ -239,7 +239,7 @@
                             </thead>
                             <tbody>
                                 <tr t-foreach="o.resume_line_ids" t-as="r">
-                                 <t t-if="r.line_type_id.name == 'Experience' or r.line_type_id.name == 'Experiencia'">
+                                 <t t-if="r.line_type_id.type_resume == 'labor'">
                                     <td>
                                         <span t-field="r.name"/>
                                     </td>

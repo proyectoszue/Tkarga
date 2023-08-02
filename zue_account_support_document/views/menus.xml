@@ -1,0 +1,7 @@
+<odoo>
+    <data>
+        <menuitem name="Documento soporte" id="zue_account_support_document.zue_menu_documents_support" parent="account.menu_finance_payables"/>
+            <menuitem name="Documentos soporte" id="zue_account_support_document.menu_documents_support_account" sequence="40" parent="zue_account_support_document.zue_menu_documents_support" action="documents_support_action"/>
+            <menuitem name="Notas documentos soporte" id="zue_account_support_document.menu_notes_documents_support_account" sequence="40" parent="zue_account_support_document.zue_menu_documents_support" action="notes_documents_support_action"/>
+    </data>
+</odoo>

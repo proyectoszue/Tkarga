@@ -7,10 +7,26 @@ class hr_tipo_cotizante(models.Model):
     _name = 'hr.tipo.cotizante'
     _description = 'Tipos de cotizante'
     _order = 'code,name'
-
+    
     code = fields.Char('Código', required=True)
     name = fields.Char('Nombre', required=True)
 
+    #Tabla de cotizante 51
+    #Documentación - http://aportesenlinea.custhelp.com/app/answers/detail/a_id/464/~/condiciones-cotizante-51
+    def get_value_cotizante_51(self,year,number_of_days):
+        value_return = 0
+        number_of_days = round(number_of_days)
+        if self.code == '51':
+            annual_parameters = self.env['hr.annual.parameters'].search([('year', '=', year)])
+            if number_of_days >= 1 and number_of_days <= 7:
+                value_return = (annual_parameters.smmlv_monthly / 4) * 1
+            elif number_of_days >= 8 and number_of_days <= 14:
+                value_return = (annual_parameters.smmlv_monthly / 4) * 2
+            elif number_of_days >= 15 and number_of_days <= 21:
+                value_return = (annual_parameters.smmlv_monthly / 4) * 3
+            elif number_of_days >= 22 and number_of_days <= 30:
+                value_return = annual_parameters.smmlv_monthly
+        return value_return
 
 class hr_subtipo_cotizante(models.Model):
     _name = 'hr.subtipo.cotizante'
@@ -48,11 +64,11 @@ class hr_parameterization_of_contributors(models.Model):
 
 class hr_indicador_especial_pila(models.Model):
     _name = 'hr.indicador.especial.pila'
-    _description = 'Indicadores especiales para PILA'
-
+    _description = 'Indicadores especiales para PILA'    
+    
     name = fields.Char("Nombre")
     code = fields.Char('Codigo')
-
+                
 class hr_contract_setting(models.Model):
     _name = 'hr.contract.setting'
     _description = 'Configuracion nomina entidades'
@@ -68,13 +84,13 @@ class hr_contract_setting(models.Model):
     _sql_constraints = [('emp_type_entity_uniq', 'unique(employee_id,contrib_id)', 'El empleado ya tiene una entidad de este tipo, por favor verifique.')]
 
     @api.constrains('employee_id','contrib_id')
-    def _check_duplicate_entitites(self):
+    def _check_duplicate_entitites(self):  
         for record in self:
             obj_duplicate = self.env['hr.contract.setting'].search([('id','!=',record.id),('employee_id','=',record.employee_id.id),('contrib_id','=',record.contrib_id.id)])
 
-            if len(obj_duplicate) > 0:
-                raise ValidationError(_('El empleado ya tiene una entidad de este tipo, por favor verifique.'))
-
+            if len(obj_duplicate) > 0:   
+                raise ValidationError(_('El empleado ya tiene una entidad de este tipo, por favor verifique.'))  
+    
     def write(self, vals):
         for record in self:
             vals_history = {
@@ -104,24 +120,40 @@ class hr_contract_setting_history(models.Model):
 class hr_employee_dependents(models.Model):
     _name = 'hr.employee.dependents'
     _description = 'Dependientes de los empleados'
-
+    
     employee_id = fields.Many2one('hr.employee', 'Empleado', required=True, ondelete='cascade')
     name = fields.Char('Nombre completo', required=True)
     genero = fields.Selection([('masculino', 'Masculino'),
                                ('femenino', 'Femenino'),
                                ('otro', 'Otro')],'Genero')
     date_birthday = fields.Date('Fecha de nacimiento')
-    dependents_type = fields.Selection([('hijo', 'Hijo(a)'),
+    dependents_type = fields.Selection([('hijo', 'Hijo'),
                                ('padre', 'Padre'),
                                ('madre', 'Madre'),
                                ('conyuge', 'Cónyuge'),
-                               ('hermano', 'Hermano(a)'),
+                               ('hermano', 'Hermano'),
                                ('otro', 'Otro')],'Tipo')
+    z_document_type = fields.Selection([
+        ('11', 'Registro civil de nacimiento'),
+        ('12', 'Tarjeta de identidad'),
+        ('13', 'Cédula de ciudadanía'),
+        ('21', 'Tarjeta de extranjería'),
+        ('22', 'Cedula de extranjería'),
+        ('31', 'NIT'),
+        ('41', 'Pasaporte'),
+        ('42', 'Tipo de documento extranjero'),
+        ('43', 'Sin identificación del exterior o para uso definido por la DIAN'),
+        ('44', 'Documento de identificación extranjero persona jurídica'),
+        ('PE', 'Permiso especial de permanencia'),
+        ('PT', 'Permiso por Protección Temporal')
+    ], string='Tipo de documento',default='13')
+    z_vat = fields.Char(string='Número de documento')
+    z_report_income_and_withholdings = fields.Boolean(string='Reportar en Certificado ingresos y retenciones')
 
 class hr_employee_labor_union(models.Model):
     _name = 'hr.employee.labor.union'
     _description = 'Sindicato de empleados'
-
+    
     employee_id = fields.Many2one('hr.employee', 'Empleado', required=True, ondelete='cascade')
     name_labor_union = fields.Char('Nombre del sindicato', required=True)
     afiliado = fields.Boolean('Afiliado', help='Indica si el empelado esta afiliado a un sindicato')
@@ -154,6 +186,26 @@ class hr_cost_distribution_employee(models.Model):
     _sql_constraints = [('change_distribution_analytic_uniq', 'unique(employee_id,analytic_account_id)',
                          'Ya existe una cuenta analítica asignada, por favor verificar')]
 
+class hr_employee_sanctions(models.Model):
+    _name = 'hr.employee.sanctions'
+    _description = 'Sanciones'
+
+    employee_id = fields.Many2one('hr.employee', string='Empleado')
+    company_id = fields.Many2one(related='employee_id.company_id', string='Compañía', store=True)
+    address_home_id = fields.Many2one(related='employee_id.address_home_id', string='Tercero asociado', store=True)
+    document_id = fields.Many2one('documents.document', string='Documento')
+    absence_id = fields.Many2one('hr.leave', string='Ausencia')
+    registration_date = fields.Date(string='Fecha de registro')
+    type_fault_id = fields.Many2one('hr.types.faults', string='Tipo de falta')
+    name = fields.Char(string='Observación')
+    stage = fields.Selection([('1', 'Comunicación'),
+                              ('2', 'Descargos'),
+                              ('3', 'Pronunciamiento'),
+                              ('4', 'Sanción'),
+                              ('5', 'Cancelar'),
+                              ], string='Estado')
+
+
 class hr_employee(models.Model):
     _inherit = 'hr.employee'
 
@@ -165,75 +217,114 @@ class hr_employee(models.Model):
         else:
             return False
     #Trazabilidad
-    work_email = fields.Char(track_visibility='onchange')
-    company_id = fields.Many2one(track_visibility='onchange')
-    department_id = fields.Many2one(track_visibility='onchange')
-    job_id = fields.Many2one(track_visibility='onchange')
-    parent_id = fields.Many2one(track_visibility='onchange')
-    address_id = fields.Many2one(track_visibility='onchange')
+    work_email = fields.Char(tracking=True)
+    company_id = fields.Many2one(tracking=True)
+    department_id = fields.Many2one(tracking=True)
+    job_id = fields.Many2one(tracking=True)
+    parent_id = fields.Many2one(tracking=True)
+    address_id = fields.Many2one(tracking=True)
+    resource_calendar_id = fields.Many2one('resource.calendar',
+                                           domain="[('type_working_schedule', '=', 'employees'),'|', ('company_id', '=', False), ('company_id', '=', company_id)]",tracking=True)
     #Asignación
-    branch_id = fields.Many2one('zue.res.branch', 'Sucursal', track_visibility='onchange')
-    analytic_account_id = fields.Many2one('account.analytic.account', 'Cuenta analítica', track_visibility='onchange')
-    front_back = fields.Selection([('front','Front office'),('back','Back office')],'Area laboral', track_visibility='onchange')
-    confianza_manejo = fields.Boolean('Confianza y manejo', track_visibility='onchange')
+    branch_id = fields.Many2one('zue.res.branch', 'Sucursal', tracking=True)
+    #analytic_account_id = fields.Many2one('account.analytic.account', 'Cuenta analítica', tracking=True)
+    front_back = fields.Selection([('front','Front office'),('back','Back office')],'Area laboral', tracking=True)
+    confianza_manejo = fields.Boolean('Confianza y manejo', tracking=True)
     type_thirdparty = fields.Many2one('zue.type_thirdparty',string='Tipo de tercero', domain=[('types', '=', '4')], default=_get_default_type_thirdparty)
-    info_project = fields.Char(string='Proyecto')
+    info_project = fields.Char(string='Proyecto', tracking=True)
     #Evaluación de desempeño
-    ed_qualification = fields.Float(string='Calificación', track_visibility='onchange')
-    ed_observation = fields.Text(string='Observaciones', track_visibility='onchange')
+    ed_qualification = fields.Float(string='Calificación', tracking=True)
+    ed_observation = fields.Text(string='Observaciones', tracking=True)
     #General
-    partner_encab_id = fields.Many2one('res.partner', 'Tercero', help='Tercero equivalente a el empleado')
-    type_employee = fields.Many2one('hr.types.employee',string='Tipo de Empleado', track_visibility='onchange')
-    sabado = fields.Boolean('Sábado día hábil', help='Indica si el día sábado se incluye como día hábil', track_visibility='onchange')
-    certificate = fields.Selection(selection_add=[('primary','Primaria'),
-                                    ('academic_bachelor','Bachiller'),
-                                    ('apprentice','Aprendiz'),
-                                    ('technical','Técnico'),
-                                    ('technologist','Tecnólogo'),
-                                    ('academic','Universitario'),
-                                    ('specialist','Especialista'),
-                                    ('magister','Maestría')],
-                                    string='Nivel de certificado', track_visibility='onchange')
-    social_security_entities  = fields.One2many('hr.contract.setting', 'employee_id', string = 'Entidades', track_visibility='onchange')
-    dependents_information = fields.One2many('hr.employee.dependents', 'employee_id', string = 'Dependientes', track_visibility='onchange')
-    labor_union_information = fields.One2many('hr.employee.labor.union', 'employee_id', string = 'Sindicato', track_visibility='onchange')
-    personal_email = fields.Char(string='Correo-e personal')
-    personal_mobile = fields.Char(string='Móvil')
+    partner_encab_id = fields.Many2one('res.partner', 'Tercero', help='Tercero equivalente a el empleado', tracking=True)
+    type_employee = fields.Many2one('hr.types.employee',string='Tipo de Empleado', tracking=True)
+    sabado = fields.Boolean('Sábado día hábil', help='Indica si el día sábado se incluye como día hábil', tracking=True)
+    certificate = fields.Selection(selection=[('primary', 'Primaria'),
+                                    ('academic_bachelor', 'Bachiller'),
+                                    ('technical', 'Técnico'),
+                                    ('technologist', 'Tecnólogo'),
+                                    ('academic', 'Profesional Universitario'),
+                                    ('specialist', 'Especialista'),
+                                    ('magister', 'Magister'),
+                                    ('doctor', 'Doctor'),
+                                    ('graduate', 'Licenciado'),
+                                    ('bachelor', 'Graduado'),
+                                    ('master', 'Maestro'),
+                                    ('other', 'Otro')],
+                                    string='Nivel de certificado', default='primary',tracking=True)
+    social_security_entities  = fields.One2many('hr.contract.setting', 'employee_id', string = 'Entidades', tracking=True)
+    dependents_information = fields.One2many('hr.employee.dependents', 'employee_id', string = 'Dependientes', tracking=True)
+    labor_union_information = fields.One2many('hr.employee.labor.union', 'employee_id', string = 'Sindicato', tracking=True)
+    personal_email = fields.Char(string='Correo-e personal', tracking=True)
+    personal_mobile = fields.Char(string='Móvil', tracking=True)
     type_job = fields.Selection([('clave', 'Cargo Clave'),
                                     ('critico', 'Cargo Crítico'),
-                                    ('cc', 'Cargo CC')], 'Tipo de cargo', track_visibility='onchange')
-    emergency_relationship = fields.Char(string='Parentesco contacto')
+                                    ('cc', 'Cargo CC')], 'Tipo de cargo', tracking=True)
+    emergency_relationship = fields.Char(string='Parentesco contacto', tracking=True)
     documents_ids = fields.One2many('hr.employee.documents', 'employee_id', 'Documentos')
     distribution_cost_information = fields.One2many('hr.cost.distribution.employee', 'employee_id', string='Distribución de costos empleado')
     #PILA
-    extranjero = fields.Boolean('Extranjero', help='Extranjero no obligado a cotizar a pensión', track_visibility='onchange')
-    residente = fields.Boolean('Residente en el Exterior', help='Colombiano residente en el exterior', track_visibility='onchange')
-    date_of_residence_abroad = fields.Date(string='Fecha radicación en el exterior')
-    tipo_coti_id = fields.Many2one('hr.tipo.cotizante', string='Tipo de cotizante', track_visibility='onchange')
-    subtipo_coti_id = fields.Many2one('hr.subtipo.cotizante', string='Subtipo de cotizante')
+    extranjero = fields.Boolean('Extranjero', help='Extranjero no obligado a cotizar a pensión', tracking=True)
+    residente = fields.Boolean('Residente en el Exterior', help='Colombiano residente en el exterior', tracking=True)
+    date_of_residence_abroad = fields.Date(string='Fecha radicación en el exterior', tracking=True)
+    tipo_coti_id = fields.Many2one('hr.tipo.cotizante', string='Tipo de cotizante', tracking=True)
+    subtipo_coti_id = fields.Many2one('hr.subtipo.cotizante', string='Subtipo de cotizante', tracking=True)
     type_identification = fields.Selection([('CC', 'Cédula de ciudadanía'),
                                             ('CE', 'Cédula de extranjería'),
                                             ('TI', 'Tarjeta de identidad'),
                                             ('RC', 'Registro civil'),
-                                            ('PA', 'Pasaporte')], 'Tipo de identificación', track_visibility='onchange')
-    indicador_especial_id = fields.Many2one('hr.indicador.especial.pila','Indicador tarifa especial pensiones', track_visibility='onchange')
+                                            ('PA', 'Pasaporte')], 'Tipo de identificación', tracking=True)
+    indicador_especial_id = fields.Many2one('hr.indicador.especial.pila','Indicador tarifa especial pensiones', tracking=True)
     cost_assumed_by  = fields.Selection([('partner', 'Cliente'),
-                                        ('company', 'Compañía')], 'Costo asumido por', track_visibility='onchange')
+                                        ('company', 'Compañía')], 'Costo asumido por', tracking=True)
     #Licencia de conducción
-    licencia_rh = fields.Selection([('op','O+'),('ap','A+'),('bp','B+'),('abp','AB+'),('on','O-'),('an','A-'),('bn','B-'),('abn','AB-')],'Tipo de sangre', track_visibility='onchange')
-    licencia_categoria = fields.Selection([('a1','A1'),('a2','A2'),('b1','B1'),('b2','B2'),('b3','B3'),('c1','C1'),('c2','C2'),('c3','C3')],'Categoria', track_visibility='onchange')
-    licencia_vigencia = fields.Date('Vigencia', track_visibility='onchange')
-    licencia_restricciones = fields.Char('Restricciones', size=255, track_visibility='onchange')
-    operacion_retirar = fields.Boolean('Retirar de la operacion', track_visibility='onchange')
-    operacion_reemplazo = fields.Many2one('hr.employee','Reemplazo', track_visibility='onchange')
+    licencia_rh = fields.Selection([('op','O+'),('ap','A+'),('bp','B+'),('abp','AB+'),('on','O-'),('an','A-'),('bn','B-'),('abn','AB-')],'Tipo de sangre', tracking=True)
+    licencia_categoria = fields.Selection([('a1','A1'),('a2','A2'),('b1','B1'),('b2','B2'),('b3','B3'),('c1','C1'),('c2','C2'),('c3','C3')],'Categoria', tracking=True)
+    licencia_vigencia = fields.Date('Vigencia', tracking=True)
+    licencia_restricciones = fields.Char('Restricciones', tracking=True)
+    operacion_retirar = fields.Boolean('Retirar de la operacion', tracking=True)
+    operacion_reemplazo = fields.Many2one('hr.employee','Reemplazo', tracking=True)
     #Estado civil
     type_identification_spouse = fields.Selection([('CC', 'Cédula de ciudadanía'),
                                             ('CE', 'Cédula de extranjería'),
                                             ('TI', 'Tarjeta de identidad'),
                                             ('RC', 'Registro civil'),
-                                            ('PA', 'Pasaporte')], 'Tipo de identificación cónyuge', track_visibility='onchange')
-    num_identification_spouse = fields.Char('Número de identificación cónyuge', track_visibility='onchange')
-    spouse_phone= fields.Char('Teléfono del cónyuge')
+                                            ('PA', 'Pasaporte')], 'Tipo de identificación cónyuge', tracking=True)
+    num_identification_spouse = fields.Char('Número de identificación cónyuge', tracking=True)
+    spouse_phone= fields.Char('Teléfono del cónyuge', tracking=True)
+    #Sanciones
+    employee_sanctions_ids = fields.One2many('hr.employee.sanctions', 'employee_id', string='Sanciones')
+    #Edad
+    z_employee_age = fields.Integer(string='Edad', compute='_get_employee_age', store=True)
+    # Campos Caracterizacion
+    z_stratum = fields.Selection([('1', '1'),
+                                  ('2', '2'),
+                                  ('3', '3'),
+                                  ('4', '4'),
+                                  ('5', '5'),
+                                  ('6', '6')], string='Estrato', tracking=True)
+    z_sexual_orientation = fields.Selection([('heterosexual', 'Heterosexual'),
+                                             ('bisexual', 'Bisexual'),
+                                             ('homosexual', 'Homosexual'),
+                                             ('pansexual', 'Pansexual'),
+                                             ('asexual', 'Asexual'),
+                                             ('other', 'Otro')], string='Orientación Sexual', tracking=True)
+    z_sexual_orientation_other = fields.Char(string="¿Cual?", tracking=True)
+    z_ethnic_group = fields.Selection([('none', 'Ninguno'),
+                                       ('indigenous', 'Indígena'),
+                                       ('afrocolombian', 'Afrocolombiano'),
+                                       ('gypsy', 'Gitano'),
+                                       ('raizal', 'Raizal')], string='Grupo étnico', tracking=True)
+    z_housing_area = fields.Selection([('rural', 'Rural'),
+                                       ('urban', 'Urbana')], string='Zona de Vivienda', tracking=True)
+    z_health_risk_factors = fields.Char(string="Factores de riesgo en salud", tracking=True)
+    z_religion = fields.Char(string="Religión", tracking=True)
+    z_victim_armed_conflict = fields.Selection([('yes', 'Si'),
+                                                ('not', 'No')], string='Victima del conflicto armado', tracking=True)
+    z_academic_data= fields.Char(string="Datos académicos", tracking=True)
+    z_city_birth_id = fields.Many2one('zue.city',string="Ciudad de nacimiento",domain="[('state_id', '=', z_department_birth_id)]", tracking=True)
+    z_department_birth_id = fields.Many2one('res.country.state',string="Departamento de nacimiento", domain="[('country_id', '=', country_id)]", tracking=True)
+    z_military_passbook = fields.Boolean('Libreta militar', tracking=True)
 
     _sql_constraints = [('emp_identification_uniq', 'unique(company_id,identification_id)', 'La cédula debe ser unica. La cédula ingresada ya existe en esta compañía')]
 
@@ -241,14 +332,14 @@ class hr_employee(models.Model):
     def _onchange_partner_encab(self):
         for record in self:
             for partner in record.partner_encab_id:
-                self.address_home_id = partner.id
+                self.address_home_id = partner.id                
 
     @api.onchange('address_home_id')
     def _onchange_tercero_asociado(self):
         for record in self:
             for partner in record.address_home_id:
                 if record.address_home_id.id != record.partner_encab_id.id:
-                    self.partner_encab_id = partner.id
+                    self.partner_encab_id = partner.id  
                 self.name = partner.name
                 self.country_id = partner.country_id
                 self.identification_id = partner.vat
@@ -256,6 +347,12 @@ class hr_employee(models.Model):
                 self.work_email = partner.email
                 self.phone = partner.phone
                 self.personal_mobile = partner.mobile
+
+    @api.depends('birthday')
+    def _get_employee_age(self):
+        for record in self:
+            if record.birthday:
+                record.z_employee_age = (date.today() - record.birthday).days // 365
 
     @api.constrains('distribution_cost_information')
     def _check_porcentage_distribution_cost(self):
@@ -266,9 +363,14 @@ class hr_employee(models.Model):
                     porc_total += distribution.porcentage
                 if porc_total != 100:
                     raise UserError(_('Los porcentajes de la distribución de costos no suman un 100%, por favor verificar.'))
+    @api.constrains('dependents_information')
+    def _check_dependents(self):
+        for record in self:
+            if len(record.dependents_information.filtered(lambda a: a.z_report_income_and_withholdings == True)) > 4:
+                raise UserError(_('No puede reportar más de 4 dependientes en el certificado de ingresos y retenciones, por favor verificar.'))
 
     @api.constrains('identification_id')
-    def _check_identification(self):
+    def _check_identification(self):  
         for record in self:
             if record.identification_id != record.address_home_id.vat:
                 raise UserError(_('El número de identificación debe ser igual al tercero seleccionado.'))
@@ -279,7 +381,7 @@ class hr_employee(models.Model):
     def _check_social_security_entities(self):
         for record in self:
             if record.tipo_coti_id or record.subtipo_coti_id:
-                #Obtener parametriazación de cotizantes
+                #Obtener parametrización de cotizantes
                 obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
                     [('type_of_contributor', '=', record.tipo_coti_id.id),
                      ('contributor_subtype', '=', record.subtipo_coti_id.id)],limit=1)
@@ -330,9 +432,17 @@ class hr_employee(models.Model):
         if vals.get('address_home_id') and not vals.get('partner_encab_id'):
             vals['partner_encab_id'] = vals.get('address_home_id')
         if not vals.get('address_home_id') and vals.get('partner_encab_id'):
-            vals['address_home_id'] = vals.get('partner_encab_id')
-
+            vals['address_home_id'] = vals.get('partner_encab_id')         
+        
         res = super(hr_employee, self).create(vals)
+        #Asignar tipo de tercero funcionario
+        obj_type_thirdparty = self.env['zue.type_thirdparty'].search([('types', '=', '4')], limit=1)
+        if len(obj_type_thirdparty) == 1:
+            ids_type_thirdparty = res.address_home_id.x_type_thirdparty.ids
+            id_type_thirdparty_employee = obj_type_thirdparty.id
+            if id_type_thirdparty_employee not in ids_type_thirdparty:
+                ids_type_thirdparty.append(id_type_thirdparty_employee)
+                res.address_home_id.write({'x_type_thirdparty': ids_type_thirdparty})
         return res
 
     def get_info_contract(self):
@@ -340,6 +450,8 @@ class hr_employee(models.Model):
             obj_contract = self.env['hr.contract'].search([('employee_id','=',record.id),('state','=','open')],limit=1)
             if len(obj_contract) == 0:
                 obj_contract += self.env['hr.contract'].search([('employee_id', '=', record.id), ('state', '=', 'close')],limit=1)
+            if len(obj_contract) == 0:
+                obj_contract += self.env['hr.contract'].search([('employee_id', '=', record.id), ('state', '=', 'finished')], limit=1)
             return obj_contract
 
     def get_age_for_date(self, o_date):
@@ -351,19 +463,18 @@ class hr_employee(models.Model):
 
     # Metodos reportes
     def get_report_print_badge_template(self):
-        obj = self.env['report.print.badge.template'].search([('company_id', '=', self.company_id.id)])
+        obj = self.env['report.print.badge.template'].search([('company_id','=',self.company_id.id)])
         if len(obj) == 0:
             raise ValidationError(_('No tiene configurada plantilla de identificación. Por favor verifique!'))
         return obj
 
     def get_name_rh(self):
-        rh = dict(self._fields['licencia_rh'].selection).get(self.licencia_rh, '')
+        rh = dict(self._fields['licencia_rh'].selection).get(self.licencia_rh,'')
         return rh
 
     def get_name_type_document(self):
         obj_partner = self.env['res.partner']
-        type_documet = dict(obj_partner._fields['x_document_type'].selection).get(
-            self.address_home_id.x_document_type, '')
+        type_documet = dict(obj_partner._fields['x_document_type'].selection).get(self.address_home_id.x_document_type,'')
         return type_documet
 
     def _sync_user(self, user, employee_has_image=False):
@@ -380,18 +491,18 @@ class hr_employee(models.Model):
 class report_print_badge_template(models.Model):
     _name = 'report.print.badge.template'
     _description = 'Imprimir Identificación'
-    _rec_name = 'company_id'
 
     company_id = fields.Many2one('res.company', string='Compañía', default=lambda self: self.env.company)
     with_extra_space = fields.Boolean('Con espacio extra')
     img_header_file = fields.Binary('Plantilla del identificación')
     img_header_filename = fields.Char('Plantilla del identificación filename')
+    imgback_header_file = fields.Binary('Plantilla del identificación respaldo')
+    imgback_header_filename = fields.Char('Plantilla del identificación filename respaldo')
     orientation = fields.Selection([('horizontal', 'Horizontal'),
-                              ('vertical', 'Vertical')], string='Orientación', default="horizontal")
+                                    ('vertical', 'Vertical')], string='Orientación', default="horizontal")
 
     _sql_constraints = [
         ('company_report_print_badge_template', 'UNIQUE (company_id)','Ya existe una configuración de plantilla de identificación para esta compañía, por favor verificar')
     ]
-
-
-
+                
+                    

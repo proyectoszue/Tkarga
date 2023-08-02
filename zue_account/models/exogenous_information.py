@@ -1,5 +1,6 @@
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+from odoo.exceptions import ValidationError, UserError
 from odoo import models, fields, api, _
 
 import base64
@@ -31,6 +32,7 @@ class fiscal_accounting_code(models.Model):
     concept_dian = fields.Char(string="Código Fiscal", required=True)
     code_description = fields.Char(string="Descripción del Código", required=True)
     format_id = fields.Many2one('format.encab', string='Formato')
+    #concept = fields.Char(string="Concepto")
     account_type = fields.Selection([('movement', 'Movimiento'),
                               ('balance', 'Balance'),
                               ], 'Tipo de cuenta')
@@ -38,7 +40,7 @@ class fiscal_accounting_code(models.Model):
                                   ('credit', 'Crédito'),
                                   ('net', 'Neto')], string='Tipo de movimiento', default='net',required=True)
     retention_associated = fields.Many2one('fiscal.accounting.code', string='Retención Asociada')
-    required_retention_associated = fields.Boolean('Aplica para todos los conceptos del formato asociado', track_visibility='onchange')
+    required_retention_associated = fields.Boolean('Aplica para todos los conceptos del formato asociado')
     accounting_details_ids = fields.Many2many('account.account',string='Cuentas')
     #concept = fields.Char(string="Concepto")
     #account_code = fields.Char(string="Código de cuenta")
@@ -60,7 +62,7 @@ class fiscal_accounting_group(models.Model):
     group_description = fields.Char(string="Descripción del Grupo", required=True)
     operator = fields.Selection([('>', 'Mayor que'),
                               ('<', 'Menor que'),
-                              ('=', 'Igual que'),
+                              ('==', 'Igual que'),
                               ('!=', 'Distinto de'),
                               ('<=','Menor o igual que'),
                               ('>=', 'Mayor o igual que'),
@@ -83,7 +85,7 @@ class format_encab(models.Model):
 
     format_id = fields.Char(string="Código Formato", required=True)
     description = fields.Char(string="Descripción del formato", required=True)
-    details_ids = fields.One2many('format.detail','format_id',string = 'Campos Disponibles', ondelete='cascade')
+    details_ids = fields.One2many('format.detail','format_id',string = 'Campos Disponibles')
     company_id = fields.Many2one('res.company', string='Compañía', readonly=True, required=True,default=lambda self: self.env.company)
     format_associated_id = fields.Many2one('format.encab', string='Formato Asociado')
     fields_associated_code_fiscal_ids = fields.Many2many('fiscal.accounting.code', string='Conceptos Asociados')
@@ -175,105 +177,124 @@ class generate_media_magnetic(models.TransientModel):
                                                                               limit=1)
                 format_fields = fiscal.format_id.details_ids
 
-                partner_ids = self.env['account.move.line'].search([('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
-                                                                      ('move_id.accounting_closing_id','=',False),('account_id', 'in', fiscal.accounting_details_ids.ids)]).partner_id.ids
+                if fiscal.account_type == 'balance':
+                    partner_ids = self.env['account.move.line'].search(
+                        [('date', '<=', date_end), ('parent_state', '=', 'posted'),
+                         ('account_id', 'in', fiscal.accounting_details_ids.ids)]).partner_id.ids
+                else:
+                    partner_ids = self.env['account.move.line'].search(
+                        [('date', '>=', date_start), ('date', '<=', date_end), ('parent_state', '=', 'posted'),
+                         ('move_id.accounting_closing_id', '=', False),
+                         ('account_id', 'in', fiscal.accounting_details_ids.ids)]).partner_id.ids
                 obj_partner_ids = self.env['res.partner'].search([('id','in',partner_ids)])
 
                 dict_partner_minor = {}
                 dict_partner_minor_associated = {}
 
                 for partner in obj_partner_ids:
-                    moves = self.env['account.move.line'].search(
-                        [('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
-                         ('move_id.accounting_closing_id','=',False),('account_id', 'in', fiscal.accounting_details_ids.ids),('partner_id', '=', partner.id)])
-                    account_moves_ids = account_moves_ids + moves.ids
-                    amount = 0
-                    tax_base_amount = 0
-                    for i in moves:
-                        if fiscal.move_type == 'debit':
-                            amount += abs(i.debit)
-                        elif fiscal.move_type == 'credit':
-                            amount += abs(i.credit)
+                    try:
+                        if fiscal.account_type == 'balance':
+                            moves = self.env['account.move.line'].search(
+                                [('date', '<', date_start), ('parent_state', '=', 'posted'),
+                                 ('account_id', 'in', fiscal.accounting_details_ids.ids),
+                                 ('partner_id', '=', partner.id)])
+                            moves += self.env['account.move.line'].search(
+                                [('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
+                                 ('move_id.accounting_closing_id', '=', False),
+                                 ('account_id', 'in', fiscal.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
                         else:
-                            amount += abs(i.balance)
-                        tax_base_amount += i.tax_base_amount
-
-                    if len(obj_group_fiscal) > 0:
-                        ldict = {'amount':amount,'validation_minor':False}
-                        code_python = f'validation_minor = True if amount {obj_group_fiscal.operator} {obj_group_fiscal.amount}  else False'
-                        exec(code_python,ldict)
-                        validation_minor = ldict.get('validation_minor')
-                    else:
-                        validation_minor = False
-                    
-                    if validation_minor == False:
-                        #Armamos el dict con la información
-                        dict_documents = dict(self.env['res.partner']._fields['x_document_type'].selection)
-                        document_type = dict_documents.get(partner.x_document_type) if partner.x_document_type else ''
-                        info = {'fiscal_accounting_id': fiscal.concept_dian,
-                                'concept_dian': fiscal.code_description,
-                                'format':fiscal.format_id.format_id,
-                                'x_document_type': partner.x_document_type,
-                                'vat': partner.vat,
-                                'x_first_name': partner.x_first_name or '',
-                                'x_second_name': partner.x_second_name if partner.x_second_name else '',
-                                'x_first_lastname': partner.x_first_lastname or '',
-                                'x_second_lastname': partner.x_second_lastname or '',
-                                'commercial_company_name': partner.name,
-                                'x_digit_verification': partner.x_digit_verification,
-                                'street': partner.street,
-                                'state_id': partner.x_city.code[:2],
-                                'x_city': partner.x_city.code,
-                                'amount': amount,
-                                'operator':obj_group_fiscal.operator,
-                                'tax': tax_base_amount,
-                                'x_code_dian': '169',#partner.country_id.code,
-                                'phone': partner.phone or partner.mobile,
-                                'unit_rate': 0,
-                                'email': partner.email,
-                                'higher_value_iva': 0,
-                            }
-                        #Formatos asociados
-                        info_associated = {}
-                        obj_account_fiscal_associated = self.env['fiscal.accounting.code'].search([('format_id', '=', format.format_associated_id.id)])
-                        for fiscal_associated in obj_account_fiscal_associated:
-                            if (fiscal_associated.required_retention_associated == False):
-                                obj_retention_associated = self.env['fiscal.accounting.code'].search([('id','in',fiscal_associated.ids),('retention_associated','=',fiscal.id)])
-                            else:
-                                obj_retention_associated = self.env['fiscal.accounting.code'].search([('id', 'in', fiscal_associated.ids)])
-                            moves_associated = self.env['account.move.line'].search(
+                            moves = self.env['account.move.line'].search(
                                 [('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
-                                ('move_id.accounting_closing_id','=',False),('account_id', 'in', obj_retention_associated.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
-                            amount_associated = abs(sum([i.balance for i in moves_associated]))
-                            name_associated = fiscal_associated.code_description.replace(' ','_')
-                            info_associated[name_associated] = amount_associated
-                        #Guardado final
-                        media_magnetic = {}
-                        for field in sorted(format_fields, key=lambda x: x.sequence):
-                            if field.available_fields in info:
-                                media_magnetic[field.available_fields] = info.get(field.available_fields)
-                        lst_Mvto.append({**media_magnetic, **info_associated})
-                    else:
-                        #Armamos el dict con la información
-                        dict_partner_minor['fiscal_info'] = fiscal
-                        dict_partner_minor['group_fiscal'] = obj_group_fiscal
-                        dict_partner_minor['amount'] = dict_partner_minor.get('amount',0) + amount
-                        dict_partner_minor['tax'] = dict_partner_minor.get('tax', 0) + tax_base_amount
-
-                        #Formatos asociados
-                        obj_account_fiscal_associated = self.env['fiscal.accounting.code'].search([('format_id', '=', format.format_associated_id.id)])
-                        for fiscal_associated in obj_account_fiscal_associated:
-                            if (fiscal_associated.required_retention_associated == False):
-                                obj_retention_associated = self.env['fiscal.accounting.code'].search([('id','in',fiscal_associated.ids),('retention_associated','=',fiscal.id)])
+                                 ('move_id.accounting_closing_id','=',False),('account_id', 'in', fiscal.accounting_details_ids.ids),('partner_id', '=', partner.id)])
+                        account_moves_ids = account_moves_ids + moves.ids
+                        amount = 0
+                        tax_base_amount = 0
+                        for i in moves:
+                            if fiscal.move_type == 'debit':
+                                amount += i.debit
+                            elif fiscal.move_type == 'credit':
+                                amount += i.credit
                             else:
-                                obj_retention_associated = self.env['fiscal.accounting.code'].search([('id', 'in', fiscal_associated.ids)])
-                            moves_associated = self.env['account.move.line'].search(
-                                [('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
-                                ('move_id.accounting_closing_id','=',False),('account_id', 'in', obj_retention_associated.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
-                            amount_associated = abs(sum([i.balance for i in moves_associated]))
-                            name_associated = fiscal_associated.code_description.replace(' ','_')
-                            dict_partner_minor_associated[name_associated] = dict_partner_minor_associated.get(name_associated, 0) + amount_associated
+                                amount += i.balance
+                            tax_base_amount += i.tax_base_amount
 
+                        if len(obj_group_fiscal) > 0:
+                            ldict = {'amount':amount,'validation_minor':False}
+                            code_python = f'validation_minor = True if amount {obj_group_fiscal.operator} {obj_group_fiscal.amount}  else False'
+                            exec(code_python,ldict)
+                            validation_minor = ldict.get('validation_minor')
+                        else:
+                            validation_minor = False
+
+                        if validation_minor == False:
+                            #Armamos el dict con la información
+                            dict_documents = dict(self.env['res.partner']._fields['x_document_type'].selection)
+                            document_type = dict_documents.get(partner.x_document_type) if partner.x_document_type else ''
+                            info = {'fiscal_accounting_id': fiscal.concept_dian,
+                                    'concept_dian': fiscal.code_description,
+                                    'format':fiscal.format_id.format_id,
+                                    'x_document_type': partner.x_document_type,
+                                    'vat': partner.vat,
+                                    'x_first_name': partner.x_first_name or '',
+                                    'x_second_name': partner.x_second_name if partner.x_second_name else '',
+                                    'x_first_lastname': partner.x_first_lastname or '',
+                                    'x_second_lastname': partner.x_second_lastname or '',
+                                    'commercial_company_name': partner.name,
+                                    'x_digit_verification': partner.x_digit_verification,
+                                    'street': partner.street,
+                                    'state_id': partner.x_city.code[:2],
+                                    'x_city': partner.x_city.code,
+                                    'amount': amount,
+                                    'operator':obj_group_fiscal.operator,
+                                    'tax': tax_base_amount,
+                                    'x_code_dian': '169',#partner.country_id.code,
+                                    'phone': partner.phone or partner.mobile,
+                                    'unit_rate': 0,
+                                    'email': partner.email,
+                                    'higher_value_iva': 0,
+                                }
+                            #Formatos asociados
+                            info_associated = {}
+                            obj_account_fiscal_associated = self.env['fiscal.accounting.code'].search([('format_id', '=', format.format_associated_id.id)])
+                            for fiscal_associated in obj_account_fiscal_associated:
+                                if (fiscal_associated.required_retention_associated == False):
+                                    obj_retention_associated = self.env['fiscal.accounting.code'].search([('id','in',fiscal_associated.ids),('retention_associated','=',fiscal.id)])
+                                else:
+                                    obj_retention_associated = self.env['fiscal.accounting.code'].search([('id', 'in', fiscal_associated.ids)])
+                                moves_associated = self.env['account.move.line'].search(
+                                    [('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
+                                    ('move_id.accounting_closing_id','=',False),('account_id', 'in', obj_retention_associated.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
+                                amount_associated = sum([i.balance for i in moves_associated])
+                                name_associated = fiscal_associated.code_description.replace(' ','_')
+                                info_associated[name_associated] = amount_associated
+                            #Guardado final
+                            media_magnetic = {}
+                            for field in sorted(format_fields, key=lambda x: x.sequence):
+                                if field.available_fields in info:
+                                    media_magnetic[field.available_fields] = info.get(field.available_fields)
+                            lst_Mvto.append({**media_magnetic, **info_associated})
+                        else:
+                            #Armamos el dict con la información
+                            dict_partner_minor['fiscal_info'] = fiscal
+                            dict_partner_minor['group_fiscal'] = obj_group_fiscal
+                            dict_partner_minor['amount'] = dict_partner_minor.get('amount',0) + amount
+                            dict_partner_minor['tax'] = dict_partner_minor.get('tax', 0) + tax_base_amount
+
+                            #Formatos asociados
+                            obj_account_fiscal_associated = self.env['fiscal.accounting.code'].search([('format_id', '=', format.format_associated_id.id)])
+                            for fiscal_associated in obj_account_fiscal_associated:
+                                if (fiscal_associated.required_retention_associated == False):
+                                    obj_retention_associated = self.env['fiscal.accounting.code'].search([('id','in',fiscal_associated.ids),('retention_associated','=',fiscal.id)])
+                                else:
+                                    obj_retention_associated = self.env['fiscal.accounting.code'].search([('id', 'in', fiscal_associated.ids)])
+                                moves_associated = self.env['account.move.line'].search(
+                                    [('date', '>=', date_start), ('date', '<=', date_end),('parent_state','=','posted'),
+                                    ('move_id.accounting_closing_id','=',False),('account_id', 'in', obj_retention_associated.accounting_details_ids.ids), ('partner_id', '=', partner.id)])
+                                amount_associated = sum([i.balance for i in moves_associated])
+                                name_associated = fiscal_associated.code_description.replace(' ','_')
+                                dict_partner_minor_associated[name_associated] = dict_partner_minor_associated.get(name_associated, 0) + amount_associated
+                    except Exception as e:
+                        raise ValidationError(f'El tercero ID:{partner.id} NOMBRE:{partner.name} genero el siguente error: {e}')
                 if len(dict_partner_minor) > 0:
                     dict_documents = dict(self.env['res.partner']._fields['x_document_type'].selection)
                     document_type = dict_documents.get(
@@ -292,7 +313,7 @@ class generate_media_magnetic(models.TransientModel):
                             'street': dict_partner_minor.get('group_fiscal').partner_minor_amounts.street,
                             'state_id': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_city.code[:2],
                             'x_city': dict_partner_minor.get('group_fiscal').partner_minor_amounts.x_city.code,
-                            'amount': abs(dict_partner_minor.get('amount',0)),
+                            'amount': dict_partner_minor.get('amount',0),
                             'operator': dict_partner_minor.get('group_fiscal').operator,
                             'tax': dict_partner_minor.get('tax',0),
                             'x_code_dian': '169', #dict_partner_minor.get('group_fiscal').partner_minor_amounts.country_id.code,

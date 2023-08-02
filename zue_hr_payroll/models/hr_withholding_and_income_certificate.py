@@ -1,3 +1,4 @@
+import html
 import io
 import base64
 from odoo import models, fields, api, _
@@ -20,10 +21,12 @@ class hr_withholding_and_income_certificate(models.TransientModel):
     def generate_certificate(self):
         struct_report_income_and_withholdings_finally = ''
         if len(self.employee_ids) == 0:
-            raise UserError(_('No se seleccionaron empleados.'))
+            raise UserError('No se seleccionaron empleados.')
 
         obj_annual_parameters = self.env['hr.annual.parameters'].search([('year', '=', self.year)], limit=1)
         for employee in self.employee_ids:
+            if self.z_save_documents:
+                struct_report_income_and_withholdings_finally = ''
             if len(obj_annual_parameters) > 0:
                 struct_report_income_and_withholdings = obj_annual_parameters.report_income_and_withholdings
                 lst_items = []
@@ -46,7 +49,7 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                     date_end_ant = datetime.strptime(date_end_ant, '%d/%m/%Y')
                     date_end_ant = date_end_ant.date()
                 except:
-                    raise UserError(_('El año digitado es invalido, por favor verificar.'))
+                    raise UserError('El año digitado es invalido, por favor verificar.')
 
                 obj_payslip = self.env['hr.payslip'].search(
                     [('state', '=', 'done'), ('employee_id', '=', employee.id),
@@ -73,7 +76,15 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                 obj_payslip_accumulated_ant = self.env['hr.accumulated.payroll'].search([('employee_id', '=', employee.id),
                                                                                      ('date', '>=', date_start_ant),
                                                                                      ('date', '<=', date_end_ant)])
+                #Info dependientes:
+                dependents_type_vat,dependents_vat,dependents_name,dependents_type = '','','',''
+                for dependent in employee.dependents_information.filtered(lambda a: a.z_report_income_and_withholdings == True):
+                    dependents_type_vat += f'{dependent.z_document_type} ZUE_BREAK_LINE'
+                    dependents_vat += f'{dependent.z_vat} ZUE_BREAK_LINE'
+                    dependents_name += f'{dependent.name} ZUE_BREAK_LINE'
+                    dependents_type += f'{str(dependent.dependents_type).capitalize()} ZUE_BREAK_LINE'
 
+                #Recorrer configuración
                 for conf in sorted(obj_annual_parameters.conf_certificate_income_ids, key=lambda x: x.sequence):
                     ldict = {'employee':employee}
                     value = None
@@ -88,7 +99,7 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                                 exec(code_python, ldict)
                                 value = ldict.get('value')
                             elif conf.information_fields_id.model_id.model == 'hr.contract':
-                                raise UserError(_('No se puede traer información del empleado de un campo de la tabla contratos, EN DESARROLLO.'))
+                                raise UserError('No se puede traer información del empleado de un campo de la tabla contratos, EN DESARROLLO.')
                             elif conf.information_fields_id.model_id.model == 'res.partner':
                                 if conf.information_fields_id.ttype == 'many2one':
                                     code_python = 'value = employee.address_home_id.'+str(conf.information_fields_id.name) + '.' + str(conf.related_field_id.name)
@@ -98,9 +109,9 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                                 value = ldict.get('value')
                         if conf.type_partner == 'company':
                             if conf.information_fields_id.model_id.model == 'hr.employee':
-                                raise UserError(_('No se puede traer información de la compañía de un campo de la tabla empleados, por favor verificar.'))
+                                raise UserError('No se puede traer información de la compañía de un campo de la tabla empleados, por favor verificar.')
                             elif conf.information_fields_id.model_id.model == 'hr.contract':
-                                raise UserError(_('No se puede traer información de la compañía de un campo de la tabla contratos, por favor verificar.'))
+                                raise UserError('No se puede traer información de la compañía de un campo de la tabla contratos, por favor verificar.')
                             elif conf.information_fields_id.model_id.model == 'res.partner':
                                 if conf.information_fields_id.ttype == 'many2one':
                                     code_python = 'value = employee.company_id.partner_id.'+str(conf.information_fields_id.name) + '.' + str(conf.related_field_id.name)
@@ -163,11 +174,23 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                     # Tipo de Calculo ---------------------- FECHA CERTIFICACIÓN FINAL
                     elif conf.calculation == 'end_date_year':
                         value = str(year_process)+'-12-31'
+                    # Tipo de Calculo ---------------------- DEPENDIENTES - TIPO DOCUMENTO
+                    elif conf.calculation == 'dependents_type_vat':
+                        value = dependents_type_vat
+                    # Tipo de Calculo ---------------------- DEPENDIENTES - NO. DOCUMENTO
+                    elif conf.calculation == 'dependents_vat':
+                        value = dependents_vat
+                    # Tipo de Calculo ---------------------- DEPENDIENTES - APELLIDOS Y NOMBRES
+                    elif conf.calculation == 'dependents_name':
+                        value = dependents_name
+                    # Tipo de Calculo ---------------------- DEPENDIENTES - PARENTESCO
+                    elif conf.calculation == 'dependents_type':
+                        value = dependents_type
                     #----------------------------------------------------------------------------------------------
                     #                                       GUARDAR RESULTADO
                     # ----------------------------------------------------------------------------------------------
                     lst_items.append((conf.sequence, value))
-                    if value != None:
+                    if value != None and value != False:
                         struct_report_income_and_withholdings = struct_report_income_and_withholdings.replace('$_val'+str(conf.sequence)+'_$',("{:,.2f}".format(value) if type(value) is float else str(value)))
                     else:
                         struct_report_income_and_withholdings = struct_report_income_and_withholdings.replace('$_val' + str(conf.sequence)+'_$', '')
@@ -177,60 +200,62 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                     # struct_report_income_and_withholdings_finally += '\n <div style="page-break-after: always;"/> \n'
                     struct_report_income_and_withholdings_finally += struct_report_income_and_withholdings
 
-        #Limpiar vals no calculados
-        for sequence_val in range(1,101):
-            struct_report_income_and_withholdings_finally = struct_report_income_and_withholdings_finally.replace('$_val' + str(sequence_val) + '_$', '')
-            for sequence_val_internal in range(1,10):
-                struct_report_income_and_withholdings_finally = struct_report_income_and_withholdings_finally.replace('$_val' + str(sequence_val) + '.' + str(sequence_val_internal) + '_$', '')
+                #Limpiar vals no calculados
+                for sequence_val in range(1,101):
+                    struct_report_income_and_withholdings_finally = struct_report_income_and_withholdings_finally.replace('$_val' + str(sequence_val) + '_$', '')
+                    for sequence_val_internal in range(1,10):
+                        struct_report_income_and_withholdings_finally = struct_report_income_and_withholdings_finally.replace('$_val' + str(sequence_val) + '.' + str(sequence_val_internal) + '_$', '')
+
+                if self.z_save_documents:
+                    pdf_writer = PdfFileWriter()
+                    obj_report = self.env['hr.withholding.and.income.certificate'].create(
+                        {
+                            'year': self.year,
+                            'employee_ids': employee.ids,
+                            'struct_report_income_and_withholdings':str(struct_report_income_and_withholdings_finally).replace("ZUE_BREAK_LINE", "<br>"),
+                        }
+                    )
+                    report = self.env.ref('zue_hr_payroll.hr_report_income_and_withholdings_action', False)
+                    pdf_content, _ = report._render_qweb_pdf(obj_report.id)
+                    reader = PdfFileReader(io.BytesIO(pdf_content), strict=False, overwriteWarnings=False)
+                    for page in range(reader.getNumPages()):
+                        pdf_writer.addPage(reader.getPage(page))
+                    _buffer = io.BytesIO()
+                    pdf_writer.write(_buffer)
+                    merged_pdf = _buffer.getvalue()
+                    _buffer.close()
+
+                    # Crear adjunto
+                    name = 'Certificado Ingreso y Retenciones año gravable ' + str(self.year - 1) + '.pdf'
+                    obj_attachment = self.env['ir.attachment'].create({
+                        'name': name,
+                        'store_fname': name,
+                        'res_name': name,
+                        'type': 'binary',
+                        'res_model': 'res.partner',
+                        'res_id': employee.address_home_id.id,
+                        'datas': base64.b64encode(merged_pdf),
+                    })
+                    # Asociar adjunto a documento de Odoo
+                    doc_vals = {
+                        'name': name,
+                        'owner_id': self.env.user.id,
+                        'partner_id': employee.address_home_id.id,
+                        'folder_id': self.env.user.company_id.documents_hr_folder.id,
+                        'tag_ids': self.env.user.company_id.z_validated_certificate.ids,
+                        'type': 'binary',
+                        'attachment_id': obj_attachment.id
+                    }
+                    self.env['documents.document'].sudo().create(doc_vals)
+
         #Retonar PDF
-        self.struct_report_income_and_withholdings = struct_report_income_and_withholdings_finally
+        self.struct_report_income_and_withholdings = str(struct_report_income_and_withholdings_finally).replace("ZUE_BREAK_LINE", "<br>")
         datas = {
              'id': self.id,
              'model': 'hr.withholding.and.income.certificate'
             }
 
         if self.z_save_documents:
-            pdf_writer = PdfFileWriter()
-
-            for employee in self.employee_ids:
-                obj_report = self.env['hr.withholding.and.income.certificate'].create(
-                    {
-                        'year':self.year,
-                        'employee_ids':employee.ids,
-                    }
-                )
-                report = self.env.ref('zue_hr_payroll.hr_report_income_and_withholdings_action', False)
-                pdf_content, _ = report.render_qweb_pdf(obj_report.id)
-                reader = PdfFileReader(io.BytesIO(pdf_content), strict=False, overwriteWarnings=False)
-                for page in range(reader.getNumPages()):
-                    pdf_writer.addPage(reader.getPage(page))
-                _buffer = io.BytesIO()
-                pdf_writer.write(_buffer)
-                merged_pdf = _buffer.getvalue()
-                _buffer.close()
-
-                # Crear adjunto
-                name = 'Certificado Ingreso y Retenciones año gravable ' + str(self.year-1) + '.pdf'
-                obj_attachment = self.env['ir.attachment'].create({
-                    'name': name,
-                    'store_fname': name,
-                    'res_name': name,
-                    'type': 'binary',
-                    'res_model': 'res.partner',
-                    'res_id': employee.address_home_id.id,
-                    'datas': base64.b64encode(merged_pdf),
-                })
-                # Asociar adjunto a documento de Odoo
-                doc_vals = {
-                    'name': name,
-                    'owner_id': self.env.user.id,
-                    'partner_id': employee.address_home_id.id,
-                    'folder_id': self.env.user.company_id.documents_hr_folder.id,
-                    #'tag_ids': self.env.user.company_id.z_validated_certificate.ids, # Atributo solo de V15
-                    'type': 'binary',
-                    'attachment_id': obj_attachment.id
-                }
-                self.env['documents.document'].sudo().create(doc_vals)
             return True
 
         return {

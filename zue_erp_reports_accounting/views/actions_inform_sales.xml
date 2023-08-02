@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="action_zue_inform_sales_purchases" model="ir.actions.act_window">
+            <field name="name">Informe de ventas y compras</field>
+            <field name="res_model">zue.inform.sales.purchases</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <record model="ir.ui.view" id="actions_zue_inform_sales_purchases_form">
+            <field name="name">Informes</field>
+            <field name="model">zue.inform.sales.purchases</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="z_company_id"/>
+                                <field name="z_start_date"/>
+                                <field name="z_finish_date"/>
+                            </group>
+                            <group>
+                                <field name="z_sales_purchases" widget="radio"/>
+                            </group>
+                        </group>
+                        <footer>
+                            <button name="report_excel" string="Generar Excel" type="object" class="oe_highlight"/>
+                        </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

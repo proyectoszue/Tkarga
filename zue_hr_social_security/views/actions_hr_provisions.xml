@@ -52,20 +52,26 @@
                         <group>
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="time_process" readonly="1"/>
-                            <field name="details_ids">
-                                <tree editable="top">
-                                    <field name="provision"/>             
-                                    <field name="employee_id"/>             
-                                    <field name="contract_id" optional="show"/>             
-                                    <field name="value_wage" optional="show"/>             
-                                    <field name="value_base" optional="show"/>
-                                    <field name="time" optional="show"/>
-                                    <field name="amount" optional="show"/>
-                                    <field name="value_payments" optional="show"/>
-                                    <field name="current_payable_value" optional="show"/>
-                                    <field name="value_balance" optional="show"/>
-                                </tree>
-                            </field>
+                        </group>
+                        <notebook>
+                            <page string="Ejecución">
+                                <field name="details_ids" readonly="1" force_save="1">
+                                    <tree>
+                                        <field name="provision"/>
+                                        <field name="employee_id"/>
+                                        <field name="contract_id" optional="show"/>
+                                        <field name="value_wage" optional="show"/>
+                                        <field name="value_base" optional="show"/>
+                                        <field name="time" optional="show"/>
+                                        <field name="amount" optional="show"/>
+                                        <field name="value_payments" optional="show"/>
+                                        <field name="current_payable_value" optional="show"/>
+                                        <field name="value_balance" optional="show"/>
+                                    </tree>
+                                </field>
+                            </page>
+                        </notebook>
+                        <group>
                             <field name="move_id" readonly="1"/>
                         </group>
                     </sheet>

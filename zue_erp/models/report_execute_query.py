@@ -20,7 +20,7 @@ class x_reports(models.Model):
     columns = fields.Char(string='Columnas (Separadas por , )', required=True)
     query = fields.Text(string='Query')    
     excel_file = fields.Binary('Excel file')
-    excel_file_name = fields.Char('Excel name', size=64)
+    excel_file_name = fields.Char('Excel name')
     
     #Retonar columnas
     def get_columns(self):
@@ -36,10 +36,11 @@ class x_reports(models.Model):
         return _res
     
     #Ejecutar instrucción SQL
-    def execute_sql(self):
-        query = self.query
-        
-        self._cr.execute(query)        
+    def execute_sql(self, query=''):
+        if not query:
+            query = self.query
+
+        self._cr.execute(query)
         return True
 
     def get_excel(self):        

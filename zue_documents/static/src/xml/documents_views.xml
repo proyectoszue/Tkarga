@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<templates xml:space="preserve">
+<!--    <t t-name="ZueDocumentsViews.buttons" t-extend="DocumentsViews.buttons">-->
+<!--        <t t-operation="inside">-->
+<!--            <button type="button" class="btn btn-secondary o_documents_kanban_request_template">-->
+<!--                Plantilla de solicitud-->
+<!--            </button>-->
+<!--        </t>-->
+<!--    </t>-->
+
+    <template t-name="ZueDocumentsViews.DocumentsViews.buttons" t-inherit="documents.DocumentsViews.buttons" t-inherit-mode="extension">
+        <xpath expr="//div/button[hasclass('o_documents_kanban_request')]" position="after">
+            <button type="button" class="btn btn-secondary o_documents_kanban_request_template">
+                Plantilla de solicitud
+            </button>
+            <button type="button" class="btn btn-secondary o_documents_kanban_merge_pdfs">
+                Unir PDFs
+            </button>
+        </xpath>
+    </template>
+</templates>

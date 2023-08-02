@@ -48,14 +48,15 @@
             <field name="dpi">90</field>
         </record>
 
-        <report
-            id="report_birthday_list_action"
-            model="hr.birthday.list"
-            string="Lista de Cumpleaños"
-            report_type="qweb-pdf"
-            name="zue_hr_employee.report_birthday_list"
-            file="zue_hr_employee.report_birthday_list"
-        />
+         <record id="report_birthday_list_action" model="ir.actions.report">
+           <field name="name">Lista de Cumpleaños</field>
+           <field name="model">hr.birthday.list</field>
+           <field name="report_type">qweb-pdf</field>
+           <field name="report_name">zue_hr_employee.report_birthday_list</field>
+           <field name="report_file">zue_hr_employee.report_birthday_list</field>
+           <field name="binding_model_id" ref="model_hr_birthday_list"/>
+        </record>
+
         <record id="report_birthday_list_action" model="ir.actions.report">
             <field name="paperformat_id" ref="zue_hr_employee.birthday_list"/>
         </record>

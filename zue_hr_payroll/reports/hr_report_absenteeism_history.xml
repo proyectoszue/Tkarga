@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-        <report
-            id="hr_report_absenteeism_history_action"
-            model="hr.report.absenteeism.history"
-            string="Historico de Ausentismos"
-            report_type="qweb-pdf"
-            name="zue_hr_payroll.hr_report_absenteeism_history"
-            file="zue_hr_payroll.hr_report_absenteeism_history"
-        />
+        <record id="hr_report_absenteeism_history_action" model="ir.actions.report">
+           <field name="name">Historico de Ausentismos</field>
+           <field name="model">hr.report.absenteeism.history</field>
+           <field name="report_type">qweb-pdf</field>
+           <field name="report_name">zue_hr_payroll.hr_report_absenteeism_history</field>
+           <field name="report_file">zue_hr_payroll.hr_report_absenteeism_history</field>
+           <field name="binding_model_id" ref="model_hr_report_absenteeism_history"/>
+        </record>
 </odoo>
 

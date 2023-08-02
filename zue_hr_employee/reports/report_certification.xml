@@ -16,14 +16,15 @@
             <field name="dpi">90</field>
         </record>
 
-        <report
-            id="report_certificacion_laboral_action"
-            model="hr.labor.certificate.history"
-            string="Certificacion laboral"
-            report_type="qweb-pdf"
-            name="zue_hr_employee.report_certificacion_laboral"
-            file="zue_hr_employee.report_certificacion_laboral"
-        />
+        <record id="report_certificacion_laboral_action" model="ir.actions.report">
+           <field name="name">Certificacion laboral</field>
+           <field name="model">hr.labor.certificate.history</field>
+           <field name="report_type">qweb-pdf</field>
+           <field name="report_name">zue_hr_employee.report_certificacion_laboral</field>
+           <field name="report_file">zue_hr_employee.report_certificacion_laboral</field>
+           <field name="binding_model_id" ref="model_hr_labor_certificate_history"/>
+        </record>
+
         <record id="report_certificacion_laboral_action" model="ir.actions.report">
             <field name="paperformat_id" ref="zue_hr_employee.labor_certification" />
         </record>

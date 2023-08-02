@@ -98,6 +98,7 @@ class hr_employee_rtefte(models.Model):
     employee_id = fields.Many2one('hr.employee',string='Empleado', required=True, readonly=True)
     year = fields.Integer('Año',required=True, readonly=True)
     month = fields.Integer('Mes',required=True, readonly=True)
+    type_tax = fields.Many2one('hr.type.tax.retention','Tipo de retención', readonly=True)
     deduction_retention = fields.One2many('hr.employee.deduction.retention', 'encab_id' , 'RteFte', readonly=True)
 
     def name_get(self):

@@ -15,15 +15,14 @@
             <field name="header_spacing">0</field>
             <field name="dpi">90</field>
         </record>
-        <report
-            id="hr_report_income_and_withholdings_action"
-            model="hr.withholding.and.income.certificate"
-            string="Certificado ingreso y retenciones"
-            report_type="qweb-html"
-            name="zue_hr_payroll.hr_report_income_and_withholdings"
-            file="zue_hr_payroll.hr_report_income_and_withholdings"
-        />
-         <record id="hr_report_income_and_withholdings_action" model="ir.actions.report">
-            <field name="paperformat_id" ref="zue_hr_payroll.hr_annual_parameters"/>
+
+        <record id="hr_report_income_and_withholdings_action" model="ir.actions.report">
+           <field name="name">Certificado ingreso y retenciones</field>
+           <field name="model">hr.withholding.and.income.certificate</field>
+           <field name="report_type">qweb-html</field>
+           <field name="report_name">zue_hr_payroll.hr_report_income_and_withholdings</field>
+           <field name="report_file">zue_hr_payroll.hr_report_income_and_withholdings</field>
+           <field name="paperformat_id" ref="zue_hr_payroll.hr_annual_parameters"/>
+           <field name="binding_model_id" ref="zue_hr_payroll.model_hr_withholding_and_income_certificate"/>
         </record>
 </odoo>

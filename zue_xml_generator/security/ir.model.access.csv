@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_zue_xml_generator_details,zue.xml.generator.details,model_zue_xml_generator_details,,1,1,1,1
+access_zue_xml_generator_header,zue.xml.generator.header,model_zue_xml_generator_header,,1,1,1,1

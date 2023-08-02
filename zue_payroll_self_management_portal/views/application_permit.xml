@@ -1,148 +1,134 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <template id="assets_frontend" inherit_id="web.assets_frontend">
-            <xpath expr="." position="inside">
-                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
-                      integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
-                      crossorigin="anonymous"/>
-                <link rel="stylesheet" href="/zue_payroll_self_management_portal/static/src/css/main.css"/>
-                <script type="text/javascript"
-                        src="/zue_payroll_self_management_portal/static/src/js/application_permit.js"></script>
-                <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
-                        integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
-                        crossorigin="anonymous"></script>
-            </xpath>
-        </template>
-        <template id="application_permit" name="Solicitud de permisos">
-            <!-- <link rel="stylesheet" type="text/scss" href="/zue_payroll_self_management_portal/static/src/css/main.css"/> -->
-            <t t-call="website.layout">
-                <div class="oe_structure">
+        <template id="application_permit" name="Solicitud de ausencias">
+            <body t-att-style="'background-color:'+str(portal_design.z_background_color)+';font-family:'+str(portal_design.z_font)+';'">
+            <link rel="stylesheet" href="/zue_payroll_self_management_portal/static/src/css/main.css"/>
+            <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+                  integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3"
+                  crossorigin="anonymous"/>
+            <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+                    integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+                    crossorigin="anonymous"></script>
+            <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"/>
+            <t t-call="web.basic_layout">
+                <script type="text/javascript" src="/zue_payroll_self_management_portal/static/src/js/employee_absences.js"/>
+                <script>
+                    $(function () {
+                        $('#attachment').on('change',function(e){
+                            var fileName = e.target.files[0].name;
+                            $(this).next('.custom-file-label').html(fileName);
+                        })
+                    });
+                </script>
+                <t t-if="absences_update">
+                    <script>
+                        $(document).ready(function(){
+                        Swal.fire({
+                              title: 'Felicitaciones!',
+                              text: 'Tu ausencia se registro correctamente.',
+                              showDenyButton: false,
+                              showCancelButton: false,
+                              confirmButtonText: 'Continuar',
+                            }).then((result) => {
+                              if (result.isConfirmed) {
+                                window.parent.location.reload();
+                              }
+                            })
+                            //alert("Tu ausencia se registro correctamente.");
+                            //window.parent.location.reload();
+                        });
+                    </script>
+                </t>
+                <div class="oe_structure" t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
                     <main class="container">
-                        <h1 class="center title">
-                            <strong>Solicitud de Permisos</strong>
-                        </h1>
-                        <form class="form-application-permit"
+                        <br/>
+                        <div class="row">
+                            <div class="col-md-2">
+                                <a type="button" class="fa fa-arrow-left"
+                                   t-att-style="'color:'+str(portal_design.z_secondary_color)+';'"
+                                   t-attf-href="/zue_payroll_self_management_portal/absences">
+                                </a>
+                            </div>
+                            <div class="col-md-10">
+                                <h1 class="center title d-flex justify-content-center"
+                                    t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                    <strong>Solicitud de ausencias</strong>
+                                </h1>
+                            </div>
+                        </div>
+                        <form class="form-application-permit" enctype="multipart/form-data"
                               action='/zue_payroll_self_management_portal/save_permit_application' method="POST">
                             <section class="control-edit">
                                 <!-- <h2>Información Basica</h2> -->
                                 <div class="form-row">
-                                    <div class="form-group col-md-4">
-                                        <label for="permit_date" class="form-label">Fecha de la solicitud</label>
-                                        <input type="date" class="form-control" id="permit_date"
-                                               placeholder="Fecha Solicitud" name="permit_date"/>
-                                    </div>
-                                    <div class="form-group col-md-4">
-                                        <label for="reason" class="form-label">Tipo de Solicitud</label>
-                                        <select class="form-select" id="reason" name="reason"
-                                                placeholder="Tipo de Solicitud">
-                                            <option value="personal">Diligencia Personal</option>
-                                            <option value="med_general">Cita médico general</option>
-                                            <option value="med_laboral">Cita médico laboral</option>
-                                            <option value="other">Otros</option>
+                                    <div class="form-group col-md-12">
+                                        <label class="form-label">Tipo de Ausencia</label>
+                                        <select class="form-select" id="holiday_status_id" name="holiday_status_id"
+                                                t-att-style="'color:'+str(portal_design.z_secondary_color)+';'"
+                                                required="required">
+                                            <option value="" selected="selected" disabled="disabled" hidden="hidden">--
+                                                Seleccione --
+                                            </option>
+                                            <option t-foreach="lst_leave_types" t-as="leave_type"
+                                                    t-att-value="leave_type[0]">
+                                                <span t-esc="leave_type[1]"/>
+                                            </option>
                                         </select>
-                                        <input class="form-control" type="text" hidden="hidden"
-                                               id="text_other" name="text_other"
-                                               placeholder="¿Cual?"/>
                                     </div>
-                                    <div class="form-group col-md-4">
-                                        <label for="empty" class="form-label"/>
-                                        <div class="form-check col-md-12">
-                                            <input class="form-check-input" type="checkbox" value="" id="severalDays"
-                                                   name="leave_requested_more_day"/>
-                                            <label class="form-check-label" for="severalDays">Permiso superior a
-                                                un dia.
-                                            </label>
-                                        </div>
-                                        <div class="form-check col-md-12">
-                                             <input class="form-check-input" type="checkbox" value="" id="compensatedCheck"
-                                                   name="leave_compensated"/>
-                                            <label class="form-check-label" for="compensatedCheck">Permiso compensado.
-                                            </label>
-                                        </div>
+                                    <div class="form-group col-md-6">
+                                        <label class="form-label">Fecha inicio</label>
+                                        <input type="date" class="form-control" id="date_start" required="required"
+                                               t-att-style="'color:'+str(portal_design.z_secondary_color)+';'"
+                                               name="date_start"/>
                                     </div>
-                                </div>
-                                <div class="form-row">
-                                    <div class="form-group col-md-4">
-                                        <label for="email" class="form-label">Dias solicitados</label>
-                                        <input type="number" id="permit_days" name="permit_days" class="form-control"/>
-                                    </div>
-                                    <div class="form-group col-md-4">
-                                        <label for="initial_hour" class="form-label">Hora de Salida</label>
-                                        <input type="time" class="form-control" id="initial_hour"
-                                               placeholder="Hora de Salida" name="initial_hour"/>
-                                        <input type="hidden" id="initial_date" name="initial_date"/>
-                                    </div>
-                                    <div class="form-group col-md-4">
-                                        <label for="final_hour" class="form-label">Hora de Llegada</label>
-                                        <input type="time" class="form-control" id="final_hour"
-                                               placeholder="Hora de Llegada" name="final_hour"/>
-                                        <input type="hidden" id="final_date" name="final_date"/>
+                                    <div class="form-group col-md-6">
+                                        <label class="form-label">Cantidad de días</label>
+                                        <input class="txt_number_of_days form-control" type="number"
+                                               t-att-style="'color:'+str(portal_design.z_secondary_color)+';'"
+                                               id="number_of_days" name="number_of_days" required="required" value="0"/>
                                     </div>
                                 </div>
 
                                 <div class="form-row">
+                                    <div class="form-group col-md-6">
+                                        <label class="form-label">Fecha fin</label>
+                                        <input type="date" class="form-control" id="date_end"
+                                               t-att-style="'color:'+str(portal_design.z_secondary_color)+';'"
+                                               name="date_end" disabled="disabled"/>
+                                    </div>
+                                    <div class="form-group col-md-6">
+                                        <label>Adjunto</label>
+                                        <div class="custom-file" lang="es">
+                                            <input type="file" class="custom-file-input"
+                                                   id="attachment" name="attachment"
+                                                   aria-describedby="addon_attachment"
+                                                   t-att-style="'color:'+str(portal_design.z_secondary_color)+';'"/>
+                                            <label class="custom-file-label" for="attachment">Seleccione el archivo</label>
+                                        </div>
+                                    </div>
                                     <div class="form-group col-md-12">
-                                        <label for="observation">Observaciones</label>
-                                        <textarea class="observation form-control"
-                                                  placeholder="Observaciones adicionales" name="observation"
-                                                  id="observation"></textarea>
+                                        <label>Descripción</label>
+                                        <textarea class="observation form-control" name="observation"
+                                                  t-att-style="'color:'+str(portal_design.z_secondary_color)+';'"
+                                                  id="observation" required="required"></textarea>
                                     </div>
                                 </div>
                                 <div class="form-row justify-content-center">
                                     <div class="form-group col-md-12">
                                         <input type="submit" class="btn btn-outline-success btn-lg btn-block"
+                                               t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
+                                               ';color:'+str(portal_design.z_primary_color)+';'"
                                                id="SaveData" value="Solicitar"/>
                                     </div>
                                 </div>
                             </section>
                         </form>
                     </main>
-                </div>
-            </t>
-        </template>
 
-        <template id="my_application_permits" name="Ver mis Permisos">
-            <t t-call="website.layout">
-                <div class="oe_structure">
-                    <main class="container">
-                        <h1 class="center title">
-                            <strong>Mis Permisos</strong>
-                        </h1>
-                        <br/>
-                        <table class="table">
-                            <thead class="thead-dark">
-                                <tr>
-                                    <th>Fecha de solicitud</th>
-                                    <th>Tipo de solicitud</th>
-                                    <th>Observaciones</th>
-                                    <th>Estado</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <t t-set="type_reason" t-value="{'personal': 'Diligencia Personal','med_general': 'Cita médico general','med_laboral': 'Cita médico laboral','other': 'Otros'}"/>
-                                <t t-set="states" t-value="{'confirm': 'Para Aprobar','validate': 'Aprobado','refuse': 'Rechazado'}"/>
-                                <tr t-foreach="obj_permit_application" t-as="opa">
-                                    <td><span t-esc="opa.permit_date"/></td>
-                                    <td><span t-esc="type_reason.get(opa.reason,'')"/></td>
-                                    <td><span t-esc="opa.observation"/></td>
-                                    <td>
-                                        <t t-if="opa.state == 'confirm'">
-                                            <span class="badge badge-pill badge-warning" t-esc="states.get(opa.state,'')"/>
-                                        </t>
-                                        <t t-if="opa.state == 'validate'">
-                                            <span class="badge badge-pill badge-success" t-esc="states.get(opa.state,'')"/>
-                                        </t>
-                                        <t t-if="opa.state == 'refuse'">
-                                            <span class="badge badge-pill badge-danger" t-esc="states.get(opa.state,'')"/>
-                                        </t>
-                                    </td>
-                                </tr>
-                            </tbody>
-                        </table>
-                    </main>
                 </div>
             </t>
+            </body>
         </template>
     </data>
 </odoo>

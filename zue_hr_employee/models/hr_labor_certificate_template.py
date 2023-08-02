@@ -23,6 +23,7 @@ class hr_labor_certificate_template(models.Model):
                                    compute='_compute_txt_model_fields', store=False)
     body_labor_certificate = fields.Html(string='Contenido', translate=False)
     show_average_overtime = fields.Boolean('Mostrar promedio de horas extras de los ultimos 3 meses')
+    z_show_total_rules = fields.Boolean('Mostrar total de reglas variables/fijas')
 
     _sql_constraints = [
         ('company_certificate_template', 'UNIQUE (company_id)', 'Ya existe una configuración de plantilla de certificado laboral para esta compañía, por favor verificar')
@@ -53,6 +54,12 @@ class hr_labor_certificate_template_detail(models.Model):
     sequence = fields.Integer(string='Secuencia')
     last_month = fields.Boolean(string='Último mes')
     average_last_months = fields.Boolean(string='Promedio  de los ultimos 3 meses')
+    z_value_contract = fields.Boolean(string="Valor contrato")
+    # Es quincenal o mensual
+    z_payment_frequency = fields.Selection([
+                                    ('biweekly', 'Quincenal'),
+                                    ('monthly', 'Mensual')
+                                ], string='Frecuencia de pago', default='biweekly', required=True)
 
     _sql_constraints = [
         ('rule_certificate_template_detail', 'UNIQUE (certificate_template_id, rule_salary_id)',

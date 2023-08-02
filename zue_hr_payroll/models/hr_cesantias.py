@@ -6,6 +6,7 @@ from odoo.tools import float_compare, float_is_zero
 
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+import math
 
 class hr_history_cesantias(models.Model):
     _name = 'hr.history.cesantias'
@@ -95,7 +96,7 @@ class Hr_payslip(models.Model):
         employee = self.employee_id
         contract = self.contract_id
 
-        if contract.modality_salary == 'integral' or contract.contract_type == 'aprendizaje':
+        if contract.modality_salary == 'integral' or contract.contract_type == 'aprendizaje' or contract.subcontract_type == 'obra_integral':
             return result.values()
 
         year = self.date_from.year
@@ -147,40 +148,48 @@ class Hr_payslip(models.Model):
 
                     #Acumulados
                     if dias_trabajados != 0:
-                        acumulados_promedio = (amount / dias_trabajados) * 30  # dias_liquidacion
+                        acumulados_promedio = (amount / dias_trabajados) * 30  # dias_liquidacion // HISTORIA: Promedio de la base variable no tome ausentismos
                     else:
                         acumulados_promedio = 0
                     #Salario - Se toma el salario correspondiente a la fecha de liquidación
-                    wage = 0
-                    obj_wage = self.env['hr.contract.change.wage'].search([('contract_id','=',contract.id),('date_start','<',self.date_to)])
-                    for change in sorted(obj_wage, key=lambda x: x.date_start): #Obtiene el ultimo salario vigente antes de la fecha de liquidacion
-                        wage = change.wage
-                    wage = contract.wage if wage == 0 else wage
-                    initial_process_date = self.date_cesantias if inherit_contrato != 0 else self.date_to - relativedelta(months=3)
-                    end_process_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
-                    obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '>=', initial_process_date),('date_start', '<=', end_process_date)])
-                    obj_wage_history = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id)])
-                    if cesantias_salary_take and len(obj_wage) > 0 and len(obj_wage_history) > 1:
-                        wage_average = 0
-                        dias_trabajados_average = self.dias360(initial_process_date, end_process_date)
-                        while initial_process_date <= end_process_date:
-                            if initial_process_date.day != 31:
-                                if initial_process_date.month == 2 and initial_process_date.day == 28 and (initial_process_date + timedelta(days=1)).day != 29:
-                                    wage_average += (contract.get_wage_in_date(initial_process_date) / 30) * 3
-                                elif initial_process_date.month == 2 and initial_process_date.day == 29:
-                                    wage_average += (contract.get_wage_in_date(initial_process_date) / 30) * 2
-                                else:
-                                    wage_average += contract.get_wage_in_date(initial_process_date) / 30
-                            initial_process_date = initial_process_date + timedelta(days=1)
-                        if dias_trabajados_average != 0:
-                            wage = contract.wage if wage_average == 0 else (wage_average / dias_trabajados_average) * 30
-                        else:
-                            wage = 0
-                    #Auxilio de transporte
-                    auxtransporte = annual_parameters.transportation_assistance_monthly
-                    auxtransporte_tope = annual_parameters.top_max_transportation_assistance
+                    wage,auxtransporte,auxtransporte_tope = 0,0,0
+                    if contract.subcontract_type not in ('obra_parcial','obra_integral'):
+                        wage = 0
+                        obj_wage = self.env['hr.contract.change.wage'].search([('contract_id','=',contract.id),('date_start','<',self.date_to)])
+                        for change in sorted(obj_wage, key=lambda x: x.date_start): #Obtiene el ultimo salario vigente antes de la fecha de liquidacion
+                            wage = change.wage
+                        wage = contract.wage if wage == 0 else wage
+                        initial_process_date = self.date_cesantias if inherit_contrato != 0 else self.date_to - relativedelta(months=3)
+                        end_process_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
+                        obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '>=', initial_process_date),('date_start', '<=', end_process_date)])
+                        if cesantias_salary_take and len(obj_wage) > 0:
+                            wage_average = 0
+                            dias_trabajados_average = self.dias360(initial_process_date, end_process_date)
+                            while initial_process_date <= end_process_date:
+                                if initial_process_date.day != 31:
+                                    if initial_process_date.month == 2 and initial_process_date.day == 28 and (initial_process_date + timedelta(days=1)).day != 29:
+                                        wage_average += (contract.get_wage_in_date(initial_process_date) / 30) * 3
+                                    elif initial_process_date.month == 2 and initial_process_date.day == 29:
+                                        wage_average += (contract.get_wage_in_date(initial_process_date) / 30) * 2
+                                    else:
+                                        wage_average += contract.get_wage_in_date(initial_process_date) / 30
+                                initial_process_date = initial_process_date + timedelta(days=1)
+                            if dias_trabajados_average != 0:
+                                wage = contract.wage if wage_average == 0 else (wage_average / dias_trabajados_average) * 30
+                            else:
+                                wage = 0
+                        #Auxilio de transporte
+                        auxtransporte = annual_parameters.transportation_assistance_monthly
+                        auxtransporte_tope = annual_parameters.top_max_transportation_assistance
                     #Calculo base
-                    if wage <= auxtransporte_tope:
+                    value_rules_base_auxtransporte_tope = localdict['payslip'].get_accumulated_cesantias(self.date_from, self.date_to, 1)
+                    if inherit_contrato != 0:
+                        value_rules_base_auxtransporte_tope = localdict['payslip'].get_accumulated_cesantias(self.date_cesantias,self.date_liquidacion,1)
+                    if dias_trabajados != 0:
+                        value_rules_base_auxtransporte_tope = (value_rules_base_auxtransporte_tope / dias_trabajados) * 30  # dias_liquidacion // HISTORIA: Promedio de la base variable no tome ausentismos
+                    else:
+                        value_rules_base_auxtransporte_tope = 0
+                    if (wage+value_rules_base_auxtransporte_tope) <= auxtransporte_tope:
                         amount_base = round(wage + auxtransporte + acumulados_promedio, 0) if round_payroll == False else wage + auxtransporte + acumulados_promedio
                     else:
                         amount_base = round(wage + acumulados_promedio, 0) if round_payroll == False else wage + acumulados_promedio
@@ -201,12 +210,18 @@ class Hr_payslip(models.Model):
                         if entity.contrib_id.type_entities == 'cesantias':
                             entity_cesantias = entity.partner_id
 
-                amount = round(amount,0) if round_payroll == False else amount
+                amount = round(amount,0) if round_payroll == False else round(amount, 2)
                 #check if there is already a rule computed with that code
                 previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
                 #set/overwrite the amount computed for this rule in the localdict
-                tot_rule = round(amount * qty * rate / 100.0,0) if round_payroll == False else amount * qty * rate / 100.0
-                tot_rule += previous_amount
+                tot_rule_original = (amount * qty * rate / 100.0)
+                part_decimal, part_value = math.modf(tot_rule_original)
+                tot_rule = amount * qty * rate / 100.0
+                if part_decimal >= 0.5 and math.modf(tot_rule)[1] == part_value:
+                    tot_rule = (part_value + 1) + previous_amount
+                else:
+                    tot_rule = tot_rule + previous_amount
+                tot_rule = round(tot_rule, 0)
                 localdict[rule.code] = tot_rule
                 rules_dict[rule.code] = rule
                 # sum the amount for its salary category

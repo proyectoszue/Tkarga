@@ -13,6 +13,8 @@ class Hr_payslip(models.Model):
 
     excel_value_base_file = fields.Binary('Excel Valores base file')
     excel_value_base_file_name = fields.Char('Excel Valores base filename')
+    z_excel_lines = fields.Binary('Excel líneas de recibo de nómina')
+    z_excel_lines_filename = fields.Char('Excel líneas de recibo de nómina filename')
 
     def get_query(self,process,date_start,date_end):
         # formatear fechas
@@ -52,25 +54,31 @@ class Hr_payslip(models.Model):
 
         if self.struct_id.process == 'vacaciones':
             date_start = self.date_from - relativedelta(years=1)
+            date_start = self.contract_id.date_start if date_start <= self.contract_id.date_start else date_start
             date_end = self.date_from
             query_vacaciones = self.get_query('base_vacaciones',date_start,date_end)
             query_vacaciones_dinero = self.get_query('base_vacaciones_dinero', date_start, date_end)
         elif self.struct_id.process == 'prima':
             date_start = self.date_from
+            date_start = self.contract_id.date_start if date_start <= self.contract_id.date_start else date_start
             date_end = self.date_to
             query_prima = self.get_query('base_prima', date_start, date_end)
         elif self.struct_id.process == 'cesantias' or self.struct_id.process == 'intereses_cesantias':
             date_start = self.date_from
+            date_start = self.contract_id.date_start if date_start <= self.contract_id.date_start else date_start
             date_end = self.date_to
             query_cesantias = self.get_query('base_cesantias', date_start, date_end)
         elif self.struct_id.process == 'contrato':
             date_start = self.date_liquidacion - relativedelta(years=1)
+            date_start = self.contract_id.date_start if date_start <= self.contract_id.date_start else date_start
             date_end = self.date_liquidacion
             query_vacaciones_dinero = self.get_query('base_vacaciones_dinero', date_start, date_end)
             date_start = self.date_prima
+            date_start = self.contract_id.date_start if date_start <= self.contract_id.date_start else date_start
             date_end = self.date_liquidacion
             query_prima = self.get_query('base_prima', date_start, date_end)
             date_start = self.date_cesantias
+            date_start = self.contract_id.date_start if date_start <= self.contract_id.date_start else date_start
             date_end = self.date_liquidacion
             query_cesantias = self.get_query('base_cesantias', date_start, date_end)
         else:
@@ -229,5 +237,78 @@ class Hr_payslip(models.Model):
         }
         return action
 
+    def get_excel_lines(self):
+        # Generar EXCEL
+        filename = f'Líneas de recibo de nómina - {self.display_name}.xlsx'
+        stream = io.BytesIO()
+        book = xlsxwriter.Workbook(stream, {'in_memory': True})
+        date_format = book.add_format({'num_format': 'dd/mm/yyyy'})
+        number_format = book.add_format({'num_format': '#,##'})
 
+        columns = ['Nombre', 'Categoría', 'Cantidad', 'C. Inicio', 'C. Fin', 'Base', 'Entidad', 'Prestamo', 'Regla',
+                   'Importe', 'Total']
+
+        sheet = book.add_worksheet('Líneas')
+        # Agregar columnas
+        aument_columns = 0
+        for column in columns:
+            sheet.write(0, aument_columns, column)
+            aument_columns = aument_columns + 1
+
+        # Agregar Información
+        aument_rows = 1
+        for line in self.line_ids:
+            sheet.write(aument_rows, 0, line.name)
+            sheet.write(aument_rows, 1, line.category_id.display_name)
+            sheet.write(aument_rows, 2, line.quantity,number_format)
+            if line.initial_accrual_date:
+                sheet.write_datetime(aument_rows, 3, line.initial_accrual_date, date_format)
+            else:
+                sheet.write(aument_rows, 3, '')
+            if line.final_accrual_date:
+                sheet.write_datetime(aument_rows, 4, line.final_accrual_date, date_format)
+            else:
+                sheet.write(aument_rows, 4, '')
+            sheet.write(aument_rows, 5, line.amount_base,number_format)
+            if line.entity_id:
+                sheet.write(aument_rows, 6, line.entity_id.display_name)
+            else:
+                sheet.write(aument_rows, 6, '')
+            if line.loan_id:
+                sheet.write(aument_rows, 7, line.loan_id.display_name)
+            else:
+                sheet.write(aument_rows, 7, '')
+            sheet.write(aument_rows, 8, line.salary_rule_id.display_name)
+            sheet.write(aument_rows, 9, line.amount,number_format)
+            sheet.write(aument_rows, 10, line.total,number_format)
+            aument_rows = aument_rows + 1
+        # Tamaño columnas
+        sheet.set_column('A:B', 30)
+        sheet.set_column('C:C', 10)
+        sheet.set_column('D:F', 15)
+        sheet.set_column('G:I', 30)
+        sheet.set_column('J:K', 15)
+        # Convertir en tabla
+        array_header_table = []
+        aument_rows = 2 if aument_rows == 1 else aument_rows
+        for i in columns:
+            dict = {'header': i}
+            array_header_table.append(dict)
+        sheet.add_table(0, 0, aument_rows - 1, len(columns) - 1,
+                                   {'style': 'Table Style Medium 2', 'columns': array_header_table})
+
+        book.close()
+        self.write({
+            'z_excel_lines': base64.encodestring(stream.getvalue()),
+            'z_excel_lines_filename': filename,
+        })
+
+        action = {
+            'name': 'Export Excel líneas de recibo de nómina',
+            'type': 'ir.actions.act_url',
+            'url': "web/content/?model=hr.payslip&id=" + str(
+                self.id) + "&filename_field=z_excel_lines_filename&field=z_excel_lines&download=true&filename=" + self.z_excel_lines_filename,
+            'target': 'self',
+        }
+        return action
 

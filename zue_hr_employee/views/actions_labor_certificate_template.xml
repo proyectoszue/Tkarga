@@ -21,6 +21,7 @@
                     <field name="company_id"/>
                     <field name="type_header_footer"/>
                     <field name="show_average_overtime"/>
+                    <field name="z_show_total_rules"/>
                 </tree>
             </field>
         </record>
@@ -34,20 +35,16 @@
                         <group>
                             <field name="company_id" required="1"/>
                             <field name="type_header_footer" widget="radio"/>
-                            <p>Al utilizar un encabezado y pie de pagina personalizado se deben adjuntar las imagenes
-                                correspondientes de cada uno de ellos.
-                            </p>
+                            <p>Al utilizar un encabezado y pie de pagina personalizado se deben adjuntar las imagenes correspondientes de cada uno de ellos.</p>
                         </group>
                         <group attrs="{'invisible':[('type_header_footer', '!=', 'custom')]}">
                             <group>
                                 <field name="img_header_filename" invisible="1"/>
-                                <field name="img_header_file" filename="img_header_filename"
-                                       attrs="{'invisible':[('type_header_footer', '!=', 'custom')]}"/>
+                                <field name="img_header_file" filename="img_header_filename" attrs="{'invisible':[('type_header_footer', '!=', 'custom')]}"/>
                             </group>
                             <group>
                                 <field name="img_footer_filename" invisible="1"/>
-                                <field name="img_footer_file" filename="img_footer_filename"
-                                       attrs="{'invisible':[('type_header_footer', '!=', 'custom')]}"/>
+                                <field name="img_footer_file" filename="img_footer_filename" attrs="{'invisible':[('type_header_footer', '!=', 'custom')]}"/>
                             </group>
                         </group>
                         <group>
@@ -56,6 +53,7 @@
                             <field name="body_labor_certificate" invisible="1"/>
                             <field name="notes"/>
                             <field name="show_average_overtime"/>
+                            <field name="z_show_total_rules"/>
                         </group>
                         <group>
                             <field name="certificate_template_detail_ids">
@@ -64,6 +62,8 @@
                                     <field name="rule_salary_id"/>
                                     <field name="last_month"/>
                                     <field name="average_last_months"/>
+                                    <field name="z_value_contract"/>
+                                    <field name="z_payment_frequency"/>
                                 </tree>
                             </field>
                         </group>

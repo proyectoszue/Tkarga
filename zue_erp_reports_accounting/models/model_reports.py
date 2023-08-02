@@ -48,9 +48,14 @@ class x_reports_account(models.Model):
     columns = fields.Char(string='Columnas (Separadas por , )', required=True)
     query = fields.Text(string='Query')    
     excel_file = fields.Binary('Excel file')
-    excel_file_name = fields.Char('Excel name', size=64)
-    
-    
+    excel_file_name = fields.Char('Excel name')
+    z_only_zue_developer = fields.Boolean(string='Desarrollo Zue', default=False)
+
+    @api.model
+    def create(self, values):
+        self.exception_words(values['query'])
+        return super(x_reports_account, self).create(values)
+
     #Retonar columnas
     def get_columns(self):
         _columns = self.columns.split(",")
@@ -58,6 +63,7 @@ class x_reports_account(models.Model):
     
     #Ejecutar consulta SQL
     def run_sql(self):
+        self.exception_words(self.query)
         #Armar fecha dependiendo lo seleccionado
         date_initial = str(self.x_ano_initial)+'-'+str(self.x_month_initial)+'-01'  # >=
         
@@ -81,6 +87,19 @@ class x_reports_account(models.Model):
         self._cr.execute(query)
         _res = self._cr.dictfetchall()
         return _res
+
+    def exception_words(self, query):
+        if self.z_only_zue_developer != True:
+            if 'delete'in query:
+                raise ValidationError ('No puede realizar esta consulta')
+            elif 'update'in query:
+                raise ValidationError('No puede realizar esta consulta')
+            elif 'truncate'in query:
+                raise ValidationError('No puede realizar esta consulta')
+            elif 'drop'in query:
+                raise ValidationError('No puede realizar esta consulta')
+
+        return True
     
     def get_excel(self):        
         if self.query and self.columns:
@@ -126,4 +145,10 @@ class x_reports_account(models.Model):
                         'target': 'self',
                     }
             return action
-        
+
+    @api.onchange('query')
+    def lower_case(self):
+        if self.query:
+            self.query = self.query.lower()
+        else:
+            self.query = ""
