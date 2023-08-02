@@ -49,9 +49,6 @@ class ResPartner(models.Model):
                                     ], string='Tipo de documento', tracking=True, default='13')
     x_digit_verification = fields.Integer(string='Digito de verificación', tracking=True,compute='_compute_verification_digit', store=True)
     x_vat_expedition_date = fields.Date('Fecha de expedición documento')
-    z_country_issuance_id = fields.Many2one('res.country', string='Pais de expedicion documento')
-    z_department_issuance_id = fields.Many2one('res.country.state', string='Departamento de expedicion documento')
-    z_city_issuance_id = fields.Many2one('zue.city', string='Ciudad de expedicion documento')
     x_business_name = fields.Char(string='Nombre de negocio', tracking=True)
     x_first_name = fields.Char(string='Primer nombre', tracking=True)
     x_second_name = fields.Char(string='Segundo nombre', tracking=True)
@@ -99,6 +96,8 @@ class ResPartner(models.Model):
                                         ('3', 'Mediana'),
                                         ('4', 'Grande')
                                     ], string='Tamaño empresa', tracking=True)
+
+    x_tax_responsibilities = fields.Char(string='Responsabilidades Tributarias')
 
     #INFORMACION COMERCIAL
     x_account_origin = fields.Selection([
