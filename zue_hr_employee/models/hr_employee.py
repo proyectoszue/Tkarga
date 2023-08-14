@@ -127,12 +127,12 @@ class hr_employee_dependents(models.Model):
                                ('femenino', 'Femenino'),
                                ('otro', 'Otro')],'Genero')
     date_birthday = fields.Date('Fecha de nacimiento')
-    dependents_type = fields.Selection([('hijo', 'Hijo'),
-                               ('padre', 'Padre'),
-                               ('madre', 'Madre'),
-                               ('conyuge', 'Cónyuge'),
-                               ('hermano', 'Hermano'),
-                               ('otro', 'Otro')],'Tipo')
+    dependents_type = fields.Selection([('hijo', 'Hijo(a)'),
+                                        ('padre', 'Padre'),
+                                        ('madre', 'Madre'),
+                                        ('conyuge', 'Cónyuge'),
+                                        ('hermano', 'Hermano(a)'),
+                                        ('otro', 'Otro')], 'Tipo')
     z_document_type = fields.Selection([
         ('11', 'Registro civil de nacimiento'),
         ('12', 'Tarjeta de identidad'),
