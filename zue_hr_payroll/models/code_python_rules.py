@@ -204,18 +204,15 @@ if obj_salary_rule and liquidate_employee_pension and contract.contract_type != 
                     result = (round((total)*porc) if round((total)*porc) % 100 == 0 else round((total)*porc) + 100 - round((total)*porc) % 100)*-1
 # ---------------------------------------Fondo subsistencia--------------------------------------------------------
 result = 0.0
-obj_salary_rule = payslip.get_salary_rule('SSOCIAL003', employee.type_employee.id)
-liquidates_solidarity_fund = payslip.get_parameterization_contributors().liquidates_solidarity_fund if len(
-    payslip.get_parameterization_contributors()) > 0 else True
+obj_salary_rule = payslip.get_salary_rule('SSOCIAL003',employee.type_employee.id)
+liquidates_solidarity_fund = payslip.get_parameterization_contributors().liquidates_solidarity_fund if len(payslip.get_parameterization_contributors()) > 0 else True
 if obj_salary_rule and liquidates_solidarity_fund and contract.contract_type != 'aprendizaje':
     day_initial_payrroll = payslip.date_from.day
-    day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28, 29) else payslip.date_to.day
-    aplicar = 0 if obj_salary_rule.aplicar_cobro == '30' and inherit_contrato != 0 else int(
-        obj_salary_rule.aplicar_cobro)
+    day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
+    aplicar = 0 if obj_salary_rule.aplicar_cobro=='30' and inherit_contrato!=0 else int(obj_salary_rule.aplicar_cobro)
     if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
         salario_minimo = annual_parameters.smmlv_monthly
-        total = categories.DEV_SALARIAL if aplicar == 0 and inherit_contrato == 0 else categories.DEV_SALARIAL + payslip.sum_mount(
-            'DEV_SALARIAL', payslip.date_from, payslip.date_to)
+        total = categories.DEV_SALARIAL if aplicar == 0 and inherit_contrato==0 else categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from, payslip.date_to)
         # Ley 1393
         if payslip.date_from.day > 15 or (inherit_contrato != 0):
             total_salarial = categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from,
@@ -233,27 +230,31 @@ if obj_salary_rule and liquidates_solidarity_fund and contract.contract_type != 
         dias_work = payslip.sum_days_works('WORK100', payslip.date_from, payslip.date_to)
         dias_work_act = worked_days.WORK100.number_of_days if worked_days.WORK100 else 0
         dias_work = dias_work_act if (aplicar == 0) else dias_work + dias_work_act
-        top_twenty_five_smmlv = annual_parameters.top_twenty_five_smmlv  # (annual_parameters.top_twenty_five_smmlv / 30) * dias_work
+        top_twenty_five_smmlv = annual_parameters.top_twenty_five_smmlv#(annual_parameters.top_twenty_five_smmlv / 30) * dias_work
         if contract.modality_salary == 'integral':
             porc_integral_salary = annual_parameters.porc_integral_salary / 100
             total = total * porc_integral_salary
             total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
         else:
             total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
-        if (total / salario_minimo) >= 4 and (total / salario_minimo) < 16:
-            result = payslip.roundup100(total * 0.005 * (-1))
-        if (total / salario_minimo) >= 16 and (total / salario_minimo) <= 17:
-            result = payslip.roundup100(total * 0.007 * (-1))
-        if (total / salario_minimo) > 17 and (total / salario_minimo) <= 18:
-            result = payslip.roundup100(total * 0.009 * (-1))
-        if (total / salario_minimo) > 18 and (total / salario_minimo) <= 19:
-            result = payslip.roundup100(total * 0.01 * (-1))
-        if (total / salario_minimo) > 19 and (total / salario_minimo) <= 20:
-            result = payslip.roundup100(total * 0.013 * (-1))
-        if (total / salario_minimo) > 20 and (total / salario_minimo) <= 25:
-            result = payslip.roundup100(total * 0.015 * (-1))
-        if (total / salario_minimo) > 25:
-            result = payslip.roundup100(salario_minimo * 25 * 0.01 * (-1))
+        if (total/salario_minimo) >= 4 and (total/salario_minimo) < 16:
+            result =  payslip.roundup100(total * 0.005 * (-1))
+        if  (total/salario_minimo) >= 16 and (total/salario_minimo) <= 17:
+            result =  payslip.roundup100(total * 0.007 * (-1))
+        if  (total/salario_minimo) > 17 and (total/salario_minimo) <= 18:
+            result =  payslip.roundup100(total * 0.009 * (-1))
+        if  (total/salario_minimo) > 18 and (total/salario_minimo) <= 19:
+            result =  payslip.roundup100(total * 0.01 * (-1))
+        if  (total/salario_minimo) > 19 and (total/salario_minimo) <= 20:
+            result =  payslip.roundup100(total * 0.013 * (-1))
+        if  (total/salario_minimo) > 20 and (total/salario_minimo) <= 25:
+            result =  payslip.roundup100(total * 0.015* (-1))
+        if  (total/salario_minimo) > 25:
+            result =  payslip.roundup100(salario_minimo * 25 * 0.01* (-1))
+
+        if result != 0:
+            value_period = payslip.sum('SSOCIAL003', payslip.date_from, payslip.date_to)
+            result = result - value_period
 #---------------------------------------Fondo Solidadridad--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('SSOCIAL004',employee.type_employee.id)
@@ -290,7 +291,8 @@ if obj_salary_rule and liquidates_solidarity_fund and contract.contract_type != 
         else:
             total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
         if (total/salario_minimo) >= 4:
-            result =  payslip.roundup100(total * 0.005 * (-1))
+            value_period = payslip.sum('SSOCIAL004', payslip.date_from, payslip.date_to)
+            result =  (payslip.roundup100(total * 0.005 * (-1)) - value_period)
 #---------------------------------------Valor devengos/deducciones & Libranzas --------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('AUX001',employee.type_employee.id) 
@@ -746,6 +748,28 @@ if obj_salary_rule and dias != 0.0:
             else:
                 if (contract.wage <= auxtransporte_tope) and (total <= auxtransporte_tope):
                     result = round(dias * auxtransporte /30)
+#--------------------------------------- Bonificación de servicios prestados --------------------------------------------------------
+result = 0.0
+obj_salary_rule = payslip.get_salary_rule('EMPPUBLICO_BONISERVICIOSPRESTADOS',employee.type_employee.id)
+if obj_salary_rule and dias != 0.0:
+    lst_date_years = payslip.years_in_company(payslip.date_to)
+    bool_calculation = False
+    for date in lst_date_years:
+        bool_calculation = True if date >= payslip.date_from and date <= payslip.date_to else False
+    if bool_calculation:
+        obj_salary_rule_prima = payslip.get_salary_rule('EMPPUBLICO_PRIMATECNICA', employee.type_employee.id)
+        obj_concept_prima = payslip.get_concepts(contract.id, obj_salary_rule_prima.id, id_contract_concepts)
+        obj_salary_rule_gastos = payslip.get_salary_rule('EMPPUBLICO_GASTOSREPRESENTACION', employee.type_employee.id)
+        obj_concept_gastos = payslip.get_concepts(contract.id, obj_salary_rule_gastos.id, id_contract_concepts)
+        amount = contract.wage
+        if obj_concept_prima:
+            amount += (contract.wage * (obj_concept_prima.amount / 100))
+        if obj_concept_gastos:
+            amount += (contract.wage * (obj_concept_gastos.amount / 100))
+        if amount > annual_parameters.z_bonus_services_rendered:
+            result = amount * 0.35
+        else:
+            result = amount * 0.5
 #---------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------

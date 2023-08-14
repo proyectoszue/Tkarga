@@ -226,7 +226,7 @@
                                         <field name="z_percentage_public"/>
                                     </group>
                                      <group string="Topes">
-                                        <field name="z_Bonus_services_rendered"/>
+                                        <field name="z_bonus_services_rendered"/>
                                         <field name="z_food_subsidy_tope"/>
                                     </group>
                                 </group>

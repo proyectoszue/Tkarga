@@ -550,6 +550,30 @@ class hr_labor_certificate_history(models.Model):
         self.pdf = pdf#base64.encodebytes(pdf)
         self.pdf_name = f'Certificado - {self.contract_id.name} - {self.sequence}.pdf'
 
+        #Guardar en documentos
+        # Crear adjunto
+        name = f'Certificado - {self.contract_id.name} - {self.sequence}.pdf'
+        obj_attachment = self.env['ir.attachment'].create({
+            'name': name,
+            'store_fname': name,
+            'res_name': name,
+            'type': 'binary',
+            'res_model': 'res.partner',
+            'res_id': self.contract_id.employee_id.address_home_id.id,
+            'datas': pdf,
+        })
+        # Asociar adjunto a documento de Odoo
+        doc_vals = {
+            'name': name,
+            'owner_id': self.contract_id.employee_id.user_id.id if self.contract_id.employee_id.user_id else self.env.user.id,
+            'partner_id': self.contract_id.employee_id.address_home_id.id,
+            'folder_id': self.env.user.company_id.documents_hr_folder.id,
+            'tag_ids': self.env.user.company_id.z_validated_certificate.ids,
+            'type': 'binary',
+            'attachment_id': obj_attachment.id
+        }
+        self.env['documents.document'].sudo().create(doc_vals)
+
         return {
             'type': 'ir.actions.report',
             'report_name': report_name,
@@ -590,12 +614,44 @@ class zue_retirement_severance_pay(models.Model):
         ('termination', 'Retiro por terminación'),
         ('partial', 'Retiro parcial')
     ], string='Tipo de retiro')
+    pdf = fields.Binary(string='Carta para retiro de cesantías')
+    pdf_name = fields.Char(string='Filename Carta para retiro de cesantías')
 
     def generate_report_severance_pay(self):
         datas = {
             'id': self.id,
             'model': 'zue.retirement.severance.pay'
         }
+
+        report_name = 'zue_hr_employee.report_retirement_severance_pay'
+        pdf = self.env.ref('zue_hr_employee.report_retirement_severance_pay_action', False)._render_qweb_pdf(self.id)[0]
+        pdf = base64.b64encode(pdf)
+        self.pdf = pdf  # base64.encodebytes(pdf)
+        self.pdf_name = f'Carta para retiro de cesantías - {self.z_contract_id.name}.pdf'
+
+        # Guardar en documentos
+        # Crear adjunto
+        name = f'Carta para retiro de cesantías - {self.z_contract_id.name}.pdf'
+        obj_attachment = self.env['ir.attachment'].create({
+            'name': name,
+            'store_fname': name,
+            'res_name': name,
+            'type': 'binary',
+            'res_model': 'res.partner',
+            'res_id': self.z_contract_id.employee_id.address_home_id.id,
+            'datas': pdf,
+        })
+        # Asociar adjunto a documento de Odoo
+        doc_vals = {
+            'name': name,
+            'owner_id': self.z_contract_id.employee_id.user_id.id if self.z_contract_id.employee_id.user_id else self.env.user.id,
+            'partner_id': self.z_contract_id.employee_id.address_home_id.id,
+            'folder_id': self.env.user.company_id.documents_hr_folder.id,
+            'tag_ids': self.env.user.company_id.z_validated_certificate.ids,
+            'type': 'binary',
+            'attachment_id': obj_attachment.id
+        }
+        self.env['documents.document'].sudo().create(doc_vals)
 
         return {
             'type': 'ir.actions.report',

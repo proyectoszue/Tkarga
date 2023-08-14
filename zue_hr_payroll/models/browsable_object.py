@@ -504,6 +504,24 @@ class Payslips(BrowsableObject):
         else:
             return 0.0
 
+    # -------AÑOS EN LA EMPRESA Y LA FECHA CUANDO CUMPLIO EL AÑO
+    def years_in_company(self,date_process):
+        lst_date_years = []
+        date_start = self.contract_id.date_start
+        while date_start <= date_process:
+            date_start_o = date_start
+            date_start = date_start+relativedelta(years=1)
+            dias_ausencias = sum([i.number_of_days for i in self.env['hr.leave'].search(
+                [('date_from', '>=', date_start_o), ('date_to', '<=', date_start),
+                 ('state', '=', 'validate'), ('employee_id', '=', self.contract_id.employee_id.id),
+                 ('unpaid_absences', '=', True)])])
+            dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search(
+                [('star_date', '>=', date_start_o), ('end_date', '<=', date_start),
+                 ('employee_id', '=', self.contract_id.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
+            date_start = date_start + timedelta(days=dias_ausencias)
+            if (date_start-date_start_o).days >= 365 and date_start <= date_process:
+                lst_date_years.append(date_start)
+        return lst_date_years
     #-----------------------------------------FIN Código Localización colombiana ZUE------------------------------------------------------
 
     @property

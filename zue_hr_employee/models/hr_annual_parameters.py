@@ -578,7 +578,7 @@ class hr_annual_parameters(models.Model):
     report_income_and_withholdings = fields.Html('Estructura Certificado ingresos y retenciones',default=default_html_report_income_and_withholdings)
     #PRESTACIONES SOCIALES SECTOR PUBLICO Y DISTRITAL
     z_food_subsidy_amount = fields.Integer(string="Subsidio de alimentación")
-    z_Bonus_services_rendered = fields.Integer(string="Tope Bonificación por servicios prestados (B.S.P)")
+    z_bonus_services_rendered = fields.Integer(string="Tope Bonificación por servicios prestados (B.S.P)")
     z_food_subsidy_tope = fields.Integer(string="Tope Subsidio de alimentación")
     z_percentage_public = fields.Integer(string="Porcentaje Emp. Publicos")
 
