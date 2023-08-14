@@ -133,6 +133,7 @@
                     <group>
                         <field name="method_schedule_pay" widget="radio"/>
                         <field name="analytic_account_ids" widget="many2many_tags"/>
+                        <field name="z_branch_ids" widget="many2many_tags"/>
                         <field name="state_contract" widget="radio"/>
                     </group>
                     <group attrs="{'invisible':[('struct_process', '!=', 'prima')]}">
@@ -144,7 +145,7 @@
                     </group>
                     <button string="Limpiar" name="clean_employees" type="object"/>
                     <newline/>
-                    <field name="employee_ids" nolabel="1">
+                    <field name="employee_ids" nolabel="1" domain="[['contract_id.state','=',state_contract]]">
                         <tree>
                             <field name="name"/>
                             <field name="company_id"/>

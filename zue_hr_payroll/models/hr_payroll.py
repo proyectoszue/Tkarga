@@ -91,6 +91,7 @@ class HrPayslipEmployees(models.TransientModel):
                                           ('monthly', 'Mensual'),
                                           ('other', 'Ambos')], 'Frecuencia de Pago', default='other')
     analytic_account_ids = fields.Many2many('account.analytic.account', string='Cuentas analíticas')
+    z_branch_ids = fields.Many2many('zue.res.branch', string='Sucursales')
     state_contract = fields.Selection([('open','En Proceso'),('finished','Finalizado Por Liquidar')], string='Estado Contrato', default='open')
     settle_payroll_concepts = fields.Boolean('Liquida conceptos de nómina', default=True)
     novelties_payroll_concepts = fields.Boolean('Liquida conceptos de novedades', default=True)
@@ -102,12 +103,14 @@ class HrPayslipEmployees(models.TransientModel):
             domain.append(('contract_id.method_schedule_pay','=',self.method_schedule_pay))
         if len(self.analytic_account_ids) > 0:
             domain.append(('contract_id.analytic_account_id', 'in', self.analytic_account_ids.ids))
+        if len(self.z_branch_ids) > 0:
+            domain.append(('branch_id', 'in', self.z_branch_ids.ids))
         if self.prima_run_reverse_id:
             employee_ids = self.env['hr.payslip'].search([('payslip_run_id', '=', self.prima_run_reverse_id.id)]).employee_id.ids
             domain.append(('id','in',employee_ids))
         return domain
 
-    @api.depends('structure_id','department_id','method_schedule_pay','analytic_account_ids','state_contract','prima_run_reverse_id')
+    @api.depends('structure_id','department_id','method_schedule_pay','analytic_account_ids','z_branch_ids','state_contract','prima_run_reverse_id')
     def _compute_employee_ids(self):
         for wizard in self:
             domain = wizard._get_available_contracts_domain()
