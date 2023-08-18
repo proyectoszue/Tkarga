@@ -148,6 +148,8 @@ class hr_employee_dependents(models.Model):
         ('PT', 'Permiso por Protección Temporal')
     ], string='Tipo de documento',default='13')
     z_vat = fields.Char(string='Número de documento')
+    z_phone = fields.Integer(string='Teléfono')
+    z_address = fields.Char(string='Dirección')
     z_report_income_and_withholdings = fields.Boolean(string='Reportar en Certificado ingresos y retenciones')
 
 class hr_employee_labor_union(models.Model):

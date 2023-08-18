@@ -177,6 +177,11 @@
                 <xpath expr="//field[@name='emergency_phone']" position="after">
                     <field name="emergency_relationship"/>
                 </xpath>
+                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='personal_information']/group[1]/group[2]/field[2]"
+                       position="attributes">
+                    <attribute name="attrs">{}</attribute>
+                    <attribute name="invisible">1</attribute>
+                </xpath>
                 <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">
                     <page string="Contratos" name="contratos">
                         <group>
@@ -201,7 +206,7 @@
                             </field>
                         </group>
                     </page>
-                    <page string="Estado Civil" name="estado_civil">
+                    <page string="Información Familiar" name="estado_civil">
                         <group>
                             <group>
                                 <field name="marital"/>
@@ -228,6 +233,8 @@
                                     <field name="dependents_type"/>
                                     <field name="z_document_type"/>
                                     <field name="z_vat"/>
+                                    <field name="z_phone"/>
+                                    <field name="z_address"/>
                                     <field name="z_report_income_and_withholdings"/>
                                 </tree>
                             </field>
@@ -323,6 +330,10 @@
                 <xpath expr="//field[@name='km_home_work']" position="after">
                     <xpath expr="//field[@name='licencia_rh']" position="move"/>
                     <field name="z_military_passbook"/>
+                </xpath>
+                <xpath expr="//field[@name='place_of_birth']" position="attributes">
+                    <attribute name="attrs">{}</attribute>
+                    <attribute name="invisible">1</attribute>
                 </xpath>
             </field>
         </record>
