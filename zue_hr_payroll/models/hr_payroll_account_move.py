@@ -222,7 +222,7 @@ class Hr_payslip(models.Model):
                                     break
                                         # Fin Lógica ZUE
 
-                            if (debit_account_id and amount >= 0 and line.code != 'NET') or (debit_account_id and line.code == 'NET' and amount < 0):
+                            if debit_account_id and amount >= 0:  # If the rule has a debit account.
                                 debit = abs(amount) if abs(amount) > 0.0 else 0.0
                                 credit = 0.0  # -amount if amount < 0.0 else 0.0
 
@@ -236,7 +236,7 @@ class Hr_payslip(models.Model):
                                     debit_line['debit'] += debit
                                     debit_line['credit'] += credit
 
-                            if (credit_account_id and amount < 0 and line.code != 'NET') or (credit_account_id and line.code == 'NET' and debit == 0.0):
+                            if (credit_account_id and amount < 0) or (credit_account_id and line.code == 'NET'):  # If the rule has a credit account.
                                 debit = 0.0  # -amount if amount < 0.0 else 0.0
                                 credit = abs(amount) if abs(amount) > 0.0 else 0.0
                                 credit_line = False  # self._get_existing_lines(line_ids, line, credit_account_id, debit, credit)
