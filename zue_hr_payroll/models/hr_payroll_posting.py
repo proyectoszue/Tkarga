@@ -44,7 +44,7 @@ class hr_payroll_posting(models.Model):
     #Realizar validacion
 
     def payroll_posting(self):
-        type_flat_file = ['bancolombiasap', 'bancolombiapab', 'davivienda1', 'occired', 'avvillas1', 'bancobogota','popular']
+        type_flat_file = ['bancolombiasap', 'bancolombiapab', 'davivienda1', 'occired', 'avvillas1', 'bancobogota','popular','bbva']
         value_total_not_include = 0
         line_ids_not_include = []
         for type in type_flat_file:

@@ -22,6 +22,7 @@ class hr_payroll_flat_file_detail(models.TransientModel):
                                    ('avvillas1', 'AV VILLAS 1'),
                                    ('bancobogota', 'Banco Bogotá'),
                                    ('popular', 'Banco Popular'),
+                                   ('bbva', 'Banco BBVA'),
                                    ('not_include', 'Reglas no incluidas'),
                                    ], string='Tipo de Plano')
     txt_file = fields.Binary('Archivo plano file')
@@ -971,6 +972,108 @@ class hr_payroll_flat_file(models.TransientModel):
 
         return base64.encodestring(stream.getvalue())
 
+    def generate_flat_file_bbva(self, obj_payslip):
+        filler = ' '
+
+        def left(s, amount):
+            return s[:amount]
+
+        def right(s, amount):
+            return s[-amount:]
+
+        det_content_txt = ''
+        cant_detalle = 0
+
+        for payslip in obj_payslip:
+            cant_detalle = cant_detalle + 1
+            # Tipo documento
+            document_type = '01'
+            x_document_type = payslip.employee_id.address_home_id.x_document_type
+            if x_document_type == '13':
+                document_type = '01'
+            elif x_document_type == '12':
+                document_type = '04'
+            elif x_document_type == '22':
+                document_type = '02'
+            elif x_document_type == '31':
+                document_type = '03'
+            elif x_document_type == '41':
+                document_type = '05'
+            else:
+                raise ValidationError(_('El empleado ' + payslip.contract_id.employee_id.name + ' no tiene tipo de documento valido, por favor verificar.'))
+            nit_beneficiario = right(16 * '0' + payslip.contract_id.employee_id.identification_id, 16)
+            forma_pago = '1'
+            banco_destino = ''
+            for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
+                if bank.is_main:
+                    banco_destino = bank.bank_id.bic
+            oficina_receptora = '0000'
+            digito_verificacion = '00'
+            tipo_transaccion = ''
+            for bank in payslip.employee_id.address_home_id.bank_ids:
+                if bank.is_main and banco_destino == '1013':
+                    tipo_transaccion = '0200' if bank.type_account == 'A' else '0100' # 0100: Abono a cuenta corriente / 0200: Abono a cuenta ahorros
+                else:
+                    tipo_transaccion = '0000'
+            cuenta = ''
+            for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
+                if bank.is_main and banco_destino == '1013':
+                    cuenta = (bank.acc_number[-6:])
+                else:
+                    cuenta = '000000'
+            tipo_cuenta_nacham = ''
+            for bank in payslip.employee_id.address_home_id.bank_ids:
+                if bank.is_main and banco_destino != '1013':
+                    tipo_cuenta_nacham = '02' if bank.type_account == 'A' else '01'  # 01: Abono a cuenta corriente / 02: Abono a cuenta ahorros
+                else:
+                    tipo_cuenta_nacham = '00'
+            no_cuenta_nacham = ''
+            for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
+                if bank.is_main and banco_destino != '1013':
+                    no_cuenta_nacham = left(str(bank.acc_number).replace("-", "") + 17 * ' ', 17)
+                else:
+                    no_cuenta_nacham = '                 '
+            # Obtener valor de transacción
+            total_valor_transaccion = 0
+            valor_transaccion = 13 * '0'
+            valor_transaccion_decimal = 2 * '0'
+            valor_not_include = 0
+            for line in payslip.line_ids:
+                valor_not_include += line.total if line.salary_rule_id.not_include_flat_payment_file else 0
+                if line.code == 'NET':
+                    total_valor_transaccion = (total_valor_transaccion + line.total) - valor_not_include
+                    total_valor_transaccion = 0 if total_valor_transaccion < 0 else total_valor_transaccion
+                    val_write = line.total - valor_not_include
+                    val_write = 0 if val_write < 0 else val_write
+                    valor = str(val_write).split(".")  # Eliminar decimales
+                    valor_transaccion = right(13 * '0' + str(valor[0]), 13)
+                    valor_transaccion_decimal = right(2 * '0' + str(valor[1]), 2)
+            fecha_mov = '00000000'
+            codigo_oficina_pagadora = '0000'
+            nombre_beneficiario = left(payslip.contract_id.employee_id.name + 36 * ' ' , 36)
+            direccion_beneficiario = left(payslip.contract_id.employee_id.address_home_id.street + 36 * ' ', 36)
+            direccion_beneficiario_dos = '                                   '
+            email_beneficiario = '                                                 '
+            concepto = left(self.description + 40 * ' ', 40)
+
+            content_line = '''%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s''' % (
+                document_type, nit_beneficiario, forma_pago, banco_destino, oficina_receptora,digito_verificacion,
+                tipo_transaccion,cuenta,tipo_cuenta_nacham,no_cuenta_nacham,valor_transaccion,valor_transaccion_decimal,
+                fecha_mov,codigo_oficina_pagadora,nombre_beneficiario,direccion_beneficiario,direccion_beneficiario_dos,
+                email_beneficiario,concepto)
+
+            if cant_detalle == 1:
+                det_content_txt = content_line
+            else:
+                det_content_txt = det_content_txt + '\n' + content_line
+        if det_content_txt == '':
+            raise ValidationError(_('No existe información en las liquidaciones seleccionadas, por favor verificar.'))
+
+        content_txt = det_content_txt
+
+        # Retornar archivo
+        return base64.encodestring((content_txt).encode())
+
     #Ejecutar proceso
     def generate_flat_file(self):
         self.env['hr.payroll.flat.file.detail'].search([('flat_file_id','=',self.id)]).unlink()
@@ -1008,7 +1111,7 @@ class hr_payroll_flat_file(models.TransientModel):
                     }
                     self.env['hr.payroll.flat.file.detail'].create(values_flat_file)
         else:
-            type_flat_file = ['bancolombiasap','bancolombiapab','davivienda1','occired','avvillas1','bancobogota','popular']
+            type_flat_file = ['bancolombiasap','bancolombiapab','davivienda1','occired','avvillas1','bancobogota','popular','bbva']
             for type in type_flat_file:
                 obj_payslip = self.env['hr.payslip']
                 # Validaciones
@@ -1055,6 +1158,8 @@ class hr_payroll_flat_file(models.TransientModel):
                             file_base64 = self.generate_flat_file_occired(obj_payslip)
                         if type == 'avvillas1':
                             file_base64 = self.generate_flat_file_avvillas(obj_payslip)
+                        if type == 'bbva':
+                            file_base64 = self.generate_flat_file_bbva(obj_payslip)
                         if type == 'bancobogota':
                             file_base64 = self.generate_flat_file_bogota(obj_payslip)
                             file_base64_excel = self.generate_flat_file_bogota_excel(obj_payslip)

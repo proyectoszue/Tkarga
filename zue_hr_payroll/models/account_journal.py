@@ -12,4 +12,5 @@ class Account_journal(models.Model):
                                     ('avvillas1', 'AV VILLAS 1'),
                                     ('bancobogota', 'Banco Bogotá'),
                                     ('popular', 'Banco Popular'),
+                                    ('bbva', 'Banco BBVA'),
                                     ], string='Tipo de Plano')

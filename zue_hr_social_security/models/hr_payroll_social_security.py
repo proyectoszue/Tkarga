@@ -523,7 +523,7 @@ class hr_payroll_social_security(models.Model):
                                                 nValorSaludEmpleado = nValorBaseSalud*(nPorcAporteSaludEmpleado/100) if nDiasLicencia==0 else 0
                                             else:
                                                 nValorSaludEmpleado = 0
-                                            if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and (nValorBaseSalud >= (annual_parameters.smmlv_monthly*10) or dict_social_security['BaseSeguridadSocial'].dict['TOTAL'] >= (annual_parameters.smmlv_monthly*10))) or bEsAprendiz == True:
+                                            if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and (nValorBaseSalud >= (annual_parameters.smmlv_monthly*10) or dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL',0) >= (annual_parameters.smmlv_monthly*10))) or bEsAprendiz == True:
                                                 nPorcAporteSaludEmpresa = annual_parameters.value_porc_health_company if not bEsAprendiz else annual_parameters.value_porc_health_employee+annual_parameters.value_porc_health_company
                                                 nValorSaludEmpresa = nValorBaseSalud*(nPorcAporteSaludEmpresa/100)
                                             else:
@@ -617,7 +617,7 @@ class hr_payroll_social_security(models.Model):
                                         else:
                                             nValorBaseICBF = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseICBF) < nRedondeoDecimalesDif else roundupdecimal(nValorBaseICBF))
                                         #nValorBaseICBF = ((executing.nValorBaseICBF / 30) * nDias) if nValorBaseICBF == 0 else (nValorBaseICBF)
-                                        if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and (nValorBaseSENA >= (annual_parameters.smmlv_monthly*10) or dict_social_security['BaseParafiscales'].dict['TOTAL'] >= (annual_parameters.smmlv_monthly*10))):
+                                        if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and (nValorBaseSENA >= (annual_parameters.smmlv_monthly*10) or dict_social_security['BaseParafiscales'].dict.get('TOTAL',0) >= (annual_parameters.smmlv_monthly*10))):
                                             if nValorBaseSENA > 0 and nDiasAusencias == 0:
                                                 nPorcAporteSENA = annual_parameters.value_porc_sena_company
                                                 nValorSENA = roundup100(nValorBaseSENA * nPorcAporteSENA / 100)
@@ -664,7 +664,7 @@ class hr_payroll_social_security(models.Model):
                                         'nPorcAporteCajaCom':nPorcAporteCajaCom if nValorCajaCom > 0 else 0,
                                         'nValorCajaCom':nValorCajaCom,
                                         #SENA & ICBF
-                                        'cExonerado1607': executing.nDiasLiquidados if nValorBaseSalud < (annual_parameters.smmlv_monthly * 10) else False,
+                                        'cExonerado1607': executing.cExonerado1607 if nValorBaseSalud < (annual_parameters.smmlv_monthly * 10) else False,
                                         'nValorBaseSENA':nValorBaseSENA,
                                         'nPorcAporteSENA':nPorcAporteSENA if nValorSENA > 0 else 0,
                                         'nValorSENA':nValorSENA,
