@@ -142,7 +142,7 @@ class hr_payroll_flat_file(models.TransientModel):
         content_txt = encab_content +'\n'+ detalle_content 
 
         #Retornar archivo
-        return base64.encodestring((content_txt).encode())
+        return base64.encodebytes((content_txt).encode())
 
     #Lógica de bancolombia pab
     def generate_flat_file_pab(self,obj_payslip):
@@ -244,7 +244,7 @@ class hr_payroll_flat_file(models.TransientModel):
         content_txt = encab_content +'\n'+ detalle_content
 
         # Retornar archivo
-        return base64.encodestring((content_txt).encode())
+        return base64.encodebytes((content_txt).encode())
 
     #Lógica de occired
     def generate_flat_file_occired(self,obj_payslip):
@@ -362,7 +362,7 @@ class hr_payroll_flat_file(models.TransientModel):
         content_txt = encab_content_txt +'\n'+ det_content_txt +'\n'+ tot_content_txt
 
         # Retornar archivo
-        return base64.encodestring((content_txt).encode())
+        return base64.encodebytes((content_txt).encode())
 
     # Lógica de avvillas
     def generate_flat_file_avvillas(self,obj_payslip):
@@ -468,7 +468,7 @@ class hr_payroll_flat_file(models.TransientModel):
         content_txt = encab_content_txt + '\n' + det_content_txt + '\n' + tot_content_txt
 
         # Retornar archivo
-        return base64.encodestring((content_txt).encode())
+        return base64.encodebytes((content_txt).encode())
 
     # Lógica de Davivienda
     def generate_flat_file_davivienda(self,obj_payslip):
@@ -591,7 +591,7 @@ class hr_payroll_flat_file(models.TransientModel):
         content_txt = encab_content_txt + '\n' + detalle_content
 
         # Retornar archivo
-        return base64.encodestring((content_txt).encode())
+        return base64.encodebytes((content_txt).encode())
 
     # Lógica de Banco Bogotá excel
     def generate_flat_file_bogota_excel(self, obj_payslip):
@@ -665,11 +665,11 @@ class hr_payroll_flat_file(models.TransientModel):
         book.close()
 
         # self.write({
-        #     'excel_file': base64.encodestring(stream.getvalue()),
+        #     'excel_file': base64.encodebytes(stream.getvalue()),
         #     'excel_file_name': filename,
         # })
 
-        return base64.encodestring(stream.getvalue())
+        return base64.encodebytes(stream.getvalue())
 
     # Archivo plano patrimonio autonomo popular
     def generate_flat_file_popular_excel(self,obj_payslip):
@@ -761,7 +761,7 @@ class hr_payroll_flat_file(models.TransientModel):
                         {'style': 'Table Style Medium 2', 'columns': array_header_table})
         # Guadar Excel
         book.close()
-        return base64.encodestring(stream.getvalue())
+        return base64.encodebytes(stream.getvalue())
 
     # Lógica de Banco Bogotá
     def generate_flat_file_bogota(self, obj_payslip):
@@ -898,7 +898,7 @@ class hr_payroll_flat_file(models.TransientModel):
         content_txt = encab_content_txt + '\n' + det_content_txt
 
         # Retornar archivo
-        return base64.encodestring((content_txt).encode())
+        return base64.encodebytes((content_txt).encode())
 
 
     # Lógica de Plano de reglas no incluidas
@@ -966,11 +966,11 @@ class hr_payroll_flat_file(models.TransientModel):
         book.close()
 
         # self.write({
-        #     'excel_file': base64.encodestring(stream.getvalue()),
+        #     'excel_file': base64.encodebytes(stream.getvalue()),
         #     'excel_file_name': filename,
         # })
 
-        return base64.encodestring(stream.getvalue())
+        return base64.encodebytes(stream.getvalue())
 
     def generate_flat_file_bbva(self, obj_payslip):
         filler = ' '
@@ -1072,7 +1072,7 @@ class hr_payroll_flat_file(models.TransientModel):
         content_txt = det_content_txt
 
         # Retornar archivo
-        return base64.encodestring((content_txt).encode())
+        return base64.encodebytes((content_txt).encode())
 
     #Ejecutar proceso
     def generate_flat_file(self):

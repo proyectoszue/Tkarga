@@ -267,6 +267,7 @@ class hr_executing_provisions(models.Model):
                                     [('state', '=', 'done'), ('date_to', '>=', date_start),
                                      ('date_to', '<=', date_end),('contract_id', '=', contract.id), ('id', 'not in', last_lines_payslip.ids),
                                      ('struct_id.process', 'in', ['cesantias', 'intereses_cesantias', 'prima'])])
+                                analytic_account_id = contract.analytic_account_id
                                 for last_payslip in sorted(last_lines_payslip,key=lambda x: x.date_to):
                                     analytic_account_id = last_payslip.analytic_account_id
 
