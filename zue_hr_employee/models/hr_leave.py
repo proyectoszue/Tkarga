@@ -4,9 +4,10 @@ from odoo import models, fields, api
 class hr_leave_type(models.Model):
     _inherit = 'hr.leave.type'
 
+    code = fields.Char(string='Código de Nómina')
     is_vacation = fields.Boolean('Tipo de ausencia para vacaciones disfrutadas')
     #Validación
-    obligatory_attachment  = fields.Boolean('Obligar adjunto')
+    obligatory_attachment = fields.Boolean('Obligar adjunto')
     #Configuración de la EPS/ARL
     num_days_no_assume = fields.Integer('Número de días que no asume')
     recognizing_factor_eps_arl = fields.Float('Factor que reconoce la EPS/ARL', digits=(25,5))
@@ -17,10 +18,10 @@ class hr_leave_type(models.Model):
     periods_calculations_ibl_company = fields.Integer('Periodos para cálculo de IBL Empresa')
     company_input_id = fields.Many2one('hr.salary.rule', 'Regla de la incapacidad empresa')
     unpaid_absences = fields.Boolean('Ausencia no remunerada')
+    discounting_bonus_days = fields.Boolean('Descontar días en prima')
     type_of_entity_association = fields.Many2one('hr.contribution.register', 'Tipo de entidad asociada')
+    # Portal web
+    published_portal = fields.Boolean(string='Permitir uso en portal de autogestión')
 
     _sql_constraints = [('hr_leave_type_code_uniq', 'unique(code)',
                          'Ya existe este código de nómina, por favor verficar.')]
-    
-
-    

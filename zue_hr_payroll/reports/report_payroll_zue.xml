@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <odoo>
     <data>
-        <report
-                id="report_payroll_zue_action"
-                model="hr.payroll.report.zue.filter"
-                string="Informe Liquidación PDF"
-                name="zue_hr_payroll.report_payroll_zue"
-                file="zue_hr_payroll.report_payroll_zue"
-                report_type="qweb-pdf"/>
+        <record id="report_payroll_zue_action" model="ir.actions.report">
+           <field name="name">Informe de Liquidación</field>
+           <field name="model">hr.payroll.report.zue.filter</field>
+           <field name="report_type">qweb-pdf</field>
+           <field name="report_name">zue_hr_payroll.report_payroll_zue</field>
+           <field name="report_file">zue_hr_payroll.report_payroll_zue</field>
+           <field name="binding_model_id" ref="zue_hr_payroll.model_hr_payroll_report_zue_filter"/>
+        </record>
 
         <template id="zue_hr_payroll.report_payroll_zue">
             <t t-call="web.html_container">
@@ -19,7 +20,7 @@
                             }
                         </style>
                         <div class="page">
-                            <span t-raw="doc.pdf_report_payroll"/>
+                            <span t-esc="doc.pdf_report_payroll"/>
                         </div>
                     </t>
                 </t>

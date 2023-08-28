@@ -1,0 +1,9 @@
+<odoo>
+    <data>
+        <!-- Menu documentos-->
+        <!-- Filtro Favoritos Unir PDFs -->
+        <menuitem id="menu_document_favorite_merge_pdfs" name="Filtros favoritos - Unir PDFs" parent="documents.Config" action="action_document_merge_pdf_favorites"/>
+        <!-- Plantilla de solicitud de documentos -->
+        <menuitem id="menu_document_request_template" name="Plantilla de solicitud de documentos" parent="documents.Config" action="action_document_request_template"/>
+    </data>
+</odoo>

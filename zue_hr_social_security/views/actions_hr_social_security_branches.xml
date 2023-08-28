@@ -7,13 +7,21 @@
 				<field name="view_mode">tree</field>
 		</record>
 
+		<!-- Crear record rule para filtrar las compañias-->
+        <record id="rule_hr_social_security_branches_company" model="ir.rule">
+            <field name="name">Permisos compañia Sucursales seguridad social</field>
+            <field name="model_id" ref="model_hr_social_security_branches"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+
         <record model="ir.ui.view" id="hr_social_security_branches_list">
 			    <field name="name">hr social security branches list</field>
 			    <field name="model">hr.social.security.branches</field>
 			    <field name="arch" type="xml">
 				<tree editable="bottom"> 					           					
                     <field name="code"/>                
-					<field name="name"/> 					
+					<field name="name"/>
+					<field name="company_id"/>
 				</tree>
 			</field>
 		</record>
@@ -25,6 +33,13 @@
 				<field name="view_mode">tree</field>
 		</record>
 
+		<!-- Crear record rule para filtrar las compañias-->
+        <record id="rule_hr_social_security_work_center_company" model="ir.rule">
+            <field name="name">Permisos compañia Centros de trabajo seguridad social</field>
+            <field name="model_id" ref="model_hr_social_security_work_center"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+
         <record model="ir.ui.view" id="hr_social_security_work_center_list">
 			    <field name="name">hr social security work center list</field>
 			    <field name="model">hr.social.security.work.center</field>
@@ -32,7 +47,8 @@
 				<tree editable="bottom"> 					           					
                     <field name="code"/>                
 					<field name="name"/> 	
-					<field name="branch_social_security_id"/>				
+					<field name="branch_social_security_id"/>
+					<field name="company_id"/>
 				</tree>
 			</field>
 		</record>
@@ -45,7 +61,7 @@
             <field name="inherit_id" ref="hr.view_employee_form"/>
             <field name="arch" type="xml">                
                 <xpath expr="//field[@name='tipo_coti_id']" position="before">
-                    <field name="branch_social_security_id"/>
+                    <field name="branch_social_security_id" domain="[('company_id', '=', company_id)]"/>
                     <field name="work_center_social_security_id" domain="[('branch_social_security_id', '=', branch_social_security_id)]"/>
                 </xpath>                
             </field>

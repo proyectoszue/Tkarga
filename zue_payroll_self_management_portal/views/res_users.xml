@@ -7,7 +7,7 @@
             <field name="model">res.users</field>
             <field name="inherit_id" ref="base.view_users_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='sel_groups_1_8_9']" position="after">
+                <xpath expr="//field[@name='action_id']" position="after">
                     <field name="portal_role" widget="radio"/>
                 </xpath>
             </field>

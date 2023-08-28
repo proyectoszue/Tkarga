@@ -86,7 +86,7 @@ class hr_payroll_social_security(models.Model):
     
         #----------------------------------REGISTRO TIPO 1 ENCABEZADO----------------------------------
         cTipoRegistro = '01'
-        cModalidadPlanilla = '0'
+        cModalidadPlanilla = '1'
         cSecuencia = '0001'
         cRazonSocial = left(self.company_id.partner_id.name+200*' ',200)
         switch_cTipIdTercero = {
@@ -98,7 +98,7 @@ class hr_payroll_social_security(models.Model):
             '41': 'PA',
             'PE': 'PT',
             'PT': 'PT'
-        }
+        }             
         cTipIdTercero = switch_cTipIdTercero.get(self.company_id.partner_id.x_document_type, '/')
         if cTipIdTercero == '/':
             raise ValidationError(_('El tipo de documento del tercero '+self.company_id.partner_id.name+' es invalido, por favor verificar.'))           
@@ -177,13 +177,13 @@ class hr_payroll_social_security(models.Model):
 
             if obj_parameterization_contributors.liquidates_eps_company or obj_parameterization_contributors.liquidated_eps_employee:
                 if not entity_eps or not entity_eps.code_pila_eps:
-                    raise ValidationError(_('El empleado ' + item.employee_id.name + ' no tiene EPS o falta configurar código PILA, por favor verificar.'))
+                    raise ValidationError(_('El empleado '+item.employee_id.name+' no tiene EPS o falta configurar código PILA, por favor verificar.'))
             if obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidates_solidarity_fund:
                 if (not entity_pension or not entity_pension.code_pila_eps) and item.contract_id.contract_type != 'aprendizaje' and item.employee_id.subtipo_coti_id.not_contribute_pension == False:
-                    raise ValidationError(_('El empleado ' + item.employee_id.name + ' no tiene entidad de pensión o falta configurar código PILA, por favor verificar.'))
+                    raise ValidationError(_('El empleado '+item.employee_id.name+' no tiene entidad de pensión o falta configurar código PILA, por favor verificar.'))
             if obj_parameterization_contributors.liquidated_compensation_fund:
                 if (not entity_ccf or not entity_ccf.code_pila_ccf) and item.contract_id.contract_type != 'aprendizaje':
-                    raise ValidationError(_('El empleado ' + item.employee_id.name + ' no tiene caja de compensación o falta configurar código PILA, por favor verificar.'))
+                    raise ValidationError(_('El empleado '+item.employee_id.name+' no tiene caja de compensación o falta configurar código PILA, por favor verificar.'))
 
             #-------------Inf. Basica
             cSecuencia = right('00000'+str(cant_detalle),5)
@@ -196,7 +196,7 @@ class hr_payroll_social_security(models.Model):
                 '41': 'PA',
                 'PE': 'PT',
                 'PT': 'PT'
-            }
+            }             
             cTipIdTercero = switch_cTipIdTercero.get(item.employee_id.address_home_id.x_document_type, '/')
             if cTipIdTercero == '/':
                 raise ValidationError(_('El tipo de documento del empleado '+item.employee_id.name+' es invalido, por favor verificar.'))           
@@ -279,13 +279,16 @@ class hr_payroll_social_security(models.Model):
             cTAP = 'X' if entity_pension_history else ' '
             obj_change_wage = self.env['hr.contract.change.wage'].search([('contract_id','=',item.contract_id.id),('date_start','!=',False),('date_start','>=',date_start),('date_start','<=',date_end)],limit=1)
             cVSP = 'X' if len(obj_change_wage) > 0 and item.nDiasLiquidados > 0 and cIngreso != 'X' else ' '
+            cVSP = ' ' if item.employee_id.tipo_coti_id.code == '51' else cVSP
             cCorrecciones = ' '
-            cVST = 'X' if item.nValorBaseSalud > ((item.nSueldo/30)*item.nDiasLiquidados) and (item.nValorBaseSalud - ((item.nSueldo/30)*item.nDiasLiquidados)) > 200 and item.nDiasLiquidados > 0 and cIngreso != 'X' and cTipoCotizante not in ('12','19') and cVSP != 'X' else ' '
+            cVST = 'X' if item.nValorBaseSalud > ((item.nSueldo/30)*item.nDiasLiquidados) and item.nDiasLiquidados > 0 and cIngreso != 'X' and cTipoCotizante not in ('12','19') and cVSP != 'X' else ' '
+            cVST = ' ' if item.employee_id.tipo_coti_id.code == '51' else cVST
+            
             cSLN = 'X' if item.nDiasLicencia > 0 else ' '
             cIGE = 'X' if item.nDiasIncapacidadEPS > 0 else ' '
             cLMA = 'X' if item.nDiasMaternidad > 0 else ' '
             cVAC = 'X' if item.nDiasVacaciones > 0 else 'L' if item.nDiasLicenciaRenumerada > 0 else ' '
-            cAVP = ' '
+            cAVP = 'X' if item.nDiasLiquidados > 0 and item.cAVP and item.nAporteVoluntarioPension > 0 else ' '
             cVCT = ' '
             IRL = right('00'+str(item.nDiasIncapacidadARP),2)
 
@@ -324,10 +327,12 @@ class hr_payroll_social_security(models.Model):
                 cDiasCotizadosCajaCom = '00'
 
             cDiasCotizadosARP = '00' if item.nValorBaseARP <= 0 else right( '00' + str( item.nDiasLiquidados + item.nDiasVacaciones + item.nDiasIncapacidadEPS + item.nDiasLicencia + item.nDiasLicenciaRenumerada + item.nDiasMaternidad + item.nDiasIncapacidadARP), 2 )
+            cDiasCotizadosARP = cDiasCotizadosARP if cTipoCotizante != '51' else '30' # "Número de días cotizados a Riesgos Laborales" se reportará 30 días. Cotizante 51
 
             cSalarioBasico = right('0'*9+ str(item.nSueldo if item.nSueldo>=annual_parameters.smmlv_monthly else annual_parameters.smmlv_monthly).split('.')[0],9) 
-            cSalarioIntegral = ' ' if item.contract_id.modality_salary != 'basico' else 'F'
+            cSalarioIntegral = 'V' if item.contract_id.modality_salary not in ['basico','sostenimiento'] else 'F'
             cSalarioIntegral = cSalarioIntegral if item.contract_id.modality_salary != 'integral' else 'X'
+            cSalarioIntegral = ' ' if item.employee_id.tipo_coti_id.code == '51' else cSalarioIntegral
 
             if obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidates_solidarity_fund:
                 cIBCPension = right('0'*9+str(item.nValorBaseFondoPension).split('.')[0],9)
@@ -344,10 +349,10 @@ class hr_payroll_social_security(models.Model):
                 cTarifaPension = left(str((item.nPorcAportePensionEmpleado + item.nPorcAportePensionEmpresa) / 100 ) + '0'*7, 7 )
 
                 cValorAportePension = right('0'*9+str(roundup100(item.nValorPensionEmpresa + item.nValorPensionEmpleado)).split('.')[0],9)
-                cAporteVoluntarioPension = '0'*9
+                cAporteVoluntarioPension = right('0'*9+str(roundup100(item.nAporteVoluntarioPension)).split('.')[0],9) if item.nDiasLiquidados > 0 and item.cAVP and item.nAporteVoluntarioPension > 0 else '0'*9
                 cCotizacionVoluntariaEmpresaPension = '0'*9
 
-                cValorAportePensionTotal = right('0'*9+str(roundup100(item.nValorPensionEmpresa + item.nValorPensionEmpleado)).split('.')[0],9)
+                cValorAportePensionTotal = right('0'*9+str(roundup100(item.nValorPensionEmpresa + item.nValorPensionEmpleado + item.nAporteVoluntarioPension)).split('.')[0],9)
 
                 cValorFondoSolidaridad = right('0'*9+str(item.nValorFondoSolidaridad).split('.')[0],9)
                 cValorFondoSubsistencia = right('0'*9+str(item.nValorFondoSubsistencia).split('.')[0],9)
@@ -389,8 +394,12 @@ class hr_payroll_social_security(models.Model):
             cValorMEN = '0'*9
             cIdentificacionCotizantePrincipal = ' '*18
             cExonerado1607 = 'S' if item.cExonerado1607 else 'N'
-            
+            cExonerado1607 = 'N' if item.employee_id.tipo_coti_id.code == '51' else cExonerado1607
+
             cCodigoEntidadARP = left(self.company_id.entity_arp_id.code_pila_eps+' '*6,6) if not entity_arp or not entity_arp.code_pila_eps else left(entity_arp.code_pila_eps+' '*6,6)
+            if not item.TerceroARP and item.contract_id.contract_type == 'aprendizaje':
+                cCodigoEntidadARP = ' ' * 6
+
             cNivelRiesgo = '1' if not item.contract_id.risk_id.code else right(item.contract_id.risk_id.code,1)
             cIndicadorTarifaEspecial = ' '
 
@@ -398,8 +407,12 @@ class hr_payroll_social_security(models.Model):
 
             #------Fechas
             cFechaIngreso = item.contract_id.date_start.strftime('%Y-%m-%d') if item.nIngreso and item.nDiasLiquidados > 0  else ' '*10
-            cFechaRetiro = item.contract_id.retirement_date.strftime('%Y-%m-%d') if item.nRetiro and item.nDiasLiquidados > 0  else ' '*10
+            if not item.contract_id.retirement_date:
+                cFechaRetiro = item.contract_id.date_end.strftime('%Y-%m-%d') if item.nRetiro and item.nDiasLiquidados > 0 else ' ' * 10
+            else:
+                cFechaRetiro = item.contract_id.retirement_date.strftime('%Y-%m-%d') if item.nRetiro and item.nDiasLiquidados > 0  else ' '*10
             cFechaInicioVSP = obj_change_wage.date_start.strftime('%Y-%m-%d') if len(obj_change_wage) > 0 and item.nDiasLiquidados > 0 else ' '*10
+            cFechaInicioVSP = ' '*10 if item.employee_id.tipo_coti_id.code == '51' else cFechaInicioVSP
             cFechaInicioSLN = item.dFechaInicioSLN.strftime('%Y-%m-%d') if item.dFechaInicioSLN else ' '*10
             cFechaFinSLN = item.dFechaFinSLN.strftime('%Y-%m-%d') if item.dFechaFinSLN else ' '*10
             cFechaInicioIGE = item.dFechaInicioIGE.strftime('%Y-%m-%d') if item.dFechaInicioIGE else ' '*10
@@ -418,7 +431,7 @@ class hr_payroll_social_security(models.Model):
             cActividadEconomicaNivelRiesgo = right(
                 '0000000' + item.contract_id.z_economic_activity_level_risk_id.z_risk_class_id.code + item.contract_id.z_economic_activity_level_risk_id.z_code_ciiu_id.code + item.contract_id.z_economic_activity_level_risk_id.z_code,
                 7) if item.contract_id.z_economic_activity_level_risk_id else '0' * 7
-            
+
             part_line_six = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s' % (cFechaIngreso,cFechaRetiro,cFechaInicioVSP,cFechaInicioSLN,cFechaFinSLN,cFechaInicioIGE,cFechaFinIGE,cFechaInicioLMA,cFechaFinLMA,cFechaInicioVACLR,cFechaFinVACLR,cFechaInicioVCT,cFechaFinVCT,cFechaInicioIRL,cFechaFinIRL,cIBCOtrosParafiscales,cNumeroHorasLaboradas,cFechaRadicaciónExterior,cActividadEconomicaNivelRiesgo)
 
             #Concatenar detalle total

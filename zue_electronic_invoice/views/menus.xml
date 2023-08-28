@@ -1,0 +1,9 @@
+<odoo>
+    <data>
+        <!-- Menu Configuración tipo de impuestos -->
+        <menuitem name="Tipo de Impuestos" id="zue_electronic_invoice.zue_tax_type_menu" parent="account.account_invoicing_menu" sequence="30" action="account_tax_type_action"/>
+        <!-- Menu Reponsabilidades RUT -->
+        <menuitem name="Responsabilidades RUT" id="zue_electronic_invoice.menu_responsibilities_rut" parent="account.account_invoicing_menu"  sequence="31" action="zue_menu_action_responsibilities_rut"/>
+        <menuitem name="Métodos de pago" id="zue_electronic_invoice.menu_fe_payment_options" parent="account.account_invoicing_menu"  sequence="32" action="fe_payment_options_action"/>
+    </data>
+</odoo>

@@ -28,6 +28,10 @@
     margin: 0;
 }
 
+.custom-file-input ~ .custom-file-label::after{
+    content: "Cargar";
+}
+
 body{
     color: var(--black);
     font-family: var(--bs-font-sans-serif);
@@ -51,6 +55,25 @@ body{
     margin-top: 20px;
     margin-bottom: 40px;
     
+}
+
+.col_without_padding{
+    padding: 0px !important;
+}
+
+.style_iframe{
+    min-height: 1000px !important;
+    min-width: 100% !important;
+    height: 100%;
+}
+
+.position-relative {
+    position: relative !important;
+}
+
+.full_iframe_div{
+    height: 100% !important;
+    width: 100% !important;
 }
 
 .filters{

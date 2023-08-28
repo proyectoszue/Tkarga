@@ -54,12 +54,13 @@ class hr_salary_history_report(models.TransientModel):
                         select coalesce(a."sequence",'/') ||' - '|| a."name" as contrato, a.date_start as fecha_ingreso, 
                                 case when a.state = 'open' then 'En Proceso' else 'Inactivo' end as estado_contrato,
                                 b."name" as empleado,c."name" as compania, coalesce(e."name",'') as sucursal,
-                                d.date_start as fecha_inicio_salario, d.wage as salario
+                                coalesce(d.date_start,'1900-01-01') as fecha_inicio_salario_cargo, coalesce(d.wage,0) as salario, coalesce(f."name",'') as cargo
                         from hr_contract as a
                         inner join hr_employee as b on a.employee_id = b.id
                         inner join res_company as c on b.company_id = c.id
                         left join hr_contract_change_wage as d on a.id =d.contract_id 
                         left join zue_res_branch as e on b.branch_id = e.id
+                        left join hr_job as f on d.job_id = f.id
                         %s
                         order by b."name",d.date_start 
         ''' % query_where
@@ -73,7 +74,7 @@ class hr_salary_history_report(models.TransientModel):
         book = xlsxwriter.Workbook(stream, {'in_memory': True})
 
         # Columnas
-        columns = ['Contrato', 'Fecha Ingreso', 'Estado Contrato', 'Empleado', 'Compañia', 'Sucursal' , 'Fecha Inicio Salario','Salario']
+        columns = ['Contrato', 'Fecha Ingreso', 'Estado Contrato', 'Empleado', 'Compañia', 'Sucursal' , 'Fecha Inicio Salario/Cargo','Salario', 'Cargo']
         sheet = book.add_worksheet('Historico salarial')
 
         # Agregar textos al excel
@@ -85,14 +86,14 @@ class hr_salary_history_report(models.TransientModel):
         cell_format_title.set_bottom(5)
         cell_format_title.set_bottom_color('#1F497D')
         cell_format_title.set_font_color('#1F497D')
-        sheet.merge_range('A1:H1', text_title, cell_format_title)
+        sheet.merge_range('A1:I1', text_title, cell_format_title)
         cell_format_text_generate = book.add_format({'bold': False, 'align': 'left'})
         cell_format_text_generate.set_font_name('Calibri')
         cell_format_text_generate.set_font_size(10)
         cell_format_text_generate.set_bottom(5)
         cell_format_text_generate.set_bottom_color('#1F497D')
         cell_format_text_generate.set_font_color('#1F497D')
-        sheet.merge_range('A2:H2', text_generate, cell_format_text_generate)
+        sheet.merge_range('A2:I2', text_generate, cell_format_text_generate)
         # Formato para fechas
         date_format = book.add_format({'num_format': 'dd/mm/yyyy'})
 

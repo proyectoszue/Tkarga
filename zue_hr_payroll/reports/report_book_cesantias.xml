@@ -16,14 +16,15 @@
             <field name="dpi">90</field>
         </record>
 
-        <report
-            id="report_book_cesantias_action"
-            model="hr.contract"
-            string="Libro de Cesantías"
-            report_type="qweb-pdf"
-            name="zue_hr_payroll.report_book_cesantias"
-            file="zue_hr_payroll.report_book_cesantias"
-        />
+         <record id="report_book_cesantias_action" model="ir.actions.report">
+           <field name="name">Libro de Cesantías</field>
+           <field name="model">hr.contract</field>
+           <field name="report_type">qweb-pdf</field>
+           <field name="report_name">zue_hr_payroll.report_book_cesantias</field>
+           <field name="report_file">zue_hr_payroll.report_book_cesantias</field>
+           <field name="binding_model_id" ref="model_hr_contract"/>
+        </record>
+
         <record id="report_book_cesantias_action" model="ir.actions.report">
             <field name="paperformat_id" ref="zue_hr_payroll.book_cesantias"/>
         </record>

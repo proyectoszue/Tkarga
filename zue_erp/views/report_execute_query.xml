@@ -31,7 +31,7 @@
         <field name="model">zue.reports</field>
         <field name="arch" type="xml">
             <form>
-            <sheet string="Reportes creados por LOGYCA">
+            <sheet string="Reportes ZUE">
               <group col="4">
                 <button name="get_excel" class="oe_highlight" type="object" string="Generar Excel"/>		
                 <button name="execute_sql" class="oe_highlight" type="object" string="Ejecutar Query" groups="base.group_no_one"/>

@@ -24,7 +24,7 @@ var ProgressMenu = Widget.extend({
         core.bus.on('rpc_progress_destroy', this, this._removeProgressBar);
         this.progressCounter = 0;
         this.$progresses_preview = this.$('.o_mail_systray_dropdown_items');
-        if (this.getSession().uid !== 1) {
+        if (!this.getSession().is_system) {
             this.$el.toggleClass('hidden', !this.progressCounter);
         }
         this.call('bus_service', 'onNotification', this, this._onNotification);
@@ -42,18 +42,20 @@ var ProgressMenu = Widget.extend({
         _.each(notifications, function (notification) {
             self._handleNotification(notification);
         });
+        this._updateProgressMenu();
+        this._queryRecentOperations();
     },
     /**
      * On every bus notification schedule update of all progress and pass progress message to progress bar
      * @private
      */
     _handleNotification: function(notification){
-        if (this.channel && (notification[0] === this.channel)) {
+        if (this.channel && (notification.type === this.channel)) {
             // this._setTimerProgressPreview();
-            var progress = notification[1][0];
+            var progress = notification.payload[0];
             this._processProgressData(progress.code, progress.state, progress.uid);
             if (['ongoing', 'done'].indexOf(progress.state) >= 0) {
-                core.bus.trigger('rpc_progress', notification[1])
+                core.bus.trigger('rpc_progress', notification.payload)
             }
         }
     },
@@ -71,6 +73,7 @@ var ProgressMenu = Widget.extend({
         this.progress_bars[code] = progress_bar;
         progress_bar.appendTo(this.$progresses_preview);
         this._updateProgressMenu();
+        return progress_bar;
     },
     /**
      * Remove progress bar
@@ -110,9 +113,32 @@ var ProgressMenu = Widget.extend({
             this.$('.fa-spinner').removeClass('fa-spin');
             this.$el.addClass('o_no_notification');
         }
-        if (!this.getSession().is_admin) {
+        if (!this.getSession().is_system) {
             this.$el.toggleClass('o_hidden', !this.progressCounter);
         }
+    },
+    /**
+     * Query server for recent operations in progress
+     * @private
+     */
+    _queryRecentOperations: function() {
+        var self = this;
+        this._rpc({
+            model: 'web.progress',
+            method: 'get_all_progress',
+            args: []
+        }, {'shadow': true}).then(function (codes_list) {
+            if (codes_list.length > 0) {
+                _.forEach(codes_list, function (item) {
+                    if (item.code) {
+                        var pb = self._addProgressBar(item.code);
+                        if (pb) {
+                            pb._getProgressViaRPC();
+                        }
+                    }
+                })
+            }
+        })
     },
     /**
      * Process and display progress details
@@ -120,9 +146,9 @@ var ProgressMenu = Widget.extend({
      */
     _processProgressData: function(code, state, uid) {
         var session_uid = this.getSession().uid;
-        var session_is_admin = this.getSession().is_admin;
+        var session_is_system = this.getSession().is_system;
         var progress_bar = this._findProgressBar(code);
-        if (session_uid !== uid && !session_is_admin) {
+        if (session_uid !== uid && !session_is_system) {
             return;
         }
         if (!progress_bar && state === 'ongoing') {

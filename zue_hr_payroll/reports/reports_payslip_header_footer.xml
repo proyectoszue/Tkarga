@@ -14,15 +14,14 @@
             <field name="dpi">90</field>
         </record>
 
-        <report
-            id="report_liquidacion_template_action"
-            model="hr.payslip"
-            string="Comprobante de Nómina"
-            report_type="qweb-pdf"
-            name="zue_hr_payroll.reports_payslip_header_footer_template_final"
-            file="zue_hr_payroll.reports_payslip_header_footer_template_final"
-            print_report_name="'Liquidación %s - %s' % (object.struct_id.name,object.employee_id.name)"
-        />
+        <record id="report_liquidacion_template_action" model="ir.actions.report">
+           <field name="name">Comprobante de Nómina</field>
+           <field name="model">hr.payslip</field>
+           <field name="report_type">qweb-pdf</field>
+           <field name="report_name">zue_hr_payroll.reports_payslip_header_footer_template_final</field>
+           <field name="report_file">zue_hr_payroll.reports_payslip_header_footer_template_final</field>
+           <field name="binding_model_id" ref="model_hr_payslip"/>
+        </record>
 
         <record id="report_liquidacion_template_action" model="ir.actions.report">
             <field name="paperformat_id" ref="zue_hr_payroll.liquidacion_template_format"/>

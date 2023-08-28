@@ -8,12 +8,17 @@ class ResCompany(models.Model):
 
     payroll_electronic_operator = fields.Selection([('Carvajal', 'Carvajal'),
                                                     ('FacturaTech', 'FacturaTech')],
-                                                   string='Operador', default='Carvajal')
+                                                   string='Operador NE', default='Carvajal')
     payroll_electronic_username_ws = fields.Char(string='Usuario WS')
     payroll_electronic_password_ws = fields.Char(string='Contraseña WS')
     payroll_electronic_company_id_ws = fields.Char(string='Identificador compañia WS')
     payroll_electronic_account_id_ws = fields.Char(string='Identificador cuenta WS')
     payroll_electronic_service_ws = fields.Char(string='Servicio WS', default='PAYROLL')
+    payroll_peoplepass_journal_id = fields.Many2one('account.journal',string='Diario contabilización pago valor no incluido')
+    payroll_peoplepass_debit_account_id = fields.Many2one('account.account',string='Cuenta contabilización pago valor no incluido débito')
+    payroll_peoplepass_credit_account_id = fields.Many2one('account.account',string='Cuenta contabilización pago valor no incluido crédito')
+    # Certificado ingreso y retenciones
+    z_validated_certificate = fields.Many2one('documents.tag', string='Certificado validado')
 
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
@@ -27,13 +32,19 @@ class ResConfigSettings(models.TransientModel):
     vacation_days_calculate_absences = fields.Char('Días de vacaciones para calcular deducciones')
     cesantias_salary_take = fields.Boolean('Promediar salario de los últimos 3 meses, si ahí variación en cesantías')
     prima_salary_take = fields.Boolean('Promediar salario de los últimos 6 meses, si ahí variación en prima')
+    # Certificado ingreso y retenciones
+    z_validated_certificate = fields.Many2one(related='company_id.z_validated_certificate',string='Certificado validado', readonly=False)
     #Nómina electronica
-    payroll_electronic_operator = fields.Selection(related='company_id.payroll_electronic_operator', string='Operador',readonly=False)
+    payroll_electronic_operator = fields.Selection(related='company_id.payroll_electronic_operator',string='Operador NE', readonly=False)
     payroll_electronic_username_ws = fields.Char(related='company_id.payroll_electronic_username_ws',string='Usuario WS', readonly=False)
     payroll_electronic_password_ws = fields.Char(related='company_id.payroll_electronic_password_ws',string='Contraseña WS', readonly=False)
     payroll_electronic_company_id_ws = fields.Char(related='company_id.payroll_electronic_company_id_ws',string='Identificador compañia WS', readonly=False)
     payroll_electronic_account_id_ws = fields.Char(related='company_id.payroll_electronic_account_id_ws',string='Identificador cuenta WS', readonly=False)
     payroll_electronic_service_ws = fields.Char(related='company_id.payroll_electronic_service_ws',string='Servicio WS', default='PAYROLL', readonly=False)
+    #PeoplePass
+    payroll_peoplepass_journal_id = fields.Many2one(related='company_id.payroll_peoplepass_journal_id',string='Diario contabilización pago valor no incluido', readonly=False)
+    payroll_peoplepass_debit_account_id = fields.Many2one(related='company_id.payroll_peoplepass_debit_account_id',string='Cuenta contabilización pago valor no incluido débito', readonly=False)
+    payroll_peoplepass_credit_account_id = fields.Many2one(related='company_id.payroll_peoplepass_credit_account_id',string='Cuenta contabilización pago valor no incluido crédito', readonly=False)
 
     def set_values(self):
         super(ResConfigSettings, self).set_values()

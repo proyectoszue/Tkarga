@@ -17,7 +17,7 @@ class zue_custom_alerts(models.Model):
                                     ('1', 'Acción planificada'),
                                     ('2', 'Acción automática')     
                                 ], string='Forma de ejecución', required=True, default='1')  
-    model_id = fields.Many2one('ir.model', string='Modelo', required=True)
+    model_id = fields.Many2one('ir.model', string='Modelo', ondelete='cascade',required=True)
     model_name = fields.Char(related='model_id.model', string='Model Name', readonly=True, store=True)
     action_domain = fields.Char(string='Condiciones a cumplir')
     model_fields = fields.Many2many('ir.model.fields', domain="[('model_id', '=', model_id)]",string='Campos que contienen la información para la alerta')
@@ -77,7 +77,7 @@ class zue_custom_alerts(models.Model):
                     field_email = obj[field_email]
                 
                 emails = list(set([field_email]))                
-                #emails = list(set(['lbuitron@logyca.com']))                
+                #emails = list(set(['luis.buitron@zbox.com.co']))
                 #raise ValidationError(_(emails))
                 
                 #Obtener asunto:

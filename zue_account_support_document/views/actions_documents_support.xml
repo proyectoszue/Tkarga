@@ -1,0 +1,143 @@
+<odoo>
+    <data>
+        <!-- Documentos Ausencias -->
+        <record model="ir.actions.act_window" id="documents_support_action">
+            <field name="name">Documentos soporte</field>
+            <field name="res_model">sending.support.document</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Crear record rule para filtrar las compañias-->
+        <record id="rule_documents_support_company" model="ir.rule">
+            <field name="name">Permisos compañia Documento soporte</field>
+            <field name="model_id" ref="model_sending_support_document"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record model="ir.ui.view" id="documents_support_view_tree">
+            <field name="name">Soporte de documentos</field>
+            <field name="model">sending.support.document</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="initial_date"/>
+                    <field name="end_date"/>
+                    <field name="company_id"/>
+                    <field name="observations"/>
+                </tree>
+            </field>
+        </record>
+        <record model="ir.ui.view" id="documents_support_view_form">
+            <field name="name">Soporte de documentos form</field>
+            <field name="model">sending.support.document</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="consecutive_assignment" type="object" string="Asignación de Consecutivo" class="oe_highlight" states="draft"/>
+                        <button name="cancel_process" type="object" string="Cancelar" states="ac"/>
+                        <field name="state" widget="statusbar"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group string="Periodo">
+                                <field name="initial_date"/>
+                                <field name="end_date"/>
+                                <field name="company_id"/>
+                            </group>
+                            <group string="Observaciones">
+                                <field name="observations" nolabel="1"/>
+                            </group>
+                        </group>
+                        <group string="Ejecución">
+                            <field name="qty_done" readonly="1"/>
+                            <field name="qty_failed" readonly="1"/>
+                        </group>
+                        <hr style="border-style:solid;border-width:2px;width:100%;"/>
+                        <h2 style="text-align:center">Proceso</h2>
+                        <notebook>
+                            <page string="Ejecución" name="ejecucion">
+                                <group>
+                                    <field name="journal_resolution_id" readonly="1"/>
+<!--                                    <field name="qty_failed" readonly="1"/>-->
+<!--                                    <field name="qty_done" readonly="1"/>-->
+                                </group>
+                                <field name="executing_document_support_ids" nolabel="1" readonly="0">
+                                    <tree>
+                                        <field name="consecutive_doc_support" optional="show"/>
+                                        <field name="partner_id" optional="show"/>
+                                        <field name="partner_vat" optional="hide"/>
+                                        <field name="journal_id" optional="show"/>
+                                        <field name="move_id" optional="show"/>
+                                        <field name="move_date" optional="show"/>
+                                        <field name="first_concept" optional="hide"/>
+                                        <field name="xml_file" invisible="1"/>
+                                        <field name="pdf_file" invisible="1"/>
+                                        <field name="amount" optional="show"/>
+                                        <field name="status" optional="show"/>
+<!--                                        <field name="transaction_id" optional="hide"/>-->
+<!--                                        <field name="result_status" optional="hide"/>-->
+                                    </tree>
+
+                                </field>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="documents_support_detail_view_tree">
+            <field name="name">Detalle soporte de documentos</field>
+            <field name="model">sending.support.document.detail</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="consecutive_doc_support" optional="show"/>
+                    <field name="partner_id" optional="show"/>
+                    <field name="partner_vat" optional="hide"/>
+                    <field name="journal_id" optional="show"/>
+                    <field name="move_id" optional="show"/>
+                    <field name="move_date" optional="show"/>
+                    <field name="first_concept" optional="hide"/>
+                    <field name="xml_file" invisible="1"/>
+                    <field name="pdf_file" invisible="1"/>
+                    <field name="amount" optional="show"/>
+                    <field name="transaction_id" optional="hide"/>
+                    <field name="result_status" optional="hide"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="documents_support_detail_view_form">
+            <field name="name">Detalle Soporte de documentos form</field>
+            <field name="model">sending.support.document.detail</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="consecutive_doc_support" readonly="1"/>
+                                <field name="prefix_doc_support" readonly="1"/>
+                                <field name="item_doc_support" readonly="1"/>
+                                <field name="partner_id" readonly="1"/>
+                                <field name="partner_vat" readonly="1"/>
+                            </group>
+                            <group>
+                                <field name="journal_id" readonly="1"/>
+                                <field name="move_id" readonly="1"/>
+                                <field name="move_date" readonly="1"/>
+                                <field name="line_move_ids" readonly="1" widget="many2many_tags"/>
+                                <field name="first_concept" readonly="1"/>
+                                <field name="xml_file" invisible="1" readonly="1"/>
+                                <field name="amount" readonly="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="transaction_id" readonly="0"/>
+                            <field name="result_status" readonly="1"/>
+                            <field name="result_upload_xml" invisible="1"/>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

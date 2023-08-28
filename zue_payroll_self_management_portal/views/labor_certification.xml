@@ -1,38 +1,48 @@
 <odoo>
     <data>
         <template id="labor_certification" name="Certificado Laboral">
+            <body t-att-style="'background-color:'+str(portal_design.z_background_color)+';font-family:'+str(portal_design.z_font)+';'">
             <link rel="stylesheet" href="/zue_payroll_self_management_portal/static/src/css/main.css"/>
-            <t t-call="website.layout">
-                <div class="oe_structure">
-                    <main>
-                        <div class="container">
+            <t t-call="web.basic_layout">
+                <div t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                    <br/>
+                    <center>
+                        <h1>
+                            <span t-esc="report_name"/>
+                        </h1>
+                    </center>
+                    <hr/>
+                    <div>
+                        <form class='filters' action='/zue_payroll_self_management_portal/certification_print'
+                              method="POST">
+                            <p class="text-justify">Por favor digite los campos solicitados para generar su certificado
+                                laboral
+                            </p>
                             <br/>
-                            <center>
-                                <h1>
-                                    <span t-esc="report_name"/>
-                                </h1>
-                            </center>
-                            <hr/>
-                            <div>
-                                <form class='filters' action='/zue_payroll_self_management_portal/certification_print' method="POST">
-                                    <p class="text-justify">Por favor digite los campos solicitados para generar su certificado laboral</p>
-                                    <br/>
-                                    <p><strong> Contrato : </strong><span t-esc="contract"/></p>
-                                    <p><strong> Fecha de Generacion : </strong> <span t-esc="generation_date"/></p>
-                                    <div class="mb-3 row">
-                                        <label for="addressed" class="col-sm-2 col-form-label">Dirigido A: </label>
-                                        <div class="col-sm-10">
-                                        <input type="text" class="form-control" id="addressed" name="addressed"/>
-                                        </div>
-                                    </div>
-                                    <br/>
-                                    <input type="submit" class="btn btn-success" value="Generar Certificado"/>
-                                </form>
+                            <p>
+                                <strong>Contrato :</strong>
+                                <span t-esc="contract"/>
+                            </p>
+                            <p>
+                                <strong>Fecha de Generacion :</strong>
+                                <span t-esc="generation_date"/>
+                            </p>
+                            <div class="mb-3 row">
+                                <label for="addressed" class="col-md-2 col-form-label">Dirigido A:</label>
+                                <div class="col-md-10">
+                                    <input type="text" class="form-control" id="addressed" name="addressed"
+                                           t-att-style="'color:'+str(portal_design.z_secondary_color)+';'"/>
+                                </div>
                             </div>
-                        </div>
-                    </main>
+                            <br/>
+                            <input type="submit" class="btn btn-outline-primary" value="Generar Certificado"
+                                   t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
+                                           ';color:'+str(portal_design.z_primary_color)+';'"/>
+                        </form>
+                    </div>
                 </div>
             </t>
+            </body>
         </template>
     </data>
 </odoo>

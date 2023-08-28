@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_sending_support_document,sending.support.document,model_sending_support_document,,1,1,1,1
+access_sending_support_document_detail,sending.support.document.detail,model_sending_support_document_detail,,1,1,1,1
+access_notes_documents_support,notes.documents.support,model_notes_documents_support,,1,1,1,1
+access_sending_notes_document_support_detail,sending.notes.document.support.detail,model_sending_notes_document_support_detail,,1,1,1,1

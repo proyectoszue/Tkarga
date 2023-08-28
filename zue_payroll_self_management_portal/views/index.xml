@@ -1,242 +1,495 @@
 <odoo>
-  <data>
+    <data>
 
-    <template id="index_page" name="Index">
-      <t t-call="website.layout">
-        <div class="oe_structure">
-          <div>
-            <br/>
-            <center>
-              <h1>
-                <b>
-                  <span class="title" t-esc="title"/>
-                </b>
-              </h1>
-            </center>
-            <br/>
-            <div class="col-sm-12">
-              <div class="row">
-                <div class="col-sm-4">
-                  <!-- Foto y Nombre empleado -->
-                  <div class="text-center">
-                    <ul style="list-style: none;">
-                      <li>
-                        <img t-if="photo" t-att-src="image_data_uri(photo)"/>
-                      </li>
-                      <br/>
-                      <br/>
-                      <li>
-                        <h4>
-                          <b>
-                            <span t-esc="name"/>
-                          </b>
-                        </h4>
-                      </li>
-                    </ul>
-                  </div>
-                  <br/>
-                  <!-- Funcionalidades -->
-                  <div class="text-center">
-                    <ul style="list-style: none;">
-                      <li>
-                        <a class="btn btn-outline-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/application_permit">
-                      Solicitar Permiso
-                        </a>
-                      </li>
-                      <br/>
-                      <li>
-                        <a class="btn btn-outline-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/my_application_permits">
-                      Ver mis Permisos
-                        </a>
-                      </li>
-                      <br/>
-                      <li>
-                        <a class="btn btn-outline-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/labor_certification">
-                      Certificado Laboral
-                        </a>
-                      </li>
-                      <br/>
-                      <li>
-                        <a class="btn btn-outline-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/generate_vouchers">
-                      Comprobantes de nómina
-                        </a>
-                      </li>
-                      <br/>
-                      <li>
-                        <a class="btn btn-outline-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/book_vacation">
-                      Libro de vacaciones 
-                        </a>
-                      </li>
-                      <br/>
-                      <li>
-                        <a class="btn btn-outline-primary" style="width:80%;" t-attf-href="/zue_payroll_self_management_portal/book_cesantias">
-                      Libro de cesantías
-                        </a>
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-                <!-- Información Básica -->
-                <div class="col-sm-4">
-                  <div class="well">
-                    <br/>
-                    <br/>
-                    <table class="table table-striped table-reposive">
-                      <thead>
-                        <tr>
-                          <th colspan="2" class="text-center">
-                            <h3>Información Básica</h3>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td>
-                            <h5 >Tipo de Empleado</h5>
-                          </td>
-                          <td>
-                            <h6>
-                              <span t-esc="type_employee"/>
-                            </h6>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <h5 >Identificación</h5>
-                          </td>
-                          <td>
-                            <h6>
-                              <span t-esc="identification"/>
-                            </h6>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <h5 >Dirección</h5>
-                          </td>
-                          <td>
-                            <h6>
-                              <span t-esc="street"/>
-                            </h6>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <h5 >Email</h5>
-                          </td>
-                          <td>
-                            <h6>
-                              <span t-esc="email"/>
-                            </h6>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <h5 >Teléfono</h5>
-                          </td>
-                          <td>
-                            <h6>
-                              <span t-esc="phone"/>
-                            </h6>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <h5 >Fecha Nacimiento</h5>
-                          </td>
-                          <td>
-                            <h6>
-                              <span t-esc="date_birthday"/>
-                            </h6>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                    <a class="btn btn-outline-primary center" t-attf-href="/zue_payroll_self_management_portal/update_personal_data">
-                      Actualizar datos personales
-                    </a>
-                  </div>
-                </div>
-                <!-- Información Laboral -->
-                <div class="col-sm-4">
-                  <div class="well">
-                    <br/>
-                    <br/>
-                    <table class="table table-striped table-reposive">
-                      <thead>
-                        <tr>
-                          <th colspan="2" class="text-center">
-                            <h3>Información Laboral</h3>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        <tr>
-                          <td>
-                            <h5 >Compañía</h5>
-                          </td>
-                          <td>
-                            <h6>
-                              <span t-esc="company"/>
-                            </h6>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <h5 >Tipo de Contrato</h5>
-                          </td>
-                          <td>
-                            <h6>
-                              <span t-esc="type_contract"/>
-                            </h6>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <h5 >Departamento</h5>
-                          </td>
-                          <td>
-                            <h6>
-                              <span t-esc="department"/>
-                            </h6>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <h5 >Cargo Actual</h5>
-                          </td>
-                          <td>
-                            <h6>
-                              <span t-esc="job"/>
-                            </h6>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td>
-                            <h5 >Fecha de Ingreso</h5>
-                          </td>
-                          <td>
-                            <h6>
-                              <span t-esc="date_start"/>
-                            </h6>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <br/>
-            <p class="text-center callout callout-info ">
-              <b>NOTA:</b> Para actualizar sus datos adicionales debe acercarse a la persona encargada de recurso humano.
-            </p>
+        <template id="index_page" name="Index">
+            <t t-call="website.layout">
+                <div class="col-md-12 col_without_padding full_iframe_div"
+                     t-att-style="'border:solid;background-color:'+str(portal_design.z_background_color)+';font-family:'+str(portal_design.z_font)+';'">
+                    <div class="row full_iframe_div" style="min-height: 800px; margin: 0% !important;">
+                        <div class="col-md-2 col_without_padding">
+                            <div class="card full_iframe_div"
+                                 t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                <t t-if="user.login_date">
+                                    <div class="row"
+                                         t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';margin-left:5%;font-size: small;'">
+                                        Última conexión:
+                                        <span t-esc="user.login_date" t-options='{"widget": "datetime"}'/>
+                                    </div>
+                                </t>
+                                <br/>
+                                <div class="row">
+                                    <div class="col-md-2">
+                                        <a data-toggle="collapse"
+                                           t-att-style="'border-color:'+str(portal_design.z_background_color)+';background-color:'+str(portal_design.z_background_color)+
+                                           ';color:'+str(portal_design.z_primary_color)+';'"
+                                           href="#UpdateData" role="button" aria-expanded="false"
+                                           aria-controls="UpdateData" type="button" class="btn btn-outline-primary">
+                                            <span class="fa fa-pencil" title="Actualizar datos"
+                                                t-att-style="'background-color:'+str(portal_design.z_background_color)+';color:'+str(portal_design.z_primary_color)+';'"/>
+                                        </a>
+                                    </div>
+                                </div>
+                                <center>
+                                    <img t-if="photo" class="shadow-lg card-img-top" t-att-src="image_data_uri(photo)"
+                                         style="max-width: 50%; border-radius: 50% 10%"/>
+                                    <img t-if="not photo" class="shadow-lg card-img-top"
+                                         src="/zue_payroll_self_management_portal/static/src/img/avatar_grey.png"
+                                         style="max-width: 50%; border-radius: 50% 10%"/>
+                                </center>
+                                <div>
+                                    <center>
+                                        <b class="card-title" style="font-size: medium;">
+                                            <span t-esc="name" t-att-style="'color:'+str(portal_design.z_primary_color)+';'"/>
+                                            <br/>
+                                            <span t-esc="job" class="badge badge-primary"
+                                                  t-att-style="'background-color:'+str(portal_design.z_background_color)+';color:'+str(portal_design.z_primary_color)+';'"/>
+                                        </b>
+                                        <br/>
+                                        <b style="font-size: small;">
+                                            <span t-esc="identification" t-att-style="'color:'+str(portal_design.z_primary_color)+';'"/>
+                                            <br/>
+                                            <span t-esc="street" t-att-style="'color:'+str(portal_design.z_primary_color)+';'"/>
+                                            <br/>
+                                            <span t-esc="email" t-att-style="'color:'+str(portal_design.z_primary_color)+';'"/>
+                                            <br/>
+                                            <span t-esc="phone" t-att-style="'color:'+str(portal_design.z_primary_color)+';'"/>
+                                            <br/>
+                                            <span t-esc="date_birthday" t-att-style="'color:'+str(portal_design.z_primary_color)+';'"/>
+                                        </b>
+                                    </center>
+                                </div>
+                                <ul class="list-group list-group-flush">
+                                    <a data-toggle="collapse"
+                                       href="#Communications" role="button" aria-expanded="false"
+                                       aria-controls="Communications">
+                                        <li class="list-group-item"
+                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                            <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                <span class="fa fa-home"/>
+                                                Inicio
+                                            </b>
+                                        </li>
+                                    </a>
+                                    <a data-toggle="collapse" href="#MenuInformes"
+                                       role="button" aria-expanded="false" aria-controls="MenuInformes">
+                                        <li class="list-group-item"
+                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                            <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                <span class="fa fa-file"/>
+                                                Informes
+                                            </b>
+                                        </li>
+                                    </a>
+                                    <div class="collapse multi-collapse" id="MenuInformes">
+                                        <ul class="list-group list-group-flush">
+                                            <a data-toggle="collapse"
+                                               href="#LaboralCertificate" role="button" aria-expanded="false"
+                                               aria-controls="LaboralCertificate">
+                                                <li class="list-group-item"
+                                                    t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                    Certificado Laboral
+                                                </li>
+                                            </a>
+                                            <a data-toggle="collapse"
+                                               href="#PayrollsVouchers" role="button" aria-expanded="false"
+                                               aria-controls="PayrollsVouchers">
+                                                <li class="list-group-item"
+                                                    t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                    Comprobantes de nómina
+                                                </li>
+                                            </a>
+                                            <a t-attf-href="/zue_payroll_self_management_portal/book_vacation">
+                                                <li class="list-group-item"
+                                                    t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                    Libro de vacaciones
+                                                </li>
+                                            </a>
+                                            <a t-attf-href="/zue_payroll_self_management_portal/book_cesantias">
+                                                <li class="list-group-item"
+                                                    t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                    Libro de cesantías
+                                                </li>
+                                            </a>
+                                        </ul>
+                                    </div>
+                                    <a data-toggle="collapse"
+                                       href="#LaboralInformation" role="button" aria-expanded="false"
+                                       aria-controls="LaboralInformation">
+                                        <li class="list-group-item"
+                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                            <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                <span class="fa fa-address-card"/>
+                                                Información Laboral
+                                            </b>
+                                        </li>
+                                    </a>
+                                    <a data-toggle="collapse"
+                                       href="#Absences" role="button" aria-expanded="false"
+                                       aria-controls="Absences">
+                                        <li class="list-group-item"
+                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                            <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                <span class="fa fa-user-times"/>
+                                                Ausencias
+                                            </b>
+                                        </li>
+                                    </a>
+                                    <a data-toggle="collapse"
+                                       href="#Resumes" role="button" aria-expanded="false"
+                                       aria-controls="Resumes">
+                                        <li class="list-group-item"
+                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                            <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                <span class="fa fa-university"/>
+                                                Experiencia
+                                            </b>
+                                        </li>
+                                    </a>
+                                    <a data-toggle="collapse"
+                                       href="#Skills" role="button" aria-expanded="false"
+                                       aria-controls="Skills">
+                                        <li class="list-group-item"
+                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                            <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                <span class="fa fa-cogs"/>
+                                                Habilidades
+                                            </b>
+                                        </li>
+                                    </a>
+                                    <a data-toggle="collapse"
+                                       href="#SocialSecurityDependents" role="button" aria-expanded="false"
+                                       aria-controls="SocialSecurityDependents">
+                                        <li class="list-group-item"
+                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                            <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                <span class="fa fa-shield"/>
+                                                Seguridad social &amp; Dependientes
+                                            </b>
+                                        </li>
+                                    </a>
+                                    <a data-toggle="collapse"
+                                       href="#Documents" role="button" aria-expanded="false"
+                                       aria-controls="Documents">
+                                        <li class="list-group-item"
+                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                            <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                <span class="fa fa-book"/>
+                                                Documentos
+                                            </b>
+                                        </li>
+                                    </a>
+                                    <t t-if="have_slides">
+                                        <a t-attf-href="/slides">
+                                            <li class="list-group-item"
+                                                t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                    <span class="fa fa-graduation-cap"/>
+                                                    Cursos
+                                                </b>
+                                            </li>
+                                        </a>
+                                    </t>
+                                </ul>
+                                <div/>
+                            </div>
+                        </div>
+                        <div class="col-md-10 col_without_padding">
+                            <div class="full_iframe_div accordion" id="accordionIframe">
+                                <!-- Comunicados y estadisticas -->
+                                <div class="full_iframe_div collapse show" id="Communications"
+                                     data-parent="#accordionIframe">
+                                    <div class="full_iframe_div" style="padding:1%">
+                                        <div class="row full_iframe_div" style="padding-bottom: 2%;">
+                                            <div class="col-md-3" t-att-style="'border-right:solid;border-color:'+str(portal_design.z_secondary_color)+';'">
+                                                <center>
+                                                    <h3 t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                        Estadísticas
+                                                    </h3>
+                                                </center>
+                                                <hr/>
+                                                <t t-if="planning_url">
+                                                    <div class="shadow-lg p-3 mb-4 bg-white rounded justify-content-center">
+                                                        <h4>Planificación</h4>
+                                                        <a type="button" class="btn btn-info"
+                                                           t-att-href="planning_url">Ver turnos
+                                                        </a>
+                                                    </div>
+                                                </t>
+                                                <div class="shadow-lg p-3 mb-4 rounded justify-content-center"
+                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                    <h4 t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                        Días Vacaciones
+                                                    </h4>
+                                                    <div class="card bg-light"
+                                                         t-att-style="'border-color:'+str(portal_design.z_background_color)+';'">
+                                                        <div class="container"
+                                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                            <h3 class="display-6"
+                                                                t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                                <span t-esc="('{:.2f}').format(accumulated_vacation_days)"/>
+                                                            </h3>
+                                                            <p class="lead" t-att-style="'color:'+str(portal_design.z_primary_color)+';'">Por disfrutar</p>
+                                                        </div>
+                                                    </div>
+                                                    <br/>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="card bg-light"
+                                                                t-att-style="'border-color:'+str(portal_design.z_background_color)+';'">
+                                                                <div class="container"
+                                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                                    <h3 class="display-6"
+                                                                        t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                                        <span t-esc="enjoyed_vacation_days"/>
+                                                                    </h3>
+                                                                    <p class="lead" t-att-style="'color:'+str(portal_design.z_primary_color)+';'">Disfrutadas</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="card bg-light"
+                                                                t-att-style="'border-color:'+str(portal_design.z_background_color)+';'">
+                                                                <div class="container"
+                                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                                    <h3 class="display-6"
+                                                                        t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                                        <span t-esc="money_vacation_days"/>
+                                                                    </h3>
+                                                                    <p class="lead" t-att-style="'color:'+str(portal_design.z_primary_color)+';'">En dinero</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="shadow-lg p-3 mb-4 rounded justify-content-center"
+                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                    <h4 t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">Días</h4>
+                                                    <h4 t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">Últimos 3 meses</h4>
+                                                    <small t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                        Desde el <span t-esc="start_datetime_days_statistics.date()"/> hasta el <span t-esc="datetime_today.date()"/>
+                                                    </small>
+                                                    <br/>
+                                                    <t t-foreach="lst_work_entry" t-as="work_entry">
+                                                        <div class="progress" t-att-style="'background-color:'+str(portal_design.z_primary_color)+';'">
+                                                            <div class="progress-bar" role="progressbar"
+                                                                 t-att-style="'background-color:'+str(portal_design.z_background_color)+';width:'+str((work_entry[1]*100)/qty_days_statistics)+'%'"
+                                                                 t-att-aria-valuenow="work_entry[1]" aria-valuemin="0"
+                                                                 t-att-aria-valuemax="qty_days_statistics">
+                                                                <span t-att-style="'color:'+str(portal_design.z_primary_color)+';'" t-esc="work_entry[1]"/>
+                                                            </div>
+                                                        </div>
+                                                        <span t-att-style="'color:'+str(portal_design.z_primary_color)+';'" t-esc="work_entry[0]"/>
+                                                    </t>
+                                                </div>
+                                                <div class="shadow-lg p-3 mb-4 rounded justify-content-center"
+                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                    <h4 t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">Días transcurridos desde el inicio del contrato</h4>
+                                                    <small t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                        Desde el <span t-esc="date_start"/> hasta el  <span t-esc="datetime_today.date()"/>
+                                                    </small>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="card bg-light"
+                                                                t-att-style="'border-color:'+str(portal_design.z_background_color)+';'">
+                                                                <div class="container"
+                                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                                    <h3 class="display-6"
+                                                                        t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                                        <span t-esc="qty_days_in_company"/>
+                                                                    </h3>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <div class="shadow-lg p-3 mb-4 rounded justify-content-center"
+                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                    <h4 t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">Documentos expirados</h4>
+                                                    <div class="row">
+                                                        <div class="col-md-6">
+                                                            <div class="card bg-light"
+                                                                t-att-style="'border-color:'+str(portal_design.z_background_color)+';'">
+                                                                <div class="container"
+                                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                                    <h3 class="display-6"
+                                                                        t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                                        <span t-esc="documents_statistics.get('qty_to_expire',0)"/>
+                                                                    </h3>
+                                                                    <p class="lead" t-att-style="'color:'+str(portal_design.z_primary_color)+';'">Por expirar</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="col-md-6">
+                                                            <div class="card bg-light"
+                                                                t-att-style="'border-color:'+str(portal_design.z_background_color)+';'">
+                                                                <div class="container"
+                                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                                    <h3 class="display-6"
+                                                                        t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                                        <span t-esc="documents_statistics.get('qty_expired',0)"/>
+                                                                    </h3>
+                                                                    <p class="lead" t-att-style="'color:'+str(portal_design.z_primary_color)+';'">Expirados</p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-9">
+                                                <center>
+                                                    <h3 t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                        Comunicados
+                                                    </h3>
+                                                </center>
+                                                <hr/>
+                                                <div class="card-columns">
+                                                    <div class="card" t-foreach="sorted(news, key=lambda x: x.sequence)"
+                                                         t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'"
+                                                         t-as="new">
+                                                        <span t-att-style="'color:'+str(portal_design.z_primary_color)+';'"
+                                                              t-esc="new.news_html"/>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- Actualizar Datos -->
+                                <div class="full_iframe_div collapse" id="UpdateData"
+                                     data-parent="#accordionIframe">
+                                    <iframe class="style_iframe"
+                                            t-attf-src="/zue_payroll_self_management_portal/update_personal_data"/>
+                                </div>
+                                <!-- Certificado Laboral -->
+                                <div class="full_iframe_div collapse" id="LaboralCertificate"
+                                     data-parent="#accordionIframe">
+                                    <iframe class="style_iframe"
+                                            t-attf-src="/zue_payroll_self_management_portal/labor_certification"/>
+                                </div>
+                                <!-- Comprobantes de nómina -->
+                                <div class="full_iframe_div collapse" id="PayrollsVouchers"
+                                     data-parent="#accordionIframe">
+                                    <iframe class="style_iframe"
+                                            t-attf-src="/zue_payroll_self_management_portal/generate_vouchers"/>
+                                </div>
+                                <!-- Información Laboral -->
+                                <div class="full_iframe_div collapse" id="LaboralInformation"
+                                     data-parent="#accordionIframe">
+                                    <div style="padding:1%" class="full_iframe_div">
+                                        <center>
+                                            <h3 t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                Información Laboral
+                                            </h3>
+                                        </center>
+                                        <br/>
+                                        <table class="table table-responsive-md table-striped"
+                                               t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                            <tbody>
+                                                <tr>
+                                                    <td>
+                                                        <b>Compañía</b>
+                                                    </td>
+                                                    <td>
+                                                        <span t-esc="company"/>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <b>Tipo de Contrato</b>
+                                                    </td>
+                                                    <td>
+                                                        <span t-esc="type_contract"/>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <b>Tipo de Empleado</b>
+                                                    </td>
+                                                    <td>
+                                                        <span t-esc="type_employee"/>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <b>Fecha de Ingreso</b>
+                                                    </td>
+                                                    <td>
+                                                        <span t-esc="date_start"/>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <b>Gerente</b>
+                                                    </td>
+                                                    <td>
+                                                        <span t-esc="parent"/>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <b>Sucursal</b>
+                                                    </td>
+                                                    <td>
+                                                        <span t-esc="branch"/>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <b>Ubicación Laboral</b>
+                                                    </td>
+                                                    <td>
+                                                        <span t-esc="laboral_address"/>
+                                                    </td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <b>Departamento</b>
+                                                    </td>
+                                                    <td>
+                                                        <span t-esc="department"/>
+                                                    </td>
+                                                </tr>
 
-            <br/>
-          </div>
-        </div>
-      </t>
-    </template>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <!-- Ausencias -->
+                                <div class="full_iframe_div collapse" id="Absences"
+                                     data-parent="#accordionIframe">
+                                    <iframe class="style_iframe"
+                                            t-attf-src="/zue_payroll_self_management_portal/absences"/>
+                                </div>
+                                <!-- Experiencia -->
+                                <div class="full_iframe_div collapse" id="Resumes"
+                                     data-parent="#accordionIframe">
+                                    <iframe class="style_iframe"
+                                            t-attf-src="/zue_payroll_self_management_portal/curriculum_vitae"/>
+                                </div>
+                                <!-- Habilidades -->
+                                <div class="full_iframe_div collapse" id="Skills"
+                                     data-parent="#accordionIframe">
+                                    <iframe class="style_iframe"
+                                            t-attf-src="/zue_payroll_self_management_portal/skills"/>
+                                </div>
+                                <!-- Seguridad Social & Dependientes-->
+                                <div class="full_iframe_div collapse" id="SocialSecurityDependents"
+                                     data-parent="#accordionIframe">
+                                    <iframe class="style_iframe"
+                                            t-attf-src="/zue_payroll_self_management_portal/social_security"/>
+                                </div>
+                                <!-- Documentos -->
+                                <div class="full_iframe_div collapse" id="Documents"
+                                     data-parent="#accordionIframe">
+                                    <iframe class="style_iframe"
+                                            t-attf-src="/zue_payroll_self_management_portal/documents"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </t>
+        </template>
 
-  </data>
+    </data>
 </odoo>

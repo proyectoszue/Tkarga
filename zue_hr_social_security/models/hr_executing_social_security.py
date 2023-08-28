@@ -10,6 +10,7 @@ class hr_executing_social_security(models.Model):
     employee_id = fields.Many2one('hr.employee', 'Empleado',required=True)
     branch_id =  fields.Many2one('zue.res.branch', 'Sucursal', required=True)
     contract_id =  fields.Many2one('hr.contract', 'Contrato', required=True)
+    analytic_account_id = fields.Many2one('account.analytic.account', string='Cuenta analítica')
     nNumeroHorasLaboradas = fields.Integer('Horas laboradas')
     nDiasLiquidados = fields.Integer('Días liquidados')
     nDiasIncapacidadEPS = fields.Integer('Días incapacidad EPS')
@@ -39,6 +40,8 @@ class hr_executing_social_security(models.Model):
     nValorPensionEmpresa = fields.Float('Valor pensión empresa')
     nValorPensionTotal = fields.Float('Valor pensión total')
     nDiferenciaPension = fields.Float('Diferencia pensión')
+    cAVP = fields.Boolean('Tiene AVP')
+    nAporteVoluntarioPension = fields.Float('Valor AVP')
     TerceroFondoSolidaridad = fields.Many2one('hr.employee.entities', 'Tercero fondo solidaridad')
     nPorcFondoSolidaridad = fields.Float('Porc. Fondo solidaridad')
     nValorFondoSolidaridad = fields.Float('Valor fondo solidaridad')
@@ -74,11 +77,22 @@ class hr_executing_social_security(models.Model):
     dFechaInicioIRL = fields.Date('Fecha Inicio IRL')
     dFechaFinIRL = fields.Date('Fecha Fin IRL')
 
+    def executing_social_security_employee(self):
+        self.ensure_one()
+        if self.executing_social_security_id.state != 'accounting':
+            self.executing_social_security_id.executing_social_security(self.employee_id.id)
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
+        else:
+            raise ValidationError('No puede recalcular una seguridad en estado contabilizado, por favor verificar.')
+
 class hr_errors_social_security(models.Model):
     _name = 'hr.errors.social.security'
     _description = 'Ejecución de seguridad social errores'
 
     executing_social_security_id =  fields.Many2one('hr.payroll.social.security', 'Ejecución de seguridad social', required=True, ondelete='cascade')
     employee_id = fields.Many2one('hr.employee', 'Empleado',required=True)
-    branch_id =  fields.Many2one('zue.res.branch', 'Sucursal', required=True)
+    branch_id =  fields.Many2one('zue.res.branch', 'Sucursal')
     description = fields.Text('Observación')

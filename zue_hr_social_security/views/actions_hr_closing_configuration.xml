@@ -43,6 +43,11 @@
                                 </tree>
                             </field>
                         </group>
+                        <group string="Cuentas de diferencias" attrs="{'invisible': [['process','not in',['ss_empresa_salud','ss_empresa_pension']]]}">
+                            <p>En la contabilización de la seguridad social, los valores de diferencias por aproximaciones al peso de aportes a salud y pensión si no superan los $1.000 pesos colombianos se contabilizaran en</p>
+                            <field name="debit_account_difference"/>
+                            <field name="credit_account_difference"/>
+                        </group>
                     </sheet>
                 </form>
             </field>

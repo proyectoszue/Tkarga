@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="absences_data" name="absences">
+            <body t-att-style="'background-color:'+str(portal_design.z_background_color)+';font-family:'+str(portal_design.z_font)+';'">
+            <link rel="stylesheet" href="/zue_payroll_self_management_portal/static/src/css/main.css"/>
+            <t t-call="web.basic_layout">
+                <div t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                    <br/>
+                    <div class="row">
+                        <div class="col-md-10">
+                            <center>
+                                <h1>
+                                    <b>Ausencias</b>
+                                </h1>
+                            </center>
+
+                        </div>
+                        <div class="col-md-2">
+                            <a type="button" class="btn btn-primary btn-lg btn-block"
+                               t-attf-href="/zue_payroll_self_management_portal/application_permit"
+                               t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
+                               ';color:'+str(portal_design.z_primary_color)+';'">
+                                Solicitar ausencia
+                            </a>
+                        </div>
+                    </div>
+                    <hr/>
+                    <div>
+                        <table class="table table-responsive-md"
+                               t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                            <thead t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                <tr>
+                                    <th>Tipo de Ausencia</th>
+                                    <th>Fecha inicial</th>
+                                    <th>Fecha final</th>
+                                    <th>Duración</th>
+                                    <th>Descripción</th>
+                                    <th>Estado</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="absences" t-as="ab">
+                                    <td>
+                                        <span t-esc="ab.get('holiday','')"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="ab.get('date_from','')"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="ab.get('date_to','')"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="ab.get('number_days',0)"/>
+                                        dia(s)
+                                    </td>
+                                    <td>
+                                        <span t-esc="ab.get('name','')"/>
+                                    </td>
+                                    <td>
+                                        <t t-if="ab.get('state','') == 'Por enviar'">
+                                            <span class="badge badge-pill badge-info" t-esc="ab.get('state','')"/>
+                                        </t>
+                                        <t t-elif="ab.get('state','') == 'Por aprobar'">
+                                            <span class="badge badge-pill badge-warning" t-esc="ab.get('state','')"/>
+                                        </t>
+                                        <t t-elif="ab.get('state','') == 'Rechazado'">
+                                            <span class="badge badge-pill badge-light" t-esc="ab.get('state','')"/>
+                                        </t>
+                                        <t t-elif="ab.get('state','') == 'Segunda aprobación'">
+                                            <span class="badge badge-pill badge-warning" t-esc="ab.get('state','')"/>
+                                        </t>
+                                        <t t-else="">
+                                            <span class="badge badge-pill badge-success" t-esc="ab.get('state','')"/>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </t>
+            </body>
+        </template>
+
+    </data>
+</odoo>

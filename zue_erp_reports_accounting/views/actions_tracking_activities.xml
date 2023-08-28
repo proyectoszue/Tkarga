@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="action_zue_tracking_activities" model="ir.actions.act_window">
+            <field name="name">Seguimiento De Actividades</field>
+            <field name="res_model">zue.tracking.activities</field>
+            <field name="view_mode">tree,form,pivot</field>
+            <field name="target">current</field>
+        </record>
+
+         <record model="ir.ui.view" id="actions_zue_tracking_activities_list">
+            <field name="name">Seguimiento de Actividades</field>
+            <field name="model">zue.tracking.activities</field>
+            <field name="arch" type="xml">
+                <tree create="0" edit="0" delete="0">
+                    <field name="z_activity"/>
+                    <field name="z_activity_type_id"/>
+                    <field name="z_create_uid"/>
+                    <field name="z_create_date"/>
+                    <field name="z_user_id"/>
+                    <field name="z_date_deadline"/>
+                    <field name="z_date_done"/>
+                    <field name="z_state"/>
+                </tree>
+            </field>
+         </record>
+
+        <record model="ir.ui.view" id="actions_zue_tracking_activities_pivot">
+            <field name="name">Seguimiento de Actividades</field>
+            <field name="model">zue.tracking.activities</field>
+            <field name="arch" type="xml">
+                <pivot string="Seguimiento de Actividades"/>
+            </field>
+        </record>
+
+    </data>
+</odoo>

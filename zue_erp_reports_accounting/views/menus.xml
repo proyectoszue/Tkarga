@@ -4,10 +4,29 @@
             <!-- Menu Balance de prueba -->
             <menuitem name="Balance de Prueba" id="zue_erp_reports_accounting.menu_balance_report" parent="zue_erp_reports_accounting.menu_account_report_zue" action="action_account_balance_report_filters" sequence="1"/>
             <!-- Menu Libros Oficiales -->
-            <menuitem name="Libros Oficiales" id="zue_erp_reports_accounting.menu_account_books_report_zue" parent="zue_erp_reports_accounting.menu_account_report_zue" sequence="2"/>
-                <!-- Menu Libro mayor -->
-                <menuitem name="Libro mayor" id="zue_erp_reports_accounting.menu_libro_mayor" parent="zue_erp_reports_accounting.menu_account_books_report_zue" action="action_account_libro_mayor_filters" sequence="1"/>
-                <!-- Menu Libro diario -->
-                <menuitem name="Libro diario" id="zue_erp_reports_accounting.menu_libro_diario" parent="zue_erp_reports_accounting.menu_account_books_report_zue" action="action_account_libro_diario_filters" sequence="2"/>
+            <!-- <menuitem name="Libros Oficiales" id="zue_erp_reports_accounting.menu_account_books_report_zue" parent="zue_erp_reports_accounting.menu_account_report_zue" sequence="2"/> -->
+            <!-- Menu Libro mayor -->
+            <menuitem name="Libro mayor" id="zue_erp_reports_accounting.menu_libro_mayor" parent="zue_erp_reports_accounting.menu_account_report_zue" action="action_account_libro_mayor_filters" sequence="2"/>
+            <!-- Menu auditoria consecutivos -->
+            <menuitem name="Informe de auditoria de consecutivos" id="zue_erp_reports_accounting.menu_consecutive_audit" parent="zue_erp_reports_accounting.menu_account_report_zue" action="action_zue_consecutive_audit_report" sequence="3"/>
+            <!-- Menu Libro diario -->
+            <menuitem name="Libro diario" id="zue_erp_reports_accounting.menu_libro_diario" parent="zue_erp_reports_accounting.menu_account_report_zue" action="action_account_libro_diario_filters" sequence="3"/>
+            <!-- Menu Consultas -->
+            <menuitem name="Balance Pivot" id="zue_erp_reports_accounting.menu_zue_report_balance_pivot" parent="zue_erp_reports_accounting.menu_account_report_zue" action="action_zue_report_balance_pivot" sequence="5"/>
+            <!-- Menu Consultas -->
+            <menuitem name="Auxiliar Pivot" id="zue_erp_reports_accounting.menu_zue_report_auxiliar_pivot" parent="zue_erp_reports_accounting.menu_account_report_zue" action="action_zue_report_auxiliar_pivot" sequence="6"/>
+            <!-- Menu Consultas -->
+            <menuitem name="Balance analítico Pivot" id="zue_erp_reports_accounting.menu_zue_report_balance_analytic_pivot" parent="zue_erp_reports_accounting.menu_account_report_zue" action="action_zue_report_balance_analytic_pivot" sequence="7"/>
+            <!-- Menu Consultas -->
+            <menuitem name="Consultas" id="zue_erp_reports_accounting.menu_zue_report_account_query" parent="zue_erp_reports_accounting.menu_account_report_zue" action="action_zue_reports_account" sequence="8"/>
+            <!-- Menu Informe -->
+            <menuitem name="Informe de ventas/compras" id="zue_inform_sales_purchases" parent="zue_erp_reports_accounting.menu_account_report_zue" action="action_zue_inform_sales_purchases" sequence="9"/>
+            <!-- menu Seguimiento de actividades -->
+            <menuitem name="Seguimiento de actividades" id="zue_account.zue_tracking_activities" sequence="10" parent="account.account_reports_management_menu" action="action_zue_tracking_activities"/>
+            <!-- menu Informe de CO-CGN -->
+            <menuitem name="Informe CGN y Operaciones Recíprocas" id="zue_account.zue_co_cgn_inform" sequence="11" parent="zue_erp_reports_accounting.menu_account_report_zue" action="action_zue_co_cgn_inform"/>
+        <!-- Reporte saldos de CxC-CxP -->
+        <menuitem name="Saldos de CxC-CxP" id="zue_account.menu_report_cxc_cxp" parent="zue_erp_reports_accounting.menu_account_report_zue" action="actions_balance_cxc_cxp_report"     sequence="6"/>
+        <menuitem name="Reporte CXC - Recaudos" id="zue_account.menu_zue_pivot_report_cxc" parent="zue_erp_reports_accounting.menu_account_report_zue" action="zue_action_zue_pivot_report_cxc" sequence="7"/>
     </data>
 </odoo>

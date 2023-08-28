@@ -1,6 +1,18 @@
 <odoo>
     <data>
         <!-- Formulario de ausencias-->
+        <record id="view_zue_hr_holidays_tree" model="ir.ui.view">
+            <field name="name">hr.holidays.zue.hr.leave.tree.inherit</field>
+            <field name="model">hr.leave</field>
+            <field name="priority">20</field>
+            <field name="inherit_id" ref="hr_holidays.hr_leave_view_tree"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='employee_id']" position="after">
+                    <field name="employee_company_id"/>
+                </xpath>
+            </field>
+        </record>
+
         <record id="view_zue_hr_holidays_form" model="ir.ui.view">
             <field name="name">hr.holidays.zue.hr.leave.form.inherit</field>
             <field name="model">hr.leave</field>
@@ -37,11 +49,20 @@
             <field name="priority">10</field>
             <field name="inherit_id" ref="hr_holidays.hr_leave_view_form_manager"/>
             <field name="arch" type="xml">
+                <xpath expr="//form[1]/header[1]" position="inside">
+                    <button name="add_extension" type="object" string="Agregar Prorroga" states="validate"/>
+                </xpath>
+                <xpath expr="//widget[@name='hr_leave_stats']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//form[1]/sheet[1]/group[1]/group[@name='col_left']/field[@name='employee_ids']" position="after">
+                    <field name="employee_company_id"/>
+                </xpath>
                 <xpath expr="//form[1]/sheet[1]" position="before">
                     <field name="alert_days_vacation" readonly="1" invisible="1"/>
                     <div class="alert alert-warning oe_edit_only" role="alert" attrs="{'invisible': [('alert_days_vacation', '=', False)]}">
                         El empleado solo dispone de <field name="accumulated_vacation_days" readonly="1"/>
-                        días de vacaciones pendientes.
+ días de vacaciones pendientes.
                     </div>
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/group[1]/group[1]/label[1]" position="before">
@@ -58,6 +79,11 @@
                 <xpath expr="//field[@name='name']" position="attributes">
                     <attribute name="attrs">{"readonly": [('state', 'not in', ('draft', 'confirm'))]}</attribute>
                     <attribute name="force_save">True</attribute>
+                </xpath>
+                <xpath expr="//field[@name='name']" position="before">
+                        <field name="z_date_real_from"/>
+                        <field name="z_date_real_to"/>
+                        <field name="z_real_number_of_days"/>
                 </xpath>
             </field>
         </record>
@@ -103,5 +129,32 @@
                 </search>
             </field>
         </record>
+
+        <record id="zue_hr_leave_extension_wizard" model="ir.ui.view">
+            <field name="name">Agregar prorroga para ausencias</field>
+            <field name="priority" eval="6"/>
+            <field name="model">zue.hr.leave.extension.wizard</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="z_leave_id" readonly="1" force_save="1"/>
+                            <field name="z_new_date_end"/>
+                        </group>
+                        <footer>
+                            <button name="authorized_extension" type="object" string="Agregar" class="btn btn-primary"/>
+                        </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record model="ir.actions.act_window" id="action_zue_hr_leave_extension_wizard">
+            <field name="name">Agregar prorroga para ausencias</field>
+            <field name="res_model">zue.hr.leave.extension.wizard</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
     </data>
 </odoo>

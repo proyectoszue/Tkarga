@@ -6,6 +6,7 @@ from odoo.tools import float_compare, float_is_zero
 
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+import math
 
 class hr_vacation(models.Model):
     _name = 'hr.vacation'
@@ -162,9 +163,10 @@ class Hr_payslip(models.Model):
         leaves_time = []
         leaves_money = []
         leaves = {}
+        leave_time_ids = []
         for leave in work_entries.sorted(key=lambda w:w.date_start):
-            leaves = {}          
-            if leave.leave_id.holiday_status_id.is_vacation:
+            leaves = {}
+            if leave.leave_id.holiday_status_id.is_vacation and leave.leave_id.id not in leave_time_ids:
                 leave_holidays = leave.leave_id.holidays
                 leave_business_days = leave.leave_id.business_days
                 leave_number_of_days = leave.leave_id.number_of_days
@@ -213,6 +215,7 @@ class Hr_payslip(models.Model):
                     leaves['31BUSINESS' + leave.work_entry_type_id.code] = days_31_b
 
                 leaves_time.append(leaves)
+                leave_time_ids.append(leave.leave_id.id)
 
         #Vacaciones Remuneradas
         if len(self.paid_vacation_ids) > 0:
@@ -300,11 +303,18 @@ class Hr_payslip(models.Model):
 
                         localdict.update({'leaves':  BrowsableObject(employee.id, leaves, self.env)})
                         amount, qty, rate = rule._compute_rule(localdict)
-                        amount = round(amount,0) if round_payroll == False else amount#Se redondean los decimales de todas las reglas
+                        amount = round(amount,0) if round_payroll == False else round(amount, 2)#Se redondean los decimales de todas las reglas
                         #check if there is already a rule computed with that code
                         previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
                         #set/overwrite the amount computed for this rule in the localdict
-                        tot_rule = (amount * qty * rate / 100.0) + previous_amount
+                        tot_rule_original = (amount * qty * rate / 100.0)
+                        part_decimal, part_value = math.modf(tot_rule_original)
+                        tot_rule = amount * qty * rate / 100.0
+                        if part_decimal >= 0.5 and math.modf(tot_rule)[1] == part_value:
+                            tot_rule = (part_value + 1) + previous_amount
+                        else:
+                            tot_rule = tot_rule + previous_amount
+                        tot_rule = round(tot_rule, 0)
                         localdict[rule.code] = tot_rule
                         rules_dict[rule.code] = rule
                         # sum the amount for its salary category
@@ -373,11 +383,18 @@ class Hr_payslip(models.Model):
 
                         localdict.update({'leaves':  BrowsableObject(employee.id, leaves, self.env)})
                         amount, qty, rate = rule._compute_rule(localdict)
-                        amount = round(amount,0) if round_payroll == False else amount#Se redondean los decimales de todas las reglas
+                        amount = round(amount,0) if round_payroll == False else round(amount, 2)#Se redondean los decimales de todas las reglas
                         #check if there is already a rule computed with that code
                         previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
                         #set/overwrite the amount computed for this rule in the localdict
-                        tot_rule = (amount * qty * rate / 100.0) + previous_amount
+                        tot_rule_original = (amount * qty * rate / 100.0)
+                        part_decimal, part_value = math.modf(tot_rule_original)
+                        tot_rule = amount * qty * rate / 100.0
+                        if part_decimal >= 0.5 and math.modf(tot_rule)[1] == part_value:
+                            tot_rule = (part_value + 1) + previous_amount
+                        else:
+                            tot_rule = tot_rule + previous_amount
+                        tot_rule = round(tot_rule, 0)
                         localdict[rule.code] = tot_rule
                         rules_dict[rule.code] = rule
                         # sum the amount for its salary category
@@ -443,23 +460,44 @@ class Hr_payslip(models.Model):
                         dias_liquidacion = dias_trabajados - dias_ausencias
 
                         if (self.date_liquidacion - contract.date_start).days <= 365:
-                            if dias_liquidacion > 0:
-                                acumulados_promedio = (amount_base/dias_liquidacion)*30
+                            dias_contract = self.dias360(contract.date_start, self.date_liquidacion)#int((self.date_liquidacion - contract.date_start).days)-1
+                            if dias_contract > 0:
+                                acumulados_promedio = (amount_base/dias_contract)*30 # dias_liquidacion // HISTORIA: Promedio de la base variable no tome ausentismos
                             else:
                                 acumulados_promedio = 0
                         else:
                             acumulados_promedio = amount_base/12
 
-                        amount_base = contract.wage + acumulados_promedio
+                        # wage = 0
+                        # if contract.subcontract_type not in ('obra_parcial', 'obra_integral'):
+                        #     wage = contract.wage
+                        wage = 0
+                        obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '<', self.date_to)])
+                        for change in sorted(obj_wage, key=lambda x: x.date_start):  # Obtiene el ultimo salario vigente antes de la fecha de liquidacion
+                            wage = change.wage
+
+                        if contract.subcontract_type not in ('obra_parcial', 'obra_integral'):
+                            wage = contract.wage if wage == 0 else wage
+                        else:
+                            wage = 0
+
+                        amount_base = wage + acumulados_promedio
 
                         amount = round(amount_base / 720, 0) if round_payroll == False else amount_base / 720
                         qty = dias_liquidacion
 
-                    amount = round(amount,0) if round_payroll == False else amount #Se redondean los decimales de todas las reglas
+                    amount = round(amount,0) if round_payroll == False else round(amount, 2) #Se redondean los decimales de todas las reglas
                     #check if there is already a rule computed with that code
                     previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
                     #set/overwrite the amount computed for this rule in the localdict
-                    tot_rule = (amount * qty * rate / 100.0) + previous_amount
+                    tot_rule_original = (amount * qty * rate / 100.0)
+                    part_decimal, part_value = math.modf(tot_rule_original)
+                    tot_rule = amount * qty * rate / 100.0
+                    if part_decimal >= 0.5 and math.modf(tot_rule)[1] == part_value:
+                        tot_rule = (part_value + 1) + previous_amount
+                    else:
+                        tot_rule = tot_rule + previous_amount
+                    tot_rule = round(tot_rule, 0)
                     localdict[rule.code] = tot_rule
                     rules_dict[rule.code] = rule
                     # sum the amount for its salary category
@@ -487,7 +525,7 @@ class Hr_payslip(models.Model):
         
         #Ejecutar reglas salariales de la nómina de pago regular
         if inherit_contrato == 0 and inherit_nomina == 0:
-            obj_struct_payroll = self.env['hr.payroll.structure'].search([('regular_pay','=',True),('process','=','nomina')])
+            obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','nomina')])
             struct_original = self.struct_id.id
             self.struct_id = obj_struct_payroll.id
             result_payroll = self._get_payslip_lines(inherit_vacation=1,localdict=localdict)

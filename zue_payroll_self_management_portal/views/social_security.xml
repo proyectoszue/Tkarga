@@ -1,0 +1,210 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="social_security" name="Seguridad Social y Dependientes">
+            <body t-att-style="'background-color:'+str(portal_design.z_background_color)+';font-family:'+str(portal_design.z_font)+';'">
+            <t t-call="web.basic_layout">
+                <div t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                    <br/>
+                    <center>
+                        <h3>
+                            Seguridad Social
+                        </h3>
+                    </center>
+                    <hr/>
+                    <div class="card-deck d-flex justify-content-center">
+                        <t t-foreach="social_security" t-as="ss">
+                            <div class="card mb-3"
+                                 t-att-style="'max-width: 18rem;border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
+                                 ';color:'+str(portal_design.z_primary_color)+';'">
+                                <div class="card-header">
+                                    <t t-if="ss.get('contrib','') == 'eps'">
+                                        <span class="fa fa-heartbeat"/>
+                                    </t>
+                                    <t t-elif="ss.get('contrib','') == 'pension'">
+                                        <span class="fa fa-support"/>
+                                    </t>
+                                    <t t-elif="ss.get('contrib','') == 'riesgo'">
+                                        <span class="fa fa-handshake-o"/>
+                                    </t>
+                                    <t t-elif="ss.get('contrib','') == 'caja'">
+                                        <span class="fa fa-sitemap"/>
+                                    </t>
+                                    <t t-else="">
+                                        <span class="fa fa-bank"/>
+                                    </t>
+                                    <span t-esc="ss.get('type_entity','')"/>
+                                </div>
+                                <div class="card-body"
+                                     t-att-style="'background-color:'+str(portal_design.z_primary_color)+';color:'+str(portal_design.z_secondary_color)+';'">
+                                    <h5 class="card-title">
+                                        <span t-esc="ss.get('entity','')"/>
+                                    </h5>
+                                    <t t-if="ss.get('date_change',False)">
+                                        <p class="card-text">
+                                            <small class="text-muted">Ingreso el
+                                                <span t-esc="ss.get('date_change','')"/>
+                                            </small>
+                                        </p>
+                                    </t>
+                                </div>
+                            </div>
+                        </t>
+                    </div>
+                    <br/>
+                    <div class="row">
+                        <div class="col-md-11">
+                            <center>
+                                <h1>
+                                    <b>Dependientes</b>
+                                </h1>
+                            </center>
+                        </div>
+                        <div class="col-md-1 d-flex justify-content-center align-items-lg-center">
+                            <button type="button" class="btn btn-outline-primary"
+                                    data-toggle="modal"
+                                    data-target="#modalDependientes"
+                                    t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
+                                    ';color:'+str(portal_design.z_primary_color)+';'">
+                                <span class="fa fa-plus fa-1x fa-lg" title="Agregar"/>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Modal -->
+                    <div class="modal fade" id="modalDependientes" tabindex="-1" role="dialog"
+                         aria-labelledby="modalDependientes" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content"
+                                 t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modalDependientes">Dependientes</h5>
+                                    <button type="button" class="close" data-dismiss="modal"
+                                            aria-label="Close">
+                                    </button>
+                                </div>
+                                <form class="form-update-data"
+                                      action='/zue_payroll_self_management_portal/add_dependents_employee_save'
+                                      method="POST">
+                                    <div class="modal-body">
+                                        <label>Parentesco</label>
+                                        <select class="form-control form-control-sm" id="field_dependents_type"
+                                                name="field_dependents_type">
+                                            <option t-foreach="lst_dependents_type" t-as="dependents_type"
+                                                    t-att-value="dependents_type[0]">
+                                                <span t-esc="dependents_type[1]"/>
+                                            </option>
+                                        </select>
+                                        <br/>
+                                        <label>Nombre</label>
+                                        <input class="form-control form-control-sm" type="text" id="field_name" name="field_name"
+                                               required="true"/>
+                                        <br/>
+                                        <label>Genero</label>
+                                        <select class="form-control form-control-sm" id="field_genero"
+                                                name="field_genero">
+                                            <option t-foreach="lst_gender" t-as="gender"
+                                                    t-att-value="gender[0]">
+                                                <span t-esc="gender[1]"/>
+                                            </option>
+                                        </select>
+                                        <br/>
+                                        <label>Fecha de nacimiento</label>
+                                        <input type="date" id="field_date_birthday" name="field_date_birthday"
+                                               class="form-control form-control-sm"/>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary"
+                                                t-att-style="'border-color:'+str(portal_design.z_background_color)+';background-color:'+str(portal_design.z_background_color)+
+                                                ';color:'+str(portal_design.z_primary_color)+';'"
+                                                data-dismiss="modal">
+                                            Descartar
+                                        </button>
+                                        <button type="submit" class="btn btn-primary"
+                                                t-att-style="'border-color:'+str(portal_design.z_background_color)+';background-color:'+str(portal_design.z_background_color)+
+                                                ';color:'+str(portal_design.z_primary_color)+';'">Guardar y cerrar
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <hr/>
+                    <div>
+                        <table class="table table-responsive-md" t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                            <thead t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                <tr>
+                                    <td>
+                                        <b>Parentesco</b>
+                                    </td>
+                                    <td>
+                                        <b>Nombre</b>
+                                    </td>
+                                    <td>
+                                        <b>Genero</b>
+                                    </td>
+                                    <td>
+                                        <b>Fecha de nacimiento</b>
+                                    </td>
+                                    <td/>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="dependents" t-as="dependent">
+                                    <td>
+                                        <span t-esc="dependent.get('type','')"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="dependent.get('name','')"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="dependent.get('genero','')"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="dependent.get('date_birthday','')"/>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-outline-danger" data-toggle="modal"
+                                                t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
+                                                ';color:'+str(portal_design.z_primary_color)+';'"
+                                                t-att-data-target="'#delete_Modal'+str(dependent.get('id',0))">
+                                            <span class="fa fa-trash" title="Eliminar"/>
+                                        </button>
+                                        <!-- Modal -->
+                                        <div class="modal fade" t-att-id="'delete_Modal'+str(dependent.get('id',0))"
+                                             tabindex="-1" role="dialog"
+                                             t-att-aria-labelledby="'delete_Modal'+str(dependent.get('id',0))"
+                                             aria-hidden="true">
+                                            <div class="modal-dialog" role="document">
+                                                <div class="modal-content"
+                                                     t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                    <div class="modal-body">
+                                                        ¿Desea eliminar este registro?
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary"
+                                                                t-att-style="'border-color:'+str(portal_design.z_background_color)+';background-color:'+str(portal_design.z_background_color)+
+                                                                ';color:'+str(portal_design.z_primary_color)+';'"
+                                                                data-dismiss="modal">Descartar
+                                                        </button>
+                                                        <a class="btn btn-danger"
+                                                           t-att-style="'border-color:'+str(portal_design.z_background_color)+';background-color:'+str(portal_design.z_background_color)+
+                                                           ';color:'+str(portal_design.z_primary_color)+';'"
+                                                           t-attf-href="/zue_payroll_self_management_portal/delete_dependents_employee_save/{{dependent.get('id',0)}}">
+                                                            Eliminar
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <br/>
+            </t>
+            </body>
+        </template>
+    </data>
+</odoo>

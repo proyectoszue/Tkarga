@@ -47,6 +47,29 @@
             </field>
         </record>
 
+        <!-- TIPOS DE FALTAS -->
+        <record id="action_hr_type_faults" model="ir.actions.act_window">
+            <field name="name">Tipos de faltas</field>
+            <field name="res_model">hr.types.faults</field>
+            <field name="view_mode">tree</field>
+            <field name="domain">[]</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">Crear Tipo de de falta
+                </p>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="list_hr_type_faults">
+            <field name="name">list hr type faults</field>
+            <field name="model">hr.types.faults</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom">
+                    <field name="name" required="1"/>
+                    <field name="description" required="1"/>
+                </tree>
+            </field>
+        </record>
+
         <!-- PARAMETRIZACION COTIZANTES -->
         <record model="ir.actions.act_window" id="action_hr_parameterization_of_contributors">
             <field name="name">Parametrización Cotizantes</field>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- ACTIONS TREE,FORM-->
+        <record model="ir.actions.act_window" id="zue_action_hr_employee_portal_design">
+            <field name="name">Diseño del Portal</field>
+            <field name="res_model">zue.hr.employee.portal.design</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- VISTA TREE -->
+        <record model="ir.ui.view" id="zue_actions_hr_employee_portal_design_list">
+            <field name="name">Diseño del portal</field>
+            <field name="model">zue.hr.employee.portal.design</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="z_company_design_id"/>
+<!--                    <field name="z_theme"/>-->
+                    <field name="z_primary_color"/>
+                    <field name="z_background_color"/>
+                    <field name="z_secondary_color"/>
+                    <field name="z_font"/>
+                </tree>
+            </field>
+        </record>
+
+        <!-- VISTA FORM -->
+        <record model="ir.ui.view" id="zue_actions_hr_employee_portal_design_form">
+            <field name="name">Diseño del portal</field>
+            <field name="model">zue.hr.employee.portal.design</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="z_company_design_id"/>
+                            </group>
+                            <group>
+                                <field name="z_logo" widget='image' class="oe_avatar"/>
+                            </group>
+                        </group>
+
+                        <group>
+                            <group>
+                                <!--<field name="z_theme" widget="radio"/>-->
+                                <field name="z_font"/>
+                            </group>
+                            <group>
+                                <field name="z_primary_color" widget="color"/>
+                                <field name="z_secondary_color" widget="color"/>
+                                <field name="z_background_color" widget="color"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</odoo>

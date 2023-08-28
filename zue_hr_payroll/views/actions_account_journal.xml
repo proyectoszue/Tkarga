@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
-        <record id="Account_journal_inherit" model="ir.ui.view">
+        <record id="payroll_account_journal_inherit" model="ir.ui.view">
             <field name="name">account.journal.inherit</field>
             <field name="model">account.journal</field>
-            <field name="inherit_id" ref="account.view_account_bank_journal_form"/>
+            <field name="inherit_id" ref="account.view_account_journal_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//field[@name='outbound_payment_method_ids']" position="after">
+                <xpath expr="//field[@name='bank_account_id']" position="after">
                     <field name="is_payroll_spreader"/>
+                    <field name="plane_type" attrs="{'invisible': [('is_payroll_spreader', '=', False)]}"/>
                 </xpath>
             </field>
         </record>

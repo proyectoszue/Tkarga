@@ -80,8 +80,12 @@
                                 <td style="border:none;">
                                     <span t-field="o.employee_id.job_id"/>
                                 </td>
-                                <td style="border:none;"/>
-                                <td style="border:none;"/>
+                                <td style="border:none;">
+                                    <b>Referencia:</b>
+                                </td>
+                                <td style="border:none;">
+                                    <span t-field="o.number"/>
+                                </td>
                                 <td style="border:none;"/>
                                 <td style="border:none;"/>
                             </tr>
@@ -191,7 +195,14 @@
                                                         <span t-esc="sum([i.number_of_days for i in o.worked_days_line_ids.filtered(lambda x: x.code == 'WORK100')])"/>
                                                     </t>
                                                     <t t-else="">
-                                                        <span t-field="line.quantity"/>
+                                                        <t t-if="line.loan_id">
+                                                            <span t-esc="len(line.loan_id.prestamo_lines)-len(line.loan_id.prestamo_lines.filtered(lambda i: i.paid == False))"/>
+                                                            /
+                                                            <span t-esc="len(line.loan_id.prestamo_lines)"/>
+                                                        </t>
+                                                        <t t-else="">
+                                                            <span t-field="line.quantity"/>
+                                                        </t>
                                                     </t>
                                                 </td>
                                                 <t t-if="line.salary_rule_id.dev_or_ded == 'devengo'">
@@ -224,20 +235,28 @@
                         <table class="table">
                             <tr style="border:none;">
                                 <td style="width: 70%;border:none;">
-                                    <p align="justify"><span t-if="cp_template.caption" t-esc="cp_template.caption" /></p>
+                                    <p align="justify">
+                                        <span t-if="cp_template.caption" t-esc="cp_template.caption"/>
+                                    </p>
                                 </td>
                                 <td style="width: 30%;border:none;">
                                     <table class="table table-condensed">
                                         <tr class="border-black">
-                                            <td><strong>DEVENGOS</strong></td>
+                                            <td>
+                                                <strong>DEVENGOS</strong>
+                                            </td>
                                             <td class="text-right">
-                                                <span t-field="o.line_ids.filtered(lambda line: line.code == 'TOTALDEV').total" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
+                                                <span t-field="o.line_ids.filtered(lambda line: line.code == 'TOTALDEV').total"
+                                                      t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td><strong>DEDUCCIONES</strong></td>
+                                            <td>
+                                                <strong>DEDUCCIONES</strong>
+                                            </td>
                                             <td class="text-right">
-                                                <span t-field="o.line_ids.filtered(lambda line: line.code == 'TOTALDED').total" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
+                                                <span t-field="o.line_ids.filtered(lambda line: line.code == 'TOTALDED').total"
+                                                      t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
                                             </td>
                                         </tr>
                                         <tr class="border-black">
@@ -251,7 +270,8 @@
                                         </tr>
                                         <tr>
                                             <td class="text-justify" colspan="2">
-                                                    <span t-esc="o.contract_id.get_amount_text(o.line_ids.filtered(lambda line: line.code == 'NET').total).lower().capitalize()"/> pesos
+                                                <span t-esc="o.contract_id.get_amount_text(o.line_ids.filtered(lambda line: line.code == 'NET').total).lower().capitalize()"/>
+                                                pesos
                                             </td>
                                         </tr>
                                     </table>

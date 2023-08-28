@@ -1,40 +1,95 @@
 <?xml version="1.0" encoding="utf-8"?>
-<odoo>  
+<odoo>
     <template id="report_liquidacion_final_document">
-        <t t-set="o" t-value="o.with_context(lang=o.employee_id.address_home_id.lang or o.env.lang)"/>         
+        <t t-set="o" t-value="o.with_context(lang=o.employee_id.address_home_id.lang or o.env.lang)"/>
         <div class="row">
-            <div class="col-md-12 text-center"><strong>LIQUIDACION DE CONTRATO LABORAL</strong></div>
+            <div class="col-md-12 text-center">
+                <strong>LIQUIDACION DE CONTRATO LABORAL</strong>
+            </div>
         </div>
         <div class="page" style="font-style: normal; font-size: 12px;">
             <div class="oe_structure"/>
             <div class="row">
-        <style>
-            th, td{
-                padding-bottom: 1px !important;
-                padding-top: 1px !important;
-            }
-        </style>
                 <div class="col-md-6 col-md-offset-6">
                     <table style="width:100%;">
                         <tr style="border: 1px solid black;">
                             <td>
-                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Identidad</b>           :<span t-field="o.employee_id.identification_id"/></p>
-                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Empleado</b>            :<span t-field="o.employee_id.name"/></p>
-                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ingreso</b>       :<span t-field="o.contract_id.date_start"/></p>
-                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha retiro</b>        :<span t-field="o.date_liquidacion"/></p>
-                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Dias Laborados</b>      :<span t-esc="o.dias360(o.contract_id.date_start,o.date_liquidacion)"/></p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Referencia</b>
+                                    :
+                                    <span t-field="o.number"/>
+                                </p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Identidad</b>
+                                    :
+                                    <span t-field="o.employee_id.identification_id"/>
+                                </p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Empleado</b>
+                                    :
+                                    <span t-field="o.employee_id.name"/>
+                                </p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Fecha ingreso</b>
+                                    :
+                                    <span t-field="o.contract_id.date_start"/>
+                                </p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Cargo</b>
+                                    :
+                                    <span t-field="o.employee_id.job_id.name"/>
+                                </p>
                             </td>
                             <td>
-                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Tipo contrato</b>       :<span t-field="o.contract_id.contract_type"/></p>
-                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult cesantias</b> :<span t-field="o.date_cesantias"/></p>
-                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult prima</b>     :<span t-field="o.date_prima"/></p>
-                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult vacaciones</b>:<span t-field="o.date_vacaciones"/></p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Tipo contrato</b>
+                                    :
+                                    <span t-field="o.contract_id.contract_type"/>
+                                </p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Sucursal</b>
+                                    :
+                                    <span t-field="o.employee_id.branch_id.name"/>
+                                </p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Fecha Ult cesantias</b>
+                                    :
+                                    <span t-field="o.date_cesantias"/>
+                                </p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Fecha Ult prima</b>
+                                    :
+                                    <span t-field="o.date_prima"/>
+                                </p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ult vacaciones</b>:
+                                    <span t-field="o.date_vacaciones"/>
+                                </p>
                             </td>
                             <td>
-                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Sucursal</b>            :<span t-field="o.employee_id.branch_id.name"/></p>
-                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Salario basico</b>      :<span t-field="o.contract_id.wage"/></p>
-                             <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Cargo</b>               :<span t-field="o.employee_id.job_id.name"/></p>
-                            <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Motivo retiro</b>       :<span t-field="o.reason_retiro"/></p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Salario basico</b>
+                                    :
+                                    <span t-field="o.contract_id.wage"/>
+                                </p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Cuenta bancaria:</b>
+                                    <span t-field="o.employee_id.address_home_id.bank_ids.filtered(lambda bank: bank.is_main == True and bank.company_id == o.employee_id.company_id).acc_number"/>
+                                </p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Dias laborados</b>
+                                    :
+                                    <span t-esc="(o.date_liquidacion - o.contract_id.date_start).days"/>
+                                </p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Fecha retiro</b>
+                                    :
+                                    <span t-field="o.date_liquidacion"/>
+                                </p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Motivo retiro</b>
+                                    :
+                                    <span t-field="o.reason_retiro"/>
+                                </p>
                             </td>
                         </tr>
                     </table>
@@ -46,80 +101,123 @@
                     <table class="table table-bordered">
                         <thead>
                             <tr>
-                                <th>Concepto</th>
-                                <th>Entidad</th>
-                                <th>Base</th>
-                                <th>Desde</th>
-                                <th>Hasta</th>
-                                <th>Cantidad</th>
-                                <th class="text-right">Valor</th>
+                                <td style="width: 17%;">Categoria</td>
+                                <td style="width: 17%;">Concepto</td>
+                                <td style="width: 12%;">Base</td>
+                                <td style="width: 13%;">Desde</td>
+                                <td style="width: 13%;">Hasta</td>
+                                <td style="width: 6%;">Cantidad</td>
+                                <td class="text-right" style="width: 12%;">Valor</td>
                             </tr>
                         </thead>
                         <tbody class="invoice_tbody">
-                            <tr t-foreach="o.line_ids" t-as="l">
-                            <span t-if="not l.category_id.name in ['Neto','Bruto']">
-                                <td><span t-field="l.name"/></td>
-                                <t t-if="l.entity_id.business_name">
-                                    <td style="width: 20%">
-                                        <span t-field="l.entity_id.business_name"/>
-                                    </td>
-                                </t>
-                                <t t-if="not l.entity_id.business_name">
-                                    <td style="width: 20%">
-                                        <span t-field="l.entity_id.name"/>
-                                    </td>
-                                </t>
-                                <td><span t-esc="l.amount_base" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/></td>
-                                <t t-if="l.code in ['CESANTIAS','INTCESANTIAS']">
-                                    <td><span t-esc="o.date_cesantias"/></td>
-                                </t>
-                                <t t-if="l.code == 'PRIMA'">
-                                    <td><span t-esc="o.date_prima"/></td>
-                                </t>
-                                <t t-if="l.code == 'VACCONTRATO'">
-                                    <td><span t-esc="o.date_vacaciones"/></td>
-                                </t>
-                                <t t-if="not l.code in ['CESANTIAS','INTCESANTIAS','PRIMA','VACCONTRATO']">
-                                    <td><span t-esc="o.date_from"/></td>
-                                </t>
-                                <td><span t-esc="o.date_to"/></td>
-                                <td>
-                                    <t t-if="l.salary_rule_id.display_days_worked == True">
-                                        <span t-esc="sum([i.number_of_days for i in o.worked_days_line_ids.filtered(lambda x: x.code == 'WORK100')])"/>
+                            <t t-set="count_category" t-value="0"/>
+                            <t t-set="recno_category" t-value="0"/>
+                            <tr t-foreach="sorted(o.line_ids,key=lambda x: (x.category_id.sequence,x.category_id.name,x.salary_rule_id.sequence))"
+                                t-as="l">
+                                <span t-if="not l.category_id.name in ['Neto','Bruto']">
+                                    <t t-set="count_category" t-value="l.count_category_ids()"/>
+                                    <t t-if="recno_category == 0">
+                                        <t t-set="recno_category" t-value="count_category"/>
                                     </t>
-                                    <t t-elif="l.code == 'VACCONTRATO'">
-                                        <span t-esc="'%.2f'% o.contract_id.get_accumulated_vacation_days(o.id)"/>
+                                    <t t-if="count_category == recno_category">
+                                        <td style="width: 20%" t-att-rowspan="count_category">
+                                            <span t-field="l.category_id.name"/>
+                                        </td>
+                                        <t t-set="recno_category" t-value="recno_category - 1"/>
                                     </t>
                                     <t t-else="">
-                                        <span t-field="l.quantity"/>
+                                        <t t-set="recno_category" t-value="recno_category - 1"/>
                                     </t>
-                                </td>
-                                <td class="text-right"><span t-esc="l.total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/></td>
-                            </span>
+                                    <td>
+                                        <span t-field="l.name"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="l.amount_base"
+                                              t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
+                                    </td>
+                                    <t t-if="l.code in ['CESANTIAS','INTCESANTIAS']">
+                                        <td>
+                                            <span t-esc="o.date_cesantias"/>
+                                        </td>
+                                    </t>
+                                    <t t-if="l.code == 'PRIMA'">
+                                        <td>
+                                            <span t-esc="o.date_prima"/>
+                                        </td>
+                                    </t>
+                                    <t t-if="l.code == 'VACCONTRATO'">
+                                        <td>
+                                            <span t-esc="o.date_vacaciones"/>
+                                        </td>
+                                    </t>
+                                    <t t-if="not l.code in ['CESANTIAS','INTCESANTIAS','PRIMA','VACCONTRATO']">
+                                        <td>
+                                            <span t-esc="o.date_from"/>
+                                        </td>
+                                    </t>
+                                    <td>
+                                        <span t-esc="o.date_to"/>
+                                    </td>
+                                    <td>
+                                        <t t-if="l.salary_rule_id.display_days_worked == True">
+                                            <span t-esc="sum([i.number_of_days for i in o.worked_days_line_ids.filtered(lambda x: x.code == 'WORK100')])"/>
+                                        </t>
+                                        <t t-else="">
+                                            <span t-field="l.quantity"/>
+                                        </t>
+                                    </td>
+                                    <td class="text-right">
+                                        <span t-esc="l.total"
+                                              t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
+                                    </td>
+                                </span>
                             </tr>
                         </tbody>
                     </table>
                 </div>
             </div>
-            <br/>
             <div class="row">
                 <div class="col-md-6 col-md-offset-6">
                     <table class="table">
                         <tr>
                             <td style="width: 70%">
-                                <p align="justify"><span t-if="cp_template.caption" t-esc="cp_template.caption" /></p>
+                                <p align="justify">
+                                    <span t-if="cp_template.caption" t-esc="cp_template.caption"/>
+                                </p>
                             </td>
                             <td style="width: 30%">
                                 <table class="table table-condensed">
                                     <tr class="border-black">
-                                        <td><strong>NETO A PAGAR</strong></td>
+                                        <td>
+                                            <strong>DEVENGOS</strong>
+                                        </td>
                                         <td class="text-right">
-                                                <span t-field="o.line_ids.filtered(lambda line: line.code == 'NET').total" t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
+                                            <span t-field="o.line_ids.filtered(lambda line: line.code == 'TOTALDEV').total"
+                                                  t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td>
+                                            <strong>DEDUCCIONES</strong>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="o.line_ids.filtered(lambda line: line.code == 'TOTALDED').total"
+                                                  t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
+                                        </td>
+                                    </tr>
+                                    <tr class="border-black">
+                                        <td>
+                                            <strong>NETO A PAGAR</strong>
+                                        </td>
+                                        <td class="text-right">
+                                            <span t-field="o.line_ids.filtered(lambda line: line.code == 'NET').total"
+                                                  t-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: o.company_id.currency_id}"/>
                                         </td>
                                     </tr>
                                     <tr>
                                         <td class="text-justify" colspan="2">
-                                                <span t-esc="o.contract_id.get_amount_text(o.line_ids.filtered(lambda line: line.code == 'NET').total).lower().capitalize()"/> pesos
+                                            <span t-esc="o.contract_id.get_amount_text(o.line_ids.filtered(lambda line: line.code == 'NET').total).lower().capitalize()"/> pesos
                                         </td>
                                     </tr>
                                 </table>
@@ -132,7 +230,7 @@
     </template>
 
     <template id="report_liquidacion_final">
-         <t t-foreach="docs" t-as="o">
+        <t t-foreach="docs" t-as="o">
             <t t-set="inside_foreach_docs" t-value="o"/>
             <t t-call="zue_hr_payroll.report_liquidacion_final_document" t-lang="o.employee_id.address_home_id.lang"/>
         </t>

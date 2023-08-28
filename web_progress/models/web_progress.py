@@ -4,6 +4,8 @@ from odoo.exceptions import UserError
 from threading import RLock
 from datetime import datetime, timedelta
 from collections import defaultdict
+from contextlib import contextmanager
+import html
 import odoo
 import json
 import logging
@@ -22,8 +24,40 @@ progress_data = defaultdict(dict)
 user_name = {}
 
 
+@contextmanager
+def clear_upon_failure(self):
+    """ Context manager that clears the environments (caches and fields to
+        recompute) upon exception.
+    """
+    tocompute = {
+        field: set(ids)
+        for field, ids in self.all.tocompute.items()
+    }
+    towrite = {
+        model: {
+            record_id: dict(values)
+            for record_id, values in id_values.items()
+        }
+        for model, id_values in self.all.towrite.items()
+    }
+    try:
+        yield
+    except Exception:
+        self.clear()
+        self.all.tocompute.update(tocompute)
+        for model, id_values in towrite.items():
+            for record_id, values in id_values.items():
+                self.all.towrite[model][record_id].update(values)
+        raise
+
 def json_dump(v):
     return json.dumps(v, separators=(',', ':'))
+
+
+class CancelledProgress(models.UserError):
+    # exception used to cancel the execution
+    pass
+
 
 class RestoreEnvToComputeToWrite(Exception):
     """
@@ -83,6 +117,19 @@ class WebProgress(models.TransientModel):
             return user_name.get(code, '')
 
     @api.model
+    def get_progress_rpc(self, code=None):
+        """
+        External call to get progress for given code
+        :param code: web progress code
+        """
+        with registry(self.env.cr.dbname).cursor() as new_cr:
+            # Create a new environment with new cursor database
+            new_env = api.Environment(new_cr, self.env.uid, self.env.context)
+            # with_env replace original env for this method
+            progress_obj = self.with_env(new_env)
+            return progress_obj.get_progress(code)
+
+    @api.model
     def get_progress(self, code=None, recur_depth=None):
         """
         Get progress for given code
@@ -104,7 +151,7 @@ class WebProgress(models.TransientModel):
             for parent_depth in range(progress_id.recur_depth):
                 result += self.get_progress(code, recur_depth=parent_depth)
         progress_vals = {
-            'msg': progress_id.msg,
+            'msg': html.escape(progress_id.msg or ''),
             'code': progress_id.code,
             'progress': progress_id.progress,
             'progress_total': progress_id.progress_total,
@@ -124,46 +171,42 @@ class WebProgress(models.TransientModel):
         return result
 
     @api.model
-    def get_all_progress(self):
+    def is_progress_admin(self, user_id=None):
+        """
+        Check if the current user (or a user given by parameter)
+        has progress admin credentials.
+        :return:
+        """
+        if not user_id:
+            user_id = self.env.user
+        # superuser and users being in group system are progress admins
+        return user_id._is_superuser() or user_id._is_system()
+
+    @api.model
+    def get_all_progress(self, recency=_progress_period_secs * 2):
         """
         Get progress information for all ongoing operations
+        :param recency: (int) seconds back
+        :return list of progress codes
         """
         query = """
-        SELECT DISTINCT
-        FIRST_VALUE(CASE WHEN state = 'ongoing' AND done != total THEN id END)
-            OVER (PARTITION BY code ORDER BY create_date DESC, recur_depth DESC) AS id
-        FROM web_progress
-        WHERE recur_depth = 0 {user_id}
-        """.format(user_id=self.env.user.id != SUPERUSER_ID and "AND create_uid = {}".format(self.env.user.id) or '')
+        SELECT code, array_agg(state) FROM web_progress
+        WHERE create_date > timezone('utc', now()) - INTERVAL '{recency} SECOND'
+              AND recur_depth = 0 {user_id}
+        GROUP BY code
+        """.format(
+            recency=recency or 0,
+            user_id=not self.is_progress_admin() and "AND create_uid = {user_id}"
+                .format(
+                user_id=self.env.user.id,
+            ) or '')
         # superuser has right to see (and cancel) progress of everybody
-        # _logger.info(query)
         self.env.cr.execute(query)
         result = self.env.cr.fetchall()
-        progress_ids = self.browse([r[0] for r in result if r[0]]).sorted('code')
-        # compute real progress when there are recursive progress calls
-        progress_real = {}
-        for progress_id in progress_ids:
-            progress = 0
-            progress_total = 100
-            deep_progress_list = progress_id.get_progress(progress_id.code)
-            if len(deep_progress_list) <= 1:
-                progress = progress_id.progress
-            else:
-                for el in deep_progress_list:
-                    if el['progress'] and el['total']:
-                        progress += el['progress'] * progress_total / 100
-                    if el['total']:
-                        progress_total /= el['total']
-            progress_real[progress_id.code] = round(progress, 0)
-        return [{'msg': progress_id.msg,
-                 'code': progress_id.code,
-                 'progress': progress_real[progress_id.code],
-                 'done': progress_id.done,
-                 'total': progress_id.total,
-                 'state': progress_id.state,
-                 'cancellable': progress_id.cancellable,
-                 'uid': progress_id.create_uid.id,
-                 } for progress_id in progress_ids]
+        ret = [{
+            'code': r[0],
+        } for r in result if r[0] and 'cancel' not in r[1] and 'done' not in r[1]]
+        return ret
 
     #
     # Protected members called by backend
@@ -246,79 +289,49 @@ class WebProgress(models.TransientModel):
             return
         code = vals_list[0].get('code')
         try:
-            with self.env.clear_upon_failure():
-                with api.Environment.manage():
-                    with registry(self.env.cr.dbname).cursor() as new_cr:
-                        # Create a new environment with a new cursor
-                        new_env = api.Environment(new_cr, self.env.uid, self.env.context)
-                        # clear whatever is to be computed or written
-                        # it will be restored later on
-                        new_env.clear()
-                        # with_env replaces the original env for this method
-                        progress_obj = self.with_env(new_env)
-                        progress_obj.create(vals_list)
-                        # notify bus
-                        if notify:
-                            progress_notif = progress_obj.get_progress(code)
-                            progress_obj._bus_send('web_progress', progress_notif)
-                        # isolated transaction to commit
-                        new_env.cr.commit()
-                        # restore main transaction's data
-                        raise RestoreEnvToComputeToWrite
+            with clear_upon_failure(self.env):
+                with registry(self.env.cr.dbname).cursor() as new_cr:
+                    # Create a new environment with a new cursor
+                    new_env = api.Environment(new_cr, self.env.uid, self.env.context)
+                    # clear whatever is to be computed or written
+                    # it will be restored later on
+                    new_env.clear()
+                    # with_env replaces the original env for this method
+                    progress_obj = self.with_env(new_env)
+                    progress_obj.create(vals_list)
+                    # notify bus
+                    if notify:
+                        progress_notif = progress_obj.get_progress(code)
+                        new_env['bus.bus']._sendone('web_progress', 'web_progress', progress_notif)
+                    # isolated transaction to commit
+                    new_env.cr.commit()
+                    # restore main transaction's data
+                    raise RestoreEnvToComputeToWrite
         except RestoreEnvToComputeToWrite:
             pass
 
     @api.model
-    def _bus_send(self, channel, message):
-        """
-        Copied send message from bus.bus.
-        The garbage collection that occurs in the standard Odoo code may cause deadlocks.
-        Here the garbage collection of 'web.progress' model will execute the garbage collection of 'bus.bus'
-        :param channel: channel name
-        :param message: message to send
-        """
-        notifications = [[channel, message]]
-        channels = set()
-        for channel, message in notifications:
-            channels.add(channel)
-            values = {
-                "channel": json_dump(channel),
-                "message": json_dump(message)
-            }
-            self.env['bus.bus'].sudo().create(values)
-        if channels:
-            # We have to wait until the notifications are commited in database.
-            # When calling `NOTIFY imbus`, some concurrent threads will be
-            # awakened and will fetch the notification in the bus table. If the
-            # transaction is not commited yet, there will be nothing to fetch,
-            # and the longpolling will return no notification.
-            def notify():
-                with odoo.sql_db.db_connect('postgres').cursor() as cr:
-                    cr.execute("notify imbus, %s", (json_dump(list(channels)),))
-
-            self._cr.after('commit', notify)
-
-    @api.model
     def _check_cancelled(self, params):
         """
-        Check if operation was not cancelled by the user.
+        Check if operation was not cancelled by the user or progress admin.
         The check is executed using a fresh cursor, i.e., it looks outside the current transaction scope
         :param code: web progress code
         :return: (recordset) res.users of the user that cancelled the operation
         """
         code = params.get('code')
-        with api.Environment.manage():
-            with registry(self.env.cr.dbname).cursor() as new_cr:
-                # use new cursor to check for cancel
-                query = """
-                SELECT create_uid FROM web_progress
-                WHERE code = %s AND state = 'cancel' AND recur_depth = 0
-                    AND (create_uid = %s OR create_uid = %s)
-                """
-                new_cr.execute(query, (code, self.env.user.id, SUPERUSER_ID))
-                result = new_cr.fetchall()
-                if result:
-                    return self.create_uid.browse(result[0])
+        with registry(self.env.cr.dbname).cursor() as new_cr:
+            # use new cursor to check for cancel
+            query = """
+            SELECT create_uid FROM web_progress
+            WHERE code = %s AND state = 'cancel' AND recur_depth = 0
+                
+            """
+            new_cr.execute(query, (code, ))
+            result = new_cr.fetchall()
+            if result:
+                user_id = self.create_uid.browse(result[0])
+                if self.env.user == user_id or self.is_progress_admin(user_id):
+                    return user_id
         return False
 
     def _get_parent_codes(self, params):
@@ -417,7 +430,7 @@ class WebProgress(models.TransientModel):
         global last_report_time, first_report_time, progress_data
         code = params.get('code')
         precise_code = self._get_precise_code(params)
-        time_now = datetime.utcnow()
+        time_now = datetime.now()
         with lock:
             first_ts = first_report_time.get(code)
             if not first_ts:
@@ -434,7 +447,7 @@ class WebProgress(models.TransientModel):
             if params.get('cancellable', True):
                 user_id = self._check_cancelled(params)
                 if user_id:
-                    raise UserError(_("Operation has been cancelled by") + " " + user_id.name)
+                    raise CancelledProgress(_("Operation has been cancelled by") + " " + user_id.sudo().name)
             time_left, time_total, time_elapsed = self._get_time_left(params, time_now, first_ts)
             if time_left:
                 self._set_attrib_for_all(params, 'time_left', time_left)
@@ -532,10 +545,3 @@ class WebProgress(models.TransientModel):
             vals_list.append(self._report_progress_prepare_vals(my_progress_data))
             first_line = False
         self._create_progress(vals_list)
-
-    def unlink(self):
-        """
-        Garbage collect bus.bus together with this model's records.
-        """
-        self.env['bus.bus'].gc()
-        return super().unlink()

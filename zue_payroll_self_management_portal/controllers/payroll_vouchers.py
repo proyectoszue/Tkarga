@@ -18,6 +18,8 @@ class ZuePayrollVouchersPortal(Controller):
             return request.not_found()
             
         obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)], limit=1)
+        obj_portal_design = request.env['zue.hr.employee.portal.design'].search(
+            [('z_company_design_id', '=', request.env.user.company_id.id)], limit=1)
         company = obj_employee.company_id.name
 
         #Filtros de años (Se traen los ultimos 3 años)
@@ -31,7 +33,7 @@ class ZuePayrollVouchersPortal(Controller):
             years.append(year_dict)
             year = year - 1
 
-        return request.render('zue_payroll_self_management_portal.generate_vouchers',{'company':company,'years':years})
+        return request.render('zue_payroll_self_management_portal.generate_vouchers',{'company':company,'years':years, 'portal_design':obj_portal_design})
 
     @route(["/zue_payroll_self_management_portal/payslip"], type='http', auth='user', website=True, csrf=False)
     def get_payroll_report_print(self, **post):
@@ -62,7 +64,7 @@ class ZuePayrollVouchersPortal(Controller):
         for payslip in payslips:
             report_name = payslip.struct_id.name + ' del ' + str(year) + '-' +  str(month)
             report = request.env.ref('zue_payroll_self_management_portal.report_payslip_portal_action', False)
-            pdf_content, _ = report.render_qweb_pdf(payslip.id)
+            pdf_content, _ = report._render_qweb_pdf(payslip.id)
             reader = PdfFileReader(io.BytesIO(pdf_content), strict=False, overwriteWarnings=False)
 
             for page in range(reader.getNumPages()):

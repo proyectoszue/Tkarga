@@ -16,10 +16,14 @@ class hr_report_absenteeism_history(models.TransientModel):
     def get_info_absenteeism(self):
         if len(self.employee_id) > 0:
             obj_absenteeism = self.env['hr.leave'].search([('employee_id','in',self.employee_id.ids),
+                                                           ('state', '=', 'validate'),
+                                                           ('employee_id.company_id','in',self.env.companies.ids),
                                                             ('request_date_from', '>=', self.start_date),
                                                             ('request_date_from', '<=', self.date_end)],order='employee_id asc')
         else:
-            obj_absenteeism = self.env['hr.leave'].search([('request_date_from','>=',self.start_date),
+            obj_absenteeism = self.env['hr.leave'].search([('employee_id.company_id','in',self.env.companies.ids),
+                                                           ('state', '=', 'validate'),
+                                                           ('request_date_from','>=',self.start_date),
                                                            ('request_date_from','<=',self.date_end)],order='employee_id asc')
 
         if self.state:

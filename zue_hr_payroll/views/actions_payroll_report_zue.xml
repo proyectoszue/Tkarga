@@ -35,12 +35,15 @@
                                 <field name="show_job_placement"/>
                                 <field name="show_sectional"/>
                                 <field name="show_department"/>
+                                <field name="show_dispersing_account"/>
                             </group>
                             <group>
                                 <field name="show_analytical_account"/>
                                 <field name="show_job"/>
                                 <field name="show_sena_code"/>
                                 <field name="show_basic_salary"/>
+                                <field name="show_bank_officer"/>
+                                <field name="show_bank_account_officer"/>
                             </group>
                         </group>
                         <br/>

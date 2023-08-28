@@ -18,6 +18,7 @@ class HolidaysRequest(models.Model):
     employee_identification = fields.Char('Identificación empleado')
     branch_id = fields.Many2one(related='employee_id.branch_id', string='Sucursal', store=True)
     unpaid_absences = fields.Boolean(related='holiday_status_id.unpaid_absences', string='Ausencia no remunerada',store=True)
+    discounting_bonus_days = fields.Boolean(related='holiday_status_id.discounting_bonus_days', string='Descontar días en prima',store=True)
     #Campos para vacaciones
     is_vacation = fields.Boolean(related='holiday_status_id.is_vacation', string='Es vacaciones',store=True)
     business_days = fields.Integer(string='Días habiles')
@@ -27,14 +28,19 @@ class HolidaysRequest(models.Model):
     alert_days_vacation = fields.Boolean(string='Alerta días vacaciones')
     accumulated_vacation_days = fields.Float(string='Días acumulados de vacaciones')
     #Creación de ausencia
-    type_of_entity = fields.Many2one('hr.contribution.register', 'Tipo de Entidad',track_visibility='onchange')
-    entity = fields.Many2one('hr.employee.entities', 'Entidad',track_visibility='onchange')
-    diagnostic = fields.Many2one('hr.leave.diagnostic', 'Diagnóstico',track_visibility='onchange')
-    radicado = fields.Char('Radicado #',track_visibility='onchange')
-    is_recovery = fields.Boolean('Es recobro',track_visibility='onchange')
-    payroll_value = fields.Float('Valor pagado en nómina',track_visibility='onchange')
-    eps_value = fields.Float('Valor pagado por la EPS',track_visibility='onchange')
-    payment_date = fields.Date ('Fecha de pago',track_visibility='onchange')
+    type_of_entity = fields.Many2one('hr.contribution.register', 'Tipo de Entidad')
+    entity = fields.Many2one('hr.employee.entities', 'Entidad')
+    diagnostic = fields.Many2one('hr.leave.diagnostic', 'Diagnóstico')
+    radicado = fields.Char('Recobro radicado #')
+    is_recovery = fields.Boolean('Es recobro')
+    payroll_value = fields.Float('Valor pagado en nómina')
+    eps_value = fields.Float('Valor pagado por la EPS')
+    payment_date = fields.Date ('Fecha de pago')
+    # Campos fecha real
+    z_date_real_from = fields.Date('Fecha real desde')
+    z_date_real_to = fields.Date('Fecha real hasta')
+    z_real_number_of_days = fields.Integer('Duración real (Días)', compute='_onchange_real_leave_dates')
+    z_qty_extension = fields.Integer('Prorrogas',tracking=True,default=0)
 
     @api.onchange('date_from', 'date_to', 'employee_id')
     def _onchange_leave_dates(self):
@@ -43,6 +49,20 @@ class HolidaysRequest(models.Model):
                 self.number_of_days = self._get_number_of_days(self.date_from, self.date_to, self.employee_id.id)['days']
             else:
                 self.number_of_days = 0
+
+    @api.onchange('z_date_real_from', 'z_date_real_to')
+    def _onchange_real_leave_dates(self):
+        for record in self:
+            self.z_real_number_of_days = 0
+            if record.z_date_real_to and record.z_date_real_from:
+                if record.z_date_real_to < record.z_date_real_from:
+                    self.z_real_number_of_days = 0
+                    raise ValidationError('La fecha real desde debe ser inferior a la fecha real hasta, por favor verificar')
+                # if record.z_date_real_to == False or record.z_date_real_from == False:
+                #     self.z_date_real_to = datetime.now().replace(day=1, month=1, year=2000, hour=00, minute=00, second=00)
+                #     self.z_date_real_from = datetime.now().replace(day=2, month=1, year=2000, hour=00, minute=00, second=00)
+                else:
+                    self.z_real_number_of_days = (self.z_date_real_to - self.z_date_real_from).days + 1
 
     @api.onchange('employee_id','holiday_status_id')
     def _onchange_info_entity(self):
@@ -61,7 +81,7 @@ class HolidaysRequest(models.Model):
     def onchange_number_of_days_vacations(self):   
         for record in self:
             original_number_of_days = record.number_of_days
-            if record.holiday_status_id.is_vacation:
+            if record.holiday_status_id.is_vacation and record.request_date_from:
                 #Obtener si el dia sabado es habil | Guardar dias fines de semana 5=Sabado & 6=Domingo
                 lst_days = [5,6] if record.employee_id.sabado == False else [6]
                 date_to = record.request_date_from - timedelta(days=1)
@@ -107,12 +127,11 @@ class HolidaysRequest(models.Model):
                     record.accumulated_vacation_days = obj_contract.get_accumulated_vacation_days()
                     record.alert_days_vacation = False
 
-
     @api.constrains('state', 'number_of_days', 'holiday_status_id')
     def _check_holidays(self):
         mapped_days = self.mapped('holiday_status_id').get_employees_days(self.mapped('employee_id').ids)
         for holiday in self:
-            if holiday.holiday_type != 'employee' or not holiday.employee_id or holiday.holiday_status_id.allocation_type == 'no':
+            if holiday.holiday_type != 'employee' or not holiday.employee_id or holiday.holiday_status_id.requires_allocation == 'no':
                 continue
             leave_days = mapped_days[holiday.employee_id.id][holiday.holiday_status_id.id]
             if float_compare(leave_days['remaining_leaves'], 0, precision_digits=2) == -1 or float_compare(leave_days['virtual_remaining_leaves'], 0, precision_digits=2) == -1:
@@ -122,8 +141,11 @@ class HolidaysRequest(models.Model):
                 #                         'Please also check the time off waiting for validation.'))
 
     def action_approve(self):
-        #Validación adjunto
         for holiday in self:
+            # Validacion compañia
+            if self.env.company.id != holiday.employee_id.company_id.id:
+                raise ValidationError(_('El empleado ' + holiday.employee_id.name + ' esta en la compañía ' + holiday.employee_id.company_id.name + ' por lo cual no se puede aprobar debido a que se encuentra ubicado en la compañía ' + self.env.company.name + ', seleccione la compañía del empleado para aprobar la ausencia.'))
+            # Validación adjunto
             if holiday.holiday_status_id.obligatory_attachment:
                 attachment = self.env['ir.attachment'].search([('res_model', '=', 'hr.leave'),('res_id','=',holiday.id)])    
                 if not attachment:    
@@ -192,6 +214,17 @@ class HolidaysRequest(models.Model):
         res = super(HolidaysRequest, self).create(vals)
         return res
 
+    def add_extension(self):
+        return {
+            'context': {'default_z_leave_id': self.id},
+            'view_type': 'form',
+            'view_mode': 'form',
+            'res_model': 'zue.hr.leave.extension.wizard',
+            'type': 'ir.actions.act_window',
+            'target': 'new',
+        }
+
+
 class hr_leave_diagnostic(models.Model):
     _name = "hr.leave.diagnostic"
     _description = "Diagnosticos Ausencias"
@@ -208,11 +241,28 @@ class hr_leave_diagnostic(models.Model):
             result.append((record.id, "{} | {}".format(record.code,record.name)))
         return result
 
-    # @api.model
-    # def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
-    #     args = args or []
-    #     domain = []
-    #     if name:
-    #         domain = ['|', ('name', operator, name), ('code', operator, name)]
-    #     diagnostic_interface = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
-    #     return diagnostic_interface#self.browse(contract_interface_id).name_get()
+    @api.model
+    def _name_search(self, name, args=None, operator='ilike', limit=100, name_get_uid=None):
+        args = args or []
+        domain = []
+        if name:
+            domain = ['|', ('name', operator, name), ('code', operator, name)]
+        diagnostic_interface = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
+        return diagnostic_interface#self.browse(contract_interface_id).name_get()
+
+class zue_hr_leave_extension_wizard(models.TransientModel):
+    _name = 'zue.hr.leave.extension.wizard'
+    _description = 'Agregar prorroga en ausencias'
+
+    z_leave_id = fields.Many2one('hr.leave',string='Ausencia',required=True)
+    z_new_date_end = fields.Date(string='Nueva fecha final',required=True)
+
+    def authorized_extension(self):
+        self.z_leave_id.action_refuse()
+        self.z_leave_id.action_draft()
+        self.z_leave_id.write({'request_date_to':self.z_new_date_end,'z_qty_extension':self.z_leave_id.z_qty_extension+1})
+        self.z_leave_id.action_confirm()
+        self.z_leave_id.action_approve()
+        return True
+
+

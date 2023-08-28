@@ -56,25 +56,25 @@ class hr_electronic_payroll_detail(models.Model):
 
     def get_xml(self):
         try:
-            identificador = 'NomElectronica_' + str(self.electronic_payroll_id.company_id.payroll_electronic_operator)
-            obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', identificador)])
+            identificador = 'NomElectronica_'+str(self.electronic_payroll_id.company_id.payroll_electronic_operator)
+            obj_xml = self.env['zue.xml.generator.header'].search([('code','=',identificador)])
 
             if len(obj_xml) > 0:
                 xml = obj_xml.xml_generator(self)
             else:
-                raise ValidationError(_("No ha configurado un XML con el identificador: '" + identificador + "', por favor verificar."))
+                raise ValidationError(_("No ha configurado un XML con el identificador: '"+identificador+"', por favor verificar."))
 
             if str(self.electronic_payroll_id.company_id.payroll_electronic_operator) == 'FacturaTech':
                 xml = xml.decode('utf-8').replace('SchemaLocation=""','SchemaLocation="" xsi:schemaLocation="dian:gov:co:facturaelectronica:NominaIndividual NominaIndividualElectronicaXSD.xsd"')
-                xml = xml.replace('<UBLExtensions> </UBLExtensions>', '<ext:UBLExtensions/>')
+                xml = xml.replace('<UBLExtensions> </UBLExtensions>','<ext:UBLExtensions/>')
                 xml = bytes(xml, 'utf-8')
 
             filename = f'NominaElectronica{str(self.electronic_payroll_id.year)}-{self.electronic_payroll_id.month}_{str(self.employee_id.identification_id)}.xml'
             self.write({
                 'xml_file': base64.encodestring(xml),
                 'xml_file_name': filename,
-                'status': False,
-                'result_status': False,
+                'status':False,
+                'result_status':False,
             })
         except Exception as e:
             self.status = 'SIN XML'
@@ -103,7 +103,7 @@ class hr_electronic_payroll_detail(models.Model):
                 raise ValidationError(_("Error! No ha configurado un web service con el nombre '"+operator+"_ne_upload_xml'"))
 
             if operator == 'Carvajal':
-                result = obj_ws.connection_requests(username, password, nonce, created, filename, filedata, company_id,account_id, service, not_show_errors=1)
+                result = obj_ws.connection_requests(username,password,nonce,created,filename,filedata,company_id,account_id,service, not_show_errors=1)
             if operator == 'FacturaTech':
                 result = obj_ws.connection_requests(username, password, filedata, not_show_errors=1)
             self.result_upload_xml = result
@@ -126,8 +126,7 @@ class hr_electronic_payroll_detail(models.Model):
                 self.transaction_id = transaction_id
         if operator == 'FacturaTech':
             if result.find('<transactionID xsi:type="xsd:string">') > -1:
-                transaction_id = result[result.find('<transactionID xsi:type="xsd:string">') + len(
-                    '<transactionID xsi:type="xsd:string">'):result.find('</transactionID>')]
+                transaction_id = result[result.find('<transactionID xsi:type="xsd:string">') + len('<transactionID xsi:type="xsd:string">'):result.find('</transactionID>')]
                 if transaction_id == '':
                     if result.find('<error xsi:type="xsd:string">El comprobante  ya ha sido firmado previamente. TrasactionID ') > -1:
                         transaction_id = result[result.find('<error xsi:type="xsd:string">El comprobante  ya ha sido firmado previamente. TrasactionID ') + len('<error xsi:type="xsd:string">El comprobante  ya ha sido firmado previamente. TrasactionID '):result.find('</error>')]
@@ -156,14 +155,12 @@ class hr_electronic_payroll_detail(models.Model):
             # Ejecutar ws
             result_status = ''
             message = ''
-            obj_ws = self.env['zue.request.ws'].search([('name', '=', operator + '_ne_status_document')])
+            obj_ws = self.env['zue.request.ws'].search([('name', '=', operator+'_ne_status_document')])
             if not obj_ws:
                 raise ValidationError(_("Error! No ha configurado un web service con el nombre '"+operator+"_ne_status_document'"))
             if operator == 'Carvajal':
                 result = obj_ws.connection_requests(username, password, nonce, created, company_id,
                                                     account_id, transaction_id, service)
-
-                result_status = ''
                 if result.find('<processName>') > -1:
                     result_status = 'Último proceso realizado: '+result[result.find('<processName>') + len('<processName>'):result.find('</processName>')] +'\n'
                 if result.find('<processStatus>') > -1:
@@ -178,13 +175,12 @@ class hr_electronic_payroll_detail(models.Model):
             if operator == 'FacturaTech':
                 result = obj_ws.connection_requests(username, password, transaction_id)
                 if result.find('<code xsi:type="xsd:string">') > -1:
-                    result_status = 'Code: ' + result[result.find('<code xsi:type="xsd:string">') + len(
-                        '<code xsi:type="xsd:string">'):result.find('</code>')] + '\n'
+                    result_status = 'Code: '+result[result.find('<code xsi:type="xsd:string">') + len('<code xsi:type="xsd:string">'):result.find('</code>')] +'\n'
                 if result.find('<message xsi:type="xsd:string">') > -1:
-                    result_status = result_status + 'Mensaje: ' + result[result.find('<message xsi:type="xsd:string">') + len('<message xsi:type="xsd:string">'):result.find('</message>')] + '\n'
+                    result_status = result_status + 'Mensaje: '+result[result.find('<message xsi:type="xsd:string">') + len('<message xsi:type="xsd:string">'):result.find('</message>')] +'\n'
                     message = result[result.find('<message xsi:type="xsd:string">') + len('<message xsi:type="xsd:string">'):result.find('</message>')]
                 if result.find('<messageError xsi:type="xsd:string">') > -1:
-                    result_status = result_status + 'Mensaje Error: ' + result[result.find('<messageError xsi:type="xsd:string">') + len('<messageError xsi:type="xsd:string">'):result.find('</messageError>')] + '\n'
+                    result_status = result_status + 'Mensaje Error: '+result[result.find('<messageError xsi:type="xsd:string">') + len('<messageError xsi:type="xsd:string">'):result.find('</messageError>')] +'\n'
                 if message == f'El comprobante {str(self.sequence)} ha sido autorizado':
                     self.status = 'ACCEPTED'
                 else:
@@ -230,10 +226,9 @@ class hr_electronic_payroll_detail(models.Model):
                 raise ValidationError(_('Error al descargar el archivo, intente mas tarde.'))
         elif operator == 'FacturaTech':
             if self.resource_type_document == 'PDF':
-                result = obj_ws.connection_requests(username, password, self.electronic_payroll_id.prefix, self.item)
+                result = obj_ws.connection_requests(username, password, self.electronic_payroll_id.prefix,self.item)
                 if result.find('<documentBase64 xsi:type="xsd:string">') > -1:
-                    download_data = result[result.find('<documentBase64 xsi:type="xsd:string">') + len(
-                        '<documentBase64 xsi:type="xsd:string">'):result.find('</documentBase64>')]
+                    download_data = result[result.find('<documentBase64 xsi:type="xsd:string">') + len('<documentBase64 xsi:type="xsd:string">'):result.find('</documentBase64>')]
 
                     filename = f'{self.resource_type_document}_{str(self.electronic_payroll_id.year)}-{self.electronic_payroll_id.month}_{str(self.employee_id.identification_id)}'
                     filename = filename + '.pdf' if self.resource_type_document == 'PDF' else filename + '.xml'
@@ -261,65 +256,31 @@ class hr_electronic_payroll_detail(models.Model):
     def consume_web_service_get_cune(self):
         try:
             operator = str(self.electronic_payroll_id.company_id.payroll_electronic_operator)
+            username = self.electronic_payroll_id.company_id.payroll_electronic_username_ws
+            password = self.electronic_payroll_id.company_id.payroll_electronic_password_ws
+            nonce = self.nonce + '_' + str(uuid.uuid4())
+            date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
+            time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
+            created = f'{str(date)}T{str(time)}-05:00'
+            company_id = self.electronic_payroll_id.company_id.payroll_electronic_company_id_ws
+            account_id = self.electronic_payroll_id.company_id.payroll_electronic_account_id_ws
+            document_type = 'NM'
+            document_number = self.sequence
+            resource_type = self.resource_type_document
+            service = self.electronic_payroll_id.company_id.payroll_electronic_service_ws
+            # Ejecutar ws
+            obj_ws = self.env['zue.request.ws'].search([('name', '=', operator + '_ne_get_cune')])
+            if not obj_ws:
+                raise ValidationError(_("Error! No ha configurado un web service con el nombre '" + operator + "_ne_get_cune'"))
             if operator == 'Carvajal':
-                self.get_cune_document()
-            if operator == 'FacturaTech':
-                username = self.electronic_payroll_id.company_id.payroll_electronic_username_ws
-                password = self.electronic_payroll_id.company_id.payroll_electronic_password_ws
-                nonce = self.nonce + '_' + str(uuid.uuid4())
-                date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
-                time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
-                created = f'{str(date)}T{str(time)}-05:00'
-                company_id = self.electronic_payroll_id.company_id.payroll_electronic_company_id_ws
-                account_id = self.electronic_payroll_id.company_id.payroll_electronic_account_id_ws
-                document_type = 'NM'
-                document_number = self.sequence
-                resource_type = self.resource_type_document
-                service = self.electronic_payroll_id.company_id.payroll_electronic_service_ws
-                # Ejecutar ws
-                obj_ws = self.env['zue.request.ws'].search([('name', '=', operator + '_ne_get_cune')])
-                if not obj_ws:
-                    raise ValidationError(_("Error! No ha configurado un web service con el nombre '" + operator + "_ne_get_cune'"))
-                result = obj_ws.connection_requests(username, password, self.electronic_payroll_id.prefix, self.item,
-                                                    not_show_errors=1)
+                raise ValidationError(_('Carvajal no tiene esta funcionalidad.'))
+            elif operator == 'FacturaTech':
+                result = obj_ws.connection_requests(username, password, self.electronic_payroll_id.prefix, self.item, not_show_errors=1)
                 if result.find('<resourceData xsi:type="xsd:string">') > -1:
                     cune = result[result.find('<resourceData xsi:type="xsd:string">') + len('<resourceData xsi:type="xsd:string">'):result.find('</resourceData>')]
                     self.cune = cune
         except Exception as e:
             print('Empleado %s Error: %s' % (self.employee_id.name, str(e)))
-
-    def get_cune_document(self):
-        operator = str(self.electronic_payroll_id.company_id.payroll_electronic_operator)
-        if operator == 'FacturaTech':
-            raise ValidationError(_("FacturaTech no tiene disponible el método get_cune_parent_document, comuníquese con el desarrollador."))
-        username = self.electronic_payroll_id.company_id.payroll_electronic_username_ws
-        password = self.electronic_payroll_id.company_id.payroll_electronic_password_ws
-        nonce = str(uuid.uuid4().hex) + str(uuid.uuid1().hex)
-        date = datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d")
-        time = datetime.now(timezone(self.env.user.tz)).strftime("%H:%M:%S")
-        created = f'{str(date)}T{str(time)}-05:00'
-        company_id = self.electronic_payroll_id.company_id.payroll_electronic_company_id_ws
-        account_id = self.electronic_payroll_id.company_id.payroll_electronic_account_id_ws
-        document_type = 'NM'
-        document_number = self.sequence
-        resource_type = 'DIAN_RESULT'
-        service = self.electronic_payroll_id.company_id.payroll_electronic_service_ws
-        # Ejecutar ws
-        obj_ws = self.env['zue.request.ws'].search([('name', '=', operator + '_ne_download_file_document')])
-        if not obj_ws:
-            raise ValidationError(_("Error! No ha configurado un web service con el nombre '" + operator + "_ne_download_file_document'"))
-        result = obj_ws.connection_requests(username, password, nonce, created, company_id,
-                                            account_id, document_type, document_number, resource_type, service)
-        if result.find('<downloadData>') > -1:
-            download_data = result[result.find('<downloadData>') + len('<downloadData>'):result.find('</downloadData>')]
-
-            text_data = str(base64.b64decode(download_data))
-            cune = str(text_data[text_data.find('<b:XmlDocumentKey>') + len('<b:XmlDocumentKey>'):text_data.find('</b:XmlDocumentKey>')])
-            self.cune = cune
-            if self.cune:
-                self.status = 'ACCEPTED'
-        else:
-            raise ValidationError(_('Error al obtener el CUNE, intente mas tarde.'))
 
     def get_type_contract(self):
         type = self.contract_id.contract_type
@@ -525,12 +486,15 @@ class hr_electronic_payroll(models.Model):
              ('id', 'not in', obj_salary_rules_value_zero.ids),('id', 'not in', obj_salary_rules_value_null.ids)])
         obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', identificador)])
 
+        if len(obj_xml) == 0:
+            raise ValidationError(_("No ha configurado un XML con el identificador: '"+identificador+"', por favor verificar."))
+
         lst_rule_not_include = []
         for rule in obj_salary_rules:
             lst_rule_include = []
             for tags_xml in obj_xml.details_ids:
-                if tags_xml.code_python or tags_xml.attributes_code_python:
-                    if str(tags_xml.code_python).find(rule.code) != -1 or str(tags_xml.attributes_code_python).find(rule.code) != -1:
+                 if tags_xml.code_python or tags_xml.attributes_code_python:
+                     if str(tags_xml.code_python).find(rule.code) != -1 or str(tags_xml.attributes_code_python).find(rule.code) != -1:
                          lst_rule_include.append(rule.code)
             if len(lst_rule_include) == 0:
                 lst_rule_not_include.append(rule.code)
@@ -543,7 +507,7 @@ class hr_electronic_payroll(models.Model):
             select distinct b.id 
             from hr_payslip a 
             inner join hr_employee b on a.employee_id = b.id 
-            where a.state = 'done' and a.date_from >= '%s' and a.date_from <= '%s' and a.company_id = %s
+            where a.state = 'done' and a.date_from >= '%s' and a.date_from <= '%s' and a.company_id = %s                    
         ''' % (date_start, date_end, self.company_id.id)
 
         self.env.cr.execute(query)
@@ -575,6 +539,8 @@ class hr_electronic_payroll(models.Model):
             obj_contracts += self.env['hr.contract'].search([('state', '=', 'open'), ('employee_id', '=', employee.id), ('date_start','<=',date_end)])
             # Obtener contratos finalizados en el mes
             obj_contracts += self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id', '=', employee.id), ('retirement_date', '>=', date_start), ('retirement_date', '<=', date_end)])
+            obj_contracts += self.env['hr.contract'].search([('state', '=', 'finished'), ('employee_id', '=', employee.id),('date_end', '>=', date_start), ('date_end', '<=', date_end)])
+            obj_contracts += self.env['hr.contract'].search([('state', '=', 'close'),('contract_type','=','aprendizaje'), ('employee_id', '=', employee.id), ('date_end', '>=', date_start),('date_end', '<=', date_end)])
 
             for obj_contract in obj_contracts:
                 item += 1
@@ -621,27 +587,27 @@ class hr_electronic_payroll(models.Model):
             if record.status:
                 if record.status != 'ACCEPTED':
                     record.consume_web_service_send_xml()
-                    #if operator == 'FacturaTech':
+                    if operator == 'FacturaTech':
+                        # Tiempo de espera de 10 segundos por cada 15 envios
+                        count += 1
+                        count_all += 1
+                        if count == 15:
+                            time.sleep(10)
+                            count = 1
+                        if count_all == 450:
+                            break
+            else:
+                # if not record.transaction_id:
+                record.consume_web_service_send_xml()
+                if operator == 'FacturaTech':
                     # Tiempo de espera de 10 segundos por cada 15 envios
                     count += 1
                     count_all += 1
                     if count == 15:
                         time.sleep(10)
                         count = 1
-                    if count_all == 300:
+                    if count_all == 450:
                         break
-            else:
-                # if not record.transaction_id:
-                record.consume_web_service_send_xml()
-                #if operator == 'FacturaTech':
-                # Tiempo de espera de 10 segundos por cada 15 envios
-                count += 1
-                count_all += 1
-                if count == 15:
-                    time.sleep(10)
-                    count = 1
-                if count_all == 300:
-                    break
         self.write({'state': 'ws'})
 
     def consume_ws_failed(self):
@@ -652,27 +618,27 @@ class hr_electronic_payroll(models.Model):
             if record.status:
                 if record.status != 'ACCEPTED': #and record.status != ''
                     record.consume_web_service_send_xml()
-                    #if operator == 'FacturaTech':
+                    if operator == 'FacturaTech':
+                        # Tiempo de espera de 10 segundos por cada 15 envios
+                        count += 1
+                        count_all += 1
+                        if count == 15:
+                            time.sleep(10)
+                            count = 1
+                        if count_all == 450:
+                            break
+            else:
+                #if not record.transaction_id:
+                record.consume_web_service_send_xml()
+                if operator == 'FacturaTech':
                     # Tiempo de espera de 10 segundos por cada 15 envios
                     count += 1
                     count_all += 1
                     if count == 15:
                         time.sleep(10)
                         count = 1
-                    if count_all == 300:
+                    if count_all == 450:
                         break
-            else:
-                #if not record.transaction_id:
-                record.consume_web_service_send_xml()
-                #if operator == 'FacturaTech':
-                # Tiempo de espera de 10 segundos por cada 15 envios
-                count += 1
-                count_all += 1
-                if count == 15:
-                    time.sleep(10)
-                    count = 1
-                if count_all == 300:
-                    break
 
     def consume_web_service_status_document_all(self):
         qty_failed = 0
@@ -683,15 +649,15 @@ class hr_electronic_payroll(models.Model):
         for record in self.executing_electronic_payroll_ids:
             if record.status != 'ACCEPTED' and record.transaction_id:
                 record.consume_web_service_status_document()
-                #if operator == 'FacturaTech':
-                # Tiempo de espera de 10 segundos por cada 15 envios
-                count += 1
-                count_all += 1
-                if count == 15:
-                    time.sleep(10)
-                    count = 1
-                if count_all == 300:
-                    break
+                if operator == 'FacturaTech':
+                    # Tiempo de espera de 10 segundos por cada 15 envios
+                    count += 1
+                    count_all += 1
+                    if count == 15:
+                        time.sleep(10)
+                        count = 1
+                    if count_all == 450:
+                        break
             if record.status != 'ACCEPTED':
                 qty_failed += 1
             else:
@@ -710,15 +676,15 @@ class hr_electronic_payroll(models.Model):
         for record in self.executing_electronic_payroll_ids:
             if not record.cune:
                 record.consume_web_service_get_cune()
-                #if operator == 'FacturaTech':
-                # Tiempo de espera de 10 segundos por cada 15 envios
-                count += 1
-                count_all += 1
-                if count == 15:
-                    time.sleep(10)
-                    count = 1
-                if count_all == 300:
-                    break
+                if operator == 'FacturaTech':
+                    # Tiempo de espera de 10 segundos por cada 15 envios
+                    count += 1
+                    count_all += 1
+                    if count == 15:
+                        time.sleep(10)
+                        count = 1
+                    if count_all == 450:
+                        break
 
     def convert_result_send_xml_all(self):
         for record in self.executing_electronic_payroll_ids:
@@ -727,9 +693,6 @@ class hr_electronic_payroll(models.Model):
     def cancel_process(self):
         self.env['hr.electronic.payroll.detail'].search([('electronic_payroll_id', '=', self.id)]).unlink()
         self.write({'state': 'draft'})
-
-    def confirm_send_ws(self):
-        self.write({'state': 'ws'})
 
     def unlink(self):
         for record in self:

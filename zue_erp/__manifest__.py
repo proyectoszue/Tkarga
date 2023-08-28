@@ -16,11 +16,11 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'ZueERP',
-    'version': '0.1',
+    "version": "15.0.1.0.0",
     'application': True,
 
     # any module necessary for this one to work correctly
-    'depends': ['base','contacts'],
+    'depends': ['base','base_vat','contacts','zue_xml_generator','zue_request_ws'],
 
     # always loaded
     'data': [
@@ -30,9 +30,8 @@
         'views/res_partner.xml',
         'views/res_users.xml',
         'views/actions_alerts.xml',
-        'views/actions_zue_request_ws.xml',
-        'views/actions_zue_xml_generator.xml',
         'views/zue_confirm_wizard.xml',
         'views/general_menus.xml'       
-    ]    
+    ],
+    'license': 'LGPL-3',
 }

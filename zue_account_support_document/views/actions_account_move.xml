@@ -1,0 +1,18 @@
+<odoo>
+    <data>
+		<record id="view_zue_support_document_form_account_move" model="ir.ui.view">
+			<field name="name">zue_account_support_document.account_move_inherit</field>
+			<field name="model">account.move</field>
+			<field name="priority">20</field>
+			<field name="inherit_id" ref="account.view_move_form"/>
+			<field name="arch" type="xml">
+				<xpath expr="//field[@name='partner_id']" position="before">
+					<field name="x_support_document_sent" invisible="1"/>
+                </xpath>
+                <xpath expr="//button[@name='button_draft']" position="attributes">
+                    <attribute name="attrs">{"invisible": [["x_support_document_sent","=",True]]}</attribute>
+                </xpath>
+			</field>
+		</record>
+    </data>
+</odoo>

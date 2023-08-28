@@ -8,9 +8,9 @@ from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
 class Hr_payslip(models.Model):
-    _inherit = 'hr.payslip'    
-    
-    reason_retiro = fields.Text('Motivo retiro')
+    _inherit = 'hr.payslip'
+
+    reason_retiro = fields.Many2one('hr.departure.reason', string='Motivo de retiro')
     have_compensation = fields.Boolean('Indemnización', default=False)
     settle_payroll_concepts = fields.Boolean('Liquida conceptos de nómina', default=True)
     novelties_payroll_concepts = fields.Boolean('Liquida conceptos de novedades', default=True)
@@ -65,7 +65,7 @@ class Hr_payslip(models.Model):
         struct_original = self.struct_id.id
         
         # 1.Devengos
-        obj_struct_payroll = self.env['hr.payroll.structure'].search([('regular_pay','=',True),('process','=','nomina')])        
+        obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','nomina')])
         self.struct_id = obj_struct_payroll.id
         localdict, result_dev = self._get_payslip_lines(inherit_contrato_dev=1)
 
@@ -106,14 +106,19 @@ class Hr_payslip(models.Model):
                         'slip_id': self.id,
                     }
 
+        # 3.Deducciones que son base para prestaciones
+        obj_struct_payroll = self.env['hr.payroll.structure'].search([('process', '=', 'nomina')])
+        self.struct_id = obj_struct_payroll.id
+        localdict, result_ded_bases = self._get_payslip_lines(inherit_contrato_ded_bases=1, localdict=localdict)
+
         if contract.contract_type != 'aprendizaje':
-            # 3.Vacaciones
+            # 4.Vacaciones
             obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','vacaciones')])
             self.struct_id = obj_struct_payroll.id
             localdict, result_vac = self._get_payslip_lines_vacation(inherit_contrato=1,localdict=localdict)
 
             if contract.modality_salary != 'integral':
-                # 4.Cesantias e intereses
+                # 5.Cesantias e intereses
                 obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','cesantias')])
                 self.struct_id = obj_struct_payroll.id
                 localdict, result_cesantias = self._get_payslip_lines_cesantias(inherit_contrato=1,localdict=localdict)
@@ -121,7 +126,7 @@ class Hr_payslip(models.Model):
                 self.struct_id = obj_struct_payroll.id
                 localdict, result_intcesantias = self._get_payslip_lines_cesantias(inherit_contrato=1, localdict=localdict)
 
-                # 5.Prima
+                # 6.Prima
                 obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','prima')])
                 self.struct_id = obj_struct_payroll.id
                 localdict, result_prima = self._get_payslip_lines_prima(inherit_contrato=1,localdict=localdict)
@@ -135,12 +140,12 @@ class Hr_payslip(models.Model):
             result_intcesantias = {}
             result_prima = {}
 
-        # 6.Deducciones
-        obj_struct_payroll = self.env['hr.payroll.structure'].search([('regular_pay','=',True),('process','=','nomina')])        
+        # 7.Deducciones faltantes
+        obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','nomina')])
         self.struct_id = obj_struct_payroll.id
         localdict, result_ded = self._get_payslip_lines(inherit_contrato_ded=1,localdict=localdict)
 
-        # 7.Guardar proceso
+        # 8.Guardar proceso
         self.struct_id = struct_original
-        result_finally = {**result_dev,**result_contrato,**result_vac,**result_cesantias,**result_intcesantias,**result_prima,**result_ded}
+        result_finally = {**result_dev,**result_contrato,**result_ded_bases,**result_vac,**result_cesantias,**result_intcesantias,**result_prima,**result_ded}
         return result_finally.values()  

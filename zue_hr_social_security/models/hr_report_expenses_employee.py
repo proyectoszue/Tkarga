@@ -98,14 +98,15 @@ class hr_report_expenses_employee(models.Model):
                     1 as unidades, 
                     a.amount as valor                    
             from hr_accumulated_payroll as a 
-            inner join hr_employee as b on a.employee_id = b.id 
+            inner join hr_employee as b on a.employee_id = b.id
             inner join res_company as c on b.company_id = c.id
             inner join res_partner as d on b.address_home_id = d.id
             inner join hr_salary_rule as f on a.salary_rule_id = f.id 
             inner join hr_salary_rule_category as g on f.category_id = g.id
             left join zue_res_branch as h on b.branch_id = h.id
-            left join res_partner as i on b.address_id = i.id            
-            left join account_analytic_account as k on b.analytic_account_id  = k.id
+            left join res_partner as i on b.address_id = i.id
+            left join hr_contract as hc on hc.employee_id = b.id and hc.state = 'open'       
+            left join account_analytic_account as k on hc.analytic_account_id  = k.id
 			UNION all			
 			--SEGURIDAD SOCIAL
 			Select 'SEGURIDAD SOCIAL' as estructura,'SS/00000' as liquidacion,
@@ -171,7 +172,7 @@ class hr_report_expenses_employee(models.Model):
             inner join res_partner as d on b.address_home_id = d.id
             left join zue_res_branch as h on b.branch_id = h.id
             left join res_partner as i on b.address_id = i.id            
-            left join account_analytic_account as k on b.analytic_account_id  = k.id    
+            left join account_analytic_account as k on hc.analytic_account_id  = k.id    
             left join hr_employee_entities as hee_salud on ae."TerceroEPS" = hee_salud.id 
             left join res_partner rp_salud on hee_salud.partner_id = rp_salud.id
             left join hr_employee_entities as hee_pension on ae."TerceroPension" = hee_pension.id 
@@ -226,7 +227,7 @@ class hr_report_expenses_employee(models.Model):
             inner join res_partner as d on b.address_home_id = d.id
             left join zue_res_branch as h on b.branch_id = h.id
             left join res_partner as i on b.address_id = i.id            
-            left join account_analytic_account as k on b.analytic_account_id  = k.id				
+            left join account_analytic_account as k on hc.analytic_account_id  = k.id				
             ) as a		
             order by a.fecha_liquidacion,a.fecha_inicial,a.fecha_final,a.compania,a.sucursal, a.empleado, a.secuencia_regla      
            '''

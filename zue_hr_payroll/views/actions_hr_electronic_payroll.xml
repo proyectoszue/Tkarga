@@ -36,11 +36,10 @@
                         <button name="executing_electronic_payroll" type="object" string="Crear XML" class="oe_highlight" states="draft"/>
                         <button name="consume_ws" type="object" string="Enviar a WS" class="oe_highlight" states="xml"/>
                         <button name="cancel_process" type="object" string="Cancelar" states="xml"/>
-                        <button name="confirm_send_ws" type="object" string="Confirmar envio WS" states="xml"/>
                         <button name="consume_web_service_status_document_all" type="object" string="Actualizar estado DIAN" class="oe_highlight" states="ws"/>
                         <button name="executing_electronic_payroll_failed" type="object" string="Actualizar XML (Fallidos)" states="ws"/>
                         <button name="consume_ws_failed" type="object" string="Enviar a WS (Fallidos)" states="ws"/>
-                        <button name="consume_web_service_get_cune_all" type="object" string="Obtener CUNEs" states="ws,close"/>
+                        <button name="consume_web_service_get_cune_all" type="object" string="Obtener CUNEs" states="close"/>
                         <button name="convert_result_send_xml_all" type="object" string="Actualizar resultado envío" states="ws" invisible="1"/>
                         <field name="state" widget="statusbar"/>
                     </header>
@@ -101,7 +100,7 @@
                                                 <group string="WS">
                                                     <button name="consume_web_service_send_xml" type="object" string="Enviar XML" attrs="{'invisible':[('status', '=', 'ACCEPTED')]}"/>
                                                     <button name="consume_web_service_status_document" type="object" string="Consultar Estado" attrs="{'invisible':[('status', '=', 'ACCEPTED')]}"/>
-                                                    <button name="consume_web_service_get_cune" type="object" string="Obtener CUNE"/>
+                                                    <button name="consume_web_service_get_cune" type="object" string="Obtener CUNE" attrs="{'invisible':[('status', '!=', 'ACCEPTED')]}"/>
                                                     <br/><br/>
                                                     <field name="resource_type_document"/>
                                                     <button name="consume_web_service_download_files" type="object" string="Descargar archivo"/>

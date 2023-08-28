@@ -24,7 +24,6 @@
                             <group string="Filtros">
                                 <field name="employee" widget="many2many_tags"/>
                                 <field name="salary_rule" widget="many2many_tags"/>
-                                <field name="z_category" widget="many2many_tags"/>
                                 <field name="branch" widget="many2many_tags"/>
                                 <field name="analytic_account" widget="many2many_tags"/>
                                 <field name="entities" widget="many2many_tags"/>

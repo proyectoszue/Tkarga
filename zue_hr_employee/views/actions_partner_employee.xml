@@ -14,12 +14,14 @@
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/group[1]/group[1]" position="before">
                     <group>
+                        <field name="l10n_latam_identification_type_id" invisible="1"/>
                         <field name="x_document_type" required="1"/>
                         <field name="vat" string="N° Identificación" required="1"/>
+                        <field name="x_vat_expedition_date" string="Fecha de expedición documento"/>
                         <field name="x_first_name" required="1"/>
                         <field name="x_second_name"/>
                         <field name="x_first_lastname" required="1"/>
-                        <field name="x_second_lastname"/>    
+                        <field name="x_second_lastname"/>
                     </group>
                 </xpath>
                 <xpath expr="//field[@name='street2']" position="attributes">
@@ -31,10 +33,12 @@
                 </xpath>
                 <xpath expr="//field[@name='state_id']" position="after">
                     <field name="x_city" placeholder="City" class="o_address_city" domain="[('state_id', '=', state_id)]"/>
+                    <field name="z_neighborhood" placeholder="Barrio" class="o_address_city"/>
                 </xpath>
                 <xpath expr="//field[@name='bank_ids']" position="replace">
                     <field name="bank_ids">
                         <tree editable="bottom">
+                            <field name="company_id"/>
                             <field name="bank_id"/>
                             <field name="type_account"/>
                             <field name="acc_number"/>

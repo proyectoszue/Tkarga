@@ -102,37 +102,6 @@
             </field>
         </record>
 
-        <!--CODIGO POSTAL VIEWS -->
-        <record id="zue_menu_action_zip_code" model="ir.actions.act_window">
-            <field name="name">Código postal</field>
-            <field name="res_model">zue.zip.code</field>
-            <field name="view_mode">tree</field>
-            <field name="help" type="html">
-                <p class="oe_view_nocontent_create">Crear código postal
-                </p>
-            </field>
-        </record>
-
-        <record id="zue_erp_search" model="ir.ui.view">
-            <field name="name">zue zip code</field>
-            <field name="model">zue.zip.code</field>
-            <field name="arch" type="xml">
-                <search string="">
-                    <field name="code" string="Código" filter_domain="[('code', 'ilike', self)]"/>
-                </search>
-            </field>
-        </record>
-
-        <record model="ir.ui.view" id="zue_erp.zip_postal">
-            <field name="name">zue zip postal</field>
-            <field name="model">zue.zip.code</field>
-            <field name="arch" type="xml">
-                <tree editable="top">
-                    <field name="code"/>
-                </tree>
-            </field>
-        </record>
-
         <!-- CITY VIEWS -->    
         <record id="zue_menu_action_city" model="ir.actions.act_window">
             <field name="name">Ciudad</field>
@@ -180,6 +149,66 @@
         </field>
         </record>
 
+      <!-- tipos de tercero VIEWS -->
+        <record id="zue_menu_action_type_thirdparty" model="ir.actions.act_window">
+            <field name="name">Tipos de tercero</field>
+            <field name="res_model">zue.type_thirdparty</field>
+            <field name="view_mode">tree,form</field>
+            <field name="domain">[]</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">Crear tipo de tercero
+                </p>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_erp.list_type_thirdparty">
+            <field name="name">zue list type thirdparty</field>
+            <field name="model">zue.type_thirdparty</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="code"/>
+                    <field name="name"/>
+                    <field name="types"/>
+                    <field name="is_company"/>
+                    <field name="is_individual"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_erp.form_type_thirdparty">
+            <field name="name">zue form type thirdparty</field>
+            <field name="model">zue.type_thirdparty</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="code"/>
+                                <field name="name"/>
+                                <field name="types"/>
+                            </group>
+                            <group>
+                                <field name="is_company"/>
+                                <field name="is_individual"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="fields_mandatory" widget="many2many_tags"/>
+                            <p>
+                                Los tipos de tercero:<br/>
+                                - Cliente<br/>
+                                - Proveedor<br/>
+                                - Funcionario<br/>
+                                Tienen de forma obligatoria los campos tipo de documento, número de documento,
+                                teléfono o móvil, nombre, dirección, departamento, ciudad, país y correo electrónico.
+                                Si desea agregar otro utilizar el campo: Campos obligatorios.<br/>
+                            </p>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
         <!-- vinculation_types VIEWS -->    
         <record id="zue_menu_action_vinculation_types" model="ir.actions.act_window">
             <field name="name">Tipos de vinculación</field>
@@ -204,31 +233,7 @@
         </field>
         </record>
 
-        <!-- responsibilities_rut VIEWS -->    
-        <record id="zue_menu_action_responsibilities_rut" model="ir.actions.act_window">
-            <field name="name">Responsabilidades RUT</field>
-            <field name="res_model">zue.responsibilities_rut</field>
-            <field name="view_mode">tree</field>
-            <field name="domain">[]</field>
-            <field name="help" type="html">
-                <p class="oe_view_nocontent_create">Crear responsabilidad RUT
-                </p>
-            </field>
-        </record>
-
-        <record model="ir.ui.view" id="zue_erp.list_responsibilities_rut">
-        <field name="name">zue list responsibilities_rut</field>
-        <field name="model">zue.responsibilities_rut</field>
-        <field name="arch" type="xml">
-            <tree editable="bottom">
-                <field name="code"/>
-                <field name="description"/>
-                <field name="valid_for_fe"/>
-            </tree>
-        </field>
-        </record>
-
-        <!-- contact_types VIEWS -->    
+        <!-- contact_types VIEWS -->
         <record id="zue_menu_action_contact_types" model="ir.actions.act_window">
             <field name="name">Tipos de contacto</field>
             <field name="res_model">zue.contact_types</field>
@@ -367,6 +372,37 @@
             <field name="active"/>                  
             </tree>
         </field>
+        </record>
+
+      <!--CODIGO POSTAL VIEWS -->
+        <record id="zue_menu_action_zip_code" model="ir.actions.act_window">
+            <field name="name">Código postal</field>
+            <field name="res_model">zue.zip.code</field>
+            <field name="view_mode">tree</field>
+            <field name="help" type="html">
+                <p class="oe_view_nocontent_create">Crear código postal
+                </p>
+            </field>
+        </record>
+
+        <record id="zue_erp_search" model="ir.ui.view">
+            <field name="name">zue zip code</field>
+            <field name="model">zue.zip.code</field>
+            <field name="arch" type="xml">
+                <search string="">
+                    <field name="code" string="Código" filter_domain="[('code', 'ilike', self)]"/>
+                </search>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_erp.zip_postal">
+            <field name="name">zue zip postal</field>
+            <field name="model">zue.zip.code</field>
+            <field name="arch" type="xml">
+                <tree editable="top">
+                    <field name="code"/>
+                </tree>
+            </field>
         </record>
 
         <!-- CIIU VIEWS -->

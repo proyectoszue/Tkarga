@@ -1,0 +1,38 @@
+<odoo>
+    <data>
+        <record model="ir.actions.act_window" id="actions_balance_cxc_cxp_report">
+            <field name="name">Reporte saldos de CxC-CxP</field>
+            <field name="res_model">zue.report.cxc.cxp</field>
+            <field name="target">new</field>
+            <field name="view_mode">form</field>
+        </record>
+
+        <record id="actions_balance_cxc_cxp_report_form" model="ir.ui.view">
+            <field name="name">Reporte saldos de CxC-CxP</field>
+            <field name="model">zue.report.cxc.cxp</field>
+            <field name="arch" type="xml">
+                <form string="Saldos de CxC-CxP">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="z_company_id"/>
+                                <field name="z_cutoff_date"/>
+                                <field name="partner_id"/>
+                            </group>
+                            <group>
+                                <field name="z_accounts"/>
+                                <field name="z_accounting_account_ids" widget="many2many_tags"/>
+                                <field name="z_invoice_ids" widget="many2many_tags"/>
+                                <field name="z_only_earrings"/>
+                            </group>
+                            <br></br>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="generate_excel" string="Convertir Excel" type="object" class="oe_highlight"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

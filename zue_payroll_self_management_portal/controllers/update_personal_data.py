@@ -16,12 +16,15 @@ class ZuePayrollUpdatePersonalDataPortal(Controller):
         countries = []
         obj_employee = request.env['hr.employee.public'].search([('user_id', '=', request.env.user.id)], limit=1)
         obj_countries = request.env['res.country'].search([('id','>',0)])
+        obj_portal_design = request.env['zue.hr.employee.portal.design'].search(
+            [('z_company_design_id', '=', request.env.user.company_id.id)], limit=1)
 
         for line in obj_countries:
             countries.append({'id': line.id,'name': line.name})
 
         return request.render('zue_payroll_self_management_portal.update_personal_data',
-                              {'obj': obj_employee,'list_countries': countries})
+                              {'profile_update':False,'obj': obj_employee,'list_countries': countries,
+                               'portal_design':obj_portal_design})
 
     @route(["/zue_payroll_self_management_portal/update_personal_data_save"], type='http', auth='user', website=True, csrf=False)
     def update_personal_data_save(self, **post):
@@ -53,9 +56,18 @@ class ZuePayrollUpdatePersonalDataPortal(Controller):
         values_partner = {'street': post['street'],
                           'mobile': post['phone']}
 
-
+        obj_portal_design = request.env['zue.hr.employee.portal.design'].search(
+            [('z_company_design_id', '=', request.env.user.company_id.id)], limit=1)
         obj_employee = request.env['hr.employee.public'].search([('user_id', '=', request.env.user.id)], limit=1)
         request.env['hr.employee.update.tmp'].create({'employee_id':obj_employee.id}).update_personal_data(values_employee,values_partner)
-        return request.redirect('/zue_payroll_self_management_portal')
 
+        countries = []
+        obj_countries = request.env['res.country'].search([('id', '>', 0)])
+
+        for line in obj_countries:
+            countries.append({'id': line.id, 'name': line.name})
+
+        return request.render('zue_payroll_self_management_portal.update_personal_data',
+                              {'profile_update': True, 'obj': obj_employee, 'list_countries': countries, 'portal_design': obj_portal_design})
+        #return request.redirect('/zue_payroll_self_management_portal/update_personal_data')
 

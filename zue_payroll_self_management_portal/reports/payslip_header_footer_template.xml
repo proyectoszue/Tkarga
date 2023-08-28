@@ -52,7 +52,7 @@
                     <t t-call="web.basic_layout">
                         <!-- Encabezado -->
                         <div class="header">
-                            <span t-raw="cp_template.header_custom"/>
+                            <span t-esc="cp_template.header_custom"/>
                         </div>
                         <!-- Contenido dependiendo la estructura -->
 
@@ -97,7 +97,7 @@
                         </div>
                         <!-- Pie de pagina -->
                         <div class="footer">
-                            <span t-raw="cp_template.footer_custom"/>
+                            <span t-esc="cp_template.footer_custom"/>
                         </div>
                     </t>
                 </t>

@@ -1,0 +1,29 @@
+<odoo>
+    <data>
+		<record id="view_zue_account_form_account_journal" model="ir.ui.view">
+			<field name="name">zue_account.account_journal_inherit</field>
+			<field name="model">account.journal</field>
+			<field name="priority">20</field>
+			<field name="inherit_id" ref="account.view_account_journal_form"/>
+			<field name="arch" type="xml">
+                <xpath expr="//page[@name='advanced_settings']/group[1]/group[2]" position="after">
+					<group string="Resolución DIAN (ZUE)">
+						<field name="z_disable_dian_sending" type="object"/>
+						<field name="dian_authorization_number" type="object"/>
+						<field name="dian_authorization_date" type="object"/>
+						<field name="dian_authorization_end_date" type="object"/>
+						<field name="dian_min_range_number" type="object"/>
+						<field name="dian_max_range_number" type="object"/>
+					</group>
+					<group string="Alerta de resolución de facturación">
+						<field name="z_is_debit_note" type="object"/>
+						<field name="z_is_credit_note" type="object"/>
+						<field name="z_generate_alert" type="object"/>
+						<field name="z_expiration_days" type="object"/>
+						<field name="z_expiration_folios" type="object"/>
+					</group>
+                </xpath>
+			</field>
+		</record>
+    </data>
+</odoo>

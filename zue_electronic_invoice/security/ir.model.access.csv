@@ -1,0 +1,8 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_account_tax_type,account.tax.type,model_account_tax_type,,1,1,1,1
+access_zue_responsibilities_rut,zue.responsibilities_rut,model_zue_responsibilities_rut,,1,1,1,1
+access_fe_payment_options,fe.payment.options,model_fe_payment_options,,1,1,1,1
+access_zue_fe_encab,zue.fe.encab,model_zue_fe_encab,,1,1,1,1
+access_zue_fe_encab_tax,zue.fe.encab.tax,model_zue_fe_encab_tax,,1,1,1,1
+access_zue_fe_detail,zue.fe.detail,model_zue_fe_detail,,1,1,1,1
+access_zue_fe_detail_tax,zue.fe.detail.tax,model_zue_fe_detail_tax,,1,1,1,1

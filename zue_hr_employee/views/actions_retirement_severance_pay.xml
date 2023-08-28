@@ -1,0 +1,44 @@
+<odoo>
+    <data>
+<!--        <record id="view_hr_contract_form" model="ir.ui.view">-->
+<!--            <field name="name">hr.contract.form.inherit</field>-->
+<!--            <field name="model">hr.contract</field>-->
+<!--            <field name="priority">20</field>-->
+<!--            <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>-->
+<!--            <field name="arch" type="xml">-->
+<!--                <xpath expr="//button[@name='generate_labor_certificate']" position="after">-->
+<!--                    <button name="generate_report_severance" type="object" string="Carta retiro de cesantías"/>-->
+<!--                </xpath>-->
+<!--            </field>-->
+<!--        </record>-->
+
+        <record id="action_zue_retirement_severance_pay" model="ir.actions.act_window">
+            <field name="name">Carta retiro de cesantías</field>
+            <field name="res_model">zue.retirement.severance.pay</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <record id="form_zue_retirement_severance_pay" model="ir.ui.view">
+            <field name="name">Carta retiro de cesantías form</field>
+            <field name="model">zue.retirement.severance.pay</field>
+            <field name="arch" type="xml">
+                <form string="Generar Carta para retiro de cesantías">
+                    <group>
+                        <field name="z_contract_id" readonly="1" force_save="1"/>
+                        <field name="z_contrib_id" invisible="1"/>
+                        <field name="z_directed_to"/>
+                        <field name="z_withdrawal_type" widget="radio"/>
+                        <field name="z_withdrawal_concept_partial" attrs="{'invisible': [('z_withdrawal_type', '!=', 'partial')]}"/>
+                        <field name="z_withdrawal_concept_total" attrs="{'invisible': [('z_withdrawal_type', '!=', 'termination')]}"/>
+                        <field name="z_withdrawal_value" attrs="{'invisible': [('z_withdrawal_type', '!=', 'partial')]}"/>
+                    </group>
+                    <footer>
+                        <button string="Generar carta" name="generate_report_severance_pay" type="object"
+                                class="oe_highlight"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

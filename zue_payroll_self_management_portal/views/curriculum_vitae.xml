@@ -1,0 +1,351 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <template id="curriculum_vitae_data" name="Experiencia">
+            <body t-att-style="'background-color:'+str(portal_design.z_background_color)+';font-family:'+str(portal_design.z_font)+';'">
+            <link rel="stylesheet" href="/zue_payroll_self_management_portal/static/src/css/main.css"/>
+            <t t-call="web.basic_layout">
+                <div t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                    <br/>
+                    <div class="row">
+                        <div class="col-md-11">
+                            <center>
+                                <h1>
+                                    <b>Experiencia</b>
+                                </h1>
+                            </center>
+                        </div>
+                        <div class="col-md-1 d-flex justify-content-center align-items-lg-center">
+                            <button type="button" class="btn btn-outline-primary" data-toggle="modal"
+                                    t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
+                                    ';color:'+str(portal_design.z_primary_color)+';'"
+                                    data-target="#modalCurriculum">
+                                <span class="fa fa-plus fa-1x fa-lg" title="Agregar"/>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Modal -->
+                    <div class="modal fade" id="modalCurriculum" tabindex="-1" role="dialog"
+                         aria-labelledby="modalCurriculum" aria-hidden="true">
+                        <div class="modal-dialog modal-xl" role="document">
+                            <div class="modal-content"
+                                 t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modalCurriculum">Experiencia</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    </button>
+                                </div>
+                                <form class="form-update-data"
+                                      action='/zue_payroll_self_management_portal/add_curriculum_employee_save'
+                                      method="POST">
+                                    <div class="modal-body">
+                                        <label>Título</label>
+                                        <input class="form-control" type="text" id="field_name" name="field_name"
+                                               required="true"/>
+                                        <div class="col-md-12">
+                                            <div class="row">
+                                                <div class="col-md-12">
+                                                    <label>Tipo</label>
+                                                    <select class="form-control form-control-sm" id="field_line_type_id"
+                                                            name="field_line_type_id">
+                                                        <option t-foreach="lst_resume_line_type" t-as="resume_line_type"
+                                                                t-att-value="resume_line_type[0]">
+                                                            <span t-esc="resume_line_type[1]"/>
+                                                        </option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label>Fecha inicial</label>
+                                                    <input type="date" id="field_date_start" name="field_date_start"
+                                                           class="form-control form-control-sm" required="true"/>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label>Fecha final</label>
+                                                    <input type="date" id="field_date_end" name="field_date_end"
+                                                           class="form-control form-control-sm"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <br/>
+                                        <div class="form-group">
+                                            <label>Descripción</label>
+                                            <textarea class="form-control form-control-sm" id="field_description"
+                                                      name="field_description" rows="3"/>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                                                t-att-style="'border-color:'+str(portal_design.z_background_color)+';background-color:'+str(portal_design.z_background_color)+
+                                                ';color:'+str(portal_design.z_primary_color)+';'">
+                                            Descartar
+                                        </button>
+                                        <button type="submit" class="btn btn-primary"
+                                                t-att-style="'border-color:'+str(portal_design.z_background_color)+';background-color:'+str(portal_design.z_background_color)+
+                                           ';color:'+str(portal_design.z_primary_color)+';'">
+                                            Guardar y cerrar
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <hr/>
+                    <div>
+                        <table class="table table-responsive-md table-sm table-hover table-borderless">
+                            <tbody t-foreach="type_resumes" t-as="type_r" t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                <tr t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                    <td class="o_group_name" colspan="100%">
+                                        <span class="o_horizontal_separator my-0">
+                                            <h5>
+                                                <b>
+                                                    <span t-esc="type_r"/>
+                                                </b>
+                                            </h5>
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr class="o_data_row" t-foreach="curriculum" t-as="cr">
+                                    <t t-if="type_r==cr.get('type','')">
+                                        <td class="position-relative"
+                                            t-att-style="'padding:0px;border-left:solid;border-color:'+str(portal_design.z_secondary_color)+';'">
+                                            <div class="position-relative"
+                                                 t-att-style="'border:solid'+str(portal_design.z_secondary_color)+'4px;position:absolute;border-radius: 0% 100% 100% 0% !important;
+                                                 background-color:'+str(portal_design.z_primary_color)+';'"/>
+                                        </td>
+                                        <td class="o_data_cell pt-0 w-100">
+                                            <div class="o_resume_line">
+                                                <small class="o_resume_line_dates">
+                                                    <b>
+                                                        <span t-esc="cr.get('date_start','')"/>
+                                                    </b>
+                                                    -
+                                                    <b>
+                                                        <t t-if="cr.get('date_end','') != '' and cr.get('date_end','') != False">
+                                                            <span t-esc="cr.get('date_end','')"/>
+                                                        </t>
+                                                        <t t-else="">
+                                                            <span>Actual</span>
+                                                        </t>
+                                                    </b>
+                                                </small>
+                                                <h6 class="o_resume_line_title mt-2">
+                                                    <b>
+                                                        <span t-esc="cr.get('name','')"/>
+                                                    </b>
+                                                </h6>
+                                                <p class="o_resume_line_desc">
+                                                    <span t-esc="cr.get('description','')"/>
+                                                </p>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <button type="button" class="btn btn-outline" data-toggle="modal"
+                                                    t-att-style="'margin-top: 20;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'"
+                                                    t-att-data-target="'#delete_Modal'+str(cr.get('id',0))">
+                                                <span class="fa fa-trash" title="Eliminar"/>
+                                            </button>
+                                            <!-- Modal -->
+                                            <div class="modal fade" t-att-id="'delete_Modal'+str(cr.get('id',0))"
+                                                 tabindex="-1" role="dialog"
+                                                 t-att-aria-labelledby="'delete_Modal'+str(cr.get('id',0))"
+                                                 aria-hidden="true">
+                                                <div class="modal-dialog" role="document">
+                                                    <div class="modal-content"
+                                                         t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                        <div class="modal-body">
+                                                            ¿Desea eliminar este registro?
+                                                        </div>
+                                                        <div class="modal-footer">
+                                                            <button type="button" class="btn"
+                                                                    t-att-style="'background-color:'+str(portal_design.z_background_color)+';color:'+str(portal_design.z_primary_color)+';'"
+                                                                    data-dismiss="modal">Descartar
+                                                            </button>
+                                                            <a class="btn"
+                                                               t-attf-href="/zue_payroll_self_management_portal/delete_curriculum_employee_save/{{cr.get('id',0)}}"
+                                                               t-att-style="'background-color:'+str(portal_design.z_background_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                                Eliminar
+                                                            </a>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="position-relative"
+                                            t-att-style="'padding:0px;border-right:solid;border-color:'+str(portal_design.z_secondary_color)+';'">
+                                        </td>
+                                    </t>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <br/>
+            </t>
+            </body>
+        </template>
+
+        <template id="skills_data" name="Habilidades">
+            <body t-att-style="'background-color:'+str(portal_design.z_background_color)+';color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
+            <t t-call="web.basic_layout">
+                <script type="text/javascript" src="/zue_payroll_self_management_portal/static/src/js/employee_skills.js"/>
+                <div t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                    <br/>
+                    <div class="row">
+                        <div class="col-md-11">
+                            <center>
+                                <h1>
+                                    <b>Habilidades</b>
+                                </h1>
+                            </center>
+                        </div>
+                        <div class="col-md-1 d-flex justify-content-center align-items-lg-center">
+                            <button type="button" class="btn btn-outline-primary" data-toggle="modal"
+                                    t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
+                                    ';color:'+str(portal_design.z_primary_color)+';'"
+                                    data-target="#modalSkill">
+                                <span class="fa fa-plus fa-1x fa-lg" title="Agregar"/>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Modal -->
+                    <div class="modal fade" id="modalSkill" tabindex="-1" role="dialog"
+                         aria-labelledby="modalCurriculum" aria-hidden="true">
+                        <div class="modal-dialog" role="document">
+                            <div class="modal-content"
+                                 t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                <div class="modal-header">
+                                    <h5 class="modal-title" id="modalSkill  ">Habilidades</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    </button>
+                                </div>
+                                <form class="form-update-data"
+                                      action='/zue_payroll_self_management_portal/add_skill_employee_save'
+                                      method="POST">
+                                    <div class="modal-body">
+                                        <label>Tipo</label>
+                                        <select class="skill_type_select form-control form-control-sm" id="field_skill_type_id"
+                                                name="field_skill_type_id" required="true">
+                                            <option value="" selected="selected" disabled="disabled" hidden="hidden">-- Seleccione --</option>
+                                            <option t-foreach="lst_skill_type" t-as="skill_type"
+                                                    t-att-value="skill_type[0]">
+                                                <span t-esc="skill_type[1]"/>
+                                            </option>
+                                        </select>
+                                        <br/>
+                                        <label>Habilidad</label>
+                                        <select class="skill_select form-control form-control-sm" id="field_skill_id"
+                                                name="field_skill_id" required="true">
+                                            <option value="" selected="selected" disabled="disabled" hidden="hidden">-- Seleccione --</option>
+                                            <option t-foreach="lst_skill_skills" t-as="skill_skills"
+                                                    t-att-value="skill_skills[0]" t-att-skill-type-id="skill_skills[2]" t-att-is_other="skill_skills[3]">
+                                                <span t-esc="skill_skills[1]"/>
+                                            </option>
+                                        </select>
+                                        <input type="text" class="form-control form-control-sm" hidden="hidden"
+                                           id="field_skill_other" name="field_skill_other" placeholder="¿Cual?"/>
+                                        <br/>
+                                        <label>Nivel</label>
+                                        <select class="form-control form-control-sm" id="field_skill_level_id"
+                                                name="field_skill_level_id" required="true">
+                                            <option value="" selected="selected" disabled="disabled" hidden="hidden">-- Seleccione --</option>
+                                            <option t-foreach="lst_skill_level" t-as="skill_level"
+                                                    t-att-value="skill_level[0]" t-att-skill-type-id="skill_level[2]">
+                                                <span t-esc="skill_level[1]"/>
+                                            </option>
+                                        </select>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                                                t-att-style="'border-color:'+str(portal_design.z_background_color)+';background-color:'+str(portal_design.z_background_color)+
+                                                ';color:'+str(portal_design.z_primary_color)+';'">
+                                            Descartar
+                                        </button>
+                                        <button type="submit" class="btn btn-primary"
+                                                t-att-style="'border-color:'+str(portal_design.z_background_color)+';background-color:'+str(portal_design.z_background_color)+
+                                                ';color:'+str(portal_design.z_primary_color)+';'">Guardar y cerrar</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    <hr/>
+                    <div>
+                        <table class="table table-responsive-md"
+                               t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                            <thead t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                <tr>
+                                    <th>Tipo de habilidad</th>
+                                    <th>Habilidad</th>
+                                    <th>Nivel de habilidad</th>
+                                    <th>Progreso</th>
+                                    <th/>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr t-foreach="skills" t-as="sk" t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                    <td>
+                                        <span t-esc="sk.get('type','')"/>
+                                    </td>
+                                    <td>
+                                        <t t-if="sk.get('which_is','') != ''">
+                                            <span t-esc="sk.get('which_is','')"/>
+                                        </t>
+                                        <t t-else="">
+                                            <span t-esc="sk.get('skill','')"/>
+                                        </t>
+                                    </td>
+                                    <td>
+                                        <span t-esc="sk.get('level','')"/>
+                                    </td>
+                                    <td>
+                                        <div class="badge badge-primary" t-att-style="'color:'+str(portal_design.z_primary_color)+';background-color:'+str(portal_design.z_secondary_color)+';'">
+                                            <span t-esc="sk.get('progress',0)"/>
+                                            %
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <button type="button" class="btn btn-outline-danger" data-toggle="modal"
+                                                t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
+                                                ';color:'+str(portal_design.z_primary_color)+';'"
+                                                t-att-data-target="'#delete_Modal'+str(sk.get('id',0))">
+                                            <span class="fa fa-trash" title="Eliminar"/>
+                                        </button>
+                                        <!-- Modal -->
+                                        <div class="modal fade" t-att-id="'delete_Modal'+str(sk.get('id',0))"
+                                             tabindex="-1" role="dialog"
+                                             t-att-aria-labelledby="'delete_Modal'+str(sk.get('id',0))"
+                                             aria-hidden="true">
+                                            <div class="modal-dialog" role="document">
+                                                <div class="modal-content"
+                                                     t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                    <div class="modal-body">
+                                                        ¿Desea eliminar este registro?
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary"
+                                                                t-att-style="'border-color:'+str(portal_design.z_background_color)+';background-color:'+str(portal_design.z_background_color)+
+                                                                ';color:'+str(portal_design.z_primary_color)+';'"
+                                                                data-dismiss="modal">Descartar
+                                                        </button>
+                                                        <a class="btn btn-danger"
+                                                           t-attf-href="/zue_payroll_self_management_portal/delete_skill_employee_save/{{sk.get('id',0)}}"
+                                                           t-att-style="'border-color:'+str(portal_design.z_background_color)+';background-color:'+str(portal_design.z_background_color)+
+                                                           ';color:'+str(portal_design.z_primary_color)+';'">
+                                                            Eliminar
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                <br/>
+            </t>
+            </body>
+        </template>
+    </data>
+</odoo>

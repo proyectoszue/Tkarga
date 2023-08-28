@@ -16,7 +16,11 @@ class hr_conf_certificate_income(models.Model):
                                     ('sum_sequence', 'Sumatoria secuencias anteriores'),
                                     ('date_issue', 'Fecha expedición'),
                                     ('start_date_year', 'Fecha certificación inicial'),
-                                    ('end_date_year', 'Fecha certificación final')], string='Tipo Cálculo',
+                                    ('end_date_year', 'Fecha certificación final'),
+                                    ('dependents_type_vat', 'Dependientes - Tipo documento'),
+                                    ('dependents_vat', 'Dependientes - No. Documento'),
+                                    ('dependents_name', 'Dependientes - Apellidos y Nombres'),
+                                    ('dependents_type', 'Dependientes - Parentesco'),], string='Tipo Cálculo',
                                    default='info', required=True)
     type_partner = fields.Selection([('employee', 'Empleado'), ('company', 'Compañía')], string='Origen Información')
     information_fields_id = fields.Many2one('ir.model.fields', string="Información",domain="[('model_id.model', 'in', ['hr.employee','res.partner','hr.contract'])]")
@@ -530,9 +534,9 @@ class hr_annual_parameters(models.Model):
                                                      store=True)
     # Básicos Horas Laborales
     hours_daily = fields.Integer('Horas diarias', required=True)
-    hours_weekly = fields.Integer('Horas semanales', compute='_values_hours', store=True)
-    hours_fortnightly = fields.Integer('Horas quincenales', compute='_values_hours', store=True)
-    hours_monthly = fields.Integer('Horas mensuales', compute='_values_hours', store=True)
+    hours_weekly = fields.Integer('Horas semanales', required=True)
+    hours_fortnightly = fields.Integer('Horas quincenales', required=True)
+    hours_monthly = fields.Integer('Horas mensuales', required=True)
     # Seguridad Social
     weight_contribution_calculations = fields.Boolean('Cálculos de aportes al peso')
     # Salud
@@ -572,6 +576,11 @@ class hr_annual_parameters(models.Model):
                                                   string='Configuración de reglas salariales')
     # HTML Certificado Ingreso y retenciones
     report_income_and_withholdings = fields.Html('Estructura Certificado ingresos y retenciones',default=default_html_report_income_and_withholdings)
+    #PRESTACIONES SOCIALES SECTOR PUBLICO Y DISTRITAL
+    z_food_subsidy_amount = fields.Integer(string="Subsidio de alimentación")
+    z_bonus_services_rendered = fields.Integer(string="Tope Bonificación por servicios prestados (B.S.P)")
+    z_food_subsidy_tope = fields.Integer(string="Tope Subsidio de alimentación")
+    z_percentage_public = fields.Integer(string="Porcentaje Emp. Publicos")
 
     # Metodos
     def name_get(self):
@@ -601,7 +610,7 @@ class hr_annual_parameters(models.Model):
         self.value_factor_integral_salary = value_factor_integral_salary
         self.value_factor_integral_performance = value_factor_integral_performance
 
-    @api.depends('hours_daily')
+    @api.onchange('hours_daily')
     def _values_hours(self):
         self.hours_weekly = 7 * self.hours_daily
         self.hours_fortnightly = 15 * self.hours_daily

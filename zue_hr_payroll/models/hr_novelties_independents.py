@@ -8,8 +8,7 @@ class hr_novelties_independents(models.Model):
     employee_id = fields.Many2one('hr.employee', string='Empleado', index=True)
     employee_identification = fields.Char('Identificación empleado')
     salary_rule_id = fields.Many2one('hr.salary.rule', string='Regla salarial', required=True)
-    dev_or_ded = fields.Selection([('devengo', 'Devengo'),
-                                   ('deduccion', 'Deducción')], 'Naturaleza', related='salary_rule_id.dev_or_ded',
+    dev_or_ded = fields.Selection(related='salary_rule_id.dev_or_ded',
                                   store=True, readonly=True)
     date = fields.Date('Fecha', required=True)
     amount = fields.Float('Valor', required=True)

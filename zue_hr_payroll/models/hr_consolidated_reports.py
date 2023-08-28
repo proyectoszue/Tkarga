@@ -113,7 +113,7 @@ class hr_consolidated_reports(models.TransientModel):
                 inner join hr_contract as b on a.id = b.employee_id and b.active = true {self.query_filter_period('and','b.date_start')}
                                                 and (b.state = 'open' or (({self.query_filter_period('','b.retirement_date',1)} {self.query_filter_period('and','b.retirement_date')}) or ({self.query_filter_period('','b.retirement_date',0,'>=')})))                                                
                 left join zue_res_branch as rb on a.branch_id = rb.id
-                left join account_analytic_account as aaa on a.analytic_account_id = aaa.id 
+                left join account_analytic_account as aaa on b.analytic_account_id = aaa.id 
                 left join (select a.employee_id,sum(a.days) as days_unpaid_absences 
                             from hr_absence_history as a
                             inner join hr_leave_type as b on a.leave_type_id = b.id and b.unpaid_absences = true
@@ -272,7 +272,7 @@ class hr_consolidated_reports(models.TransientModel):
                 inner join hr_contract as b on a.id = b.employee_id and b.active = true {self.query_filter_period('and','b.date_start')}
                                                 and (b.state = 'open' or (({self.query_filter_period('','b.retirement_date',1)} {self.query_filter_period('and','b.retirement_date')}) or ({self.query_filter_period('','b.retirement_date',0,'>=')})))
                 left join zue_res_branch as rb on a.branch_id = rb.id
-                left join account_analytic_account as aaa on a.analytic_account_id = aaa.id 
+                left join account_analytic_account as aaa on b.analytic_account_id = aaa.id 
                 left join (select a.employee_id,sum(a.days) as days_unpaid_absences 
                             from hr_absence_history as a
                             inner join hr_leave_type as b on a.leave_type_id = b.id and b.unpaid_absences = true
@@ -415,7 +415,7 @@ class hr_consolidated_reports(models.TransientModel):
                 inner join hr_contract as b on a.id = b.employee_id and b.active = true {self.query_filter_period('and','b.date_start')}
                                                 and (b.state = 'open' or (({self.query_filter_period('','b.retirement_date',1)} {self.query_filter_period('and','b.retirement_date')}) or ({self.query_filter_period('','b.retirement_date',0,'>=')})))
                 left join zue_res_branch as rb on a.branch_id = rb.id
-                left join account_analytic_account as aaa on a.analytic_account_id = aaa.id 
+                left join account_analytic_account as aaa on b.analytic_account_id = aaa.id 
                 left join (select a.employee_id,sum(a.days) as days_unpaid_absences 
                             from hr_absence_history as a
                             inner join hr_leave_type as b on a.leave_type_id = b.id and b.unpaid_absences = true
