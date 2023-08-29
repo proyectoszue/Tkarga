@@ -30,6 +30,32 @@ class hr_payroll_flat_file_detail(models.TransientModel):
     excel_file = fields.Binary('Excel')
     excel_file_name = fields.Char('Excel filename')
 
+    def download_txt(self):
+        if self.txt_file:
+            action = {
+                'name': 'ArchivoPlano',
+                'type': 'ir.actions.act_url',
+                'url': "web/content/?model=hr.payroll.flat.file.detail&id=" + str(
+                    self.id) + "&filename_field=txt_file_name&field=txt_file&download=true&filename=" + self.txt_file_name,
+                'target': 'self',
+            }
+            return action
+        else:
+            raise ValidationError('No se genero archivo plano.')
+
+    def download_excel(self):
+        if self.excel_file:
+            action = {
+                'name': 'ArchivoPlano',
+                'type': 'ir.actions.act_url',
+                'url': "web/content/?model=hr.payroll.flat.file.detail&id=" + str(
+                    self.id) + "&filename_field=excel_file_name&field=excel_file&download=true&filename=" + self.excel_file_name,
+                'target': 'self',
+            }
+            return action
+        else:
+            raise ValidationError('No se genero archivo excel.')
+
 class hr_payroll_flat_file(models.TransientModel):
     _name = 'hr.payroll.flat.file'
     _description = 'Archivo plano de pago de nómina'
