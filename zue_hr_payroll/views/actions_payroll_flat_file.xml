@@ -46,16 +46,18 @@
                                     <group>
                                         <field name="journal_id"/>
                                         <field name="plane_type"/>
-                                        <field name="txt_file_name" invisible="1"/>
-                                        <field name="txt_file" filename="txt_file_name"/>
-                                        <field name="excel_file_name" invisible="1"/>
-                                        <field name="excel_file" filename="excel_file_name"/>
+<!--                                        <field name="txt_file_name" invisible="1"/>-->
+<!--                                        <field name="txt_file" filename="txt_file_name"/>-->
+<!--                                        <field name="excel_file_name" invisible="1"/>-->
+<!--                                        <field name="excel_file" filename="excel_file_name"/>-->
+                                        <button name="download_txt" string="Descargar Archivo Plano" type="object"/>
+                                        <button name="download_excel" string="Descargar Excel" type="object"/>
                                     </group>
                                 </form>
                             </field>
                         </group>
                     </sheet>
-                    <footer></footer>
+                    <footer/>
                 </form>
             </field>
         </record>
