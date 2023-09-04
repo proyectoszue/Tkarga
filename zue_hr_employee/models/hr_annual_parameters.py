@@ -533,10 +533,10 @@ class hr_annual_parameters(models.Model):
     value_factor_integral_performance = fields.Float('Valor prestacional', compute='_values_integral_salary',
                                                      store=True)
     # Básicos Horas Laborales
-    hours_daily = fields.Integer('Horas diarias', required=True)
-    hours_weekly = fields.Integer('Horas semanales', required=True)
-    hours_fortnightly = fields.Integer('Horas quincenales', required=True)
-    hours_monthly = fields.Integer('Horas mensuales', required=True)
+    hours_daily = fields.Float('Horas diarias', required=True)
+    hours_weekly = fields.Float('Horas semanales', required=True)
+    hours_fortnightly = fields.Float('Horas quincenales', required=True)
+    hours_monthly = fields.Float('Horas mensuales', required=True)
     # Seguridad Social
     weight_contribution_calculations = fields.Boolean('Cálculos de aportes al peso')
     # Salud
