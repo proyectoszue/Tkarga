@@ -110,7 +110,7 @@ class hr_employee_report_curriculum(models.TransientModel):
         writer.write(result_stream)
         #Guardar pdf
         self.write({
-            'pdf_file': base64.encodestring(result_stream.getvalue()),
+            'pdf_file': base64.encodebytes(result_stream.getvalue()),
             'pdf_file_name': filename,
         })
         #Descargar reporte
