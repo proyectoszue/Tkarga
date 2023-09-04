@@ -32,4 +32,4 @@ class hr_resume_line_type(models.Model):
     _inherit = 'hr.resume.line.type'
 
     type_resume = fields.Selection([('labor', 'Laboral'),
-                            ('academic', 'Académico')], 'Tipo', required=True, default="labor")
+                            ('academic', 'Académico'), ('interview', 'Entrevista')], 'Tipo', required=True, default="labor")
