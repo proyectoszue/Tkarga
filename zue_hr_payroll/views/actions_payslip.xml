@@ -47,6 +47,8 @@
                         </group>
                     </group>
                     <group attrs="{'invisible':[('struct_process', 'not in', ['cesantias','intereses_cesantias','contrato'])]}">
+                        <field name="z_is_advance_severance" attrs="{'invisible':[('struct_process', 'not in', ['cesantias','intereses_cesantias'])]}"/>
+                        <field name="z_value_advance_severance" attrs="{'invisible':[('z_is_advance_severance', '=', False)],'required':[('z_is_advance_severance', '=', True)]}"/>
                         <field name="employee_severance_pay" attrs="{'invisible':[('struct_process', 'not in', ['cesantias','intereses_cesantias','contrato'])]}"/>
                         <field name="severance_payments_reverse" attrs="{'invisible':[('struct_process', 'not in', ['cesantias','intereses_cesantias','contrato'])]}" widget="many2many_tags"/>
                     </group>
