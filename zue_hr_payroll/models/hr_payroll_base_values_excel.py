@@ -224,7 +224,7 @@ class Hr_payslip(models.Model):
                             {'style': 'Table Style Medium 2', 'columns': array_header_table})
         book.close()
         self.write({
-            'excel_value_base_file': base64.encodestring(stream.getvalue()),
+            'excel_value_base_file': base64.encodebytes(stream.getvalue()),
             'excel_value_base_file_name': filename,
         })
 
@@ -299,7 +299,7 @@ class Hr_payslip(models.Model):
 
         book.close()
         self.write({
-            'z_excel_lines': base64.encodestring(stream.getvalue()),
+            'z_excel_lines': base64.encodebytes(stream.getvalue()),
             'z_excel_lines_filename': filename,
         })
 
