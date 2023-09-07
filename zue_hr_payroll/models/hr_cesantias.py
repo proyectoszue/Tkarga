@@ -49,6 +49,8 @@ class hr_history_cesantias(models.Model):
 class Hr_payslip(models.Model):
     _inherit = 'hr.payslip'
 
+    z_is_advance_severance = fields.Boolean(string='Es avance de cesantías')
+    z_value_advance_severance = fields.Float(string='Valor a pagar avance')
     employee_severance_pay = fields.Boolean(string='Pago cesantías al empleado')
     severance_payments_reverse = fields.Many2many('hr.history.cesantias',
                                                   string='Historico de cesantias/int.cesantias a tener encuenta',
@@ -199,9 +201,21 @@ class Hr_payslip(models.Model):
                     qty = dias_liquidacion
 
                     if rule.code == 'INTCESANTIAS':
-                        amount_base = round(amount * qty * rate / 100.0,0) if round_payroll == False else amount * qty * rate / 100.0
-                        amount = round(amount_base / 360, 0) if round_payroll == False else amount_base / 360
-                        qty = dias_liquidacion
+                        # Revisar si tuvo avance y calcular los intereses pendientes
+                        date_check = (self.date_cesantias or self.date_from) - timedelta(days=1)
+                        obj_check_advance = self.env['hr.history.cesantias'].search(
+                            [('employee_id', '=', self.employee_id.id), ('contract_id', '=', self.contract_id.id),
+                             ('type_history', '=', 'cesantias'), ('settlement_date', '=', date_check),
+                             ('payslip.z_is_advance_severance', '=', True)])
+                        if len(obj_check_advance) == 1:
+                            amount_base = round(amount * qty * rate / 100.0,0) if round_payroll == False else amount * qty * rate / 100.0
+                            amount_base += obj_check_advance.severance_value
+                            amount = round(amount_base / 360, 0) if round_payroll == False else amount_base / 360
+                            qty = dias_liquidacion+obj_check_advance.time
+                        else:
+                            amount_base = round(amount * qty * rate / 100.0,0) if round_payroll == False else amount * qty * rate / 100.0
+                            amount = round(amount_base / 360, 0) if round_payroll == False else amount_base / 360
+                            qty = dias_liquidacion
                         rate = 12
 
                 entity_cesantias = False
@@ -211,6 +225,15 @@ class Hr_payslip(models.Model):
                             entity_cesantias = entity.partner_id
 
                 amount = round(amount,0) if round_payroll == False else round(amount, 2)
+                if self.z_is_advance_severance and self.z_value_advance_severance > 0:
+                    if rule.code == 'CESANTIAS':
+                        if self.z_value_advance_severance > (amount * qty * rate / 100.0):
+                            raise ValidationError(f'No se puede hacer el avance ya que el valor es superior a lo permitido ({(amount * qty * rate / 100.0)})')
+                        equivalent_days = (self.z_value_advance_severance * qty) / (amount * qty * rate / 100.0)
+                        amount,amount_base,qty = (self.z_value_advance_severance)/round(equivalent_days,0),0,round(equivalent_days,0)
+                        self.date_to = self.date_from + timedelta(days=equivalent_days)
+                    if rule.code == 'INTCESANTIAS':
+                        amount, amount_base, qty = 0, 0, 0
                 #check if there is already a rule computed with that code
                 previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
                 #set/overwrite the amount computed for this rule in the localdict

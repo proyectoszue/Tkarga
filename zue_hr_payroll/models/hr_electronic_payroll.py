@@ -71,7 +71,7 @@ class hr_electronic_payroll_detail(models.Model):
 
             filename = f'NominaElectronica{str(self.electronic_payroll_id.year)}-{self.electronic_payroll_id.month}_{str(self.employee_id.identification_id)}.xml'
             self.write({
-                'xml_file': base64.encodestring(xml),
+                'xml_file': base64.encodebytes(xml),
                 'xml_file_name': filename,
                 'status':False,
                 'result_status':False,

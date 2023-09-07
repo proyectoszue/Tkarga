@@ -99,7 +99,7 @@ class HrPayslipRun(models.Model):
         book.close()
 
         self.write({
-            'excel_report_entity': base64.encodestring(stream.getvalue()),
+            'excel_report_entity': base64.encodebytes(stream.getvalue()),
             'excel_report_entity_filename': filename,
         })
 
