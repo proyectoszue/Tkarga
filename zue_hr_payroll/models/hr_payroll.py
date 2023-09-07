@@ -630,7 +630,10 @@ class Hr_payslip(models.Model):
                     'number_of_hours': w.number_of_hours,
                 })
 
-            return [(5, 0, 0)] + [(0, 0, vals) for vals in res]
+            if self.struct_id.process == 'contrato' and self.date_from == self.date_to:
+                return [(5, False, False)]
+            else:
+                return [(5, 0, 0)] + [(0, 0, vals) for vals in res]
         else:
             return [(5, False, False)]
 
@@ -658,7 +661,10 @@ class Hr_payslip(models.Model):
         result = {}
         result_not = {}
         rules_dict = {}
-        worked_days_dict = {line.code: line for line in self.worked_days_line_ids if line.code}
+        if inherit_contrato_ded_bases + inherit_contrato_ded + inherit_contrato_dev == 1 and self.date_from == self.date_to:
+            worked_days_dict = {}
+        else:
+            worked_days_dict = {line.code: line for line in self.worked_days_line_ids if line.code}
         inputs_dict = {line.code: line for line in self.input_line_ids if line.code}
         pay_vacations_in_payroll = bool(self.env['ir.config_parameter'].sudo().get_param(
             'zue_hr_payroll.pay_vacations_in_payroll')) or False
