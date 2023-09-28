@@ -16,35 +16,39 @@ class HolidaysRequest(models.Model):
     _inherit = "hr.leave"
 
     employee_identification = fields.Char('Identificación empleado')
-    branch_id = fields.Many2one(related='employee_id.branch_id', string='Sucursal', store=True)
-    unpaid_absences = fields.Boolean(related='holiday_status_id.unpaid_absences', string='Ausencia no remunerada',store=True)
-    discounting_bonus_days = fields.Boolean(related='holiday_status_id.discounting_bonus_days', string='Descontar días en prima',store=True)
+    branch_id = fields.Many2one(related='employee_id.branch_id', string='Sucursal', store=True,tracking=True)
+    unpaid_absences = fields.Boolean(related='holiday_status_id.unpaid_absences', string='Ausencia no remunerada',store=True,tracking=True)
+    discounting_bonus_days = fields.Boolean(related='holiday_status_id.discounting_bonus_days', string='Descontar días en prima',store=True,tracking=True)
     #Campos para vacaciones
-    is_vacation = fields.Boolean(related='holiday_status_id.is_vacation', string='Es vacaciones',store=True)
-    business_days = fields.Integer(string='Días habiles')
-    holidays = fields.Integer(string='Días festivos')
-    days_31_business = fields.Integer(string='Días 31 habiles', help='Este día no se tiene encuenta para el calculo del pago pero si afecta su historico de vacaciones.')
-    days_31_holidays = fields.Integer(string='Días 31 festivos', help='Este día no se tiene encuenta para el calculo del pago ni afecta su historico de vacaciones.')
-    alert_days_vacation = fields.Boolean(string='Alerta días vacaciones')
-    accumulated_vacation_days = fields.Float(string='Días acumulados de vacaciones')
+    is_vacation = fields.Boolean(related='holiday_status_id.is_vacation', string='Es vacaciones',store=True,tracking=True)
+    business_days = fields.Integer(string='Días habiles',tracking=True)
+    holidays = fields.Integer(string='Días festivos',tracking=True)
+    days_31_business = fields.Integer(string='Días 31 habiles', help='Este día no se tiene encuenta para el calculo del pago pero si afecta su historico de vacaciones.',tracking=True)
+    days_31_holidays = fields.Integer(string='Días 31 festivos', help='Este día no se tiene encuenta para el calculo del pago ni afecta su historico de vacaciones.',tracking=True)
+    alert_days_vacation = fields.Boolean(string='Alerta días vacaciones',tracking=True)
+    accumulated_vacation_days = fields.Float(string='Días acumulados de vacaciones',tracking=True)
     #Creación de ausencia
-    type_of_entity = fields.Many2one('hr.contribution.register', 'Tipo de Entidad')
-    entity = fields.Many2one('hr.employee.entities', 'Entidad')
-    diagnostic = fields.Many2one('hr.leave.diagnostic', 'Diagnóstico')
-    radicado = fields.Char('Recobro radicado #')
-    is_recovery = fields.Boolean('Es recobro')
-    payroll_value = fields.Float('Valor pagado en nómina')
-    eps_value = fields.Float('Valor pagado por la EPS')
-    payment_date = fields.Date ('Fecha de pago')
+    type_of_entity = fields.Many2one('hr.contribution.register', 'Tipo de Entidad',tracking=True)
+    entity = fields.Many2one('hr.employee.entities', 'Entidad',tracking=True)
+    diagnostic = fields.Many2one('hr.leave.diagnostic', 'Diagnóstico',tracking=True)
+    radicado = fields.Char('Recobro radicado #',tracking=True)
+    is_recovery = fields.Boolean('Es recobro',tracking=True)
+    payroll_value = fields.Float('Valor pagado en nómina',tracking=True)
+    eps_value = fields.Float('Valor pagado por la EPS',tracking=True)
+    payment_date = fields.Date ('Fecha de pago',tracking=True)
     # Campos fecha real
-    z_date_real_from = fields.Date('Fecha real desde')
-    z_date_real_to = fields.Date('Fecha real hasta')
+    z_date_real_from = fields.Date('Fecha real desde',tracking=True)
+    z_date_real_to = fields.Date('Fecha real hasta',tracking=True)
     z_real_number_of_days = fields.Integer('Duración real (Días)', compute='_onchange_real_leave_dates')
     z_qty_extension = fields.Integer('Prorrogas',tracking=True,default=0)
+    #Prorroga
+    z_leave_extension_ids = fields.One2many('zue.hr.leave.extension.wizard', 'z_leave_id', 'Prorroga')
+    z_payroll_value_with_extension = fields.Float('Valor pagado en nómina con prorrogas', compute='get_values_with_extension', store=True, tracking=True)
+    z_eps_value_with_extension = fields.Float('Valor pagado por la EPS  con prorrogas', compute='get_values_with_extension', store=True, tracking=True)
 
     @api.onchange('date_from', 'date_to', 'employee_id')
     def _onchange_leave_dates(self):
-        if self.holiday_status_id.is_vacation == False:            
+        if self.holiday_status_id.is_vacation == False:
             if self.date_from and self.date_to:
                 self.number_of_days = self._get_number_of_days(self.date_from, self.date_to, self.employee_id.id)['days']
             else:
@@ -70,7 +74,7 @@ class HolidaysRequest(models.Model):
             if record.employee_id and record.holiday_status_id:
                 record.type_of_entity = record.holiday_status_id.type_of_entity_association.id
                 for entities in record.employee_id.social_security_entities:
-                    if entities.contrib_id.id == record.holiday_status_id.type_of_entity_association.id:                        
+                    if entities.contrib_id.id == record.holiday_status_id.type_of_entity_association.id:
                         record.entity = entities.partner_id.id
             else:
                 record.type_of_entity = False
@@ -78,7 +82,7 @@ class HolidaysRequest(models.Model):
                 record.diagnostic = False
 
     @api.onchange('number_of_days','request_date_from')
-    def onchange_number_of_days_vacations(self):   
+    def onchange_number_of_days_vacations(self):
         for record in self:
             original_number_of_days = record.number_of_days
             if record.holiday_status_id.is_vacation and record.request_date_from:
@@ -101,14 +105,14 @@ class HolidaysRequest(models.Model):
                             days_31_h += 1 if date_add.day == 31 else 0
                             date_to = date_add
                         else:
-                            cant_days = cant_days - 1     
+                            cant_days = cant_days - 1
                             business_days += 1
                             days_31_b += 1 if date_add.day == 31 else 0
                             date_to = date_add
                     else:
                         holidays += 1
                         days_31_h += 1 if date_add.day == 31 else 0
-                        date_to = date_add                    
+                        date_to = date_add
                 #Guardar calculo en el campo fecha final
                 record.business_days = business_days - days_31_b
                 record.holidays = holidays - days_31_h
@@ -147,8 +151,8 @@ class HolidaysRequest(models.Model):
                 raise ValidationError(_('El empleado ' + holiday.employee_id.name + ' esta en la compañía ' + holiday.employee_id.company_id.name + ' por lo cual no se puede aprobar debido a que se encuentra ubicado en la compañía ' + self.env.company.name + ', seleccione la compañía del empleado para aprobar la ausencia.'))
             # Validación adjunto
             if holiday.holiday_status_id.obligatory_attachment:
-                attachment = self.env['ir.attachment'].search([('res_model', '=', 'hr.leave'),('res_id','=',holiday.id)])    
-                if not attachment:    
+                attachment = self.env['ir.attachment'].search([('res_model', '=', 'hr.leave'),('res_id','=',holiday.id)])
+                if not attachment:
                     raise ValidationError(_('Es obligatorio agregar un adjunto para la ausencia '+holiday.display_name+'.'))
         #Ejecución metodo estandar
         obj = super(HolidaysRequest, self).action_approve()
@@ -205,24 +209,37 @@ class HolidaysRequest(models.Model):
     @api.model
     def create(self, vals):
         if vals.get('employee_identification'):
-            obj_employee = self.env['hr.employee'].search([('identification_id', '=', vals.get('employee_identification'))])            
+            obj_employee = self.env['hr.employee'].search([('identification_id', '=', vals.get('employee_identification'))])
             vals['employee_id'] = obj_employee.id
         if vals.get('employee_id'):
-            obj_employee = self.env['hr.employee'].search([('id', '=', vals.get('employee_id'))])            
-            vals['employee_identification'] = obj_employee.identification_id            
-        
+            obj_employee = self.env['hr.employee'].search([('id', '=', vals.get('employee_id'))])
+            vals['employee_identification'] = obj_employee.identification_id
+
         res = super(HolidaysRequest, self).create(vals)
         return res
 
     def add_extension(self):
         return {
-            'context': {'default_z_leave_id': self.id},
+            'context': {'default_z_leave_id': self.id,
+                        'default_z_date_end': self.request_date_to if self.request_date_to else False,
+                        'default_z_diagnostic_original_id': self.diagnostic.id if self.diagnostic else False,
+                        'default_z_diagnostic_id':self.diagnostic.id if self.diagnostic else False},
             'view_type': 'form',
             'view_mode': 'form',
             'res_model': 'zue.hr.leave.extension.wizard',
             'type': 'ir.actions.act_window',
             'target': 'new',
         }
+
+    @api.depends('z_leave_extension_ids','payroll_value','eps_value')
+    def get_values_with_extension(self):
+        for record in self:
+            if len(record.z_leave_extension_ids) > 0:
+                record.z_payroll_value_with_extension = record.payroll_value + sum([i.z_payroll_value for i in record.z_leave_extension_ids])
+                record.z_eps_value_with_extension = record.eps_value + sum([i.z_eps_value for i in record.z_leave_extension_ids])
+            else:
+                record.z_payroll_value_with_extension = record.payroll_value
+                record.z_eps_value_with_extension = record.eps_value
 
 
 class hr_leave_diagnostic(models.Model):
@@ -250,19 +267,29 @@ class hr_leave_diagnostic(models.Model):
         diagnostic_interface = self._search(expression.AND([domain, args]), limit=limit, access_rights_uid=name_get_uid)
         return diagnostic_interface#self.browse(contract_interface_id).name_get()
 
-class zue_hr_leave_extension_wizard(models.TransientModel):
+class zue_hr_leave_extension_wizard(models.Model):
     _name = 'zue.hr.leave.extension.wizard'
     _description = 'Agregar prorroga en ausencias'
 
     z_leave_id = fields.Many2one('hr.leave',string='Ausencia',required=True)
+    z_date_end = fields.Date(string='Fecha final original', required=True)
     z_new_date_end = fields.Date(string='Nueva fecha final',required=True)
+    z_diagnostic_original_id = fields.Many2one('hr.leave.diagnostic', 'Diagnóstico Original')
+    z_diagnostic_id = fields.Many2one('hr.leave.diagnostic', 'Nuevo Diagnóstico')
+    z_radicado = fields.Char('Recobro radicado #')
+    z_payroll_value = fields.Float('Valor pagado en nómina')
+    z_eps_value = fields.Float('Valor pagado por la EPS')
+    z_payment_date = fields.Date('Fecha de pago')
 
     def authorized_extension(self):
         self.z_leave_id.action_refuse()
         self.z_leave_id.action_draft()
-        self.z_leave_id.write({'request_date_to':self.z_new_date_end,'z_qty_extension':self.z_leave_id.z_qty_extension+1})
+        self.z_leave_id.write({'request_date_to':self.z_new_date_end,
+                               'z_qty_extension':self.z_leave_id.z_qty_extension+1,
+                               'diagnostic':self.z_diagnostic_id.id})
         self.z_leave_id.action_confirm()
-        self.z_leave_id.action_approve()
+        if self.z_leave_id.state != 'validate':
+            self.z_leave_id.action_approve()
         return True
 
 
