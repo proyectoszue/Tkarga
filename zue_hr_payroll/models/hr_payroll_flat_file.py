@@ -1028,6 +1028,11 @@ class hr_payroll_flat_file(models.TransientModel):
             else:
                 raise ValidationError(_('El empleado ' + payslip.contract_id.employee_id.name + ' no tiene tipo de documento valido, por favor verificar.'))
             nit_beneficiario = right(16 * '0' + payslip.contract_id.employee_id.identification_id, 16)
+            codigo_nit = '0'
+            for vat in payslip.employee_id.address_home_id.x_document_type:
+                dig_verificacion = payslip.employee_id.address_home_id.x_digit_verification
+                if x_document_type == '31':
+                    codigo_nit = dig_verificacion
             forma_pago = '1'
             banco_destino = ''
             for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
@@ -1058,7 +1063,7 @@ class hr_payroll_flat_file(models.TransientModel):
                 if bank.is_main and banco_destino != '1013':
                     no_cuenta_nacham = left(str(bank.acc_number).replace("-", "") + 17 * ' ', 17)
                 else:
-                    no_cuenta_nacham = '                 '
+                    no_cuenta_nacham = '00000000000000000'
             # Obtener valor de transacción
             total_valor_transaccion = 0
             valor_transaccion = 13 * '0'
@@ -1082,8 +1087,8 @@ class hr_payroll_flat_file(models.TransientModel):
             email_beneficiario = '                                                 '
             concepto = left(self.description + 40 * ' ', 40)
 
-            content_line = '''%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s''' % (
-                document_type, nit_beneficiario, forma_pago, banco_destino, oficina_receptora,digito_verificacion,
+            content_line = '''%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s''' % (
+                document_type, nit_beneficiario, codigo_nit, forma_pago, banco_destino, oficina_receptora,digito_verificacion,
                 tipo_transaccion,cuenta,tipo_cuenta_nacham,no_cuenta_nacham,valor_transaccion,valor_transaccion_decimal,
                 fecha_mov,codigo_oficina_pagadora,nombre_beneficiario,direccion_beneficiario,direccion_beneficiario_dos,
                 email_beneficiario,concepto)
