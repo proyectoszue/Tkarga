@@ -1027,7 +1027,7 @@ class hr_payroll_flat_file(models.TransientModel):
                 document_type = '05'
             else:
                 raise ValidationError(_('El empleado ' + payslip.contract_id.employee_id.name + ' no tiene tipo de documento valido, por favor verificar.'))
-            nit_beneficiario = right(16 * '0' + payslip.contract_id.employee_id.identification_id, 16)
+            nit_beneficiario = right(15 * '0' + payslip.contract_id.employee_id.identification_id, 15)
             codigo_nit = '0'
             for vat in payslip.employee_id.address_home_id.x_document_type:
                 dig_verificacion = payslip.employee_id.address_home_id.x_digit_verification
@@ -1036,33 +1036,33 @@ class hr_payroll_flat_file(models.TransientModel):
             forma_pago = '1'
             banco_destino = ''
             for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
-                if bank.is_main:
+                if bank.is_main == True:
                     banco_destino = bank.bank_id.bic
-            oficina_receptora = '0000'
-            digito_verificacion = '00'
-            tipo_transaccion = ''
-            for bank in payslip.employee_id.address_home_id.bank_ids:
-                if bank.is_main and banco_destino == '1013':
-                    tipo_transaccion = '0200' if bank.type_account == 'A' else '0100' # 0100: Abono a cuenta corriente / 0200: Abono a cuenta ahorros
-                else:
-                    tipo_transaccion = '0000'
+            # oficina_receptora = '0000'
+            # digito_verificacion = '00'
+            # tipo_transaccion = ''
+            # for bank in payslip.employee_id.address_home_id.bank_ids:
+            #     if bank.is_main and banco_destino == '0013':
+            #         tipo_transaccion = '0200' if bank.type_account == 'A' else '0100' # 0100: Abono a cuenta corriente / 0200: Abono a cuenta ahorros
+            #     else:
+            #         tipo_transaccion = '0000'
             cuenta = ''
             for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
-                if bank.is_main and banco_destino == '1013':
-                    cuenta = (bank.acc_number[-6:])
+                if bank.is_main == True and banco_destino == '0013':
+                    cuenta = right(16 * '0' + (bank.acc_number[-16:]), 16)
                 else:
-                    cuenta = '000000'
+                    cuenta = '0000000000000000'
             tipo_cuenta_nacham = ''
             for bank in payslip.employee_id.address_home_id.bank_ids:
-                if bank.is_main and banco_destino != '1013':
+                if bank.is_main == True and banco_destino != '0013':
                     tipo_cuenta_nacham = '02' if bank.type_account == 'A' else '01'  # 01: Abono a cuenta corriente / 02: Abono a cuenta ahorros
-                else:
+                elif banco_destino == '0013':
                     tipo_cuenta_nacham = '00'
             no_cuenta_nacham = ''
             for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
-                if bank.is_main and banco_destino != '1013':
+                if bank.is_main == True and banco_destino != '0013':
                     no_cuenta_nacham = left(str(bank.acc_number).replace("-", "") + 17 * ' ', 17)
-                else:
+                elif banco_destino == '0013':
                     no_cuenta_nacham = '00000000000000000'
             # Obtener valor de transacción
             total_valor_transaccion = 0
@@ -1087,11 +1087,10 @@ class hr_payroll_flat_file(models.TransientModel):
             email_beneficiario = '                                                 '
             concepto = left(self.description + 40 * ' ', 40)
 
-            content_line = '''%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s''' % (
-                document_type, nit_beneficiario, codigo_nit, forma_pago, banco_destino, oficina_receptora,digito_verificacion,
-                tipo_transaccion,cuenta,tipo_cuenta_nacham,no_cuenta_nacham,valor_transaccion,valor_transaccion_decimal,
-                fecha_mov,codigo_oficina_pagadora,nombre_beneficiario,direccion_beneficiario,direccion_beneficiario_dos,
-                email_beneficiario,concepto)
+            content_line = '''%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s''' % (
+                document_type, nit_beneficiario, codigo_nit, forma_pago, banco_destino, cuenta,tipo_cuenta_nacham,
+                no_cuenta_nacham,valor_transaccion,valor_transaccion_decimal,fecha_mov,codigo_oficina_pagadora,
+                nombre_beneficiario,direccion_beneficiario,direccion_beneficiario_dos,email_beneficiario,concepto)
 
             if cant_detalle == 1:
                 det_content_txt = content_line
