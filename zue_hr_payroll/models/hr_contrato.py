@@ -14,6 +14,7 @@ class Hr_payslip(models.Model):
     have_compensation = fields.Boolean('Indemnización', default=False)
     settle_payroll_concepts = fields.Boolean('Liquida conceptos de nómina', default=True)
     novelties_payroll_concepts = fields.Boolean('Liquida conceptos de novedades', default=True)
+    z_no_days_worked = fields.Boolean('Sin días laborados', default=False, help='Aplica unicamente cuando la fecha de inicio es igual a la fecha de finalización.')
 
     @api.onchange('employee_id','contract_id','struct_id','date_to')
     def load_dates_liq_contrato(self):

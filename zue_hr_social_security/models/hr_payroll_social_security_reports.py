@@ -152,7 +152,7 @@ class hr_payroll_social_security(models.Model):
         book.close()
 
         self.write({
-            'excel_file': base64.encodestring(stream.getvalue()),
+            'excel_file': base64.encodebytes(stream.getvalue()),
             'excel_file_name': filename,
         })
 
@@ -191,7 +191,7 @@ class hr_payroll_social_security(models.Model):
         book.close()
 
         self.write({
-            'excel_file': base64.encodestring(stream.getvalue()),
+            'excel_file': base64.encodebytes(stream.getvalue()),
             'excel_file_name': filename,
         })
 

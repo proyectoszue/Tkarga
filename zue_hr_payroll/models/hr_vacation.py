@@ -323,8 +323,16 @@ class Hr_payslip(models.Model):
                         #Calculo fechas de causacion                        
                         if initial_accrual_date and final_accrual_date:
                             initial_accrual_date = final_accrual_date + timedelta(days=1)
+                            dias_ausencias = sum([i.number_of_days for i in self.env['hr.leave'].search(
+                                [('date_from', '>=', initial_accrual_date), ('date_to', '<=', self.date_to),
+                                 ('state', '=', 'validate'), ('employee_id', '=', self.employee_id.id),
+                                 ('unpaid_absences', '=', True)])])
+                            dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search(
+                                [('star_date', '>=', initial_accrual_date), ('end_date', '<=', self.date_to),
+                                 ('employee_id', '=', self.employee_id.id),
+                                 ('leave_type_id.unpaid_absences', '=', True)])])
                             days = ((days_vacations_business+days_vacations_31_business) * 365) / 15
-                            final_accrual_date = initial_accrual_date + timedelta(days=days-1)
+                            final_accrual_date = initial_accrual_date + timedelta(days=(days+dias_ausencias)-1)
                         else:
                             obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee.id)])     
                             if obj_vacation:
@@ -340,8 +348,16 @@ class Hr_payslip(models.Model):
                             #fecha inicial causación
                             initial_accrual_date = accrual_date
                             #fecha final causación
+                            dias_ausencias = sum([i.number_of_days for i in self.env['hr.leave'].search(
+                                [('date_from', '>=', initial_accrual_date), ('date_to', '<=', self.date_to),
+                                 ('state', '=', 'validate'), ('employee_id', '=', self.employee_id.id),
+                                 ('unpaid_absences', '=', True)])])
+                            dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search(
+                                [('star_date', '>=', initial_accrual_date), ('end_date', '<=', self.date_to),
+                                 ('employee_id', '=', self.employee_id.id),
+                                 ('leave_type_id.unpaid_absences', '=', True)])])
                             days = ((days_vacations_business+days_vacations_31_business) * 365) / 15
-                            final_accrual_date = initial_accrual_date + timedelta(days=days-1)   
+                            final_accrual_date = initial_accrual_date + timedelta(days=(days+dias_ausencias)-1)
                             #dias360 = self.dias360(initial_accrual_date,final_accrual_date)
 
                         # create/overwrite the rule in the temporary results
@@ -403,8 +419,16 @@ class Hr_payslip(models.Model):
                         #Calculo fechas de causacion                        
                         if initial_accrual_date and final_accrual_date:
                             initial_accrual_date = final_accrual_date + timedelta(days=1)
+                            dias_ausencias = sum([i.number_of_days for i in self.env['hr.leave'].search(
+                                [('date_from', '>=', initial_accrual_date), ('date_to', '<=', self.date_to),
+                                 ('state', '=', 'validate'), ('employee_id', '=', self.employee_id.id),
+                                 ('unpaid_absences', '=', True)])])
+                            dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search(
+                                [('star_date', '>=', initial_accrual_date), ('end_date', '<=', self.date_to),
+                                 ('employee_id', '=', self.employee_id.id),
+                                 ('leave_type_id.unpaid_absences', '=', True)])])
                             days = (days_vacations * 365) / 15
-                            final_accrual_date = initial_accrual_date + timedelta(days=days-1)
+                            final_accrual_date = initial_accrual_date + timedelta(days=(days+dias_ausencias)-1)
                         else:
                             obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee.id)])     
                             if obj_vacation:
@@ -420,9 +444,17 @@ class Hr_payslip(models.Model):
                             #fecha inicial causación
                             initial_accrual_date = accrual_date
                             #fecha final causación
-                            days = (days_vacations * 365) / 15                            
+                            dias_ausencias = sum([i.number_of_days for i in self.env['hr.leave'].search(
+                                [('date_from', '>=', initial_accrual_date), ('date_to', '<=', self.date_to),
+                                 ('state', '=', 'validate'), ('employee_id', '=', self.employee_id.id),
+                                 ('unpaid_absences', '=', True)])])
+                            dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search(
+                                [('star_date', '>=', initial_accrual_date), ('end_date', '<=', self.date_to),
+                                 ('employee_id', '=', self.employee_id.id),
+                                 ('leave_type_id.unpaid_absences', '=', True)])])
+                            days = (days_vacations * 365) / 15
                             #for obj_leave in leaves_all_obj:
-                            final_accrual_date = initial_accrual_date + timedelta(days=days-1)   
+                            final_accrual_date = initial_accrual_date + timedelta(days=(days+dias_ausencias)-1)
                             #dias360 = self.dias360(initial_accrual_date,final_accrual_date)
 
                         # create/overwrite the rule in the temporary results
