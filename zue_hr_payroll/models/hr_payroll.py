@@ -629,13 +629,13 @@ class Hr_payslip(models.Model):
                     'number_of_days': w.number_of_days,
                     'number_of_hours': w.number_of_hours,
                 })
-
-            if self.struct_id.process == 'contrato' and self.date_from == self.date_to:
+            if self.struct_id.process == 'contrato' and self.date_from == self.date_to and self.z_no_days_worked:
                 return [(5, False, False)]
             else:
                 return [(5, 0, 0)] + [(0, 0, vals) for vals in res]
         else:
             return [(5, False, False)]
+
 
     def _get_payslip_lines(self,inherit_vacation=0,inherit_prima=0,inherit_contrato_dev=0,inherit_contrato_ded_bases=0,inherit_contrato_ded=0,localdict=None):
         def _sum_salary_rule_category(localdict, category, amount):
@@ -661,7 +661,7 @@ class Hr_payslip(models.Model):
         result = {}
         result_not = {}
         rules_dict = {}
-        if inherit_contrato_ded_bases + inherit_contrato_ded + inherit_contrato_dev == 1 and self.date_from == self.date_to:
+        if inherit_contrato_ded_bases + inherit_contrato_ded + inherit_contrato_dev == 1 and (self.date_from == self.date_to and self.z_no_days_worked):
             worked_days_dict = {}
         else:
             worked_days_dict = {line.code: line for line in self.worked_days_line_ids if line.code}

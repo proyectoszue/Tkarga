@@ -131,6 +131,7 @@ if obj_salary_rule and liquidated_eps_employee and contract.contract_type != 'ap
         for wd in worked_days.dict.values():
             dias_work_act += wd.number_of_days if wd.work_entry_type_id.not_contribution_base == False else 0
         dias_validation = dias_work + dias_work_act
+        dias_validation = dias_validation if dias_validation > 0 else 1
         dias_work = dias_work_act if (aplicar == 0) else dias_work + dias_work_act
         top_twenty_five_smmlv = (annual_parameters.top_twenty_five_smmlv / 30) * dias_validation
         if contract.modality_salary == 'integral':
@@ -179,6 +180,7 @@ if obj_salary_rule and liquidate_employee_pension and contract.contract_type != 
             for wd in worked_days.dict.values():
                 dias_work_act += wd.number_of_days if wd.work_entry_type_id.not_contribution_base == False else 0
             dias_validation = dias_work + dias_work_act
+            dias_validation = dias_validation if dias_validation > 0 else 1
             dias_work = dias_work_act if (aplicar == 0) else dias_work + dias_work_act
             top_twenty_five_smmlv = (annual_parameters.top_twenty_five_smmlv / 30) * dias_validation
             if contract.modality_salary == 'integral':

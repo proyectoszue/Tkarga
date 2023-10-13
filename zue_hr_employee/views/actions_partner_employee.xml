@@ -46,6 +46,19 @@
                         </tree>
                     </field>
                 </xpath>
+                <xpath expr="//label[@for='street']" position="before">
+                    <span class="o_form_label o_td_label">
+                        <b>Info. Expedición documento</b>
+                    </span>
+                    <div class="o_address_format">
+                        <field name="x_vat_expedition_date" placeholder="Fecha" class="font-weight-bold"/>
+                        <field name="z_country_issuance_id" placeholder="Pais" class="o_address_country"/>
+                        <field name="z_department_issuance_id" placeholder="Departamento"
+                               class="o_address_state" domain="[['country_id','=',z_country_issuance_id]]"/>
+                        <field name="z_city_issuance_id" placeholder="Ciudad" class="o_address_city"
+                               domain="[['state_id','=',z_department_issuance_id]]"/>
+                    </div>
+                </xpath>
             </field>
         </record>   
     </data>
