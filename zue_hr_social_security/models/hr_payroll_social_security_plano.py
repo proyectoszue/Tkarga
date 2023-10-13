@@ -274,9 +274,9 @@ class hr_payroll_social_security(models.Model):
                     entity_pension_history = entity_h.partner_id
 
             cTDE = ' '
-            cTAE = 'X' if entity_eps_history else ' '
+            cTAE = 'X' if entity_eps_history and item.nDiasLiquidados > 0 else ' '
             cTDP = ' ' 
-            cTAP = 'X' if entity_pension_history else ' '
+            cTAP = 'X' if entity_pension_history and item.nDiasLiquidados > 0 else ' '
             obj_change_wage = self.env['hr.contract.change.wage'].search([('contract_id','=',item.contract_id.id),('date_start','!=',False),('date_start','>=',date_start),('date_start','<=',date_end)],limit=1)
             cVSP = 'X' if len(obj_change_wage) > 0 and item.nDiasLiquidados > 0 and cIngreso != 'X' else ' '
             cVSP = ' ' if item.employee_id.tipo_coti_id.code == '51' else cVSP
@@ -298,8 +298,12 @@ class hr_payroll_social_security(models.Model):
 
             #-----------------Valores Parte 1
             if obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidates_solidarity_fund:
-                cCodigoEntidadFondoPension = left(entity_pension_history.code_pila_eps+' '*6,6) if entity_pension_history else left(entity_pension.code_pila_eps+' '*6 if entity_pension else ' '*6,6)
-                cCodigoEntidadFondoPensionTraslado = left(entity_pension.code_pila_eps+' '*6 if entity_pension else ' '*6,6) if entity_pension_history else ' '*6
+                if item.nDiasLiquidados > 0:
+                    cCodigoEntidadFondoPension = left(entity_pension_history.code_pila_eps+' '*6,6) if entity_pension_history else left(entity_pension.code_pila_eps+' '*6 if entity_pension else ' '*6,6)
+                    cCodigoEntidadFondoPensionTraslado = left(entity_pension.code_pila_eps+' '*6 if entity_pension else ' '*6,6) if entity_pension_history else ' '*6
+                else:
+                    cCodigoEntidadFondoPension = left(entity_pension.code_pila_eps + ' ' * 6 if entity_pension else ' ' * 6, 6)
+                    cCodigoEntidadFondoPensionTraslado = ' ' * 6
                 if item.employee_id.subtipo_coti_id.not_contribute_pension != True:
                     cDiasCotizadosPension = '00' if item.nValorBaseFondoPension <= 0 else right('00' + str(
                         item.nDiasLiquidados + item.nDiasVacaciones + item.nDiasIncapacidadEPS + item.nDiasLicencia + item.nDiasLicenciaRenumerada + item.nDiasMaternidad + item.nDiasIncapacidadARP),2)
@@ -310,8 +314,12 @@ class hr_payroll_social_security(models.Model):
                 cCodigoEntidadFondoPensionTraslado = ' '*6
                 cDiasCotizadosPension = '00'
             if obj_parameterization_contributors.liquidates_eps_company or obj_parameterization_contributors.liquidated_eps_employee:
-                cCodigoEntidadEPS = left(entity_eps_history.code_pila_eps+' '*6,6) if entity_eps_history else left(entity_eps.code_pila_eps+' '*6,6)
-                cCodigoEntidadEPSTraslado = left(entity_eps.code_pila_eps + ' ' * 6,6) if entity_eps_history else ' ' * 6
+                if item.nDiasLiquidados > 0:
+                    cCodigoEntidadEPS = left(entity_eps_history.code_pila_eps+' '*6,6) if entity_eps_history else left(entity_eps.code_pila_eps+' '*6,6)
+                    cCodigoEntidadEPSTraslado = left(entity_eps.code_pila_eps + ' ' * 6,6) if entity_eps_history else ' ' * 6
+                else:
+                    cCodigoEntidadEPS = left(entity_eps.code_pila_eps+' '*6,6)
+                    cCodigoEntidadEPSTraslado = ' ' * 6
                 cDiasCotizadosSalud = '00' if item.nValorBaseSalud <= 0 else right('00' + str(
                     item.nDiasLiquidados + item.nDiasVacaciones + item.nDiasIncapacidadEPS + item.nDiasLicencia + item.nDiasLicenciaRenumerada + item.nDiasMaternidad + item.nDiasIncapacidadARP),2)
             else:
@@ -464,7 +472,7 @@ class hr_payroll_social_security(models.Model):
             filename= 'MedioMagneticoSeguridadSocial'+cPeriodoPagoSalud+'.txt'    
             
         self.write({
-            'txt_file': base64.encodestring((content_txt).encode()),
+            'txt_file': base64.encodebytes((content_txt).encode()),
             'txt_file_name': filename,
         })   
 

@@ -210,7 +210,7 @@ class hr_entities_reports(models.TransientModel):
             book.close()
 
             self.write({
-                'excel_file': base64.encodestring(stream.getvalue()),
+                'excel_file': base64.encodebytes(stream.getvalue()),
                 'excel_file_name': filename,
             })
 

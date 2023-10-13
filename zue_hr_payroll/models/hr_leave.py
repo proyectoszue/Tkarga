@@ -48,7 +48,7 @@ class HolidaysRequest(models.Model):
 
     @api.onchange('date_from', 'date_to', 'employee_id')
     def _onchange_leave_dates(self):
-        if self.holiday_status_id.is_vacation == False:
+        if self.holiday_status_id.is_vacation == False:            
             if self.date_from and self.date_to:
                 self.number_of_days = self._get_number_of_days(self.date_from, self.date_to, self.employee_id.id)['days']
             else:
@@ -74,7 +74,7 @@ class HolidaysRequest(models.Model):
             if record.employee_id and record.holiday_status_id:
                 record.type_of_entity = record.holiday_status_id.type_of_entity_association.id
                 for entities in record.employee_id.social_security_entities:
-                    if entities.contrib_id.id == record.holiday_status_id.type_of_entity_association.id:
+                    if entities.contrib_id.id == record.holiday_status_id.type_of_entity_association.id:                        
                         record.entity = entities.partner_id.id
             else:
                 record.type_of_entity = False
@@ -82,7 +82,7 @@ class HolidaysRequest(models.Model):
                 record.diagnostic = False
 
     @api.onchange('number_of_days','request_date_from')
-    def onchange_number_of_days_vacations(self):
+    def onchange_number_of_days_vacations(self):   
         for record in self:
             original_number_of_days = record.number_of_days
             if record.holiday_status_id.is_vacation and record.request_date_from:
@@ -105,14 +105,14 @@ class HolidaysRequest(models.Model):
                             days_31_h += 1 if date_add.day == 31 else 0
                             date_to = date_add
                         else:
-                            cant_days = cant_days - 1
+                            cant_days = cant_days - 1     
                             business_days += 1
                             days_31_b += 1 if date_add.day == 31 else 0
                             date_to = date_add
                     else:
                         holidays += 1
                         days_31_h += 1 if date_add.day == 31 else 0
-                        date_to = date_add
+                        date_to = date_add                    
                 #Guardar calculo en el campo fecha final
                 record.business_days = business_days - days_31_b
                 record.holidays = holidays - days_31_h
@@ -151,8 +151,8 @@ class HolidaysRequest(models.Model):
                 raise ValidationError(_('El empleado ' + holiday.employee_id.name + ' esta en la compañía ' + holiday.employee_id.company_id.name + ' por lo cual no se puede aprobar debido a que se encuentra ubicado en la compañía ' + self.env.company.name + ', seleccione la compañía del empleado para aprobar la ausencia.'))
             # Validación adjunto
             if holiday.holiday_status_id.obligatory_attachment:
-                attachment = self.env['ir.attachment'].search([('res_model', '=', 'hr.leave'),('res_id','=',holiday.id)])
-                if not attachment:
+                attachment = self.env['ir.attachment'].search([('res_model', '=', 'hr.leave'),('res_id','=',holiday.id)])    
+                if not attachment:    
                     raise ValidationError(_('Es obligatorio agregar un adjunto para la ausencia '+holiday.display_name+'.'))
         #Ejecución metodo estandar
         obj = super(HolidaysRequest, self).action_approve()
@@ -209,12 +209,12 @@ class HolidaysRequest(models.Model):
     @api.model
     def create(self, vals):
         if vals.get('employee_identification'):
-            obj_employee = self.env['hr.employee'].search([('identification_id', '=', vals.get('employee_identification'))])
+            obj_employee = self.env['hr.employee'].search([('identification_id', '=', vals.get('employee_identification'))])            
             vals['employee_id'] = obj_employee.id
         if vals.get('employee_id'):
-            obj_employee = self.env['hr.employee'].search([('id', '=', vals.get('employee_id'))])
-            vals['employee_identification'] = obj_employee.identification_id
-
+            obj_employee = self.env['hr.employee'].search([('id', '=', vals.get('employee_id'))])            
+            vals['employee_identification'] = obj_employee.identification_id            
+        
         res = super(HolidaysRequest, self).create(vals)
         return res
 

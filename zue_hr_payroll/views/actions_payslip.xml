@@ -39,11 +39,12 @@
                             <field name="have_compensation" attrs="{'invisible':[('struct_process', '!=', 'contrato')], 'readonly':[('state', '=', 'done')]}"/>
                             <field name="settle_payroll_concepts" attrs="{'invisible':[('struct_process', '!=', 'contrato')], 'readonly':[('state', '=', 'done')]}"/>
                             <field name="novelties_payroll_concepts" attrs="{'invisible':[('struct_process', '!=', 'contrato')], 'readonly':[('state', '=', 'done')]}"/>
+                            <field name="z_no_days_worked" attrs="{'invisible':[('struct_process', '!=', 'contrato')], 'readonly':[('state', '=', 'done')]}"/>
                         </group>
                         <group>
-                            <field name="date_prima" attrs="{'invisible':[('struct_process', '!=', 'contrato')], 'required':[('struct_process', '=', 'contrato')], 'readonly':[('state', '=', 'done')]}"/>
-                            <field name="date_cesantias" attrs="{'invisible':[('struct_process', '!=', 'contrato')], 'required':[('struct_process', '=', 'contrato')], 'readonly':[('state', '=', 'done')]}"/>
-                            <field name="date_vacaciones" attrs="{'invisible':[('struct_process', '!=', 'contrato')], 'required':[('struct_process', '=', 'contrato')], 'readonly':[('state', '=', 'done')]}"/>
+                            <field name="date_prima" attrs="{'invisible':[('struct_process', '!=', 'contrato')], 'required':[('struct_process', '=', 'contrato')], 'readonly':[('state', '=', 'done')]}" readonly="1" force_save="1"/>
+                            <field name="date_cesantias" attrs="{'invisible':[('struct_process', '!=', 'contrato')], 'required':[('struct_process', '=', 'contrato')], 'readonly':[('state', '=', 'done')]}" readonly="1" force_save="1"/>
+                            <field name="date_vacaciones" attrs="{'invisible':[('struct_process', '!=', 'contrato')], 'required':[('struct_process', '=', 'contrato')], 'readonly':[('state', '=', 'done')]}" readonly="1" force_save="1"/>
                         </group>
                     </group>
                     <group attrs="{'invisible':[('struct_process', 'not in', ['cesantias','intereses_cesantias','contrato'])]}">
@@ -72,8 +73,8 @@
                     <attribute name="invisible">1</attribute>
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/notebook[1]/page[2]/field[@name='line_ids']/tree[1]/field[@name='rate']" position="replace">
-                    <field name="initial_accrual_date" optional="show"/>
-                    <field name="final_accrual_date" optional="show"/>
+                    <field name="initial_accrual_date" optional="show" readonly="1" force_save="1"/>
+                    <field name="final_accrual_date" optional="show" readonly="1" force_save="1"/>
                     <field name="amount_base" optional="show"/>
                     <field name="entity_id" optional="show"/>
                     <field name="loan_id" optional="show"/>
