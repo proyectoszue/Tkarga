@@ -277,10 +277,12 @@
                     <page string="Documentos" name="documentos">
                         <group>
                             <field name="documents_ids" nolabel="1">
-                                <tree editable="bottom">
+                                <tree editable="bottom" delete="0" edit="0">
                                     <field name="name"/>
                                     <field name="expiration_date"/>
-                                    <field name="document"/>
+                                    <field name="document" widget="selection"/>
+                                    <button name="unlink" string="Eliminar" type="object" icon="fa-trash"
+                                            confirm="¿Desea eliminar este documento?"/>
                                 </tree>
                             </field>
                         </group>
