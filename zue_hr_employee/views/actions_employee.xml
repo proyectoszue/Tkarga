@@ -280,7 +280,7 @@
                                 <tree editable="bottom" delete="0" edit="0">
                                     <field name="name"/>
                                     <field name="expiration_date"/>
-                                    <field name="document" widget="selection"/>
+                                    <field name="document"/>
                                     <button name="unlink" string="Eliminar" type="object" icon="fa-trash"
                                             confirm="¿Desea eliminar este documento?"/>
                                 </tree>
