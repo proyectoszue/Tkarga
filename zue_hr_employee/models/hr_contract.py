@@ -470,7 +470,7 @@ class hr_contract(models.Model):
             return promedio
         if z_value_contract == True:
             obj_concept = self.concepts_ids.filtered(lambda x: x.input_id.id == salary_rule_id.id)
-            if len(obj_concept) == 1:
+            if len(obj_concept) > 0:
                 rule_value = sum([i.amount for i in obj_concept])
                 if obj_concept.aplicar == '0':
                     rule_value = rule_value * 2
