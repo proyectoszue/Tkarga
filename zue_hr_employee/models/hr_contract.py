@@ -469,7 +469,7 @@ class hr_contract(models.Model):
                         promedio = total/(len(slips_ids))
             return promedio
         if z_value_contract == True:
-            obj_concepts = self.concepts_ids.filtered(lambda x: x.input_id.id == salary_rule_id.id)
+            obj_concepts = self.concepts_ids.filtered(lambda x: x.input_id.id == salary_rule_id.id and x.state == 'done')
             if obj_concepts:
                 rule_value = sum(obj_concept.amount for obj_concept in obj_concepts)
                 for obj_concept in obj_concepts:
