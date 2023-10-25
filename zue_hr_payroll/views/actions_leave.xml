@@ -175,8 +175,8 @@
                             <field name="z_date_end" readonly="1" force_save="1"/>
                             <field name="z_diagnostic_id" attrs="{'invisible': [['z_diagnostic_id','=',False]]}"/>
                             <field name="z_new_date_end"/>
-                            <field name="z_attachment_filename" invisible="1"/>
-                            <field name="z_attachment" filename="z_attachment_filename"/>
+<!--                            <field name="z_attachment_filename" invisible="1"/>-->
+<!--                            <field name="z_attachment" filename="z_attachment_filename"/>-->
                         </group>
                         <footer>
                             <button name="authorized_extension" type="object" string="Agregar" class="btn btn-primary"/>
