@@ -108,6 +108,19 @@
             </field>
         </record>
 
+        <record id="hr_leave_view_form_manager_inherit" model="ir.ui.view">
+            <field name="name">hr_leave_view_form_manager_inherit</field>
+            <field name="model">hr.leave</field>
+            <field name="inherit_id" ref="hr_holidays.hr_leave_view_form_manager"/>
+            <field name="priority" eval="20"/>
+            <field name="arch" type="xml">
+                <xpath expr="//form[1]/sheet[1]/group[1]/group[@name='col_left']/field[@name='employee_ids']"
+                       position="attributes">
+                    <attribute name="domain">[["contract_id.state","in",['open','finished']]]</attribute>
+                </xpath>
+            </field>
+        </record>
+
         <record model="ir.actions.act_window" id="action_hr_leave_diagnostic">
             <field name="name">Diagnosticos Ausencias</field>
             <field name="res_model">hr.leave.diagnostic</field>
@@ -162,6 +175,8 @@
                             <field name="z_date_end" readonly="1" force_save="1"/>
                             <field name="z_diagnostic_id" attrs="{'invisible': [['z_diagnostic_id','=',False]]}"/>
                             <field name="z_new_date_end"/>
+<!--                            <field name="z_attachment_filename" invisible="1"/>-->
+<!--                            <field name="z_attachment" filename="z_attachment_filename"/>-->
                         </group>
                         <footer>
                             <button name="authorized_extension" type="object" string="Agregar" class="btn btn-primary"/>
