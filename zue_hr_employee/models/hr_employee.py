@@ -171,6 +171,16 @@ class hr_employee_documents(models.Model):
     expiration_date = fields.Date('Fecha de vencimiento')
     document = fields.Many2one('documents.document',string='Documento',required=True)
 
+    def download_document(self):
+        self.ensure_one()
+        # Buscar el campo en el que se almacena el archivo
+        attachment = self.document.attachment_id
+        return {
+            'type': 'ir.actions.act_url',
+            'url': '/web/content/%s?download=true' % attachment.id,
+            'target': 'self',
+        }
+
     def unlink(self):
         obj_document = self.document
         obj = super(hr_employee_documents, self).unlink()
