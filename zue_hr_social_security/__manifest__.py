@@ -25,7 +25,7 @@
         'views/actions_parameterization.xml',
         'views/actions_hr_payroll_social_security.xml',
         'views/actions_hr_social_security_branches.xml',
-        'views/actions_hr_provisions.xml',
+        #'views/actions_hr_provisions.xml',
         'views/actions_hr_closing_configuration.xml',
         'views/actions_hr_entities_reports.xml',
         'views/actions_hr_report_expenses_employee.xml',
