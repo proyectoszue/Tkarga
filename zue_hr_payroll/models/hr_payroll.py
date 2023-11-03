@@ -363,10 +363,15 @@ class Hr_payslip_line(models.Model):
     def _compute_total(self):
         #round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
         for line in self:
-            amount_total_original = float(line.quantity) * line.amount * line.rate / 100
+            if str(line.salary_rule_id.amount_python_compute).find('get_overtime') != -1:  # Verficiar si la regla utiliza la tabla hr.overtime por ende es un concepto de novedad del menu horas extras
+                amount = round(line.amount, 2)
+                line.amount = amount
+            else:
+                amount = line.amount
+            amount_total_original = float(line.quantity) * amount * line.rate / 100
             part_decimal, part_value = math.modf(amount_total_original)
-            amount_total = float(line.quantity) * line.amount * line.rate / 100 #if round_payroll == False else float(line.quantity) * line.amount * line.rate / 100
-            if part_decimal >= 0.5 and math.modf(amount_total)[1] == part_value:
+            amount_total = float(line.quantity) * amount * line.rate / 100 #if round_payroll == False else float(line.quantity) * line.amount * line.rate / 100
+            if part_decimal >= 0.49 and math.modf(amount_total)[1] == part_value:
                 line.total = part_value+1
             else:
                 line.total = round(amount_total,0)
@@ -1016,7 +1021,7 @@ class Hr_payslip(models.Model):
                                 tot_rule_original = (amount * qty * rate / 100.0)
                                 part_decimal, part_value = math.modf(tot_rule_original)
                                 tot_rule = round(amount * qty * rate / 100.0,0)
-                                if part_decimal >= 0.5 and tot_rule == part_value:
+                                if part_decimal >= 0.49 and tot_rule == part_value:
                                     tot_rule = (part_value + 1)+previous_amount
                                 else:
                                     tot_rule = tot_rule+previous_amount
@@ -1059,7 +1064,7 @@ class Hr_payslip(models.Model):
                                         tot_rule_original = (amount * qty * rate / 100.0)
                                         part_decimal, part_value = math.modf(tot_rule_original)
                                         tot_rule = round(amount * qty * rate / 100.0, 0)
-                                        if part_decimal >= 0.5 and tot_rule == part_value:
+                                        if part_decimal >= 0.49 and tot_rule == part_value:
                                             tot_rule = (part_value + 1) + previous_amount
                                         else:
                                             tot_rule = tot_rule + previous_amount
@@ -1152,7 +1157,7 @@ class Hr_payslip(models.Model):
                         tot_rule_original = (amount * qty * rate / 100.0)
                         part_decimal, part_value = math.modf(tot_rule_original)
                         tot_rule = amount * qty * rate / 100.0
-                        if part_decimal >= 0.5 and math.modf(tot_rule)[1] == part_value:
+                        if part_decimal >= 0.49 and math.modf(tot_rule)[1] == part_value:
                             tot_rule = (part_value + 1) + previous_amount
                         else:
                             tot_rule = tot_rule + previous_amount
