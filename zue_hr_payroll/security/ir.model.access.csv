@@ -33,7 +33,6 @@ access_hr_payroll_report_zue_filter,access_hr_payroll_report_zue_filter,model_hr
 access_hr_work_entry_refresh,access_hr_work_entry_refresh,model_hr_work_entry_refresh,,1,1,1,1
 access_hr_accumulated_reports,access_hr_accumulated_reports,model_hr_accumulated_reports,,1,1,1,1
 access_hr_consolidated_reports,access_hr_consolidated_reports,model_hr_consolidated_reports,,1,1,1,1
-access_hr_vacation_book,access_hr_vacation_book,model_hr_vacation_book,,1,1,1,1
 access_hr_report_absenteeism_history,access_hr_report_absenteeism_history,model_hr_report_absenteeism_history,,1,1,1,1
 access_hr_payslip_reports_template,hr.payslip.reports.template,model_hr_payslip_reports_template,,1,1,1,1
 access_hr_payroll_posting_account_move,hr.payroll.posting.account.move,model_hr_payroll_posting_account_move,,1,1,1,1

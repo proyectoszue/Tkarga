@@ -650,6 +650,24 @@ if obj_salary_rule:
             days = days if days >= 0 else 0
             result =  (ibc_real) /30
             result_qty = days
+
+#---------------------------------------Incapacidad Accidente de Trabajo - ARL--------------------------------------------------------
+result = 0.0
+obj_salary_rule = payslip.get_salary_rule('INCAPACIDAD006',employee.type_employee.id)
+if obj_salary_rule:
+    if worked_days.AT != 0.0:
+        obj_leave_type = payslip.get_leave_type('AT')
+        if obj_leave_type.eps_arl_input_id.id == obj_salary_rule.id:
+            amount_ibc = contract.wage
+            if obj_leave_type.periods_calculations_ibl > 0 and payslip.sum_mount_before('BASIC', payslip.date_from) > 0:
+                amount_ibc = payslip.sum_mount_before('BASIC', payslip.date_from)
+            salario_minimo = annual_parameters.smmlv_monthly
+            ibc_real = (amount_ibc * obj_leave_type.recognizing_factor_eps_arl)
+            ibc_real = salario_minimo if (amount_ibc * obj_leave_type.recognizing_factor_eps_arl) < salario_minimo else (amount_ibc * obj_leave_type.recognizing_factor_eps_arl)
+            days = worked_days.AT.number_of_days - obj_leave_type.num_days_no_assume
+            days = days if days >= 0 else 0
+            result =  (ibc_real) /30
+            result_qty = days
 #---------------------------------------Licencia remunerada--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('LICENCIA001',employee.type_employee.id)
@@ -812,7 +830,10 @@ result = 0.0
 obj_salary_rule = payslip.get_salary_rule('VAC002',employee.type_employee.id)
 if obj_salary_rule:
     if leaves.HOLIDAYSVACDISFRUTADAS != 0.0:
-        accumulated = payslip.get_accumulated_vacation(payslip.date_from) / 360
+        if ((payslip.date_to - contract.date_start).days) >= 360:
+            accumulated = payslip.get_accumulated_vacation(payslip.date_from) / 360
+        else:
+            accumulated = payslip.get_accumulated_vacation(payslip.date_from) / ((payslip.date_to - contract.date_start).days)
         amount = contract.wage / 30      
         result =  accumulated + amount
         result_qty = leaves.HOLIDAYSVACDISFRUTADAS

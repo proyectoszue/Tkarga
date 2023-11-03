@@ -276,17 +276,31 @@ class zue_hr_leave_extension_wizard(models.Model):
     z_new_date_end = fields.Date(string='Nueva fecha final',required=True)
     z_diagnostic_original_id = fields.Many2one('hr.leave.diagnostic', 'Diagnóstico Original')
     z_diagnostic_id = fields.Many2one('hr.leave.diagnostic', 'Nuevo Diagnóstico')
+    z_attachment = fields.Binary(string='Adjunto')
+    z_attachment_filename = fields.Char(string='Adjunto filename')
     z_radicado = fields.Char('Recobro radicado #')
     z_payroll_value = fields.Float('Valor pagado en nómina')
     z_eps_value = fields.Float('Valor pagado por la EPS')
     z_payment_date = fields.Date('Fecha de pago')
 
     def authorized_extension(self):
+        #Validar si requiere adjunto
+        if self.z_leave_id.holiday_status_id.obligatory_attachment and not self.z_attachment:
+            raise ValidationError(_('Es obligatorio agregar un adjunto para la prorroga de la ausencia ' + self.z_leave_id.display_name + '.'))
+        #Convertir ausencia en borrador para realizar la modificación
         self.z_leave_id.action_refuse()
         self.z_leave_id.action_draft()
+        #Modificar ausencia original
         self.z_leave_id.write({'request_date_to':self.z_new_date_end,
                                'z_qty_extension':self.z_leave_id.z_qty_extension+1,
                                'diagnostic':self.z_diagnostic_id.id})
+        #Agregar adjunto
+        if self.z_attachment:
+            data_attach = {'name': self.z_attachment_filename,
+                           'type': 'binary', 'datas': self.z_attachment, 'res_name': self.z_attachment_filename, 'store_fname': self.z_attachment_filename,
+                           'res_model': 'hr.leave', 'res_id': self.z_leave_id.id}
+            atts_id = self.env['ir.attachment'].create(data_attach)
+        #Confirmar y aprobar
         self.z_leave_id.action_confirm()
         if self.z_leave_id.state != 'validate':
             self.z_leave_id.action_approve()
