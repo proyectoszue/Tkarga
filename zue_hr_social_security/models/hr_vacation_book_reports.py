@@ -70,12 +70,13 @@ class hr_vacation_book(models.TransientModel):
                         select distinct a.identification_id as cedula,a."name" as empleado,b."name" as compania, 
                                 coalesce(c."name",'') as ubicacion_laboral,coalesce(d."name",'') as sucursal, coalesce(e."name",'') as departamento,
                                 coalesce(f."name",'') as cuenta_analitica, coalesce(p.value_wage,hc.wage) as salario,hc.date_start as fecha_ingreso,
+                                hc.retirement_date as fecha_retiro,
                                 0 as dias_laborados,
                                 -- Se toman los días de la provision para restarlos con el calculo del reporte
                                 coalesce(p."time",0) as dias_pagados, 
                                 0 as dias_disfrutados,0 as dias_remunerados,
                                 0 as valor_dias_disfrutados, 0 as valor_dias_remunerados,                       
-                                0 as dias_adeudados, 0 dias_vac_pendientes, coalesce(p.amount,0) as valor_a_pagar
+                                0 as dias_adeudados, 0 dias_vac_pendientes, coalesce(p.current_payable_value,0) as valor_a_pagar                             
                         from hr_employee as a 
                         inner join res_company as b on a.company_id = b.id
                         inner join hr_contract as hc on a.id = hc.employee_id and hc.active = true and hc.date_start <= '{date_to}'
@@ -130,15 +131,15 @@ class hr_vacation_book(models.TransientModel):
 
         # Columnas
         columns = ['Cédula', 'Nombres y Apellidos', 'Compañía', 'Ubicación laboral', 'Seccional', 'Departamento',
-                   'Cuenta analítica','Salario Base', 'Fecha Ingreso', 'Días Laborados','Días Pagados',
+                   'Cuenta analítica','Salario Base', 'Fecha Ingreso', 'Fecha Retiro','Días Laborados','Días Pagados',
                    'Dias de vacaciones disfrutados','Días de vacaciones remunerados',
                    'Valor días de vacaciones Disfrutados','Valor días de vacaciones remunerados',
                    'Dias laborados que se adeudan','Dias de vacaciones pendientes','Valor a Pagar']
         sheet = book.add_worksheet('Libro de vacaciones')
-        sheet.merge_range('A1:R1', text_company, cell_format_title)
-        sheet.merge_range('A2:R2', text_title, cell_format_title)
-        sheet.merge_range('A3:R3', text_dates, cell_format_title)
-        sheet.merge_range('A4:R4', text_generate, cell_format_text_generate)
+        sheet.merge_range('A1:S1', text_company, cell_format_title)
+        sheet.merge_range('A2:S2', text_title, cell_format_title)
+        sheet.merge_range('A3:S3', text_dates, cell_format_title)
+        sheet.merge_range('A4:S4', text_generate, cell_format_text_generate)
         # Agregar columnas
         aument_columns = 0
         for column in columns:
@@ -149,49 +150,52 @@ class hr_vacation_book(models.TransientModel):
         aument_rows = 5
         for query in result_query:
             date_start = ''
+            date_end_employee = date_end
             employee_id,identification_id = 0,0
-            days_labor,days_unpaid_absences,days_paid,days_paid_money = 0,0,0,0
+            days_labor,days_unpaid_absences,days_paid,days_paid_money,days_enjoy = 0,0,0,0,0
             value_business_days,money_value = 0,0
             for row in query.values():
                 width = len(str(row)) + 10
                 # La columna 0 es Id Empleado por ende se guarda su valor en la variable employee_id
                 identification_id = row if aument_columns == 0 else identification_id
                 employee_id = self.env['hr.employee'].search([('identification_id','=',identification_id)],limit=1).id
-                # La columna 8 es Fecha Ingreso por ende se guarda su valor en la variable date_start
+                # La columna 8 y 9 es Fecha Ingreso y Retiro por ende se guarda su valor en la variable date_start y date_end
                 date_start = row if aument_columns == 8 else date_start
-                if aument_columns <= 8:
+                date_end_employee = row if aument_columns == 9 and str(type(row)).find('date') > -1 else date_end_employee
+                obj_hr_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee_id), ('departure_date', '<=', date_end_employee)])
+                if aument_columns <= 9:
                     if str(type(row)).find('date') > -1:
                         sheet.write_datetime(aument_rows, aument_columns, row, date_format)
                     else:
                         sheet.write(aument_rows, aument_columns, row)
                 else:
-                    if aument_columns == 9: # Dias Laborados
-                        days_labor = self.dias360(date_start,date_end)
+                    if aument_columns == 10: # Dias Laborados
+                        days_labor = self.dias360(date_start,date_end_employee)
                         sheet.write(aument_rows, aument_columns, days_labor)
-                    elif aument_columns == 10: # Días Totales Pagados
-                        days_paid_money = sum([i.units_of_money for i in
-                                         self.env['hr.vacation'].search([('employee_id', '=', employee_id),('departure_date','<=',date_end)])])
-                        days_paid = days_labor - row
+                    elif aument_columns == 11: # Días Totales Pagados
+                        days_paid_money = sum([i.units_of_money for i in obj_hr_vacation])
+                        days_enjoy = sum([i.business_units for i in obj_hr_vacation])
+                        days_paid = ((days_paid_money+days_enjoy)*360)/15
                         sheet.write(aument_rows, aument_columns,days_paid)
-                    elif aument_columns == 11: # Días Disfrutados
-                        sheet.write(aument_rows, aument_columns,((days_paid * 15) / 360)-days_paid_money)
-                    elif aument_columns == 12: # Dias remunerados
+                    elif aument_columns == 12: # Días Disfrutados
+                        sheet.write(aument_rows, aument_columns,days_enjoy)
+                    elif aument_columns == 13: # Dias remunerados
                         sheet.write(aument_rows, aument_columns,days_paid_money)
-                    elif aument_columns == 13: # Valor Dias disfrutados
+                    elif aument_columns == 14: # Valor Dias disfrutados
                         value_business_days = sum([i.value_business_days for i in
                                                self.env['hr.vacation'].search([('employee_id', '=', employee_id),
-                                                                               ('departure_date', '<=', date_end)])])
+                                                                               ('departure_date', '<=', date_end_employee)])])
                         sheet.write(aument_rows, aument_columns,value_business_days)
-                    elif aument_columns == 14: # Valor Dias remunerados
+                    elif aument_columns == 15: # Valor Dias remunerados
                         money_value = sum([i.money_value for i in
                                                    self.env['hr.vacation'].search([('employee_id', '=', employee_id),
-                                                                                   ('departure_date', '<=', date_end)])])
+                                                                                   ('departure_date', '<=', date_end_employee)])])
                         sheet.write(aument_rows, aument_columns,money_value)
-                    elif aument_columns == 15: # Días de Vacaciones Adeudados
+                    elif aument_columns == 16: # Días de Vacaciones Adeudados
                         sheet.write(aument_rows, aument_columns,(days_labor-days_paid))
-                    elif aument_columns == 16: # Dias de vacaciones pendientes
+                    elif aument_columns == 17: # Dias de vacaciones pendientes
                         sheet.write(aument_rows, aument_columns,(((days_labor-days_paid)*15)/360))
-                    elif aument_columns == 17: # Valor a pagar
+                    elif aument_columns == 18: # Valor a pagar
                         sheet.write(aument_rows, aument_columns,row)
                 # Ajustar tamaño columna
                 sheet.set_column(aument_columns, aument_columns, width)
