@@ -135,20 +135,20 @@
         </record>
 
         <!-- Formulario de contratos - ajustes -->
-<!--        <record id="view_zue_hr_loans_form_contract" model="ir.ui.view">-->
-<!--            <field name="name">hr.contract.zue.hr.loans.form.inherit</field>-->
-<!--            <field name="model">hr.contract</field>-->
-<!--            <field name="priority">25</field>-->
-<!--            <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>-->
-<!--            <field name="arch" type="xml">-->
-<!--&lt;!&ndash;                <xpath expr="//field[@name='partner_id']" position="after">&ndash;&gt;-->
-<!--&lt;!&ndash;                    <field name="loan_id"/>&ndash;&gt;-->
-<!--&lt;!&ndash;                </xpath>&ndash;&gt;-->
-<!--                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='dev_and_ded']/group[1]/field[@name='concepts_ids']/form[1]/sheet[1]/group[1]/group[3]/field[@name='partner_id']" position="after">-->
+        <record id="view_zue_hr_loans_form_contract" model="ir.ui.view">
+            <field name="name">hr.contract.zue.hr.loans.form.inherit</field>
+            <field name="model">hr.contract</field>
+            <field name="priority">25</field>
+            <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+            <field name="arch" type="xml">
+<!--                <xpath expr="//field[@name='partner_id']" position="after">-->
 <!--                    <field name="loan_id"/>-->
 <!--                </xpath>-->
-<!--            </field>-->
-<!--        </record>-->
+                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[@name='dev_and_ded']/group[1]/field[@name='concepts_ids']/form[1]/sheet[1]/group[1]/group[3]/field[@name='partner_id']" position="after">
+                    <field name="loan_id"/>
+                </xpath>
+            </field>
+        </record>
 
         <record id="hr_prestamo_view_search" model="ir.ui.view">
                     <field name="name">hr.loans.view.search </field>

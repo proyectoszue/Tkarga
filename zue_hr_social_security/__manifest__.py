@@ -29,6 +29,7 @@
         'views/actions_hr_closing_configuration.xml',
         'views/actions_hr_entities_reports.xml',
         'views/actions_hr_report_expenses_employee.xml',
+        'views/actions_vacation_book_reports.xml',
         'views/menus.xml',
         'reports/social_security_report_template.xml',
         'reports/social_security_report.xml',              

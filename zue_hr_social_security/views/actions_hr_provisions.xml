@@ -35,7 +35,7 @@
                     <header>
                         <button name="executing_provisions" type="object" string="Provisionar" class="oe_highlight" states="draft"/>
                         <button name="get_accounting" type="object" string="Contabilizar" class="oe_highlight" states="done"/>
-                        <button name="cancel_process" type="object" string="Cancelar" states="done"/>
+                        <button name="cancel_process" type="object" string="Cancelar" states="draft,done"/>
                         <button name="restart_accounting" type="object" string="Reiniciar Contabilización" states="accounting"/>
                         <field name="state" widget="statusbar"/>
                     </header>

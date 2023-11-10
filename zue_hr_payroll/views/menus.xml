@@ -27,7 +27,6 @@
         <menuitem name="Liquidación" id="zue_hr_payroll.menu_payroll_report" parent="hr_payroll.menu_hr_payroll_report" action="action_hr_payroll_report_zue_filter" sequence="20"/>
         <menuitem name="Reporte acumulados" id="zue_hr_payroll.hr_accumulated_reports" parent="hr_payroll.menu_hr_payroll_report" action="action_hr_accumulated_reports" sequence="21"/>
         <menuitem name="Reporte Consolidados" id="zue_hr_payroll.hr_consolidated_reports" parent="hr_payroll.menu_hr_payroll_report" action="action_hr_consolidated_reports" sequence="21"/>
-        <menuitem name="Reporte libro de vacaciones" id="zue_hr_payroll.hr_vacation_book" parent="hr_payroll.menu_hr_payroll_report" action="action_hr_vacation_book_reports" sequence="21"/>
         <menuitem name="Detalle de Nómina" id="zue_hr_payroll.menu_details_payrolls" parent="hr_payroll.menu_hr_payroll_report" action="action_hr_payslip_line_report" sequence="21"/>
         <menuitem name="Reporte Auditoria" id="zue_hr_payroll.hr_auditing_reports" parent="hr_payroll.menu_hr_payroll_report" action="action_hr_auditing_reports" sequence="22"/>
         <!-- Menus de Nóminas -->

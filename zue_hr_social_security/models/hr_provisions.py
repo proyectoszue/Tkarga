@@ -53,6 +53,7 @@ class hr_executing_provisions(models.Model):
     date_end = fields.Date('Fecha')
     #employee_ids = fields.Many2many('hr.employee', string='Empleados', ondelete='restrict', required=True)
     details_ids = fields.One2many('hr.executing.provisions.details', 'executing_provisions_id',string='Ejecución')
+    time_process_float = fields.Float(string='Tiempo ejecución float')
     time_process = fields.Char(string='Tiempo ejecución')
     observations = fields.Text('Observaciones')
     state = fields.Selection([
@@ -297,7 +298,7 @@ class hr_executing_provisions(models.Model):
 
     def executing_provisions(self):
         #Eliminar ejecución
-        self.env['hr.executing.provisions.details'].search([('executing_provisions_id','=',self.id)]).unlink()
+        #self.env['hr.executing.provisions.details'].search([('executing_provisions_id','=',self.id)]).unlink()
 
         #Obtener fechas del periodo seleccionado
         date_start = '01/'+str(self.month)+'/'+str(self.year)
@@ -331,12 +332,17 @@ class hr_executing_provisions(models.Model):
         #     ('company_id', '=', self.env.company.id), ('subcontract_type', '!=', 'obra_integral')])
 
         # Obtener contratos que tuvieron liquidaciones en el mes
+        str_contracts = '(0)'
+        if len(self.details_ids) > 0:
+            str_contracts = str(self.details_ids.contract_id.ids).replace('[', '(').replace(']', ')')
+
         query = '''
             select distinct b.id 
             from hr_payslip a
-            inner join hr_contract b on a.contract_id = b.id and (b.subcontract_type != 'obra_integral' or b.subcontract_type is null)
+            inner join hr_contract b on a.contract_id = b.id and (b.subcontract_type != 'obra_integral' or b.subcontract_type is null) and b.id not in %s
             where a.state = 'done' and a.company_id = %s and ((a.date_from >= '%s' and a.date_from <= '%s') or (a.date_to >= '%s' and a.date_to <= '%s'))
-        ''' % (self.env.company.id,date_start,date_end,date_start,date_end)
+            Limit 200
+        ''' % (str_contracts,self.env.company.id,date_start,date_end,date_start,date_end)
 
         self.env.cr.execute(query)
         result_query = self.env.cr.fetchall()
@@ -378,10 +384,22 @@ class hr_executing_provisions(models.Model):
         date_finally_process = datetime.now()
         time_process = date_finally_process - date_start_process
         time_process = time_process.seconds / 60
-
+        time_process += self.time_process_float
+        self.time_process_float = time_process
         self.time_process = "El proceso se demoro {:.2f} minutos.".format(time_process)
-        self.date_end = date_end
-        self.state = 'done'
+
+        query = '''
+                    select distinct b.id 
+                    from hr_payslip a
+                    inner join hr_contract b on a.contract_id = b.id and (b.subcontract_type != 'obra_integral' or b.subcontract_type is null) and contract_type != 'aprendizaje'
+                    where a.state = 'done' and a.company_id = %s and ((a.date_from >= '%s' and a.date_from <= '%s') or (a.date_to >= '%s' and a.date_to <= '%s'))
+                ''' % (self.env.company.id, date_start, date_end, date_start, date_end)
+        self.env.cr.execute(query)
+        result_query = self.env.cr.fetchall()
+
+        if len(self.details_ids.contract_id.ids) == len(result_query):
+            self.date_end = date_end
+            self.state = 'done'
 
     def get_accounting(self):
         line_ids = []

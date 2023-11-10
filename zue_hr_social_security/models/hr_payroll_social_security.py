@@ -589,6 +589,7 @@ class hr_payroll_social_security(models.Model):
                                         else:
                                             nValorBaseARP = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseARP) < nRedondeoDecimalesDif else roundupdecimal(nValorBaseARP))
                                         #nValorBaseARP = (valor_base_sueldo) if nValorBaseARP == 0 else (nValorBaseARP)
+                                        nValorBaseARP = annual_parameters.top_twenty_five_smmlv if nValorBaseARP >= annual_parameters.top_twenty_five_smmlv else nValorBaseARP
                                         if nValorBaseARP > 0 and nDiasAusencias == 0 and nDiasVacaciones == 0:
                                             nValorARP = roundup100(nValorBaseARP * nPorcAporteARP / 100)
                                     else:
