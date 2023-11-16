@@ -1053,21 +1053,21 @@ class hr_payroll_flat_file(models.TransientModel):
             #         tipo_transaccion = '0000'
             cuenta = ''
             for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
-                if bank.is_main == True and banco_destino == '0013':
+                if bank.is_main == True and banco_destino == '013':
                     cuenta = right(16 * '0' + (bank.acc_number[-16:]), 16)
                 else:
                     cuenta = '0000000000000000'
             tipo_cuenta_nacham = ''
             for bank in payslip.employee_id.address_home_id.bank_ids:
-                if bank.is_main == True and banco_destino != '0013':
+                if bank.is_main == True and banco_destino != '013':
                     tipo_cuenta_nacham = '02' if bank.type_account == 'A' else '01'  # 01: Abono a cuenta corriente / 02: Abono a cuenta ahorros
-                elif banco_destino == '0013':
+                elif banco_destino == '013':
                     tipo_cuenta_nacham = '00'
             no_cuenta_nacham = ''
             for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
-                if bank.is_main == True and banco_destino != '0013':
+                if bank.is_main == True and banco_destino != '013':
                     no_cuenta_nacham = left(str(bank.acc_number).replace("-", "") + 17 * ' ', 17)
-                elif banco_destino == '0013':
+                elif banco_destino == '013':
                     no_cuenta_nacham = '00000000000000000'
             # Obtener valor de transacción
             total_valor_transaccion = 0
