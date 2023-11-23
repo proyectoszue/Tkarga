@@ -380,7 +380,7 @@ class libro_diario_report(models.TransientModel):
         #c.save()        
            
         self.write({
-            'pdf_file': base64.encodestring(pdf.getvalue()),
+            'pdf_file': base64.encodebytes(pdf.getvalue()),
             'pdf_file_name': filename,
         })
             
@@ -715,7 +715,7 @@ class libro_mayor_report(models.TransientModel):
         #c.save()        
            
         self.write({
-            'pdf_file': base64.encodestring(pdf.getvalue()),
+            'pdf_file': base64.encodebytes(pdf.getvalue()),
             'pdf_file_name': filename,
         })
             

@@ -324,7 +324,7 @@ class zue_co_cgn_inform(models.TransientModel):
             content_txt = encab_content_txt + '\n' + det_content_txt
             # Crear archivo
             self.write({
-                'txt_file': base64.encodestring((content_txt).encode()),
+                'txt_file': base64.encodebytes((content_txt).encode()),
                 'txt_file_name': filename,
             })
 
