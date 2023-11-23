@@ -27,8 +27,7 @@
                         </div>
                     </div>
                     <div style="display: -webkit-box;-webkit-box-pack: center;justify-content: center;">
-                        <div class="p-2 flex-grow-1 bd-highlight"
-                             style="-webkit-box-flex: 1;-webkit-flex: 1;flex: 1;border: 3px solid black;">
+                        <div class="flex-grow-1 bd-highlight" style="-webkit-box-flex: 1;-webkit-flex: 1;flex: 1;border: 2px solid black;">
                             <strong>Nombre Tercero:
                                 <span t-field="o.partner_id.name"/>
                             </strong>
@@ -37,10 +36,11 @@
                                 <span t-field="o.partner_id.vat"/>
                             </strong>
                             <br/>
-                            <strong>
-                                Dirección:
-                                <span t-field="o.partner_id.street"/>&#160;&#160;&#160;
-                                Télefono:
+                            <strong>Dirección:
+                                <span t-field="o.partner_id.street"/>
+                            </strong>
+                            <br/>
+                            <strong>Télefono:
                                 <span t-field="o.partner_id.phone"/>
                             </strong>
                             <br/>
@@ -51,8 +51,6 @@
                         </div>
                         <div class="p-2 bd-highlight" style="-webkit-box-flex: 1;-webkit-flex: 1;flex: 1;">
                             <strong>Comprobante Contable:
-                                <br/>
-                                <span t-esc="o.journal_id.name"/>/
                                 <span t-esc="o.name"/>
                             </strong>
                             <br/>
@@ -96,7 +94,6 @@
                                        <th>Moneda</th>
                                        <th>Tasa</th>
                                        <th>No. de Factura</th>
-                                       <th>O.C</th>
                                    </tr>
                                </thead>
                                <tbody>
@@ -104,7 +101,6 @@
                                        <td><span t-esc="o.currency_id.name"/></td>
                                        <td><span t-esc="'%.2f'% (o.amount_total_in_currency_signed / o.amount_total_signed)"/></td>
                                        <td><span t-esc="o.supplier_invoice_number"/></td>
-                                       <td> </td>
                                    </tr>
                                </tbody>
                            </table>

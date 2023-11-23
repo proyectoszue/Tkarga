@@ -33,6 +33,7 @@
         'security/ir.model.access.csv',       
         'views/reports_views.xml',
         'views/action_balance_report.xml',
+        'views/actions_auxiliary_report.xml',
         'views/action_books_reports.xml',
         'views/actions_inform_sales.xml',
         'reports/balance_report.xml',
