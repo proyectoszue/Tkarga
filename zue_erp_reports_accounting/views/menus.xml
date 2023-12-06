@@ -3,6 +3,8 @@
         <menuitem name="Reportes Financieros CO" id="zue_erp_reports_accounting.menu_account_report_zue" parent="account.menu_finance_reports"/>
             <!-- Menu Balance de prueba -->
             <menuitem name="Balance de Prueba" id="zue_erp_reports_accounting.menu_balance_report" parent="zue_erp_reports_accounting.menu_account_report_zue" action="action_account_balance_report_filters" sequence="1"/>
+            <!-- Menu Auxiliar -->
+            <menuitem name="Libro Auxiliar" id="zue_erp_reports_accounting.menu_auxiliary_report" parent="zue_erp_reports_accounting.menu_account_report_zue" action="action_account_auxiliary_report_filters" sequence="2"/>
             <!-- Menu Libros Oficiales -->
             <!-- <menuitem name="Libros Oficiales" id="zue_erp_reports_accounting.menu_account_books_report_zue" parent="zue_erp_reports_accounting.menu_account_report_zue" sequence="2"/> -->
             <!-- Menu Libro mayor -->
