@@ -11,3 +11,5 @@ access_hr_closing_configuration_detail,hr.closing.configuration.detail,model_hr_
 access_hr_entities_reports,hr.entities.reports,model_hr_entities_reports,,1,1,1,1
 access_hr_report_expenses_employee,hr.report.expenses.employee,model_hr_report_expenses_employee,,1,1,1,1
 access_hr_vacation_book,access_hr_vacation_book,model_hr_vacation_book,,1,1,1,1
+access_hr_consolidated_provisions,hr.consolidated.provisions,model_hr_consolidated_provisions,,1,1,1,1
+access_hr_consolidated_provisions_detail,hr.consolidated.provisions.detail,model_hr_consolidated_provisions_detail,,1,1,1,1
