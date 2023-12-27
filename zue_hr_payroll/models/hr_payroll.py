@@ -205,6 +205,7 @@ class HrPayslipEmployees(models.TransientModel):
                     payslip_run.write({'observations':log_msg + '\n' + msg})
                 _logger.info(f'(END/ERROR) HILO/REGISTRO {str(item)} - Ejecución liquidación de nómina con {len(obj_contracts.ids)} contratos.')
             new_cr.commit()
+            new_cr.close()
 
     def compute_sheet(self):
         self.ensure_one()

@@ -46,6 +46,10 @@
                                 <field name="img_footer_filename" invisible="1"/>
                                 <field name="img_footer_file" filename="img_footer_filename" attrs="{'invisible':[('type_header_footer', '!=', 'custom')]}"/>
                             </group>
+                            <group>
+                                <field name="z_img_watermark_filename" invisible="1"/>
+                                <field name="z_img_watermark_file" filename="z_img_watermark_filename" attrs="{'invisible':[('type_header_footer', '!=', 'custom')]}"/>
+                            </group>
                         </group>
                         <group>
                             <field name="model_fields" widget="many2many_tags" invisible="1"/>

@@ -114,7 +114,7 @@ class Hr_payslip(models.Model):
     def _action_create_account_move(self):
         # ZUE - Obtener modalidad de contabilización
         settings_batch_account = self.env['ir.config_parameter'].sudo().get_param(
-            'zue_hr_payroll.module_hr_payroll_batch_account') or False
+            'zue_hr_payroll.module_hr_payroll_batch_account') or '0'
 
         precision = self.env['decimal.precision'].precision_get('Payroll')
 
@@ -147,7 +147,7 @@ class Hr_payslip(models.Model):
                 line_ids = []
                 debit_sum = 0.0
                 credit_sum = 0.0
-                if slip.struct_id.process in ['vacaciones','contrato']:
+                if slip.struct_id.process in ['vacaciones']:
                     date = slip.date_from  # slip_date
                 else:
                     date = slip.date_to  # slip_date
