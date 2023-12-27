@@ -272,6 +272,7 @@ class zue_hr_leave_extension_wizard(models.Model):
     _description = 'Agregar prorroga en ausencias'
 
     z_leave_id = fields.Many2one('hr.leave',string='Ausencia',required=True)
+    z_obligatory_attachment = fields.Boolean(related='z_leave_id.holiday_status_id.obligatory_attachment', string='Obliga adjunto')
     z_date_end = fields.Date(string='Fecha final original', required=True)
     z_new_date_end = fields.Date(string='Nueva fecha final',required=True)
     z_diagnostic_original_id = fields.Many2one('hr.leave.diagnostic', 'Diagnóstico Original')

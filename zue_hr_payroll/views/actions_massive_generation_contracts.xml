@@ -1,0 +1,75 @@
+<odoo>
+    <data>
+
+        <record model="ir.actions.act_window" id="action_zue_massive_generation_contracts">
+            <field name="name">Generación Masiva Contratos</field>
+            <field name="res_model">zue.massive.generation.contracts</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Crear record rule para filtrar las compañias-->
+        <record id="rule_zue_massive_generation_contracts_company" model="ir.rule">
+            <field name="name">Permisos compañia Generación Masiva Contratosl</field>
+            <field name="model_id" ref="model_zue_massive_generation_contracts"/>
+            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_massive_generation_contracts_list">
+            <field name="name">Generación Masiva Contratos list</field>
+            <field name="model">zue.massive.generation.contracts</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="company_id"/>
+                    <field name="z_branch_id"/>
+                    <field name="z_year"/>
+                    <field name="z_start_date"/>
+                    <field name="z_end_date"/>
+                    <field name="z_observations"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_massive_generation_contracts_form">
+            <field name="name">Generación Masiva Contratos form</field>
+            <field name="model">zue.massive.generation.contracts</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="load_employees" type="object" string="Cargar empleados" class="oe_highlight" states="draft"/>
+                        <button name="create_contracts" type="object" string="Crear contratos" class="oe_highlight" states="in_process"/>
+                        <button name="restart_executing" type="object" string="Reiniciar" states="in_process"/>
+                        <field name="state" widget="statusbar" nolabel="1" readonly="1" force_save="1"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="z_branch_id"/>
+                                <field name="z_year"/>
+                                <field name="z_start_date"/>
+                                <field name="z_end_date"/>
+                            </group>
+                            <group string="Observaciones">
+                                <field name="z_observations" nolabel="1"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <notebook>
+                            <page string="Ejecución" name="ejecucion">
+                                <group>
+                                    <field name="z_executing_massive_contracts_ids" nolabel="1">
+                                        <tree create="false" editable="bottom" delete="true">
+                                            <field name="z_employee_id"/>
+                                            <field name="z_contract_id"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

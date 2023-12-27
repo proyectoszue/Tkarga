@@ -1171,7 +1171,7 @@ class hr_payroll_flat_file(models.TransientModel):
                         #Filtro por diario / Cuenta bancaria dispersora nómina
                         for payslip in obj_payslip_tmp:
                             count_bank_main = 0
-                            for bank in payslip.employee_id.address_home_id.bank_ids:
+                            for bank in payslip.employee_id.address_home_id.bank_ids.filtered(lambda x: x.company_id.id == self.company_id.id):
                                 if bank.is_main == True:
                                     count_bank_main += 1
                                     if bank.payroll_dispersion_account.id == self.journal_id.id:

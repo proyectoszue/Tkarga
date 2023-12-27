@@ -283,8 +283,7 @@ class hr_payroll_social_security(models.Model):
             cCorrecciones = ' '
             cVST = 'X' if item.nValorBaseSalud > math.ceil((item.nSueldo/30)*item.nDiasLiquidados) and item.nDiasLiquidados > 0 and cTipoCotizante not in ('12','19') and cVSP != 'X' else ' '
             cVST = ' ' if item.employee_id.tipo_coti_id.code == '51' else cVST
-
-
+            
             cSLN = 'X' if item.nDiasLicencia > 0 else ' '
             cIGE = 'X' if item.nDiasIncapacidadEPS > 0 else ' '
             cLMA = 'X' if item.nDiasMaternidad > 0 else ' '
@@ -339,7 +338,7 @@ class hr_payroll_social_security(models.Model):
             cDiasCotizadosARP = cDiasCotizadosARP if cTipoCotizante != '51' else '30' # "Número de días cotizados a Riesgos Laborales" se reportará 30 días. Cotizante 51
 
             cSalarioBasico = right('0'*9+ str(item.nSueldo if item.nSueldo>=annual_parameters.smmlv_monthly else annual_parameters.smmlv_monthly).split('.')[0],9) 
-            cSalarioIntegral = 'V' if item.contract_id.modality_salary not in ['basico','sostenimiento'] else 'F'
+            cSalarioIntegral = 'V' if item.contract_id.modality_salary not in ['basico', 'sostenimiento'] else (' ' if item.employee_id.contract_id.contract_type == 'aprendizaje' else 'F')
             cSalarioIntegral = cSalarioIntegral if item.contract_id.modality_salary != 'integral' else 'X'
             cSalarioIntegral = ' ' if item.employee_id.tipo_coti_id.code == '51' else cSalarioIntegral
 
