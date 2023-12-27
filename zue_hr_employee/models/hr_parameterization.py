@@ -204,3 +204,9 @@ class hr_types_faults(models.Model):
 
     name = fields.Char('Nombre', required=True)
     description = fields.Text('Descripción')
+
+class hr_job(models.Model):
+    _inherit = 'hr.job'
+
+    z_functions = fields.Html(string='Funciones')
+

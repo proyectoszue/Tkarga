@@ -140,7 +140,7 @@ if obj_salary_rule and liquidated_eps_employee and contract.contract_type != 'ap
             total_validation = total_validation * porc_integral_salary
             total = top_twenty_five_smmlv if total_validation >= top_twenty_five_smmlv else total
         else:
-            total = top_twenty_five_smmlv if total_validation >= top_twenty_five_smmlv else total
+            total = ((annual_parameters.top_twenty_five_smmlv / 30) * dias_work_act) if total_validation >= top_twenty_five_smmlv else total
             #Validar que el aporte sea almenos por el smlv cuando la modalidad de salario sea basico
             salario_minimo = annual_parameters.smmlv_monthly
             if contract.modality_salary == 'basico' and contract.wage < salario_minimo and total > 0:
@@ -189,7 +189,7 @@ if obj_salary_rule and liquidate_employee_pension and contract.contract_type != 
                 total_validation = total_validation * porc_integral_salary
                 total = top_twenty_five_smmlv if total_validation >= top_twenty_five_smmlv else total
             else:
-                total = top_twenty_five_smmlv if total_validation >= top_twenty_five_smmlv else total
+                total = ((annual_parameters.top_twenty_five_smmlv / 30) * dias_work_act) if total_validation >= top_twenty_five_smmlv else total
                 # Validar que el aporte sea almenos por el smlv cuando la modalidad de salario sea basico
                 salario_minimo = annual_parameters.smmlv_monthly
                 if contract.modality_salary == 'basico' and contract.wage < salario_minimo and total > 0:
@@ -295,6 +295,110 @@ if obj_salary_rule and liquidates_solidarity_fund and contract.contract_type != 
         if (total/salario_minimo) >= 4:
             value_period = payslip.sum('SSOCIAL004', payslip.date_from, payslip.date_to)
             result =  (payslip.roundup100(total * 0.005 * (-1)) - value_period)
+# ---------------------------------------Fondo subsistencia // QUINCENAL SOLO TKARGA--------------------------------------------------------
+result = 0.0
+obj_salary_rule = payslip.get_salary_rule('SSOCIAL003',employee.type_employee.id)
+if obj_salary_rule and contract.contract_type != 'aprendizaje':
+    day_initial_payrroll = payslip.date_from.day
+    day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
+    aplicar = 0 if obj_salary_rule.aplicar_cobro=='30' and inherit_contrato!=0 else int(obj_salary_rule.aplicar_cobro)
+    if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
+        salario_minimo = annual_parameters.smmlv_monthly
+        total_month = categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from, payslip.date_to)
+        total = categories.DEV_SALARIAL if aplicar == 0 and inherit_contrato==0 else categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from, payslip.date_to)
+        # Ley 1393
+        if payslip.date_from.day > 15 or (inherit_contrato != 0):
+            total_salarial = categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from,
+                                                                         payslip.date_to)
+            auxtransporte = AUX000 + payslip.sum_mount_x_rule('AUX000', payslip.date_from, payslip.date_to)
+            vac_no_salarial = categories.VNS + + payslip.sum_mount('VNS', payslip.date_from, payslip.date_to)
+            total_no_salarial = categories.DEV_NO_SALARIAL + payslip.sum_mount('DEV_NO_SALARIAL', payslip.date_from,
+                                                                               payslip.date_to) - auxtransporte - vac_no_salarial
+            gran_total = total_salarial + total_no_salarial
+            statute_value = (gran_total / 100) * annual_parameters.value_porc_statute_1395
+            total_statute = total_no_salarial - statute_value
+            if total_statute > 0:
+                total += total_statute
+                total_month += total_statute
+        # Fin Ley 1393
+        dias_work = payslip.sum_days_works('WORK100', payslip.date_from, payslip.date_to)
+        dias_work_act = worked_days.WORK100.number_of_days if worked_days.WORK100 else 0
+        dias_work = dias_work_act if (aplicar == 0) else dias_work + dias_work_act
+        top_twenty_five_smmlv = (annual_parameters.top_twenty_five_smmlv / 30) * dias_work
+        if contract.modality_salary == 'integral':
+            porc_integral_salary = annual_parameters.porc_integral_salary / 100
+            total = total * porc_integral_salary
+            total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
+        else:
+            total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
+        if (total/salario_minimo) >= 2 and (total/salario_minimo) < 8:
+            result =  (total * 0.005 * (-1))
+        if  (total/salario_minimo) >= 8 and (total/salario_minimo) <= 8.5:
+            result =  (total * 0.006 * (-1))
+        if  (total/salario_minimo) > 8.5 and (total/salario_minimo) <= 9:
+            result =  (total * 0.007 * (-1))
+        if  (total/salario_minimo) > 9 and (total/salario_minimo) <= 9.5:
+            result =  (total * 0.008 * (-1))
+        if  (total/salario_minimo) > 9.5 and (total/salario_minimo) <= 10:
+            result =  (total * 0.009 * (-1))
+        if  (total/salario_minimo) > 10 and (total/salario_minimo) <= 12.5:
+            result =  (total * 0.01* (-1))
+        if  (total/salario_minimo) > 12.5:
+            result =  (salario_minimo * 25 * 0.01* (-1))
+        if payslip.date_from.day > 15 and not (total_month/salario_minimo) >= 4:
+            result = 0
+#---------------------------------------Fondo Solidadridad // QUINCENAL SOLO TKARGA--------------------------------------------------------
+result = 0.0
+obj_salary_rule = payslip.get_salary_rule('SSOCIAL004',employee.type_employee.id)
+if obj_salary_rule and contract.contract_type != 'aprendizaje':
+    day_initial_payrroll = payslip.date_from.day
+    day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28,29) else payslip.date_to.day
+    aplicar = 0 if obj_salary_rule.aplicar_cobro=='30' and inherit_contrato!=0 else int(obj_salary_rule.aplicar_cobro)
+    if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
+        salario_minimo = annual_parameters.smmlv_monthly
+        total_month = categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from, payslip.date_to)
+        total = categories.DEV_SALARIAL if aplicar == 0 and inherit_contrato==0 else categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from, payslip.date_to)
+        # Ley 1393
+        if payslip.date_from.day > 15 or (inherit_contrato != 0):
+            total_salarial = categories.DEV_SALARIAL + payslip.sum_mount('DEV_SALARIAL', payslip.date_from,
+                                                                         payslip.date_to)
+            auxtransporte = AUX000 + payslip.sum_mount_x_rule('AUX000', payslip.date_from, payslip.date_to)
+            vac_no_salarial = categories.VNS + + payslip.sum_mount('VNS', payslip.date_from, payslip.date_to)
+            total_no_salarial = categories.DEV_NO_SALARIAL + payslip.sum_mount('DEV_NO_SALARIAL', payslip.date_from,
+                                                                               payslip.date_to) - auxtransporte - vac_no_salarial
+            gran_total = total_salarial + total_no_salarial
+            statute_value = (gran_total / 100) * annual_parameters.value_porc_statute_1395
+            total_statute = total_no_salarial - statute_value
+            if total_statute > 0:
+                total += total_statute
+                total_month += total_statute
+        # Fin Ley 1393
+        dias_work = payslip.sum_days_works('WORK100', payslip.date_from, payslip.date_to)
+        dias_work_act = worked_days.WORK100.number_of_days if worked_days.WORK100 else 0
+        dias_work = dias_work_act if (aplicar == 0) else dias_work + dias_work_act
+        top_twenty_five_smmlv = (annual_parameters.top_twenty_five_smmlv / 30) * dias_work
+        if contract.modality_salary == 'integral':
+            porc_integral_salary = annual_parameters.porc_integral_salary / 100
+            total = total * porc_integral_salary
+            total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
+        else:
+            total = top_twenty_five_smmlv if total >= top_twenty_five_smmlv else total
+        if (total/salario_minimo) >= 2 and (total/salario_minimo) < 8:
+            result =  (total * 0.005 * (-1))
+        if  (total/salario_minimo) >= 8 and (total/salario_minimo) <= 8.5:
+            result =  (total * 0.006 * (-1))
+        if  (total/salario_minimo) > 8.5 and (total/salario_minimo) <= 9:
+            result =  (total * 0.007 * (-1))
+        if  (total/salario_minimo) > 9 and (total/salario_minimo) <= 9.5:
+            result =  (total * 0.008 * (-1))
+        if  (total/salario_minimo) > 9.5 and (total/salario_minimo) <= 10:
+            result =  (total * 0.009 * (-1))
+        if  (total/salario_minimo) > 10 and (total/salario_minimo) <= 12.5:
+            result =  (total * 0.01* (-1))
+        if  (total/salario_minimo) > 12.5:
+            result =  (salario_minimo * 25 * 0.01* (-1))
+        if payslip.date_from.day > 15 and not (total_month/salario_minimo) >= 4:
+            result = 0
 #---------------------------------------Valor devengos/deducciones & Libranzas --------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('AUX001',employee.type_employee.id) 
@@ -573,13 +677,16 @@ if obj_salary_rule:
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('INCAPACIDAD001',employee.type_employee.id)
 if obj_salary_rule:
-    if worked_days.EGA != 0.0 and leaves.EGA_PARTNER <= 90:
+    if worked_days.EGA != 0.0 and leaves.EGA_TOTAL <= 90:
         obj_leave_type = payslip.get_leave_type('EGA')
         if obj_leave_type.eps_arl_input_id.id == obj_salary_rule.id:
+            amount_ibc = contract.wage
+            if obj_leave_type.periods_calculations_ibl > 0 and payslip.sum_mount_before('DEV_SALARIAL', payslip.date_from) > 0:
+                amount_ibc = payslip.sum_mount_before('DEV_SALARIAL', payslip.date_from)
             salario_minimo = annual_parameters.smmlv_monthly
-            ibc_real = (contract.wage * obj_leave_type.recognizing_factor_eps_arl)
-            ibc_real = salario_minimo if (contract.wage * obj_leave_type.recognizing_factor_eps_arl) < salario_minimo else (contract.wage * obj_leave_type.recognizing_factor_eps_arl)
-            days =  leaves.EGA_PARTNER
+            ibc_real = (amount_ibc * obj_leave_type.recognizing_factor_eps_arl)
+            ibc_real = salario_minimo if (amount_ibc * obj_leave_type.recognizing_factor_eps_arl) < salario_minimo else (amount_ibc * obj_leave_type.recognizing_factor_eps_arl)
+            days = leaves.EGA_PARTNER
             days = days if days >= 0 else 0
             result =  (ibc_real) /30
             result_qty = days
@@ -612,12 +719,15 @@ if obj_salary_rule:
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('INCAPACIDAD002',employee.type_employee.id)
 if obj_salary_rule:
-    if worked_days.EGA != 0.0 and leaves.EGA_COMPANY <= 90:
+    if worked_days.EGA != 0.0 and leaves.EGA_TOTAL <= 90:
         obj_leave_type = payslip.get_leave_type('EGA')
         if obj_leave_type.company_input_id.id == obj_salary_rule.id:
+            amount_ibc = contract.wage
+            if obj_leave_type.periods_calculations_ibl > 0 and payslip.sum_mount_before('DEV_SALARIAL', payslip.date_from) > 0:
+                amount_ibc = payslip.sum_mount_before('DEV_SALARIAL', payslip.date_from)
             salario_minimo = annual_parameters.smmlv_monthly
-            ibc_real = (contract.wage * obj_leave_type.recognizing_factor_company)
-            ibc_real = salario_minimo if (contract.wage * obj_leave_type.recognizing_factor_company) < salario_minimo else (contract.wage * obj_leave_type.recognizing_factor_company)
+            ibc_real = (amount_ibc * obj_leave_type.recognizing_factor_company)
+            ibc_real = salario_minimo if (amount_ibc * obj_leave_type.recognizing_factor_company) < salario_minimo else (amount_ibc * obj_leave_type.recognizing_factor_company)
             days = leaves.EGA_COMPANY
             if days > 0:
                 result =  (ibc_real) /30
@@ -626,11 +736,14 @@ if obj_salary_rule:
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('INCAPACIDAD007',employee.type_employee.id)
 if obj_salary_rule:
-    if worked_days.EGA != 0.0 and ((leaves.EGA > 90 and leaves.EGA <= 180) or leaves.EGA > 540):
+    if worked_days.EGA != 0.0 and ((leaves.EGA_TOTAL > 90 and leaves.EGA_TOTAL <= 180) or leaves.EGA_TOTAL > 540):
         obj_leave_type = payslip.get_leave_type('EGA')
         if obj_leave_type:
+            amount_ibc = contract.wage
+            if obj_leave_type.periods_calculations_ibl > 0 and payslip.sum_mount_before('DEV_SALARIAL', payslip.date_from) > 0:
+                amount_ibc = payslip.sum_mount_before('DEV_SALARIAL', payslip.date_from)
             salario_minimo = annual_parameters.smmlv_monthly
-            ibc_real = (contract.wage * 0.5)
+            ibc_real = (amount_ibc * 0.5)
             ibc_real = salario_minimo if ibc_real < salario_minimo else ibc_real
             days = worked_days.EGA.number_of_days
             days = days if days >= 0 else 0 
@@ -640,7 +753,7 @@ if obj_salary_rule:
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('INCAPACIDAD008',employee.type_employee.id)
 if obj_salary_rule:
-    if worked_days.EGH != 0.0 and (leaves.EGH > 90 and leaves.EGH <= 180):
+    if worked_days.EGH != 0.0 and (leaves.EGH_TOTAL > 90 and leaves.EGH_TOTAL <= 180):
         obj_leave_type = payslip.get_leave_type('EGH')
         if obj_leave_type:
             salario_minimo = annual_parameters.smmlv_monthly
@@ -651,23 +764,42 @@ if obj_salary_rule:
             result =  (ibc_real) /30
             result_qty = days
 
-#---------------------------------------Incapacidad Accidente de Trabajo - ARL--------------------------------------------------------
+#---------------------------------------Incapacidad Accidente de Trabajo - ARL COMPAÑIA--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('INCAPACIDAD006',employee.type_employee.id)
+if obj_salary_rule:
+    if worked_days.AT != 0.0:
+        obj_leave_type = payslip.get_leave_type('AT')
+        if obj_leave_type.company_input_id.id == obj_salary_rule.id:
+            amount_ibc = contract.wage
+            if obj_leave_type.periods_calculations_ibl > 0 and payslip.sum_mount_before('DEV_SALARIAL', payslip.date_from) > 0:
+                amount_ibc = payslip.sum_mount_before('DEV_SALARIAL', payslip.date_from)
+            salario_minimo = annual_parameters.smmlv_monthly
+            ibc_real = (amount_ibc * obj_leave_type.recognizing_factor_company)
+            ibc_real = salario_minimo if (amount_ibc * obj_leave_type.recognizing_factor_company) < salario_minimo else (amount_ibc * obj_leave_type.recognizing_factor_company)
+            days = leaves.AT_COMPANY
+            days = days if days >= 0 else 0
+            result =  (ibc_real) /30
+            result_qty = days
+
+#---------------------------------------Incapacidad Accidente de Trabajo - ARL EPS--------------------------------------------------------
+result = 0.0
+obj_salary_rule = payslip.get_salary_rule('INCAPACIDAD009',employee.type_employee.id)
 if obj_salary_rule:
     if worked_days.AT != 0.0:
         obj_leave_type = payslip.get_leave_type('AT')
         if obj_leave_type.eps_arl_input_id.id == obj_salary_rule.id:
             amount_ibc = contract.wage
             if obj_leave_type.periods_calculations_ibl > 0 and payslip.sum_mount_before('BASIC', payslip.date_from) > 0:
-                amount_ibc = payslip.sum_mount_before('BASIC', payslip.date_from)
+                amount_ibc = payslip.sum_mount_before('DEV_SALARIAL', payslip.date_from)
             salario_minimo = annual_parameters.smmlv_monthly
             ibc_real = (amount_ibc * obj_leave_type.recognizing_factor_eps_arl)
             ibc_real = salario_minimo if (amount_ibc * obj_leave_type.recognizing_factor_eps_arl) < salario_minimo else (amount_ibc * obj_leave_type.recognizing_factor_eps_arl)
-            days = worked_days.AT.number_of_days - obj_leave_type.num_days_no_assume
+            days = leaves.AT_PARTNER
             days = days if days >= 0 else 0
             result =  (ibc_real) /30
             result_qty = days
+
 #---------------------------------------Licencia remunerada--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('LICENCIA001',employee.type_employee.id)

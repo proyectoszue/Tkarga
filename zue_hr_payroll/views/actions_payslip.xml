@@ -73,8 +73,8 @@
                     <attribute name="invisible">1</attribute>
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/notebook[1]/page[2]/field[@name='line_ids']/tree[1]/field[@name='rate']" position="replace">
-                    <field name="initial_accrual_date" optional="show" readonly="1" force_save="1"/>
-                    <field name="final_accrual_date" optional="show" readonly="1" force_save="1"/>
+                    <field name="initial_accrual_date" optional="show"/>
+                    <field name="final_accrual_date" optional="show"/>
                     <field name="amount_base" optional="show"/>
                     <field name="entity_id" optional="show"/>
                     <field name="loan_id" optional="show"/>

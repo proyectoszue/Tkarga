@@ -1,0 +1,34 @@
+<odoo>
+    <data>
+
+        <record model="ir.actions.act_window" id="action_zue_hr_report_leave_vs_work_entry">
+            <field name="name">Auditoria ausentismos vs entradas de trabajo</field>
+            <field name="res_model">zue.hr.report.leave.vs.work.entry</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <record id="zue_hr_report_leave_vs_work_entry" model="ir.ui.view">
+            <field name="name">Auditoria ausentismos vs entradas de trabajo form</field>
+            <field name="model">zue.hr.report.leave.vs.work.entry</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <button name="download_excel" string="Descargar Excel" type="object" class="oe_highlight"/>
+                            </group>
+                            <group>
+                                <button name="solution_report" string="Corregir Entradas" type="object" class="oe_highlight"/>
+                            </group>
+                        </group>
+                        <footer>
+                            <button special="cancel" class="oe_link" string="Cancelar" />
+                        </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</odoo>

@@ -285,5 +285,19 @@
             </field>
         </record>
 
+        <record id="hr_job_form_inherit" model="ir.ui.view">
+            <field name="name">hr_job_form_inherit</field>
+            <field name="model">hr.job</field>
+            <field name="priority">20</field>
+            <field name="inherit_id" ref="hr.view_hr_job_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//page[2]" position="after">
+                    <page string="Funciones">
+                        <field name="z_functions" widget="html" options="{'style-inline': true, 'codeview': true }"/>
+                    </page>
+                </xpath>
+            </field>
+        </record>
+
     </data>
 </odoo>

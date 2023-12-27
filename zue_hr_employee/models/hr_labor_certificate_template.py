@@ -1,4 +1,5 @@
 from odoo import fields, models, api
+import base64
 
 
 class hr_labor_certificate_template(models.Model):
@@ -16,6 +17,9 @@ class hr_labor_certificate_template(models.Model):
     img_header_filename = fields.Char('Encabezado filename')
     img_footer_file = fields.Binary('Pie de pagina')
     img_footer_filename = fields.Char('Pie de pagina filename')
+    z_img_watermark_file = fields.Binary('Marca de agua')
+    z_img_watermark_filename = fields.Char('Marca de agua filename')
+
     #Contenido
     model_fields = fields.Many2many('ir.model.fields', domain="[('model', 'in', ('hr.employee','hr.contract')),('ttype','not in',['one2many','many2many'])]",
                                     string='Campos de las tablas de empleado y contrato a utilizar')
@@ -28,6 +32,12 @@ class hr_labor_certificate_template(models.Model):
     _sql_constraints = [
         ('company_certificate_template', 'UNIQUE (company_id)', 'Ya existe una configuración de plantilla de certificado laboral para esta compañía, por favor verificar')
     ]
+
+    def get_img_watermark(self):
+        self.ensure_one()
+        base_url = self.env['ir.config_parameter'].get_param('web.base.url')
+        url = f'{base_url}/web/image/hr.labor.certificate.template/{str(self.id)}/z_img_watermark_file'
+        return url
 
     def name_get(self):
         result = []
