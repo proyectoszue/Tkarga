@@ -24,7 +24,6 @@
                     <field name="z_year"/>
                     <field name="z_start_date"/>
                     <field name="z_end_date"/>
-                    <field name="z_observations"/>
                 </tree>
             </field>
         </record>
@@ -43,17 +42,19 @@
                     <sheet>
                         <group>
                             <group>
-                                <field name="z_branch_id"/>
                                 <field name="z_year"/>
                                 <field name="z_start_date"/>
                                 <field name="z_end_date"/>
+                                <field name="company_id" groups="base.group_multi_company"/>
+                                <p>
+                                    <b>Nota:</b> Al momento de cargar empleados solamente se tienen en cuenta aquellos que no tienen un contrato activo actualmente.
+                                </p>
                             </group>
-                            <group string="Observaciones">
-                                <field name="z_observations" nolabel="1"/>
+                            <group>
+                                <field name="z_branch_id"/>
+                                <field name="z_employee_type_id"/>
+                                <field name="z_department_id"/>
                             </group>
-                        </group>
-                        <group>
-                            <field name="company_id" groups="base.group_multi_company"/>
                         </group>
                         <notebook>
                             <page string="Ejecución" name="ejecucion">
