@@ -12,9 +12,18 @@ class zue_massive_generation_contracts(models.Model):
     z_year = fields.Integer('Año', required=True)
     z_start_date = fields.Date('Fecha Inicio', required=True)
     z_end_date = fields.Date('Fecha Fin', required=True)
-    z_observations = fields.Text('Observaciones')
     state = fields.Selection([('draft','Borrador'),('in_process','En proceso'),('done','Hecho')], string='Estado', default='draft')
     z_executing_massive_contracts_ids = fields.One2many('zue.executing.contracts', 'z_executing_massive_contracts_id', string='Ejecución')
+
+    # Filtros
+    z_employee_type_id = fields.Selection([
+        ('employee', 'Empleado'),
+        ('student', 'Estudiante'),
+        ('trainee', 'Aprendiz'),
+        ('contractor', 'Contratista'),
+        ('freelance', 'Autónomo'),
+        ], string='Tipo de Empleado')
+    z_department_id = fields.Many2one('hr.department', string="Departamento")
 
     _sql_constraints = [('generation_contracts_uniq', 'unique(company_id,z_year,z_start_date,z_end_date)',
                          'El periodo de generación de contratos ya esta registrado para esta compañía, por favor verificar.')]
@@ -26,13 +35,26 @@ class zue_massive_generation_contracts(models.Model):
             result.append((record.id, name))
         return result
 
+    def where_query(self):
+        where_ = 'where he.active = true and hc.id is null '
+
+        if self.z_branch_id:
+            where_ += f'and he.branch_id = {self.z_branch_id.id} '
+        if self.z_employee_type_id:
+            where_ += f"and he.employee_type = '{self.z_employee_type_id}' "
+        if self.z_department_id:
+            where_ += f'and he.department_id = {self.z_department_id.id} '
+
+        return where_
+
     def get_query(self):
+        where = self.where_query()
         query_contract = f'''
         select distinct he.id as employee_id         
         from hr_employee he
         inner join res_company rc on he.company_id = rc.id and rc.id = {self.env.company.id} 
-        left join hr_contract hc on he.contract_id = hc.id and hc.state != 'open'        
-        where he.branch_id = {self.z_branch_id.id} and hc.id is null and he.active = true   
+        left join hr_contract hc on he.contract_id = hc.id and hc.state = 'open'
+        {where}
         '''
         self._cr.execute(query_contract)
         result_query = self._cr.dictfetchall()
@@ -85,6 +107,7 @@ class zue_massive_generation_contracts(models.Model):
             }
             obj_contract = self.env['hr.contract'].create(dict_contract)
             record.z_contract_id = obj_contract.id
+            self.state = 'done'
 
 class zue_executing_contracts(models.Model):
     _name = 'zue.executing.contracts'
