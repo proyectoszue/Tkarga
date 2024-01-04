@@ -164,7 +164,7 @@ class Hr_payslip(models.Model):
                         initial_process_date = self.date_cesantias if inherit_contrato != 0 else self.date_to - relativedelta(months=3)
                         end_process_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
                         obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '>=', initial_process_date),('date_start', '<=', end_process_date)])
-                        if cesantias_salary_take and len(obj_wage) > 1:
+                        if cesantias_salary_take and len(obj_wage) > 0:
                             initial_validate_date = self.date_cesantias if inherit_contrato != 0 else self.date_from
                             end_validate_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
                             obj_wage_of_year = self.env['hr.payslip.line'].search(
