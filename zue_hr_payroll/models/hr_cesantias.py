@@ -165,17 +165,20 @@ class Hr_payslip(models.Model):
                         end_process_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
                         obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '>=', initial_process_date),('date_start', '<=', end_process_date)])
                         if cesantias_salary_take and len(obj_wage) > 1:
+                            initial_validate_date = self.date_cesantias if inherit_contrato != 0 else self.date_from
+                            end_validate_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
                             obj_wage_of_year = self.env['hr.payslip.line'].search(
-                                [('slip_id.state', 'in', ['done', 'paid']), ('slip_id.date_from', '>=', self.date_from),
-                                 ('slip_id.date_from', '<=', self.date_to), ('category_id.code', '=', 'BASIC'),
+                                [('slip_id.state', 'in', ['done', 'paid']), ('slip_id.date_from', '>=', initial_validate_date),
+                                 ('slip_id.date_from', '<=', end_validate_date), ('category_id.code', '=', 'BASIC'),
                                  ('slip_id.contract_id', '=', contract.id)])
                             total_wage_of_year = sum([i.total for i in obj_wage_of_year])
                             obj_workdays_of_year = self.env['hr.payslip.worked_days'].search(
-                                [('payslip_id.state', 'in', ['done', 'paid']), ('payslip_id.date_from', '>=', self.date_from),
-                                 ('payslip_id.date_from', '<=', self.date_to), ('work_entry_type_id.code', '=', 'WORK100'),
+                                [('payslip_id.state', 'in', ['done', 'paid']), ('payslip_id.date_from', '>=', initial_validate_date),
+                                 ('payslip_id.date_from', '<=', end_validate_date), ('work_entry_type_id.code', '=', 'WORK100'),
                                  ('payslip_id.struct_id.process', '=', 'nomina'),('payslip_id.contract_id', '=', contract.id)])
                             total_workdays_of_year = sum([i.number_of_days for i in obj_workdays_of_year])
-                            wage = (total_wage_of_year / total_workdays_of_year) * 30
+                            if total_workdays_of_year > 0:
+                                wage = (total_wage_of_year / total_workdays_of_year) * 30
                             # wage_average = 0
                             # dias_trabajados_average = self.dias360(initial_process_date, end_process_date)
                             # while initial_process_date <= end_process_date:
