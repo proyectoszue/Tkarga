@@ -100,13 +100,13 @@
                                 <t t-if="o.state == 'open'">
                                     hasta la fecha.
                                 </t>
-                                <t t-if="m.z_functions_with == True">
+                                <t>
                                     Desempeñando el cargo de&#160;
                                     <b>
                                         <span t-esc="o.job_id.name"/>
                                     </b>
                                 </t>
-                                <t t-else=""/>
+                                <t/>
                                 en la seccional
                                 <b>
                                     <span t-esc="o.employee_id.branch_id.name"/>,
