@@ -211,6 +211,9 @@
                 <tree>
                     <field name="type_employee" invisible="1"/>
                     <field name="contract_id"/>
+                    <field name="z_employee_id"/>
+                    <field name="z_branch_id"/>
+                    <field name="z_company_id"/>
                     <field name="input_id"/>
                     <field name="amount"/>
                     <field name="period"/>
@@ -241,6 +244,9 @@
                                 <field name="aplicar"/>
                             </group>
                             <group>
+                                <field name="z_employee_id"/>
+                                <field name="z_branch_id"/>
+                                <field name="z_company_id"/>
                                 <field name="date_start"/>
                                 <field name="date_end"/>
                                 <field name="attached_name" invisible="1"/>

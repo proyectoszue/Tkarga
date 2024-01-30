@@ -31,6 +31,9 @@ class hr_contract_concepts(models.Model):
     _description = 'Deducciones o Devengos, conceptos de nómina'
 
     type_employee = fields.Many2one('hr.types.employee',string='Tipo de Empleado', store=True,readonly=True)
+    z_employee_id = fields.Many2one(related='contract_id.employee_id', store=True, required=True, string="Empleado")
+    z_branch_id = fields.Many2one(related='contract_id.employee_id.branch_id', store=True, required=True, string="Sucursal")
+    z_company_id = fields.Many2one(related='contract_id.employee_id.company_id', store=True, required=True, string='Compañía')
     input_id = fields.Many2one('hr.salary.rule', 'Regla', required=True, help='Regla salarial')
     show_voucher = fields.Boolean('Mostrar', help='Indica si se muestra o no en el comprobante de nomina')
     type_deduction = fields.Selection([('P', 'Prestamo empresa'),
