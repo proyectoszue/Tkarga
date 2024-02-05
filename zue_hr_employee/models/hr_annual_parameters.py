@@ -14,6 +14,7 @@ class hr_conf_certificate_income(models.Model):
     calculation = fields.Selection([('info', 'Información'),
                                     ('sum_rule', 'Sumatoria Reglas'),
                                     ('sum_sequence', 'Sumatoria secuencias anteriores'),
+                                    ('amount_last_six_months', 'Ingreso laboral promedio de los últimos seis meses anteriores'),
                                     ('date_issue', 'Fecha expedición'),
                                     ('start_date_year', 'Fecha certificación inicial'),
                                     ('end_date_year', 'Fecha certificación final'),
