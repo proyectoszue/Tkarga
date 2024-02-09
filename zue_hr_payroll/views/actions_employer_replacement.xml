@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <record model="ir.actions.act_window" id="action_zue_employer_replacement">
+            <field name="name">Sustitución patronal</field>
+            <field name="res_model">zue.employer.replacement</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <!-- Crear record rule para filtrar las compañias-->
+<!--        <record id="rule_zue_massive_generation_contracts_company" model="ir.rule">-->
+<!--            <field name="name">Permisos compañia Generación Masiva Contratosl</field>-->
+<!--            <field name="model_id" ref="model_zue_massive_generation_contracts"/>-->
+<!--            <field name="domain_force">['|',('company_id','=',False),('company_id', 'in', company_ids)]</field>-->
+<!--        </record>-->
+
+        <record model="ir.ui.view" id="zue_employer_replacement_list">
+            <field name="name">Sustitución patronal list</field>
+            <field name="model">zue.employer.replacement</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="z_employee_id"/>
+                    <field name="z_identification"/>
+                    <field name="z_contract"/>
+                    <field name="z_company_id"/>
+                    <field name="z_new_company_id"/>
+                    <field name="z_employer_replacement_date"/>
+                    <field name="state" widget="badge"
+                           decoration-muted="state == 'draft'"
+                           decoration-success="state == 'done'"
+                    />
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_employer_replacement_form">
+            <field name="name">Sustitución patronal form</field>
+            <field name="model">zue.employer.replacement</field>
+            <field name="arch" type="xml">
+                <form>
+                    <header>
+                        <button name="replace_employee_company" type="object" string="Sustituir" class="oe_highlight" states="draft"
+                                confirm="¿Está seguro de realizar la sustitución patronal para este empleado?"/>
+                        <field name="state" widget="statusbar" nolabel="1" readonly="1" force_save="1"/>
+                    </header>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="z_employee_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                <field name="z_identification"/>
+                                <field name="z_contract"/>
+                                <field name="z_company_id"/>
+                            </group>
+                            <group>
+                                <field name="z_new_company_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                                <field name="z_employer_replacement_date" readonly="1" force_save="1"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</odoo>

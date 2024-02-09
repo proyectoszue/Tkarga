@@ -18,7 +18,7 @@
     "version": "15.0.1.0.0",
 
     # any module necessary for this one to work correctly
-    'depends': ['base','hr','hr_payroll','hr_holidays','zue_erp','zue_hr_employee','account','web'],
+    'depends': ['base','hr','hr_payroll','hr_holidays','zue_erp','zue_hr_employee','account','web','mail'],
 
     # always loaded
     'data': [
@@ -55,6 +55,7 @@
         'views/actions_payroll_detail_report.xml',
         'views/actions_hr_auditing_reports.xml',
         'views/actions_massive_generation_contracts.xml',
+        'views/actions_employer_replacement.xml',
         'reports/reports_payslip_header_footer_template.xml',
         'reports/report_payslip.xml',
         'reports/report_payslip_vacations_templates.xml',

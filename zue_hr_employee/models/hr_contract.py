@@ -201,10 +201,11 @@ class hr_contract(models.Model):
     company_id = fields.Many2one(tracking=True)
     sequence = fields.Char(string="Secuencia", default="/", readonly=True)
     retirement_date = fields.Date('Fecha retiro', tracking=True)
-    change_wage_ids = fields.One2many('hr.contract.change.wage', 'contract_id', 'Cambios salario')
-    concepts_ids = fields.One2many('hr.contract.concepts', 'contract_id', 'Devengos & Deducciones')
-    contract_modification_history = fields.One2many('hr.contractual.modifications', 'contract_id','Modificaciones contractuales')
-    deductions_rtf_ids = fields.One2many('hr.contract.deductions.rtf', 'contract_id', 'Deducciones retención en la fuente', default=_get_default_deductions_rtf_ids, tracking=True)
+    z_employer_replacement_date = fields.Date('Fecha de sustitución patronal', tracking=True)
+    change_wage_ids = fields.One2many('hr.contract.change.wage', 'contract_id', 'Cambios salario', copy=True)
+    concepts_ids = fields.One2many('hr.contract.concepts', 'contract_id', 'Devengos & Deducciones', copy=True)
+    contract_modification_history = fields.One2many('hr.contractual.modifications', 'contract_id','Modificaciones contractuales', copy=True)
+    deductions_rtf_ids = fields.One2many('hr.contract.deductions.rtf', 'contract_id', 'Deducciones retención en la fuente', default=_get_default_deductions_rtf_ids, tracking=True, copy=True)
     risk_id = fields.Many2one('hr.contract.risk', string='Riesgo profesional', tracking=True)
     z_economic_activity_level_risk_id = fields.Many2one('zue.economic.activity.level.risk',string='Actividad económica por nivel de riesgo',tracking=True)
     contract_type = fields.Selection([('obra', 'Contrato por Obra o Labor'), 
@@ -259,7 +260,7 @@ class hr_contract(models.Model):
     new_positions = fields.Char('Cargo nuevo', tracking=True)
     time_with_the_state = fields.Char('Tiempo que lleva con el estado', tracking=True)
     #Pestaña de dotacion
-    employee_endowment_ids = fields.One2many('hr.employee.endowment', 'contract_id', 'Dotación')
+    employee_endowment_ids = fields.One2many('hr.employee.endowment', 'contract_id', 'Dotación', copy=True)
     
 
 
