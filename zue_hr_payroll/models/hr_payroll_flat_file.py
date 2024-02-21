@@ -76,6 +76,7 @@ class hr_payroll_flat_file(models.TransientModel):
     liquidations_ids= fields.Many2many('hr.payslip', string='Liquidaciones', domain=[('definitive_plan', '=', False),('payslip_run_id', '=', False)])
     flat_file_detail_ids = fields.One2many('hr.payroll.flat.file.detail','flat_file_id',string='Archivos planos')
     flat_rule_not_included = fields.Boolean('Plano de reglas no incluidas')
+    z_send_blank_email = fields.Boolean(string='Enviar correo electrónico en blanco')
     
     def name_get(self):
         result = []
@@ -247,7 +248,10 @@ class hr_payroll_flat_file(models.TransientModel):
             tipo_identificacion = ' ' # Es requerido solo si el pago es para entregar por ventanilla por ende enviamos vacio
             oficina_entrega = 5*'0'
             numero_fax = 15*filler
-            email = left(payslip.contract_id.employee_id.work_email+80*' ',80)
+            if self.z_send_blank_email == True:
+                email = 80*' '
+            else:
+                email = left(payslip.contract_id.employee_id.work_email+80*' ',80)
             identificacion_autorizado = 15*filler # Solo se llena cuando es cheques
             relleno = filler*27
 

@@ -26,10 +26,10 @@ class hr_novelties_independents(models.Model):
     def create(self, vals):
         if vals.get('employee_identification'):
             obj_employee = self.env['hr.employee'].search(
-                [('identification_id', '=', vals.get('employee_identification'))])
+                [('company_id','=',self.env.company.id),('identification_id', '=', vals.get('employee_identification'))])
             vals['employee_id'] = obj_employee.id
         if vals.get('employee_id'):
-            obj_employee = self.env['hr.employee'].search([('id', '=', vals.get('employee_id'))])
+            obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('id', '=', vals.get('employee_id'))])
             vals['employee_identification'] = obj_employee.identification_id
 
         res = super(hr_novelties_independents, self).create(vals)

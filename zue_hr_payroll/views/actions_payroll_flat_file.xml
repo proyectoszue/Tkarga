@@ -20,6 +20,7 @@
                             <field name="payment_type"/>
                             <field name="source_information" widget="radio"/>
                             <field name="flat_rule_not_included"/>
+                            <field name="z_send_blank_email"/>
                             <field name="company_id"/>
                             <field name="vat_payer"/>
                             <field name="payslip_id" attrs="{'invisible': [('source_information', '!=', 'lote')],'required': [('source_information', '=', 'lote')]}"/>

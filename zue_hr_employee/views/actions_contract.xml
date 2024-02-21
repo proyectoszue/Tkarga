@@ -69,6 +69,7 @@
                 </xpath>
                 <xpath expr="//field[@name='date_end']" position="after">
                     <field name="retirement_date" readonly="1" force_save="1"/>
+                    <field name="z_employer_replacement_date" readonly="1" force_save="1"/>
                     <field name="not_validate_top_auxtransportation"/>
                     <field name="not_pay_overtime"/>
                     <field name="z_pay_auxtransportation"/>
