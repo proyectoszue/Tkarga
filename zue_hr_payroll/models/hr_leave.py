@@ -212,7 +212,7 @@ class HolidaysRequest(models.Model):
             obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('identification_id', '=', vals.get('employee_identification'))])
             vals['employee_id'] = obj_employee.id
         if vals.get('employee_id'):
-            obj_employee = self.env['hr.employee'].search([(('company_id','=',self.env.company.id),'id', '=', vals.get('employee_id'))])
+            obj_employee = self.env['hr.employee'].search([('company_id', '=', self.env.company.id), ('id', '=', vals.get('employee_id'))])
             vals['employee_identification'] = obj_employee.identification_id            
         
         res = super(HolidaysRequest, self).create(vals)
