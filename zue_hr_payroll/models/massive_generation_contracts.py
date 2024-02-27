@@ -24,6 +24,9 @@ class zue_massive_generation_contracts(models.Model):
         ('freelance', 'Autónomo'),
         ], string='Tipo de Empleado')
     z_department_id = fields.Many2one('hr.department', string="Departamento")
+    z_contract_state = fields.Selection([('draft', 'Nuevo'),
+                                         ('open', 'En proceso'),
+                                         ], string='Estado del contrato', required=True, default='draft')
 
     _sql_constraints = [('generation_contracts_uniq', 'unique(company_id,z_year,z_start_date,z_end_date)',
                          'El periodo de generación de contratos ya esta registrado para esta compañía, por favor verificar.')]
@@ -106,6 +109,8 @@ class zue_massive_generation_contracts(models.Model):
                 'wage': 100,
             }
             obj_contract = self.env['hr.contract'].create(dict_contract)
+            if self.z_contract_state == 'open':
+                obj_contract.write({'state': 'open'})
             record.z_contract_id = obj_contract.id
             self.state = 'done'
 

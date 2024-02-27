@@ -54,6 +54,7 @@
                                 <field name="z_branch_id"/>
                                 <field name="z_employee_type_id"/>
                                 <field name="z_department_id"/>
+                                <field name="z_contract_state" widget="radio"/>
                             </group>
                         </group>
                         <notebook>
