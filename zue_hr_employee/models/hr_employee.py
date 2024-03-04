@@ -171,16 +171,6 @@ class hr_employee_documents(models.Model):
     expiration_date = fields.Date('Fecha de vencimiento')
     document = fields.Many2one('documents.document',string='Documento',required=True)
 
-    def download_document(self):
-        self.ensure_one()
-        # Buscar el campo en el que se almacena el archivo
-        attachment = self.document.attachment_id
-        return {
-            'type': 'ir.actions.act_url',
-            'url': '/web/content/%s?download=true' % attachment.id,
-            'target': 'self',
-        }
-
     def unlink(self):
         obj_document = self.document
         obj = super(hr_employee_documents, self).unlink()
@@ -264,17 +254,17 @@ class hr_employee(models.Model):
                                     ('master', 'Maestro'),
                                     ('other', 'Otro')],
                                     string='Nivel de certificado', default='primary',tracking=True)
-    social_security_entities  = fields.One2many('hr.contract.setting', 'employee_id', string = 'Entidades', tracking=True)
-    dependents_information = fields.One2many('hr.employee.dependents', 'employee_id', string = 'Dependientes', tracking=True)
-    labor_union_information = fields.One2many('hr.employee.labor.union', 'employee_id', string = 'Sindicato', tracking=True)
+    social_security_entities  = fields.One2many('hr.contract.setting', 'employee_id', string = 'Entidades', tracking=True, copy=True)
+    dependents_information = fields.One2many('hr.employee.dependents', 'employee_id', string = 'Dependientes', tracking=True, copy=True)
+    labor_union_information = fields.One2many('hr.employee.labor.union', 'employee_id', string = 'Sindicato', tracking=True, copy=True)
     personal_email = fields.Char(string='Correo-e personal', tracking=True)
     personal_mobile = fields.Char(string='Móvil', tracking=True)
     type_job = fields.Selection([('clave', 'Cargo Clave'),
                                     ('critico', 'Cargo Crítico'),
                                     ('cc', 'Cargo CC')], 'Tipo de cargo', tracking=True)
     emergency_relationship = fields.Char(string='Parentesco contacto', tracking=True)
-    documents_ids = fields.One2many('hr.employee.documents', 'employee_id', 'Documentos')
-    distribution_cost_information = fields.One2many('hr.cost.distribution.employee', 'employee_id', string='Distribución de costos empleado')
+    documents_ids = fields.One2many('hr.employee.documents', 'employee_id', 'Documentos', copy=True)
+    distribution_cost_information = fields.One2many('hr.cost.distribution.employee', 'employee_id', string='Distribución de costos empleado', copy=True)
     #PILA
     extranjero = fields.Boolean('Extranjero', help='Extranjero no obligado a cotizar a pensión', tracking=True)
     residente = fields.Boolean('Residente en el Exterior', help='Colombiano residente en el exterior', tracking=True)
@@ -305,7 +295,7 @@ class hr_employee(models.Model):
     num_identification_spouse = fields.Char('Número de identificación cónyuge', tracking=True)
     spouse_phone= fields.Char('Teléfono del cónyuge', tracking=True)
     #Sanciones
-    employee_sanctions_ids = fields.One2many('hr.employee.sanctions', 'employee_id', string='Sanciones')
+    employee_sanctions_ids = fields.One2many('hr.employee.sanctions', 'employee_id', string='Sanciones', copy=True)
     #Edad
     z_employee_age = fields.Integer(string='Edad', compute='_get_employee_age', store=True)
     # Campos Caracterizacion
