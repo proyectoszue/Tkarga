@@ -176,10 +176,12 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                         initial_validate_date = initial_validate_date if initial_validate_date >= employee.contract_id.date_start else employee.contract_id.date_start
                         obj_payslips = self.env['hr.payslip.line'].search(
                             [('slip_id.state', 'in', ['done', 'paid']),
-                             ('slip_id.date_to', '>=', initial_validate_date),
-                             ('slip_id.date_to', '<=', end_validate_date), ('salary_rule_id.id', 'in', conf.salary_rule_id.ids),
-                             ('slip_id.contract_id', '=', employee.contract_id.id)])
-                        value = (sum([i.total for i in obj_payslips])/self.dias360(initial_validate_date, end_validate_date))*30
+                             ('salary_rule_id.id', 'in', conf.salary_rule_id.ids),
+                             ('slip_id.contract_id', '=', employee.contract_id.id),
+                             '|','&',('slip_id.date_from', '>=', initial_validate_date),
+                             ('slip_id.date_from', '<=', end_validate_date),'&',('slip_id.date_to', '>=', initial_validate_date),
+                             ('slip_id.date_to', '<=', end_validate_date)])
+                        value = (sum([i.total for i in obj_payslips])/(self.dias360(initial_validate_date, end_validate_date)-1))*30
                     # Tipo de Calculo ---------------------- FECHA EXPEDICIÓN
                     elif conf.calculation == 'date_issue':
                         value = str(datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d"))
