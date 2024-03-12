@@ -181,16 +181,20 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                              '|','&',('slip_id.date_from', '>=', initial_validate_date),
                              ('slip_id.date_from', '<=', end_validate_date),'&',('slip_id.date_to', '>=', initial_validate_date),
                              ('slip_id.date_to', '<=', end_validate_date)])
-                        value = (sum([i.total for i in obj_payslips])/(self.dias360(initial_validate_date, end_validate_date)-1))*30
+                        value = (sum([i.total for i in obj_payslips])/(self.dias360(initial_validate_date, end_validate_date)))*30
                     # Tipo de Calculo ---------------------- FECHA EXPEDICIÓN
                     elif conf.calculation == 'date_issue':
                         value = str(datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d"))
                     # Tipo de Calculo ---------------------- FECHA CERTIFICACIÓN INICIAL
                     elif conf.calculation == 'start_date_year':
                         value = str(year_process)+'-01-01'
+                        if employee.contract_id.date_start:
+                            value = employee.contract_id.date_start if employee.contract_id.date_start >= date_start != 0 else value
                     # Tipo de Calculo ---------------------- FECHA CERTIFICACIÓN FINAL
                     elif conf.calculation == 'end_date_year':
                         value = str(year_process)+'-12-31'
+                        if employee.contract_id.retirement_date:
+                            value = employee.contract_id.retirement_date if employee.contract_id.retirement_date <= date_end != 0 else value
                     # Tipo de Calculo ---------------------- DEPENDIENTES - TIPO DOCUMENTO
                     elif conf.calculation == 'dependents_type_vat':
                         value = dependents_type_vat
