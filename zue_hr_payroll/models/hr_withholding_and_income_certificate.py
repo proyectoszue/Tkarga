@@ -1,6 +1,7 @@
 import html
 import io
 import base64
+import math
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError,UserError
 from datetime import datetime, timedelta
@@ -181,7 +182,7 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                              '|','&',('slip_id.date_from', '>=', initial_validate_date),
                              ('slip_id.date_from', '<=', end_validate_date),'&',('slip_id.date_to', '>=', initial_validate_date),
                              ('slip_id.date_to', '<=', end_validate_date)])
-                        value = (sum([i.total for i in obj_payslips])/(self.dias360(initial_validate_date, end_validate_date)))*30
+                        value = (sum([i.total for i in obj_payslips])/(math.ceil(self.dias360(initial_validate_date, end_validate_date)/30)))#(self.dias360(initial_validate_date, end_validate_date)))*30
                     # Tipo de Calculo ---------------------- FECHA EXPEDICIÓN
                     elif conf.calculation == 'date_issue':
                         value = str(datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d"))
