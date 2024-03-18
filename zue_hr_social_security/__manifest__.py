@@ -18,7 +18,7 @@
     "version": "15.0.1.0.0",
 
     # any module necessary for this one to work correctly
-    'depends': ['base','hr','hr_payroll','hr_holidays','zue_erp','zue_hr_employee','zue_hr_payroll','account'],
+    'depends': ['base','hr','hr_payroll','hr_holidays','zue_erp','zue_hr_employee','zue_hr_payroll','account','mail'],
 
     # always loaded
     'data': [

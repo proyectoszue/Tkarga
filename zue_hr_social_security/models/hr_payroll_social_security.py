@@ -26,9 +26,10 @@ class BrowsableObject(object):
 
 class hr_payroll_social_security(models.Model):
     _name = 'hr.payroll.social.security'
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _description = 'Seguridad Social'
 
-    year = fields.Integer('Año', required=True)
+    year = fields.Integer('Año', required=True, tracking=True)
     month = fields.Selection([('1', 'Enero'),
                             ('2', 'Febrero'),
                             ('3', 'Marzo'),
@@ -41,31 +42,31 @@ class hr_payroll_social_security(models.Model):
                             ('10', 'Octubre'),
                             ('11', 'Noviembre'),
                             ('12', 'Diciembre')        
-                            ], string='Mes', required=True)
-    observations = fields.Text('Observaciones')
+                            ], string='Mes', required=True, tracking=True)
+    observations = fields.Text('Observaciones', tracking=True)
     state = fields.Selection([
             ('draft', 'Borrador'),
             ('done', 'Realizado'),
             ('accounting', 'Contabilizado'),
-        ], string='Estado', default='draft')
+        ], string='Estado', default='draft', tracking=True)
     #Proceso
-    executing_social_security_ids = fields.One2many('hr.executing.social.security', 'executing_social_security_id', string='Ejecución')
-    errors_social_security_ids = fields.One2many('hr.errors.social.security', 'executing_social_security_id', string='Advertencias')
-    time_process = fields.Char(string='Tiempo ejecución')
+    executing_social_security_ids = fields.One2many('hr.executing.social.security', 'executing_social_security_id', string='Ejecución', tracking=True)
+    errors_social_security_ids = fields.One2many('hr.errors.social.security', 'executing_social_security_id', string='Advertencias', tracking=True)
+    time_process = fields.Char(string='Tiempo ejecución', tracking=True)
     #Plano
     presentation_form = fields.Selection([('U', 'Único'),
-                                            ('S','Sucursal')], string='Forma de presentación', default='U')
-    branch_social_security_id = fields.Many2one('hr.social.security.branches',string='Sucursal', help='Seleccione la sucursal a generar el archivo plano.')
-    work_center_social_security_id = fields.Many2one('hr.social.security.work.center', string='Centro de trabajo seguridad social', help='Seleccione el centro de trabajo a generar el archivo plano, si deja el campo vacio se generara con todos los centros de trabajo.')
+                                            ('S','Sucursal')], string='Forma de presentación', default='U', tracking=True)
+    branch_social_security_id = fields.Many2one('hr.social.security.branches',string='Sucursal', help='Seleccione la sucursal a generar el archivo plano.', tracking=True)
+    work_center_social_security_id = fields.Many2one('hr.social.security.work.center', string='Centro de trabajo seguridad social', help='Seleccione el centro de trabajo a generar el archivo plano, si deja el campo vacio se generara con todos los centros de trabajo.', tracking=True)
     #Archivos
     excel_file = fields.Binary('Excel file')
     excel_file_name = fields.Char('Excel name')
     txt_file = fields.Binary('TXT file')
     txt_file_name = fields.Char('TXT name')
 
-    move_id = fields.Many2one('account.move', string='Contabilidad')
+    move_id = fields.Many2one('account.move', string='Contabilidad', tracking=True)
     company_id = fields.Many2one('res.company', string='Compañía', readonly=True, required=True,
-        default=lambda self: self.env.company)
+        default=lambda self: self.env.company, tracking=True)
 
     _sql_constraints = [('ssecurity_period_uniq', 'unique(company_id,year,month)', 'El periodo seleccionado ya esta registrado para esta compañía, por favor verificar.')]
 
@@ -138,9 +139,19 @@ class hr_payroll_social_security(models.Model):
                             )
 
                             # Obtener parametrización de cotizantes
+                            # Obtener tipo y subtipo de cotizante de acuerdo a la fecha
+                            obj_tipo_coti = employee.tipo_coti_id
+                            obj_subtipo_coti = employee.subtipo_coti_id
+                            obj_history_social_security = self.env['zue.hr.history.employee.social.security'].search([('z_employee_id.id','=',employee.id)])
+                            if len(obj_history_social_security) > 0 and obj_contract.state != 'open' and obj_contract.id != employee.contract_id.id:
+                                for history_ss in obj_history_social_security:
+                                    if obj_contract.date_start >= history_ss.z_date_change and employee.contract_id.date_start <= history_ss.z_date_change and date_start >= history_ss.z_date_change and date_end <= history_ss.z_date_change:
+                                        obj_tipo_coti = history_ss.z_tipo_coti_id
+                                        obj_subtipo_coti = history_ss.z_subtipo_coti_id
+
                             obj_parameterization_contributors = env['hr.parameterization.of.contributors'].search(
-                                [('type_of_contributor', '=', employee.tipo_coti_id.id),
-                                 ('contributor_subtype', '=', employee.subtipo_coti_id.id)], limit=1)
+                                [('type_of_contributor', '=', obj_tipo_coti.id),
+                                 ('contributor_subtype', '=', obj_subtipo_coti.id)], limit=1)
                             #Variables
                             bEsAprendiz = True if obj_contract.contract_type == 'aprendizaje' else False
                             nDiasLiquidados = 0
@@ -276,7 +287,7 @@ class hr_payroll_social_security(models.Model):
                                     nValorBaseSENA += line.total if line.salary_rule_id.base_parafiscales else 0
                                     nValorBaseICBF += line.total if line.salary_rule_id.base_parafiscales else 0
 
-                            if cant_payslip > 0 and employee.tipo_coti_id.code != '51': # Proceso para tipos de cotizante diferente a 51 - Trabajador de Tiempo Parcial
+                            if cant_payslip > 0 and obj_tipo_coti.code != '51': # Proceso para tipos de cotizante diferente a 51 - Trabajador de Tiempo Parcial
                                 #Validar que la suma de los dias sea igual a 30 y en caso de se superior restar en los dias liquidados la diferencia
                                 nDiasTotales = nDiasLiquidados
                                 nDiasRetiro = 0 # Historia: Ajuste seguridad social unidades laboradas
@@ -534,7 +545,7 @@ class hr_payroll_social_security(models.Model):
                                     else:
                                         nValorBaseSalud = 0
                                     #----------------CALCULOS PENSION
-                                    if bEsAprendiz == False and employee.subtipo_coti_id.not_contribute_pension == False and (obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidates_solidarity_fund):
+                                    if bEsAprendiz == False and obj_subtipo_coti.not_contribute_pension == False and (obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidates_solidarity_fund):
                                         if nValorBaseFondoPension == 0:
                                             nValorBaseFondoPension = float(roundupdecimal(valor_base_sueldo))
                                         else:
@@ -688,7 +699,7 @@ class hr_payroll_social_security(models.Model):
                                         executing.unlink()
 
                                     item += 1
-                            elif cant_payslip > 0 and employee.tipo_coti_id.code == '51': # Proceso para el tipo de cotizante 51 - Trabajador de Tiempo Parcial:
+                            elif cant_payslip > 0 and obj_tipo_coti.code == '51': # Proceso para el tipo de cotizante 51 - Trabajador de Tiempo Parcial:
                                 # Guardar linea principal
                                 result = {
                                     'executing_social_security_id': self.id,
@@ -802,8 +813,8 @@ class hr_payroll_social_security(models.Model):
                                         nValorBaseCajaCom = 0
                                         nValorBaseSENA = 0
                                         nValorBaseICBF = 0
-                                        nValorBaseFondoPension = employee.tipo_coti_id.get_value_cotizante_51(date_start.year,nDias)
-                                        nValorBaseCajaCom = employee.tipo_coti_id.get_value_cotizante_51(date_start.year,nDias)
+                                        nValorBaseFondoPension = obj_tipo_coti.get_value_cotizante_51(date_start.year,nDias)
+                                        nValorBaseCajaCom = obj_tipo_coti.get_value_cotizante_51(date_start.year,nDias)
                                         # ----------------CALCULOS SALUD
                                         if nValorBaseSalud > 0:
                                             if bEsAprendiz == False:
@@ -820,7 +831,7 @@ class hr_payroll_social_security(models.Model):
                                             nValorSaludTotalEmpleado += nValorSaludEmpleado
                                             nValorSaludTotalEmpresa += nValorSaludEmpresa
                                         # ----------------CALCULOS PENSION
-                                        if bEsAprendiz == False and employee.subtipo_coti_id.not_contribute_pension == False:
+                                        if bEsAprendiz == False and obj_subtipo_coti.not_contribute_pension == False:
                                             if nValorBaseFondoPension > 0:
                                                 nPorcAportePensionEmpleado = annual_parameters.value_porc_pension_employee
                                                 nPorcAportePensionEmpresa = annual_parameters.value_porc_pension_company
