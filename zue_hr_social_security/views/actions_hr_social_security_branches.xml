@@ -66,8 +66,8 @@
                 </xpath>
                 <xpath expr="//group[@name='entidad']" position="after">
                     <group name="history_social_security" string="Histórico seguridad social"/>
-                    <field name="z_history_social_security_ids" nolabel="1" readonly="1" force_save="1">
-                        <tree>
+                    <field name="z_history_social_security_ids" nolabel="1">
+                        <tree create="false">
                             <field name="z_date_change"/>
                             <field name="z_tipo_coti_id"/>
                             <field name="z_subtipo_coti_id"/>
@@ -81,6 +81,32 @@
                     </field>
                 </xpath>
 
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_history_social_security_form">
+            <field name="name">zue_history_social_security form</field>
+            <field name="model">zue.hr.history.employee.social.security</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="z_date_change"/>
+                                <field name="z_tipo_coti_id" readonly="1" force_save="1"/>
+                                <field name="z_subtipo_coti_id" readonly="1" force_save="1"/>
+                                <field name="z_branch_social_security_id" readonly="1" force_save="1"/>
+                                <field name="z_work_center_social_security_id" readonly="1" force_save="1"/>
+                            </group>
+                            <group>
+                                <field name="z_extranjero" readonly="1" force_save="1"/>
+                                <field name="z_residente" readonly="1" force_save="1"/>
+                                <field name="z_date_of_residence_abroad" readonly="1" force_save="1"/>
+                                <field name="z_indicador_especial_id" readonly="1" force_save="1"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
             </field>
         </record>
 
