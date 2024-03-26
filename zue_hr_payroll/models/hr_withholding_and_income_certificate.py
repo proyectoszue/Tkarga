@@ -1,6 +1,7 @@
 import html
 import io
 import base64
+import math
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError,UserError
 from datetime import datetime, timedelta
@@ -171,22 +172,30 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                             end_validate_date = employee.contract_id.retirement_date if employee.contract_id.retirement_date <= date_end != 0 else date_end
                         else:
                             end_validate_date = date_end
-                        initial_validate_date = end_validate_date + relativedelta(months=-6)
+                        initial_validate_date = (end_validate_date + relativedelta(months=-6)) + timedelta(days=1)
+                        initial_validate_date = initial_validate_date if initial_validate_date >= date_start else date_start
+                        initial_validate_date = initial_validate_date if initial_validate_date >= employee.contract_id.date_start else employee.contract_id.date_start
                         obj_payslips = self.env['hr.payslip.line'].search(
                             [('slip_id.state', 'in', ['done', 'paid']),
-                             ('slip_id.date_from', '>', initial_validate_date),
-                             ('slip_id.date_from', '<=', end_validate_date), ('category_id.code', '=', 'BASIC'),
-                             ('slip_id.contract_id', '=', employee.contract_id.id)])
-                        value = sum([i.total for i in obj_payslips])/len(obj_payslips)
+                             ('salary_rule_id.id', 'in', conf.salary_rule_id.ids),
+                             ('slip_id.contract_id', '=', employee.contract_id.id),
+                             '|','&',('slip_id.date_from', '>=', initial_validate_date),
+                             ('slip_id.date_from', '<=', end_validate_date),'&',('slip_id.date_to', '>=', initial_validate_date),
+                             ('slip_id.date_to', '<=', end_validate_date)])
+                        value = (sum([i.total for i in obj_payslips])/((end_validate_date.month - initial_validate_date.month) + 1))#(self.dias360(initial_validate_date, end_validate_date)))*30
                     # Tipo de Calculo ---------------------- FECHA EXPEDICIÓN
                     elif conf.calculation == 'date_issue':
                         value = str(datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d"))
                     # Tipo de Calculo ---------------------- FECHA CERTIFICACIÓN INICIAL
                     elif conf.calculation == 'start_date_year':
                         value = str(year_process)+'-01-01'
+                        if employee.contract_id.date_start:
+                            value = employee.contract_id.date_start if employee.contract_id.date_start >= date_start != 0 else value
                     # Tipo de Calculo ---------------------- FECHA CERTIFICACIÓN FINAL
                     elif conf.calculation == 'end_date_year':
                         value = str(year_process)+'-12-31'
+                        if employee.contract_id.retirement_date:
+                            value = employee.contract_id.retirement_date if employee.contract_id.retirement_date <= date_end != 0 else value
                     # Tipo de Calculo ---------------------- DEPENDIENTES - TIPO DOCUMENTO
                     elif conf.calculation == 'dependents_type_vat':
                         value = dependents_type_vat

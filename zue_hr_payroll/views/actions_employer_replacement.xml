@@ -54,7 +54,7 @@
                             </group>
                             <group>
                                 <field name="z_new_company_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
-                                <field name="z_employer_replacement_date" readonly="1" force_save="1"/>
+                                <field name="z_employer_replacement_date"/>
                             </group>
                         </group>
                     </sheet>

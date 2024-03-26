@@ -13,3 +13,4 @@ access_hr_report_expenses_employee,hr.report.expenses.employee,model_hr_report_e
 access_hr_vacation_book,access_hr_vacation_book,model_hr_vacation_book,,1,1,1,1
 access_hr_consolidated_provisions,hr.consolidated.provisions,model_hr_consolidated_provisions,,1,1,1,1
 access_hr_consolidated_provisions_detail,hr.consolidated.provisions.detail,model_hr_consolidated_provisions_detail,,1,1,1,1
+access_zue_hr_history_employee_social_security,zue.hr.history.employee.social.security,model_zue_hr_history_employee_social_security,,1,1,1,1

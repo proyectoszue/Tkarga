@@ -63,7 +63,24 @@
                 <xpath expr="//field[@name='tipo_coti_id']" position="before">
                     <field name="branch_social_security_id" domain="[('company_id', '=', company_id)]"/>
                     <field name="work_center_social_security_id" domain="[('branch_social_security_id', '=', branch_social_security_id)]"/>
-                </xpath>                
+                </xpath>
+                <xpath expr="//group[@name='entidad']" position="after">
+                    <group name="history_social_security" string="Histórico seguridad social"/>
+                    <field name="z_history_social_security_ids" nolabel="1" readonly="1" force_save="1">
+                        <tree>
+                            <field name="z_date_change"/>
+                            <field name="z_tipo_coti_id"/>
+                            <field name="z_subtipo_coti_id"/>
+                            <field name="z_branch_social_security_id"/>
+                            <field name="z_work_center_social_security_id"/>
+                            <field name="z_extranjero"/>
+                            <field name="z_residente"/>
+                            <field name="z_date_of_residence_abroad"/>
+                            <field name="z_indicador_especial_id"/>
+                        </tree>
+                    </field>
+                </xpath>
+
             </field>
         </record>
 
