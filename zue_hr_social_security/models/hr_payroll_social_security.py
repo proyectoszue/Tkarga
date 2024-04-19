@@ -143,11 +143,16 @@ class hr_payroll_social_security(models.Model):
                             obj_tipo_coti = employee.tipo_coti_id
                             obj_subtipo_coti = employee.subtipo_coti_id
                             obj_history_social_security = self.env['zue.hr.history.employee.social.security'].search([('z_employee_id.id','=',employee.id)])
-                            if len(obj_history_social_security) > 0 and obj_contract.state != 'open' and obj_contract.id != employee.contract_id.id:
-                                for history_ss in obj_history_social_security:
-                                    if obj_contract.date_start >= history_ss.z_date_change and employee.contract_id.date_start <= history_ss.z_date_change and date_start >= history_ss.z_date_change and date_end <= history_ss.z_date_change:
-                                        obj_tipo_coti = history_ss.z_tipo_coti_id
-                                        obj_subtipo_coti = history_ss.z_subtipo_coti_id
+                            if len(obj_history_social_security) > 0: #and obj_contract.state != 'open' and obj_contract.id != employee.contract_id.id:
+                                for history_ss in sorted(obj_history_social_security, key=lambda x: x.z_date_change):
+                                    if obj_contract.state != 'open' and obj_contract.id != employee.contract_id.id:
+                                        if obj_contract.date_start >= history_ss.z_date_change and employee.contract_id.date_start <= history_ss.z_date_change and date_start >= history_ss.z_date_change and date_end <= history_ss.z_date_change:
+                                            obj_tipo_coti = history_ss.z_tipo_coti_id
+                                            obj_subtipo_coti = history_ss.z_subtipo_coti_id
+                                    else:
+                                        if datetime_start.date() < history_ss.z_date_change:
+                                            obj_tipo_coti = history_ss.z_tipo_coti_id
+                                            obj_subtipo_coti = history_ss.z_subtipo_coti_id
 
                             obj_parameterization_contributors = env['hr.parameterization.of.contributors'].search(
                                 [('type_of_contributor', '=', obj_tipo_coti.id),
@@ -1045,7 +1050,7 @@ class hr_payroll_social_security(models.Model):
         }
 
         ls_process_accounting = ['ss_empresa_salud','ss_empresa_pension','ss_empresa_arp','ss_empresa_caja','ss_empresa_sena','ss_empresa_icbf']
-        obj_employee = self.env['hr.employee'].search([('id','!=',False)])
+        obj_employee = self.env['hr.employee'].search([('id','in',self.executing_social_security_ids.employee_id.ids),'|',('active','=', True),('active','=',False)])
 
         for employee in obj_employee:
             executing_social_security = self.env['hr.executing.social.security'].search([('executing_social_security_id', '=', self.id),('employee_id','=',employee.id)])

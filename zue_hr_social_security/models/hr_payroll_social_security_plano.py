@@ -160,11 +160,16 @@ class hr_payroll_social_security(models.Model):
             obj_subtipo_coti = item.employee_id.subtipo_coti_id
             obj_history_social_security = self.env['zue.hr.history.employee.social.security'].search(
                 [('z_employee_id.id', '=', item.employee_id.id)])
-            if len(obj_history_social_security) > 0 and item.contract_id.state != 'open' and item.contract_id.id != item.employee_id.contract_id.id:
-                for history_ss in obj_history_social_security:
-                    if item.contract_id.date_start >= history_ss.z_date_change and item.employee_id.contract_id.date_start <= history_ss.z_date_change and date_start >= history_ss.z_date_change and date_end <= history_ss.z_date_change:
-                        obj_tipo_coti = history_ss.z_tipo_coti_id
-                        obj_subtipo_coti = history_ss.z_subtipo_coti_id
+            if len(obj_history_social_security) > 0: #and item.contract_id.state != 'open' and item.contract_id.id != item.employee_id.contract_id.id:
+                for history_ss in sorted(obj_history_social_security, key=lambda x: x.z_date_change):
+                    if item.contract_id.state != 'open' and item.contract_id.id != item.employee_id.contract_id.id:
+                        if item.contract_id.date_start >= history_ss.z_date_change and item.employee_id.contract_id.date_start <= history_ss.z_date_change and date_start >= history_ss.z_date_change and date_end <= history_ss.z_date_change:
+                            obj_tipo_coti = history_ss.z_tipo_coti_id
+                            obj_subtipo_coti = history_ss.z_subtipo_coti_id
+                    else:
+                        if date_start < history_ss.z_date_change:
+                            obj_tipo_coti = history_ss.z_tipo_coti_id
+                            obj_subtipo_coti = history_ss.z_subtipo_coti_id
             # Obtener parametrización de cotizantes
             obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
                 [('type_of_contributor', '=', obj_tipo_coti.id),
