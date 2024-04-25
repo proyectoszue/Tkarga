@@ -166,10 +166,12 @@ class hr_payroll_social_security(models.Model):
                         if item.contract_id.date_start >= history_ss.z_date_change and item.employee_id.contract_id.date_start <= history_ss.z_date_change and date_start >= history_ss.z_date_change and date_end <= history_ss.z_date_change:
                             obj_tipo_coti = history_ss.z_tipo_coti_id
                             obj_subtipo_coti = history_ss.z_subtipo_coti_id
+                            break
                     else:
                         if date_start < history_ss.z_date_change:
                             obj_tipo_coti = history_ss.z_tipo_coti_id
                             obj_subtipo_coti = history_ss.z_subtipo_coti_id
+                            break
             # Obtener parametrización de cotizantes
             obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
                 [('type_of_contributor', '=', obj_tipo_coti.id),
