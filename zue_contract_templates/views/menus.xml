@@ -1,0 +1,7 @@
+<odoo>
+    <data>
+
+        <menuitem id="menu_zue_contract_templates" name="Plantillas de contrato" parent="hr_payroll.menu_hr_payroll_employees_root" action="actions_zue_contract_templates" sequence="70"/>
+
+    </data>
+</odoo>
