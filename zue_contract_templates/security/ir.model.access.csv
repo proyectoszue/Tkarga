@@ -1,0 +1,3 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_zue_contract_templates,zue.contract.templates,model_zue_contract_templates,,1,1,1,1
+access_zue_contract_templates_details,zue.contract.templates.details,model_zue_contract_templates_details,,1,1,1,1
