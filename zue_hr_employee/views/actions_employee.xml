@@ -224,7 +224,7 @@
                                        attrs="{'invisible': [('marital', 'not in', ['married', 'cohabitant'])]}"/>
                             </group>
                         </group>
-                        <group name="dependientes" string="Dependientes">
+                        <group name="dependientes" string="Dependientes"/>
                             <field name="dependents_information" nolabel="1">
                                 <tree editable="bottom">
                                     <field name="name"/>
@@ -236,9 +236,10 @@
                                     <field name="z_phone"/>
                                     <field name="z_address"/>
                                     <field name="z_report_income_and_withholdings"/>
+                                    <field name="z_upc_payment"/>
+                                    <field name="z_upc_geographic_area" attrs="{'required': [('z_upc_payment', '=', True)]}"/>
                                 </tree>
                             </field>
-                        </group>
                     </page>
                     <page string="Seguridad Social" name="seguridad_social">
                         <group name="pila" string="PILA">

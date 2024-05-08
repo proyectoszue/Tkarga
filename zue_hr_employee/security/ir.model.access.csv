@@ -35,3 +35,4 @@ access_hr_employee_endowment,access_hr_employee_endowment,model_hr_employee_endo
 access_hr_labor_certificate_template_detail,hr.labor.certificate.template.detail,model_hr_labor_certificate_template_detail,,1,1,1,1
 access_zue_economic_activity_level_risk,zue.economic.activity.level.risk,model_zue_economic_activity_level_risk,,1,1,1,1
 access_zue_retirement_severance_pay,zue.retirement.severance.pay,model_zue_retirement_severance_pay,,1,1,1,1
+access_zue_upc_annual_parameters,zue.upc.annual.parameters,model_zue_upc_annual_parameters,,1,1,1,1

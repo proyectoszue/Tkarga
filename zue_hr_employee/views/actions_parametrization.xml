@@ -231,6 +231,20 @@
                                     </group>
                                 </group>
                             </page>
+                            <page string="UPC">
+                                <group>
+                                    <field name="z_upc_lines_ids" nolabel="1">
+                                        <tree editable="bottom">
+                                            <field name="z_age_group_upc"/>
+                                            <field name="z_normal_zone_upc"/>
+                                            <field name="z_special_zone_upc"/>
+                                            <field name="z_cities_upc"/>
+                                            <field name="z_islands_upc"/>
+                                            <field name="z_gender_upc"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                            </page>
                             <page string="Certificado Ingresos y Retenciones">
                                 <group>
                                     <group>
