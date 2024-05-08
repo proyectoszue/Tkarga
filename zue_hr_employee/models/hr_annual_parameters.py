@@ -582,6 +582,8 @@ class hr_annual_parameters(models.Model):
     z_bonus_services_rendered = fields.Integer(string="Tope Bonificación por servicios prestados (B.S.P)")
     z_food_subsidy_tope = fields.Integer(string="Tope Subsidio de alimentación")
     z_percentage_public = fields.Integer(string="Porcentaje Emp. Publicos")
+    # Grilla UPC
+    z_upc_lines_ids = fields.One2many('zue.upc.annual.parameters', 'z_upc_id', string='Líneas UPC')
 
     # Metodos
     def name_get(self):
@@ -645,3 +647,29 @@ class hr_annual_parameters(models.Model):
 
     _sql_constraints = [
         ('change_year_uniq', 'unique(year)', 'Ya existe una parametrización para el año digitado, por favor verificar')]
+
+class zue_upc_annual_parameters(models.Model):
+    _name = 'zue.upc.annual.parameters'
+    _description = 'Parámetros anuales UPC'
+
+    z_upc_id = fields.Many2one('hr.annual.parameters', string="UPC")
+    z_age_group_upc = fields.Selection([
+        ('age<1', 'Menores de 1 año'),
+        ('age>1 and age<=4', 'De 1 a 4 años'),
+        ('age>=5 and age<=14', 'De 5 a 14 años'),
+        ('age>=15 and age<=18', 'De 15 a 18 años'),
+        ('age>=19 and age<=44', 'De 19 a 44 años'),
+        ('age>=45 and age<=49', 'De 45 a 49 años'),
+        ('age>=50 and age<=54', 'De 50 a 54 años'),
+        ('age>=55 and age<=59', 'De 55 a 59 años'),
+        ('age>=60 and age<=64', 'De 60 a 64 años'),
+        ('age>=65 and age<=69', 'De 65 a 69 años'),
+        ('age>=70 and age<=74', 'De 70 a 74 años'),
+        ('age>=75', 'De 75 y más años')
+    ], string='Grupo de edades')
+    z_normal_zone_upc = fields.Float(string="Zona normal")
+    z_special_zone_upc = fields.Float(string="Zona especial")
+    z_cities_upc = fields.Float(string="Ciudades")
+    z_islands_upc = fields.Float(string="Islas")
+    z_gender_upc = fields.Selection([('masculino', 'Masculino'), ('femenino', 'Femenino'), ('otro', 'Otro')],
+                                    string="Genero", required=True)
