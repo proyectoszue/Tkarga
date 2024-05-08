@@ -128,36 +128,46 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                                 # Nóminas
                                 for payslip_ant in obj_payslip_ant:
                                     if conf.origin_severance_pay == 'employee':
-                                        amount += abs(sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
+                                        amount += (sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
                                     else:
-                                        amount += abs(sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == False)]))
+                                        amount += (sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == False)]))
                                 if conf.origin_severance_pay != 'employee':
                                     # Acumulados
-                                    amount += abs(sum([i.amount for i in obj_payslip_accumulated_ant.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                                    amount += (sum([i.amount for i in obj_payslip_accumulated_ant.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                                # Revisar años anteriores si existe anticipo o liquidacion de contrato
+                                if conf.origin_severance_pay == 'employee':
+                                    if employee.contract_id.retirement_date:
+                                        if employee.contract_id.retirement_date <= date_end:
+                                            for payslip in obj_payslip:
+                                                amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
+
+                                    for payslip in obj_payslip:
+                                        if payslip.struct_id.process == 'cesantias' and payslip.date_to < (date_end - timedelta(days=1)):
+                                            amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
                             else:
                                 # Nóminas
                                 for payslip_ant in obj_payslip_ant:
-                                    amount += abs(sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                                    amount += (sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
                                 # Acumulados
-                                amount += abs(sum([i.amount for i in obj_payslip_accumulated_ant.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                                amount += (sum([i.amount for i in obj_payslip_accumulated_ant.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
                         else:
                             if conf.origin_severance_pay:
                                 # Nóminas
                                 for payslip in obj_payslip:
                                     if conf.origin_severance_pay == 'employee':
-                                        amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
+                                        amount += (sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
                                     else:
-                                        amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == False)]))
+                                        amount += (sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == False)]))
                                 if conf.origin_severance_pay != 'employee':
                                     # Acumulados
-                                    amount += abs(sum([i.amount for i in obj_payslip_accumulated.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                                    amount += (sum([i.amount for i in obj_payslip_accumulated.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
                             else:
                                 #Nóminas
                                 for payslip in obj_payslip:
-                                    amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                                    amount += (sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
                                 #Acumulados
-                                amount += abs(sum([i.amount for i in obj_payslip_accumulated.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
-                        value = amount
+                                amount += (sum([i.amount for i in obj_payslip_accumulated.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                        value = abs(amount)
                     # Tipo de Calculo ---------------------- SUMATORIA SECUENCIAS ANTERIORES
                     elif conf.calculation == 'sum_sequence':
                         if conf.sequence_list_sum:
@@ -165,7 +175,7 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                             sequence_list_sum = conf.sequence_list_sum.split(',')
                             for item in lst_items:
                                 amount += float(item[1]) if str(item[0]) in sequence_list_sum else 0
-                            value = amount
+                            value = abs(amount)
                     # Tipo de Calculo ---------------------- INGRESO LABORAL PROMEDIO DE LOS ÚLTIMOS SEIS MESES ANTERIORES
                     elif conf.calculation == 'amount_last_six_months':
                         if employee.contract_id.retirement_date:
