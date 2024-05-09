@@ -7,6 +7,7 @@
             <field name="inherit_id" ref="account.view_account_journal_form"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='bank_account_id']" position="after">
+                    <field name="code" invisible="1"/>
                     <field name="is_payroll_spreader"/>
                     <field name="plane_type" attrs="{'invisible': [('is_payroll_spreader', '=', False)]}"/>
                 </xpath>
