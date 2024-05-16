@@ -132,6 +132,18 @@ class hr_employee_dependents(models.Model):
                                         ('madre', 'Madre'),
                                         ('conyuge', 'Cónyuge'),
                                         ('hermano', 'Hermano(a)'),
+                                        ('sobrino', 'Sobrino(a)'),
+                                        ('nieto', 'Nieto(a)'),
+                                        ('hermano', 'Hermano(a)'),
+                                        ('tio', 'Tío(a)'),
+                                        ('abuelo', 'Abuelo(a)'),
+                                        ('tio_abuelo', 'Tío(a) abuelo(a)'),
+                                        ('bisabuelo', 'Bisabuelo(a)'),
+                                        ('bisnieto', 'Bisnieto(a)'),
+                                        ('suegro', 'Suegro(a)'),
+                                        ('yerno', 'Yerno(a)'),
+                                        ('nuera', 'Nuera'),
+                                        ('cuñado', 'Cuñado(a)'),
                                         ('otro', 'Otro')], 'Tipo')
     z_document_type = fields.Selection([
         ('11', 'Registro civil de nacimiento'),
