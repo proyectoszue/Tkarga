@@ -74,6 +74,7 @@
         'views/actions_account_journal.xml',
         'views/actions_res_partner.xml',
         'views/actions_hr_absenteeism_history.xml',
+        'views/actions_work_income_and_pensions.xml',
         'views/menus.xml',
     ],
     'license': 'LGPL-3',

@@ -30,6 +30,8 @@ class hr_conf_certificate_income(models.Model):
     salary_rule_id = fields.Many2many('hr.salary.rule', string='Regla Salarial')
     origin_severance_pay = fields.Selection([('employee', 'Empleado'), ('fund', 'Fondo')], string='Pago cesantías')
     accumulated_previous_year = fields.Boolean(string='Acumulado año anterior')
+    z_show_format_income_and_pensions = fields.Boolean(string='Mostrar en formato 2276')
+    z_name_format_income_and_pensions = fields.Char(string='Titulo en formato 2276')
     sequence_list_sum = fields.Char(string='Sum secuencias')
 
     _sql_constraints = [('change_conf_rule_uniq', 'unique(annual_parameters_id,sequence)',

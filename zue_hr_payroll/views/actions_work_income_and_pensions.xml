@@ -1,0 +1,26 @@
+<odoo>
+    <data>
+        <!-- Informe rentas de trabajo y pensiones - Formato 2276-->
+        <record model="ir.actions.act_window" id="action_zue_work_income_and_pensions">
+            <field name="name">Informe rentas de trabajo y pensiones - Formato 2276</field>
+            <field name="res_model">zue.work.income.and.pensions</field>
+            <field name="target">new</field>
+            <field name="view_mode">form</field>
+        </record>
+
+        <record id="zue_work_income_and_pensions_form" model="ir.ui.view">
+            <field name="name">Informe rentas de trabajo y pensiones - Formato 2276</field>
+            <field name="model">zue.work.income.and.pensions</field>
+            <field name="arch" type="xml">
+                <form string="Informe rentas de trabajo y pensiones - Formato 2276">
+                    <group>
+                        <field name="z_year"/>
+                    </group>
+                    <footer>
+                        <button name="generate_excel_report" string="Generar Excel" type="object" class="oe_highlight"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>
