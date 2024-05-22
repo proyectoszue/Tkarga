@@ -282,6 +282,8 @@
                                                     <field name="origin_severance_pay"/>
                                                     <field name="accumulated_previous_year"/>
                                                     <field name="sequence_list_sum"/>
+                                                    <field name="z_show_format_income_and_pensions"/>
+                                                    <field name="z_name_format_income_and_pensions"/>
                                                 </tree>
                                             </field>
                                         </group>
