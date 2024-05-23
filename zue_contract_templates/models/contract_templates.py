@@ -27,10 +27,8 @@ class zue_contract_templates_details(models.Model):
     z_contract_templates_id = fields.Many2one('zue.contract.templates', string='Configuración de campos')
     z_sequence = fields.Integer(string='Secuencia', required=True)
     z_calculation = fields.Selection([('info', 'Información'),
-                                    ('dependents_type_vat', 'Dependientes - Tipo documento'),
-                                    ('dependents_vat', 'Dependientes - No. Documento'),
-                                    ('dependents_name', 'Dependientes - Apellidos y Nombres'),
-                                    ('dependents_type', 'Dependientes - Parentesco'), ], string='Tipo Cálculo',
+                                      ('legal_representative_name', 'Representante Legal Nombre'),
+                                      ('signature', 'Firma Autorizada'), ], string='Tipo Cálculo',
                                    default='info', required=True)
     z_type_partner = fields.Selection([('employee', 'Empleado'), ('company', 'Compañía')], string='Origen Información')
     z_information_fields_id = fields.Many2one('ir.model.fields', string="Información",
@@ -97,11 +95,14 @@ class hr_contract(models.Model):
     def generate_certificate(self):
         struct_report = ''
         obj_template = self.env['zue.contract.templates'].search([('contract_type', '=', self.contract_type)], limit=1)
+        obj_representative = self.employee_id.company_id.partner_id.child_ids.filtered(lambda x: x.x_contact_job_title.code == 'RL')
+        obj_signature = self.env['res.users'].search([('sign_signature', '!=', False), ('z_signing_contracts', '=', True)])
         if len(obj_template) > 0:
             struct_report = obj_template.z_contract_template
             # Recorrer configuración
             for conf in sorted(obj_template.z_contract_templates_details_ids, key=lambda x: x.z_sequence):
                 ldict = {'employee': self.employee_id, 'contract': self}
+                value = None
                 if conf.z_calculation == 'info':
                     if conf.z_type_partner == 'employee':
                         if conf.z_information_fields_id.model_id.model == 'hr.employee':
@@ -144,6 +145,14 @@ class hr_contract(models.Model):
                                     conf.z_information_fields_id.name)
                             exec(code_python, ldict)
                             value = ldict.get('value')
+                # Tipo de Calculo Representante legal
+                if conf.z_calculation == 'legal_representative_name':
+                    if len(obj_representative) == 1:
+                        value = obj_representative.name
+                # Tipo de Calculo Firma
+                if conf.z_calculation == 'signature':
+                    if len(obj_signature) == 1:
+                        value = obj_signature.sign_signature.decode('utf-8')
                 # ----------------------------------------------------------------------------------------------
                 #                                       GUARDAR RESULTADO
                 # ----------------------------------------------------------------------------------------------
