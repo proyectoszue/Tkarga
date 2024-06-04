@@ -156,22 +156,26 @@ class hr_payroll_social_security(models.Model):
             
         for item in details:
             # Obtener tipo y subtipo de cotizante de acuerdo a la fecha
-            obj_tipo_coti = item.employee_id.tipo_coti_id
-            obj_subtipo_coti = item.employee_id.subtipo_coti_id
-            obj_history_social_security = self.env['zue.hr.history.employee.social.security'].search(
-                [('z_employee_id.id', '=', item.employee_id.id)])
-            if len(obj_history_social_security) > 0: #and item.contract_id.state != 'open' and item.contract_id.id != item.employee_id.contract_id.id:
-                for history_ss in sorted(obj_history_social_security, key=lambda x: x.z_date_change):
-                    if item.contract_id.state != 'open' and item.contract_id.id != item.employee_id.contract_id.id:
-                        if item.contract_id.date_start >= history_ss.z_date_change and item.employee_id.contract_id.date_start <= history_ss.z_date_change and date_start >= history_ss.z_date_change and date_end <= history_ss.z_date_change:
-                            obj_tipo_coti = history_ss.z_tipo_coti_id
-                            obj_subtipo_coti = history_ss.z_subtipo_coti_id
-                            break
-                    else:
-                        if date_start < history_ss.z_date_change:
-                            obj_tipo_coti = history_ss.z_tipo_coti_id
-                            obj_subtipo_coti = history_ss.z_subtipo_coti_id
-                            break
+            if item.nValorUPC > 0 and item.dependent_upc_id:
+                obj_tipo_coti = self.env['hr.tipo.cotizante'].search([('code', '=', '40')])
+                obj_subtipo_coti = self.env['hr.subtipo.cotizante'].search([('code', '=', '00')])
+            else:
+                obj_tipo_coti = item.employee_id.tipo_coti_id
+                obj_subtipo_coti = item.employee_id.subtipo_coti_id
+                obj_history_social_security = self.env['zue.hr.history.employee.social.security'].search(
+                    [('z_employee_id.id', '=', item.employee_id.id)])
+                if len(obj_history_social_security) > 0: #and item.contract_id.state != 'open' and item.contract_id.id != item.employee_id.contract_id.id:
+                    for history_ss in sorted(obj_history_social_security, key=lambda x: x.z_date_change):
+                        if item.contract_id.state != 'open' and item.contract_id.id != item.employee_id.contract_id.id:
+                            if item.contract_id.date_start >= history_ss.z_date_change and item.employee_id.contract_id.date_start <= history_ss.z_date_change and date_start >= history_ss.z_date_change and date_end <= history_ss.z_date_change:
+                                obj_tipo_coti = history_ss.z_tipo_coti_id
+                                obj_subtipo_coti = history_ss.z_subtipo_coti_id
+                                break
+                        else:
+                            if date_start < history_ss.z_date_change:
+                                obj_tipo_coti = history_ss.z_tipo_coti_id
+                                obj_subtipo_coti = history_ss.z_subtipo_coti_id
+                                break
             # Obtener parametrización de cotizantes
             obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
                 [('type_of_contributor', '=', obj_tipo_coti.id),
@@ -213,14 +217,20 @@ class hr_payroll_social_security(models.Model):
                 '41': 'PA',
                 'PE': 'PT',
                 'PT': 'PT'
-            }             
-            cTipIdTercero = switch_cTipIdTercero.get(item.employee_id.address_home_id.x_document_type, '/')
+            }
+            if item.nValorUPC > 0 and item.dependent_upc_id:
+                cTipIdTercero = switch_cTipIdTercero.get(item.dependent_upc_id.z_document_type, '/')
+                cNumIdTercero = left(item.dependent_upc_id.z_vat + 16 * ' ', 16)
+                cNombreEmpleado = item.dependent_upc_id.name
+            else:
+                cTipIdTercero = switch_cTipIdTercero.get(item.employee_id.address_home_id.x_document_type, '/')
+                #if item.employee_id.permit_no:
+                #    cNumIdTercero = left(item.employee_id.permit_no+16*' ',16)
+                #else:
+                cNumIdTercero = left(item.employee_id.identification_id+16*' ',16)
+                cNombreEmpleado = item.employee_id.name
             if cTipIdTercero == '/':
-                raise ValidationError(_('El tipo de documento del empleado '+item.employee_id.name+' es invalido, por favor verificar.'))           
-            #if item.employee_id.permit_no:
-            #    cNumIdTercero = left(item.employee_id.permit_no+16*' ',16)
-            #else:
-            cNumIdTercero = left(item.employee_id.identification_id+16*' ',16)
+                raise ValidationError(_('El tipo de documento del empleado ' + item.employee_id.name + ' es invalido, por favor verificar.'))
             if not obj_tipo_coti.code:
                 raise ValidationError(_('El empleado '+item.employee_id.name+' no tiene tipo de cotizante, por favor verificar.'))           
             cTipoCotizante = right('00'+obj_tipo_coti.code,2)
@@ -229,7 +239,6 @@ class hr_payroll_social_security(models.Model):
             cResidenteExterior = 'X' if item.employee_id.residente == True and cTipIdTercero in ('CC','TI') else ' '
             cCodUbiLaboral = right('00000'+entity_ccf.partner_id.x_city.code,5) if entity_ccf and entity_ccf.partner_id.x_city.code else right('00000'+item.employee_id.address_home_id.x_city.code,5)            
             #Obtener nombre
-            cNombreEmpleado = item.employee_id.name
             array_NombreCompleto = cNombreEmpleado.split(' ')            
             cPrimerApellido = ' '*20
             cSegundoApellido = ' '*30
@@ -267,10 +276,16 @@ class hr_payroll_social_security(models.Model):
                     cSegundoNombre = cSegundoNombre+' '+name if cont >= 5 else cSegundoNombre
                     cont += 1
 
-            cPrimerApellido = left(cPrimerApellido+' '*20,20) if not item.employee_id.address_home_id.x_first_lastname else left(item.employee_id.address_home_id.x_first_lastname+' '*20,20)
-            cSegundoApellido = left(cSegundoApellido+' '*30,30) if not item.employee_id.address_home_id.x_second_lastname else left(item.employee_id.address_home_id.x_second_lastname+' '*30,30)
-            cPrimerNombre = left(cPrimerNombre+' '*20,20) if not item.employee_id.address_home_id.x_first_name else left(item.employee_id.address_home_id.x_first_name+' '*20,20)
-            cSegundoNombre = left(cSegundoNombre+' '*30,30) if not item.employee_id.address_home_id.x_second_name else left(item.employee_id.address_home_id.x_second_name+' '*30,30) 
+            if item.nValorUPC > 0 and item.dependent_upc_id:
+                cPrimerApellido = left(cPrimerApellido + ' ' * 20,20)
+                cSegundoApellido = left(cSegundoApellido + ' ' * 30,30)
+                cPrimerNombre = left(cPrimerNombre + ' ' * 20,20)
+                cSegundoNombre = left(cSegundoNombre + ' ' * 30,30)
+            else:
+                cPrimerApellido = left(cPrimerApellido+' '*20,20) if not item.employee_id.address_home_id.x_first_lastname else left(item.employee_id.address_home_id.x_first_lastname+' '*20,20)
+                cSegundoApellido = left(cSegundoApellido+' '*30,30) if not item.employee_id.address_home_id.x_second_lastname else left(item.employee_id.address_home_id.x_second_lastname+' '*30,30)
+                cPrimerNombre = left(cPrimerNombre+' '*20,20) if not item.employee_id.address_home_id.x_first_name else left(item.employee_id.address_home_id.x_first_name+' '*20,20)
+                cSegundoNombre = left(cSegundoNombre+' '*30,30) if not item.employee_id.address_home_id.x_second_name else left(item.employee_id.address_home_id.x_second_name+' '*30,30)
 
             #Concatenar detalle primera parte
             part_line_one = '%s%s%s%s%s%s%s%s%s%s%s%s%s' % (cTipoRegistro,cSecuencia,cTipIdTercero,cNumIdTercero,cTipoCotizante,cSubtipoCotizante,cExtranjeroNoObligadoPension,cResidenteExterior,cCodUbiLaboral,cPrimerApellido,cSegundoApellido,cPrimerNombre,cSegundoNombre)
@@ -337,8 +352,13 @@ class hr_payroll_social_security(models.Model):
                 else:
                     cCodigoEntidadEPS = left(entity_eps.code_pila_eps+' '*6,6)
                     cCodigoEntidadEPSTraslado = ' ' * 6
-                cDiasCotizadosSalud = '00' if item.nValorBaseSalud <= 0 else right('00' + str(
-                    item.nDiasLiquidados + item.nDiasVacaciones + item.nDiasIncapacidadEPS + item.nDiasLicencia + item.nDiasLicenciaRenumerada + item.nDiasMaternidad + item.nDiasIncapacidadARP),2)
+                if item.nValorUPC > 0 and item.dependent_upc_id:
+                    cCodigoEntidadEPS = ' ' * 6
+                    cCodigoEntidadEPSTraslado = ' ' * 6
+                    cDiasCotizadosSalud = '30'
+                else:
+                    cDiasCotizadosSalud = '00' if item.nValorBaseSalud <= 0 else right('00' + str(
+                        item.nDiasLiquidados + item.nDiasVacaciones + item.nDiasIncapacidadEPS + item.nDiasLicencia + item.nDiasLicenciaRenumerada + item.nDiasMaternidad + item.nDiasIncapacidadARP),2)
             else:
                 cCodigoEntidadEPS = ' ' * 6
                 cCodigoEntidadEPSTraslado = ' ' * 6
@@ -354,10 +374,14 @@ class hr_payroll_social_security(models.Model):
             cDiasCotizadosARP = '00' if item.nValorBaseARP <= 0 else right( '00' + str( item.nDiasLiquidados + item.nDiasVacaciones + item.nDiasIncapacidadEPS + item.nDiasLicencia + item.nDiasLicenciaRenumerada + item.nDiasMaternidad + item.nDiasIncapacidadARP), 2 )
             cDiasCotizadosARP = cDiasCotizadosARP if cTipoCotizante != '51' else '30' # "Número de días cotizados a Riesgos Laborales" se reportará 30 días. Cotizante 51
 
-            cSalarioBasico = right('0'*9+ str(item.nSueldo if item.nSueldo>=annual_parameters.smmlv_monthly else annual_parameters.smmlv_monthly).split('.')[0],9) 
-            cSalarioIntegral = 'V' if item.contract_id.modality_salary not in ['basico', 'sostenimiento'] else (' ' if item.employee_id.contract_id.contract_type == 'aprendizaje' else 'F')
-            cSalarioIntegral = cSalarioIntegral if item.contract_id.modality_salary != 'integral' else 'X'
-            cSalarioIntegral = ' ' if obj_tipo_coti.code == '51' else cSalarioIntegral
+            if item.nValorUPC > 0 and item.dependent_upc_id:
+                cSalarioBasico = '0'*9
+                cSalarioIntegral = ' '
+            else:
+                cSalarioBasico = right('0'*9+ str(item.nSueldo if item.nSueldo>=annual_parameters.smmlv_monthly else annual_parameters.smmlv_monthly).split('.')[0],9)
+                cSalarioIntegral = 'V' if item.contract_id.modality_salary not in ['basico', 'sostenimiento'] else (' ' if item.employee_id.contract_id.contract_type == 'aprendizaje' else 'F')
+                cSalarioIntegral = cSalarioIntegral if item.contract_id.modality_salary != 'integral' else 'X'
+                cSalarioIntegral = ' ' if obj_tipo_coti.code == '51' else cSalarioIntegral
 
             if obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidates_solidarity_fund:
                 cIBCPension = right('0'*9+str(item.nValorBaseFondoPension).split('.')[0],9)
@@ -394,7 +418,7 @@ class hr_payroll_social_security(models.Model):
 
             cTarifaSalud = left(str( (item.nPorcAporteSaludEmpleado + item.nPorcAporteSaludEmpresa ) / 100 ) +'0'*7, 7 )
             cValorAporteSalud = right('0'*9+str(roundup100(item.nValorSaludEmpresa + item.nValorSaludEmpleado)).split('.')[0], 9 )
-            cValorUPC = '0'*9 #right('0'*9+str( item.nValorUPC ), 9 )
+            cValorUPC = right('0'*9+str(item.nValorUPC).split('.')[0],9)
 
             cNumeroAutorizacionIncapacidad = ' '*15
             cValorIncapacidad = '0'*9
@@ -417,15 +441,24 @@ class hr_payroll_social_security(models.Model):
             cValorESAP = '0'*9
             cTarifaMEN = '0.' + '0'*5
             cValorMEN = '0'*9
-            cIdentificacionCotizantePrincipal = ' '*18
+            if item.nValorUPC > 0 and item.dependent_upc_id:
+                cTipIdTerceroCotizantePrincipal = switch_cTipIdTercero.get(item.employee_id.address_home_id.x_document_type, '/')
+                cNumIdTerceroCotizantePrincipal = left(item.employee_id.identification_id + 16 * ' ', 16)
+                cIdentificacionCotizantePrincipal = cTipIdTerceroCotizantePrincipal+cNumIdTerceroCotizantePrincipal
+            else:
+                cIdentificacionCotizantePrincipal = ' '*18
             cExonerado1607 = 'S' if item.cExonerado1607 else 'N'
             cExonerado1607 = 'N' if obj_tipo_coti.code == '51' else cExonerado1607
+            cExonerado1607 = 'N' if item.nValorUPC > 0 and item.dependent_upc_id else cExonerado1607
 
             cCodigoEntidadARP = left(self.company_id.entity_arp_id.code_pila_eps+' '*6,6) if not entity_arp or not entity_arp.code_pila_eps else left(entity_arp.code_pila_eps+' '*6,6)
-            if not item.TerceroARP and item.contract_id.contract_type == 'aprendizaje':
+            if (not item.TerceroARP and item.contract_id.contract_type == 'aprendizaje') or (item.nValorUPC > 0 and item.dependent_upc_id):
                 cCodigoEntidadARP = ' ' * 6
 
-            cNivelRiesgo = '1' if not item.contract_id.risk_id.code else right(item.contract_id.risk_id.code,1)
+            if item.nValorUPC > 0 and item.dependent_upc_id:
+                cNivelRiesgo = ' '
+            else:
+                cNivelRiesgo = '1' if not item.contract_id.risk_id.code else right(item.contract_id.risk_id.code,1)
             cIndicadorTarifaEspecial = ' '
 
             part_line_five = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s' % (cTarifaARP,cCentroTrabajo,cValorARP,cTarifaCCF,cValorCajaCom,cTarifaSENA,cValorSENA,cTarifaICBF,cValorICBF,cTarifaESAP,cValorESAP,cTarifaMEN,cValorMEN,cIdentificacionCotizantePrincipal,cExonerado1607,cCodigoEntidadARP,cNivelRiesgo,cIndicadorTarifaEspecial)

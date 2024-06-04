@@ -61,6 +61,7 @@
                                     <field name="executing_social_security_ids" readonly="1" nolabel="1">
                                         <tree>
                                             <field name="employee_id"/>
+                                            <field name="dependent_upc_id"/>
                                             <field name="branch_id" optional="show"/>
                                             <field name="contract_id" optional="hide"/>
                                             <field name="nDiasLiquidados" optional="show"/>
@@ -137,6 +138,7 @@
                                                     <group string="Info Empleado">
                                                         <field name="executing_social_security_id"/>
                                                         <field name="employee_id"/>
+                                                        <field name="dependent_upc_id"/>
                                                         <field name="branch_id"/>
                                                         <field name="contract_id"/>
                                                         <field name="analytic_account_id"/>
@@ -165,6 +167,7 @@
                                                         <field name="nValorSaludEmpresa"/>
                                                         <field name="nValorSaludTotal"/>
                                                         <field name="nDiferenciaSalud"/>
+                                                        <field name="nValorUPC"/>
                                                     </group>
                                                     <group string="Pensión">
                                                         <field name="TerceroPension"/>
