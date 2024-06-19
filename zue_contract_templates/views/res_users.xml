@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+		<record id="view_zue_contract_templates_form_res_users" model="ir.ui.view">
+			<field name="name">zue_contract_templates.form_res_users_inherit</field>
+			<field name="model">res.users</field>
+			<field name="inherit_id" ref="base.view_users_form"/>
+            <field name="priority" eval="50"/>
+			<field name="arch" type="xml">
+                <xpath expr="//field[@name='signature_documents']" position="attributes">
+                    <attribute name="attrs">{}</attribute>
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                  <xpath expr="//field[@name='signature_certification_laboral']" position="after">
+                    <field name="z_signing_contracts"/>
+                </xpath>
+			</field>
+		</record>
+    </data>
+</odoo>

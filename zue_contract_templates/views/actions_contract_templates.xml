@@ -1,0 +1,70 @@
+<odoo>
+    <data>
+
+        <record model="ir.actions.act_window" id="actions_zue_contract_templates">
+            <field name="name">Plantillas de contrato</field>
+            <field name="res_model">zue.contract.templates</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_contract_templates_tree">
+            <field name="name">Plantillas de contrato</field>
+            <field name="model">zue.contract.templates</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="contract_type"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_contract_templates_form">
+            <field name="name">Plantillas de contrato</field>
+            <field name="model">zue.contract.templates</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="name" required="1"/>
+                            <field name="contract_type"/>
+                        </group>
+                        <notebook>
+                            <page string="Configuración de campos">
+                                <group>
+                                    <field name="z_contract_templates_details_ids" nolabel="1">
+                                        <tree editable="bottom" default_order='z_sequence'>
+                                            <field name="z_sequence"/>
+                                            <field name="z_calculation"/>
+                                            <field name="z_type_partner"/>
+                                            <field name="z_information_fields_id"/>
+                                            <field name="z_information_fields_relation" invisible="1"/>
+                                            <field name="z_related_field_id"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                            </page>
+                            <page string="Estructura plantilla de contratos">
+                                <group>
+                                    <field name="z_contract_template" nolabel="1" widget="html"
+                                           options="{'style-inline': true, 'codeview': true }"/>
+                                </group>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="zue_contract_templates_report_form" model="ir.ui.view">
+            <field name="name">hr.contract.zue.contract.templates.inherit</field>
+            <field name="model">hr.contract</field>
+            <field name="priority">20</field>
+            <field name="inherit_id" ref="hr_contract.hr_contract_view_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//button[@name='generate_labor_certificate']" position="after">
+                    <button name="generate_certificate" type="object" string="Generar contrato"/>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

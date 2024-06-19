@@ -143,11 +143,18 @@ class hr_payroll_social_security(models.Model):
                             obj_tipo_coti = employee.tipo_coti_id
                             obj_subtipo_coti = employee.subtipo_coti_id
                             obj_history_social_security = self.env['zue.hr.history.employee.social.security'].search([('z_employee_id.id','=',employee.id)])
-                            if len(obj_history_social_security) > 0 and obj_contract.state != 'open' and obj_contract.id != employee.contract_id.id:
-                                for history_ss in obj_history_social_security:
-                                    if obj_contract.date_start >= history_ss.z_date_change and employee.contract_id.date_start <= history_ss.z_date_change and date_start >= history_ss.z_date_change and date_end <= history_ss.z_date_change:
-                                        obj_tipo_coti = history_ss.z_tipo_coti_id
-                                        obj_subtipo_coti = history_ss.z_subtipo_coti_id
+                            if len(obj_history_social_security) > 0: #and obj_contract.state != 'open' and obj_contract.id != employee.contract_id.id:
+                                for history_ss in sorted(obj_history_social_security, key=lambda x: x.z_date_change):
+                                    if obj_contract.state != 'open' and obj_contract.id != employee.contract_id.id:
+                                        if obj_contract.date_start >= history_ss.z_date_change and employee.contract_id.date_start <= history_ss.z_date_change and date_start >= history_ss.z_date_change and date_end <= history_ss.z_date_change:
+                                            obj_tipo_coti = history_ss.z_tipo_coti_id
+                                            obj_subtipo_coti = history_ss.z_subtipo_coti_id
+                                            break
+                                    else:
+                                        if datetime_start.date() < history_ss.z_date_change:
+                                            obj_tipo_coti = history_ss.z_tipo_coti_id
+                                            obj_subtipo_coti = history_ss.z_subtipo_coti_id
+                                            break
 
                             obj_parameterization_contributors = env['hr.parameterization.of.contributors'].search(
                                 [('type_of_contributor', '=', obj_tipo_coti.id),
@@ -307,6 +314,7 @@ class hr_payroll_social_security(models.Model):
                                 result = {
                                     'executing_social_security_id': self.id,
                                     'employee_id':employee.id,
+                                    'dependent_upc_id': False,
                                     'contract_id': contract_id.id,
                                     'analytic_account_id': analytic_account_id.id,
                                     'branch_id':employee.branch_id.id,
@@ -391,6 +399,45 @@ class hr_payroll_social_security(models.Model):
                                     result['nRetiro'] = False if nDiasAusencias > 0 else result['nRetiro']
 
                                     obj_executing += env['hr.executing.social.security'].create(result)
+
+                                #Una vez creada la linea principal, se obtienen los dependientes con UPC se recalculan las lineas
+                                for dependent_upc in employee.dependents_information:
+                                    if dependent_upc.z_upc_payment:
+                                        nValorUPC = 0
+                                        result['dependent_upc_id'] = dependent_upc.id
+                                        result['nNumeroHorasLaboradas'] = 0
+                                        for upc_config in annual_parameters.z_upc_lines_ids:
+                                            age = employee.get_age_for_date(dependent_upc.date_birthday)
+                                            lst_validation = [
+                                                ('age<1', age < 1),
+                                                ('age>1 and age<=4', age > 1 and age <= 4),
+                                                ('age>=5 and age<=14', age >= 5 and age <= 14),
+                                                ('age>=15 and age<=18', age >= 15 and age <= 18),
+                                                ('age>=19 and age<=44', age >= 19 and age <= 44),
+                                                ('age>=45 and age<=49', age >= 45 and age <= 49),
+                                                ('age>=50 and age<=54', age >= 50 and age <= 54),
+                                                ('age>=55 and age<=59', age >= 55 and age <= 59),
+                                                ('age>=60 and age<=64', age >= 60 and age <= 64),
+                                                ('age>=65 and age<=69', age >= 65 and age <= 69),
+                                                ('age>=70 and age<=74', age >= 70 and age <= 74),
+                                                ('age>=75', age >= 75)
+                                            ]
+                                            for validation in lst_validation:
+                                                if validation[1] == True and upc_config.z_age_group_upc == validation[0]:
+                                                    if upc_config.z_gender_upc == dependent_upc.genero:
+                                                        if dependent_upc.z_upc_geographic_area == 'ZN':
+                                                            nValorUPC = upc_config.z_normal_zone_upc
+                                                        elif dependent_upc.z_upc_geographic_area == 'ZE':
+                                                            nValorUPC = upc_config.z_special_zone_upc
+                                                        elif dependent_upc.z_upc_geographic_area == 'CD':
+                                                            nValorUPC = upc_config.z_cities_upc
+                                                        elif dependent_upc.z_upc_geographic_area == 'IS':
+                                                            nValorUPC = upc_config.z_islands_upc
+                                                        else:
+                                                            nValorUPC = 0
+                                        result['nValorUPC'] = nValorUPC
+                                        result['nDiasLiquidados'] = 0
+                                        obj_executing += env['hr.executing.social.security'].create(result)
 
                                 #Recorrer items creados
                                 cant_items = len(obj_executing)
@@ -695,7 +742,7 @@ class hr_payroll_social_security(models.Model):
 
                                     executing.write(result_update)
 
-                                    if executing.nDiasLiquidados == 0 and executing.nDiasIncapacidadEPS == 0 and executing.nDiasLicencia == 0 and executing.nDiasLicenciaRenumerada == 0 and executing.nDiasMaternidad == 0 and executing.nDiasVacaciones == 0 and executing.nDiasIncapacidadARP == 0:
+                                    if executing.nDiasLiquidados == 0 and executing.nDiasIncapacidadEPS == 0 and executing.nDiasLicencia == 0 and executing.nDiasLicenciaRenumerada == 0 and executing.nDiasMaternidad == 0 and executing.nDiasVacaciones == 0 and executing.nDiasIncapacidadARP == 0 and executing.dependent_upc_id == False:
                                         executing.unlink()
 
                                     item += 1
@@ -1045,7 +1092,7 @@ class hr_payroll_social_security(models.Model):
         }
 
         ls_process_accounting = ['ss_empresa_salud','ss_empresa_pension','ss_empresa_arp','ss_empresa_caja','ss_empresa_sena','ss_empresa_icbf']
-        obj_employee = self.env['hr.employee'].search([('id','!=',False)])
+        obj_employee = self.env['hr.employee'].search([('id','in',self.executing_social_security_ids.employee_id.ids),'|',('active','=', True),('active','=',False)])
 
         for employee in obj_employee:
             executing_social_security = self.env['hr.executing.social.security'].search([('executing_social_security_id', '=', self.id),('employee_id','=',employee.id)])

@@ -132,6 +132,18 @@ class hr_employee_dependents(models.Model):
                                         ('madre', 'Madre'),
                                         ('conyuge', 'Cónyuge'),
                                         ('hermano', 'Hermano(a)'),
+                                        ('sobrino', 'Sobrino(a)'),
+                                        ('nieto', 'Nieto(a)'),
+                                        ('hermano', 'Hermano(a)'),
+                                        ('tio', 'Tío(a)'),
+                                        ('abuelo', 'Abuelo(a)'),
+                                        ('tio_abuelo', 'Tío(a) abuelo(a)'),
+                                        ('bisabuelo', 'Bisabuelo(a)'),
+                                        ('bisnieto', 'Bisnieto(a)'),
+                                        ('suegro', 'Suegro(a)'),
+                                        ('yerno', 'Yerno(a)'),
+                                        ('nuera', 'Nuera'),
+                                        ('cuñado', 'Cuñado(a)'),
                                         ('otro', 'Otro')], 'Tipo')
     z_document_type = fields.Selection([
         ('11', 'Registro civil de nacimiento'),
@@ -151,6 +163,20 @@ class hr_employee_dependents(models.Model):
     z_phone = fields.Integer(string='Teléfono')
     z_address = fields.Char(string='Dirección')
     z_report_income_and_withholdings = fields.Boolean(string='Reportar en Certificado ingresos y retenciones')
+    z_upc_payment = fields.Boolean(string='Paga UPC')
+    z_upc_geographic_area = fields.Selection([
+        ('ZN', 'Zona normal'),
+        ('ZE', 'Zona especial'),
+        ('CD', 'Ciudades'),
+        ('IS', 'Islas')
+    ], string='Zona geográfica')
+
+    @api.onchange('z_upc_payment')
+    def onchange_z_upc_payment(self):
+        for record in self:
+            if not record.z_upc_payment:
+                record.z_upc_geographic_area = False
+
 
 class hr_employee_labor_union(models.Model):
     _name = 'hr.employee.labor.union'

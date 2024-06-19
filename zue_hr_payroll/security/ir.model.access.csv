@@ -44,3 +44,4 @@ access_zue_hr_leave_extension_wizard,access_zue_hr_leave_extension_wizard,model_
 access_zue_massive_generation_contracts,zue.massive.generation.contracts,model_zue_massive_generation_contracts,,1,1,1,1
 access_zue_executing_contracts,zue.executing.contracts,model_zue_executing_contracts,,1,1,1,1
 access_zue_employer_replacement,zue.employer.replacement,model_zue_employer_replacement,,1,1,1,1
+access_zue_work_income_and_pensions,zue.work.income.and.pensions,model_zue_work_income_and_pensions,,1,1,1,1

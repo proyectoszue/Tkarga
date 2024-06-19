@@ -64,6 +64,8 @@ class hr_executing_social_security(models.Model):
     nPorcAporteICBF = fields.Float('Porc. Aporte ICBF')
     nValorICBF = fields.Float('Valor ICBF')
     leave_id = fields.Many2one('hr.leave', 'Ausencia')
+    dependent_upc_id = fields.Many2one('hr.employee.dependents','Dependiente UPC')
+    nValorUPC = fields.Float('Valor UPC')
     dFechaInicioSLN = fields.Date('Fecha Inicio SLN')
     dFechaFinSLN = fields.Date('Fecha Fin SLN')
     dFechaInicioIGE = fields.Date('Fecha Inicio IGE')
