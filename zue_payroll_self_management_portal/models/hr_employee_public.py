@@ -81,10 +81,10 @@ class hr_employee(models.Model):
         lst_dependents = []
         for dependent in self.dependents_information:
             dict_dependent = {'id':dependent.id,
-                        'type':dependent.dependents_type.capitalize(),
-                        'name':dependent.name,
-                        'genero':dependent.genero.capitalize(),
-                        'date_birthday':dependent.date_birthday}
+                        'type':dependent.dependents_type.capitalize() if dependent.dependents_type else '',
+                        'name':dependent.name if dependent.name else '',
+                        'genero':dependent.genero.capitalize() if dependent.genero else '',
+                        'date_birthday':dependent.date_birthday if dependent.date_birthday else ''}
             lst_dependents.append(dict_dependent)
         return lst_dependents
 
@@ -204,10 +204,61 @@ class HrEmployeePublic(models.Model):
     emergency_phone = fields.Char(readonly=True)
     emergency_relationship = fields.Char(readonly=True)
     certificate = fields.Char(readonly=True)
+    front_back = fields.Char(readonly=True)
+    confianza_manejo = fields.Boolean(readonly=True)
+    type_thirdparty = fields.Many2one('zue.type_thirdparty',readonly=True)
+    info_project = fields.Char(readonly=True)
+    ed_qualification = fields.Float(readonly=True)
+    ed_observation = fields.Text(readonly=True)
     study_field = fields.Char(readonly=True)
     study_school = fields.Char(readonly=True)
     marital = fields.Char(readonly=True)
     contract_id = fields.Many2one('hr.contract.public',string='Contrato')
+    #Campos Zue
+    partner_encab_id = fields.Many2one('res.partner',readonly=True)
+    type_employee = fields.Many2one('hr.types.employee',readonly=True)
+    sabado = fields.Boolean(readonly=True)
+    certificate = fields.Char(readonly=True)
+    personal_email = fields.Char(readonly=True)
+    personal_mobile = fields.Char(readonly=True)
+    type_job = fields.Char(readonly=True)
+    emergency_relationship = fields.Char(readonly=True)
+    extranjero = fields.Boolean(readonly=True)
+    residente = fields.Boolean(readonly=True)
+    date_of_residence_abroad = fields.Date(readonly=True)
+    tipo_coti_id = fields.Many2one('hr.tipo.cotizante',readonly=True)
+    subtipo_coti_id = fields.Many2one('hr.subtipo.cotizante',readonly=True)
+    type_identification = fields.Char(readonly=True)
+    indicador_especial_id = fields.Many2one('hr.indicador.especial.pila',readonly=True)
+    cost_assumed_by = fields.Char(readonly=True)
+    licencia_rh = fields.Char(readonly=True)
+    licencia_categoria = fields.Char(readonly=True)
+    licencia_vigencia = fields.Date(readonly=True)
+    licencia_restricciones = fields.Char(readonly=True)
+    operacion_retirar = fields.Boolean(readonly=True)
+    operacion_reemplazo = fields.Many2one('hr.employee',readonly=True)
+    type_identification_spouse = fields.Char(readonly=True)
+    num_identification_spouse = fields.Char(readonly=True)
+    spouse_phone = fields.Char(readonly=True)
+    z_employee_age = fields.Integer(readonly=True)
+    z_stratum = fields.Char(readonly=True)
+    z_sexual_orientation = fields.Char(readonly=True)
+    z_sexual_orientation_other = fields.Char(readonly=True)
+    z_ethnic_group = fields.Char(readonly=True)
+    z_housing_area = fields.Char(readonly=True)
+    z_health_risk_factors = fields.Char(readonly=True)
+    z_religion = fields.Char(readonly=True)
+    z_victim_armed_conflict = fields.Char(readonly=True)
+    z_academic_data = fields.Char(readonly=True)
+    z_city_birth_id = fields.Many2one('zue.city',readonly=True)
+    z_department_birth_id = fields.Many2one('res.country.state',readonly=True)
+    z_military_passbook = fields.Boolean(readonly=True)
+    branch_social_security_id = fields.Many2one('hr.social.security.branches',readonly=True)
+    work_center_social_security_id = fields.Many2one('hr.social.security.work.center',readonly=True)
+    z_has_expired_documents = fields.Boolean(readonly=True)
+    z_has_to_expired_documents = fields.Boolean(readonly=True)
+    z_has_request_documents = fields.Boolean(readonly=True)
+
 
     def get_info_curriculum_vitae_portal(self):
         return self.sudo().env['hr.employee'].search([('id','=',self.id)]).get_info_curriculum_vitae_portal()

@@ -200,7 +200,7 @@
                                      data-parent="#accordionIframe">
                                     <div class="full_iframe_div" style="padding:1%">
                                         <div class="row full_iframe_div" style="padding-bottom: 2%;">
-                                            <div class="col-md-3" t-att-style="'border-right:solid;border-color:'+str(portal_design.z_secondary_color)+';'">
+                                            <div t-if="type_contract != 'CONTRATO DE APRENDIZAJE'" class="col-md-3" t-att-style="'border-right:solid;border-color:'+str(portal_design.z_secondary_color)+';'">
                                                 <center>
                                                     <h3 t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
                                                         Estadísticas
@@ -236,26 +236,24 @@
                                                         <div class="col-md-6">
                                                             <div class="card bg-light"
                                                                 t-att-style="'border-color:'+str(portal_design.z_background_color)+';'">
-                                                                <div class="container"
-                                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                                <div t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';font-family:'+str(portal_design.z_font)+';padding: 5px;'">
                                                                     <h3 class="display-6"
                                                                         t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
                                                                         <span t-esc="enjoyed_vacation_days"/>
                                                                     </h3>
-                                                                    <p class="lead" t-att-style="'color:'+str(portal_design.z_primary_color)+';'">Disfrutadas</p>
+                                                                    <p class="text-wrap" t-att-style="'color:'+str(portal_design.z_primary_color)+';font-size: medium;'">Disfrutadas</p>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-6">
                                                             <div class="card bg-light"
                                                                 t-att-style="'border-color:'+str(portal_design.z_background_color)+';'">
-                                                                <div class="container"
-                                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                                <div t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';font-family:'+str(portal_design.z_font)+';padding: 5px;'">
                                                                     <h3 class="display-6"
                                                                         t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
                                                                         <span t-esc="money_vacation_days"/>
                                                                     </h3>
-                                                                    <p class="lead" t-att-style="'color:'+str(portal_design.z_primary_color)+';'">En dinero</p>
+                                                                    <p class="text-wrap" t-att-style="'color:'+str(portal_design.z_primary_color)+';font-size: medium;'">En dinero</p>
                                                                 </div>
                                                             </div>
                                                         </div>
@@ -288,16 +286,13 @@
                                                         Desde el <span t-esc="date_start"/> hasta el  <span t-esc="datetime_today.date()"/>
                                                     </small>
                                                     <div class="row">
-                                                        <div class="col-md-6">
-                                                            <div class="card bg-light"
-                                                                t-att-style="'border-color:'+str(portal_design.z_background_color)+';'">
-                                                                <div class="container"
-                                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
-                                                                    <h3 class="display-6"
-                                                                        t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
-                                                                        <span t-esc="qty_days_in_company"/>
-                                                                    </h3>
-                                                                </div>
+                                                        <div class="card bg-light"
+                                                            t-att-style="'border-color:'+str(portal_design.z_background_color)+';'">
+                                                            <div t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';padding: 5px;'">
+                                                                <h3 class="display-6 text-wrap"
+                                                                    t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                                    <span t-esc="qty_days_in_company"/>
+                                                                </h3>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -309,26 +304,24 @@
                                                         <div class="col-md-6">
                                                             <div class="card bg-light"
                                                                 t-att-style="'border-color:'+str(portal_design.z_background_color)+';'">
-                                                                <div class="container"
-                                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                                <div t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';padding: 5px;'">
                                                                     <h3 class="display-6"
                                                                         t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
                                                                         <span t-esc="documents_statistics.get('qty_to_expire',0)"/>
                                                                     </h3>
-                                                                    <p class="lead" t-att-style="'color:'+str(portal_design.z_primary_color)+';'">Por expirar</p>
+                                                                    <p class="text-wrap" t-att-style="'color:'+str(portal_design.z_primary_color)+';font-size: medium;'">Por expirar</p>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div class="col-md-6">
                                                             <div class="card bg-light"
                                                                 t-att-style="'border-color:'+str(portal_design.z_background_color)+';'">
-                                                                <div class="container"
-                                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                                <div t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';padding: 5px;'">
                                                                     <h3 class="display-6"
                                                                         t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
                                                                         <span t-esc="documents_statistics.get('qty_expired',0)"/>
                                                                     </h3>
-                                                                    <p class="lead" t-att-style="'color:'+str(portal_design.z_primary_color)+';'">Expirados</p>
+                                                                    <p class="text-wrap" t-att-style="'color:'+str(portal_design.z_primary_color)+';font-size: medium;'">Expirados</p>
                                                                 </div>
                                                             </div>
                                                         </div>
