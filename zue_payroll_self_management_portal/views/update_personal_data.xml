@@ -369,6 +369,66 @@
                                                     <label for="study_school">Escuela</label>
                                                 </div>
                                             </div>
+                                            <div class="form-group col-md-4">
+                                                <div class="form-floating mb-3">
+                                                    <select class="form-select" id="z_stratum" name="z_stratum">
+                                                        <option value="1" t-att-selected="obj.z_stratum == '1'">
+                                                            1
+                                                        </option>
+                                                        <option value="2" t-att-selected="obj.z_stratum == '2'">
+                                                            2
+                                                        </option>
+                                                        <option value="3" t-att-selected="obj.z_stratum == '3'">
+                                                            3
+                                                        </option>
+                                                        <option value="4" t-att-selected="obj.z_stratum == '4'">
+                                                            4
+                                                        </option>
+                                                        <option value="5" t-att-selected="obj.z_stratum == '5'">
+                                                            5
+                                                        </option>
+                                                        <option value="6" t-att-selected="obj.z_stratum == '6'">
+                                                            6
+                                                        </option>
+                                                    </select>
+                                                    <label for="z_stratum">Estrato</label>
+                                                </div>
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <div class="form-floating mb-3">
+                                                    <select class="form-select" id="z_ethnic_group" name="z_ethnic_group">
+                                                        <option value="none" t-att-selected="obj.z_ethnic_group == 'none'">
+                                                            Ninguno
+                                                        </option>
+                                                        <option value="indigenous" t-att-selected="obj.z_ethnic_group == 'indigenous'">
+                                                            Indígena
+                                                        </option>
+                                                        <option value="afrocolombian" t-att-selected="obj.z_ethnic_group == 'afrocolombian'">
+                                                            Afrocolombiano
+                                                        </option>
+                                                        <option value="gypsy" t-att-selected="obj.z_ethnic_group == 'gypsy'">
+                                                            Gitano
+                                                        </option>
+                                                        <option value="raizal" t-att-selected="obj.z_ethnic_group == 'raizal'">
+                                                            Raizal
+                                                        </option>
+                                                    </select>
+                                                    <label for="z_ethnic_group">Grupo étnico</label>
+                                                </div>
+                                            </div>
+                                            <div class="form-group col-md-4">
+                                                <div class="form-floating mb-3">
+                                                    <select class="form-select" id="z_victim_armed_conflict" name="z_victim_armed_conflict">
+                                                        <option value="yes" t-att-selected="obj.z_victim_armed_conflict == 'yes'">
+                                                            Si
+                                                        </option>
+                                                        <option value="not" t-att-selected="obj.z_victim_armed_conflict == 'not'">
+                                                            No
+                                                        </option>
+                                                    </select>
+                                                    <label for="z_victim_armed_conflict">Victima del conflicto armado</label>
+                                                </div>
+                                            </div>
                                         </div>
                                     </section>
                                 </div>

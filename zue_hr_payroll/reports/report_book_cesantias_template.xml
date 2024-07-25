@@ -9,7 +9,8 @@
                             <strong>LIBRO DE CESANTÍAS</strong>
                         </div>
                     </div>
-                    <br/><br/>                    
+                    <br/>
+                    <br/>
                     <div class="page" style="font-style: normal; font-size: 12px;">
                         <div class="oe_structure">
                             <div class="row">
@@ -17,9 +18,11 @@
                                     <thead>
                                         <tr style="border:none;">
                                             <th colspan="7" style="border:none;">
-                                                <span t-esc="o.employee_id.identification_id"/> - <span t-esc="o.employee_id.name"/>
-                                            </th>                                            
-                                        </tr>                                        
+                                                <span t-esc="o.employee_id.identification_id"/>
+                                                -
+                                                <span t-esc="o.employee_id.name"/>
+                                            </th>
+                                        </tr>
                                         <tr style="border: 1px solid black;">
                                             <td style="width: 10%">
                                                 <b>Causación Inicial</b>
@@ -41,18 +44,32 @@
                                             </td>
                                             <td style="width: 10%">
                                                 <b>Valor Int. Cesantías</b>
-                                            </td>                                        
+                                            </td>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr t-foreach="o.get_info_book_cesantias()" t-as="info">
-                                            <td><span t-esc="info.initial_accrual_date"/></td>
-                                            <td><span t-esc="info.final_accrual_date"/></td>
-                                            <td><span t-esc="info.settlement_date"/></td>                                            
-                                            <td><span t-esc="info.time"/></td>
-                                            <td><span t-esc="info.base_value"/></td>
-                                            <td><span t-esc="info.severance_value"/></td>
-                                            <td><span t-esc="info.severance_interest_value"/></td>                                            
+                                            <td>
+                                                <span t-esc="info.initial_accrual_date"/>
+                                            </td>
+                                            <td>
+                                                <span t-esc="info.final_accrual_date"/>
+                                            </td>
+                                            <td>
+                                                <span t-esc="info.settlement_date"/>
+                                            </td>
+                                            <td>
+                                                <span t-esc="info.time"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="'$ {0:,.2f}'.format(info.base_value)"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="'$ {0:,.2f}'.format(info.severance_value)"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="'$ {0:,.2f}'.format(info.severance_interest_value)"/>
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>
