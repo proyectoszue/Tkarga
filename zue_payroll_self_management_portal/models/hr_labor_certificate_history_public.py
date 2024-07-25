@@ -11,6 +11,7 @@ class hr_labor_certificate_history_public(models.Model):
     sequence = fields.Char(string="Secuencia")
     date_generation = fields.Date('Fecha generación')
     info_to = fields.Char(string='Dirigido a')
+    z_functions_with = fields.Boolean(string="Con funciones")
     # pdf = fields.Binary(string='Certificado')
     pdf_name = fields.Char(string='Filename Certificado')
 

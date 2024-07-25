@@ -9,7 +9,8 @@
                             <strong>LIBRO DE VACACIONES</strong>
                         </div>
                     </div>
-                    <br/><br/>                    
+                    <br/>
+                    <br/>
                     <div class="page" style="font-style: normal; font-size: 12px;">
                         <div class="oe_structure">
                             <div class="row">
@@ -17,10 +18,13 @@
                                     <thead>
                                         <tr style="border:none;">
                                             <th colspan="7" style="border:none;">
-                                                <span t-esc="o.employee_id.identification_id"/> - <span t-esc="o.employee_id.name"/>
+                                                <span t-esc="o.employee_id.identification_id"/>
+                                                -
+                                                <span t-esc="o.employee_id.name"/>
                                             </th>
                                             <th colspan="4" style="border:none;">
-                                                Días acumulados de vacaciones <span t-esc="o.get_accumulated_vacation_days()"/>
+                                                Días acumulados de vacaciones
+                                                <span t-esc="o.get_accumulated_vacation_days()"/>
                                             </th>
                                         </tr>
                                         <tr>
@@ -43,7 +47,7 @@
                                             </td>
                                             <td style="width: 8%">
                                                 <b>Fecha regreso</b>
-                                            </td>                                            
+                                            </td>
                                             <td style="width: 8%">
                                                 <b>Valor IBL</b>
                                             </td>
@@ -64,22 +68,44 @@
                                             </td>
                                             <td style="width: 8%">
                                                 <b>Valor Días Dinero</b>
-                                            </td>                                            
+                                            </td>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <tr t-foreach="o.get_info_book_vacation()" t-as="info">
-                                            <td><span t-esc="info.initial_accrual_date"/></td>
-                                            <td><span t-esc="info.final_accrual_date"/></td>
-                                            <td><span t-esc="info.departure_date"/></td>
-                                            <td><span t-esc="info.return_date"/></td>                                            
-                                            <td><span t-esc="info.base_value + info.base_value_money"/></td>
-                                            <td><span t-esc="info.business_units"/></td>
-                                            <td><span t-esc="info.value_business_days"/></td>
-                                            <td><span t-esc="info.holiday_units"/></td>
-                                            <td><span t-esc="info.holiday_value"/></td>
-                                            <td><span t-esc="info.units_of_money"/></td>
-                                            <td><span t-esc="info.money_value"/></td>
+                                            <td>
+                                                <span t-esc="info.initial_accrual_date"/>
+                                            </td>
+                                            <td>
+                                                <span t-esc="info.final_accrual_date"/>
+                                            </td>
+                                            <td>
+                                                <span t-esc="info.departure_date"/>
+                                            </td>
+                                            <td>
+                                                <span t-esc="info.return_date"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="'$ {0:,.2f}'.format(info.base_value + info.base_value_money)"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="'{0:,.2f}'.format(info.business_units)"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="'$ {0:,.2f}'.format(info.value_business_days)"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="'{0:,.2f}'.format(info.holiday_units)"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="'$ {0:,.2f}'.format(info.holiday_value)"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="'{0:,.2f}'.format(info.units_of_money)"/>
+                                            </td>
+                                            <td>
+                                                <t t-esc="'$ {0:,.2f}'.format(info.money_value)"/>
+                                            </td>
                                         </tr>
                                     </tbody>
                                 </table>

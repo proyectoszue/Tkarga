@@ -19,7 +19,7 @@
     "version": "15.0.1.0.0",
 
     # any module necessary for this one to work correctly
-    'depends': ['base','website','zue_hr_employee','zue_hr_payroll','zue_documents'],
+    'depends': ['base','website','zue_hr_employee','zue_hr_payroll','zue_hr_social_security','zue_documents'],
 
     # always loaded
     'data': [
