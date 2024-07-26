@@ -24,7 +24,7 @@
                                             </th>
                                             <th colspan="4" style="border:none;">
                                                 Días acumulados de vacaciones
-                                                <span t-esc="o.get_accumulated_vacation_days()"/>
+                                                <span t-esc="'{0:,.2f}'.format(o.get_accumulated_vacation_days())"/>
                                             </th>
                                         </tr>
                                         <tr>
@@ -48,25 +48,25 @@
                                             <td style="width: 8%">
                                                 <b>Fecha regreso</b>
                                             </td>
-                                            <td style="width: 8%">
+                                            <td style="width: 9%">
                                                 <b>Valor IBL</b>
                                             </td>
-                                            <td style="width: 8%">
+                                            <td style="width: 7%">
                                                 <b>Días Habiles</b>
                                             </td>
-                                            <td style="width: 8%">
+                                            <td style="width: 9%">
                                                 <b>Valor Días Habiles</b>
                                             </td>
-                                            <td style="width: 8%">
+                                            <td style="width: 7%">
                                                 <b>Días Festivos</b>
                                             </td>
-                                            <td style="width: 8%">
+                                            <td style="width: 9%">
                                                 <b>Valor Días Festivos</b>
                                             </td>
-                                            <td style="width: 8%">
+                                            <td style="width: 7%">
                                                 <b>Días Dinero</b>
                                             </td>
-                                            <td style="width: 8%">
+                                            <td style="width: 9%">
                                                 <b>Valor Días Dinero</b>
                                             </td>
                                         </tr>
