@@ -35,38 +35,38 @@
                                                 Vacaciones tomadas
                                             </th>
                                         </tr>
-                                        <tr style="border: 1px solid black;">
-                                            <td style="max-width: 8%">
+                                        <tr style="border: 1px solid black;font-size: x-small;">
+                                            <td>
                                                 <b>Fecha Inicial</b>
                                             </td>
-                                            <td style="max-width: 8%">
+                                            <td>
                                                 <b>Fecha final</b>
                                             </td>
-                                            <td style="max-width: 8%">
+                                            <td>
                                                 <b>Fecha salida</b>
                                             </td>
-                                            <td style="max-width: 8%">
+                                            <td>
                                                 <b>Fecha regreso</b>
                                             </td>
-                                            <td style="max-width: 9%">
+                                            <td>
                                                 <b>Valor IBL</b>
                                             </td>
-                                            <td style="max-width: 7%">
+                                            <td>
                                                 <b>Días Habiles</b>
                                             </td>
-                                            <td style="max-width: 9%">
+                                            <td>
                                                 <b>Valor Días Habiles</b>
                                             </td>
-                                            <td style="max-width: 7%">
+                                            <td>
                                                 <b>Días Festivos</b>
                                             </td>
-                                            <td style="max-width: 9%">
+                                            <td>
                                                 <b>Valor Días Festivos</b>
                                             </td>
-                                            <td style="max-width: 7%">
+                                            <td>
                                                 <b>Días Dinero</b>
                                             </td>
-                                            <td style="max-width: 9%">
+                                            <td>
                                                 <b>Valor Días Dinero</b>
                                             </td>
                                         </tr>
