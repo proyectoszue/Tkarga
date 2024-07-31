@@ -36,37 +36,37 @@
                                             </th>
                                         </tr>
                                         <tr style="border: 1px solid black;">
-                                            <td style="width: 8%">
+                                            <td style="max-width: 8%">
                                                 <b>Fecha Inicial</b>
                                             </td>
-                                            <td style="width: 8%">
+                                            <td style="max-width: 8%">
                                                 <b>Fecha final</b>
                                             </td>
-                                            <td style="width: 8%">
+                                            <td style="max-width: 8%">
                                                 <b>Fecha salida</b>
                                             </td>
-                                            <td style="width: 8%">
+                                            <td style="max-width: 8%">
                                                 <b>Fecha regreso</b>
                                             </td>
-                                            <td style="width: 9%">
+                                            <td style="max-width: 9%">
                                                 <b>Valor IBL</b>
                                             </td>
-                                            <td style="width: 7%">
+                                            <td style="max-width: 7%">
                                                 <b>Días Habiles</b>
                                             </td>
-                                            <td style="width: 9%">
+                                            <td style="max-width: 9%">
                                                 <b>Valor Días Habiles</b>
                                             </td>
-                                            <td style="width: 7%">
+                                            <td style="max-width: 7%">
                                                 <b>Días Festivos</b>
                                             </td>
-                                            <td style="width: 9%">
+                                            <td style="max-width: 9%">
                                                 <b>Valor Días Festivos</b>
                                             </td>
-                                            <td style="width: 7%">
+                                            <td style="max-width: 7%">
                                                 <b>Días Dinero</b>
                                             </td>
-                                            <td style="width: 9%">
+                                            <td style="max-width: 9%">
                                                 <b>Valor Días Dinero</b>
                                             </td>
                                         </tr>
