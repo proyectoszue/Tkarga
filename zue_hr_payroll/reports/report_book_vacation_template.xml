@@ -35,7 +35,7 @@
                                                 Vacaciones tomadas
                                             </th>
                                         </tr>
-                                        <tr style="border: 1px solid black;font-size: x-small;">
+                                        <tr style="border: 1px solid black;font-size: xx-small;">
                                             <td>
                                                 <b>Fecha Inicial</b>
                                             </td>
@@ -71,7 +71,7 @@
                                             </td>
                                         </tr>
                                     </thead>
-                                    <tbody>
+                                    <tbody tyle="font-size: xx-small;">
                                         <tr t-foreach="o.get_info_book_vacation()" t-as="info">
                                             <td>
                                                 <span t-esc="info.initial_accrual_date"/>
