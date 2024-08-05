@@ -14,7 +14,7 @@
                     <div class="page" style="font-style: normal; font-size: 12px;">
                         <div class="oe_structure">
                             <div class="row">
-                                <table class="table table-bordered">
+                                <table class="table table-bordered table-sm">
                                     <thead>
                                         <tr style="border:none;">
                                             <th colspan="7" style="border:none;">
@@ -36,42 +36,42 @@
                                             </th>
                                         </tr>
                                         <tr style="border: 1px solid black;font-size: xx-small;">
-                                            <td>
+                                            <td style="width: 8%">
                                                 <b>Fecha Inicial</b>
                                             </td>
-                                            <td>
+                                            <td style="width: 8%">
                                                 <b>Fecha final</b>
                                             </td>
-                                            <td>
+                                            <td style="width: 8%">
                                                 <b>Fecha salida</b>
                                             </td>
-                                            <td>
+                                            <td style="width: 8%">
                                                 <b>Fecha regreso</b>
                                             </td>
-                                            <td>
+                                            <td style="width: 10%">
                                                 <b>Valor IBL</b>
                                             </td>
-                                            <td>
+                                            <td style="width: 6%">
                                                 <b>Días Habiles</b>
                                             </td>
-                                            <td>
+                                            <td style="width: 10%">
                                                 <b>Valor Días Habiles</b>
                                             </td>
-                                            <td>
+                                            <td style="width: 5%">
                                                 <b>Días Festivos</b>
                                             </td>
-                                            <td>
+                                            <td style="width: 10%">
                                                 <b>Valor Días Festivos</b>
                                             </td>
-                                            <td>
+                                            <td style="width: 5%">
                                                 <b>Días Dinero</b>
                                             </td>
-                                            <td>
+                                            <td style="width: 10%">
                                                 <b>Valor Días Dinero</b>
                                             </td>
                                         </tr>
                                     </thead>
-                                    <tbody tyle="font-size: xx-small;">
+                                    <tbody style="font-size: xx-small;">
                                         <tr t-foreach="o.get_info_book_vacation()" t-as="info">
                                             <td>
                                                 <span t-esc="info.initial_accrual_date"/>
