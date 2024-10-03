@@ -70,114 +70,137 @@
                                             </b>
                                         </li>
                                     </a>
-                                    <a data-toggle="collapse" href="#MenuInformes"
-                                       role="button" aria-expanded="false" aria-controls="MenuInformes">
-                                        <li class="list-group-item"
-                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
-                                            <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
-                                                <span class="fa fa-file"/>
-                                                Informes
-                                            </b>
-                                        </li>
-                                    </a>
-                                    <div class="collapse multi-collapse" id="MenuInformes">
-                                        <ul class="list-group list-group-flush">
+                                    <t t-foreach="parameterization_portal" t-as="p">
+                                        <t t-if="p.z_reports == True">
+                                            <a data-toggle="collapse" href="#MenuInformes"
+                                               role="button" aria-expanded="false" aria-controls="MenuInformes">
+                                                <li class="list-group-item"
+                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                    <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                        <span class="fa fa-file"/>
+                                                        Informes
+                                                    </b>
+                                                </li>
+                                            </a>
+                                            <div class="collapse multi-collapse" id="MenuInformes">
+                                                <ul class="list-group list-group-flush">
+                                                    <a data-toggle="collapse"
+                                                       href="#LaboralCertificate" role="button" aria-expanded="false"
+                                                       aria-controls="LaboralCertificate">
+                                                        <li class="list-group-item"
+                                                            t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                            Certificado Laboral
+                                                        </li>
+                                                    </a>
+                                                    <a data-toggle="collapse"
+                                                       href="#PayrollsVouchers" role="button" aria-expanded="false"
+                                                       aria-controls="PayrollsVouchers">
+                                                        <li class="list-group-item"
+                                                            t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                            Comprobantes de nómina
+                                                        </li>
+                                                    </a>
+                                                    <a t-attf-href="/zue_payroll_self_management_portal/book_vacation">
+                                                        <li class="list-group-item"
+                                                            t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                            Libro de vacaciones
+                                                        </li>
+                                                    </a>
+                                                    <a t-attf-href="/zue_payroll_self_management_portal/book_cesantias">
+                                                        <li class="list-group-item"
+                                                            t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                            Libro de cesantías
+                                                        </li>
+                                                    </a>
+                                                </ul>
+                                            </div>
+                                        </t>
+                                        <t t-else=" "/>
+                                        <t t-if="p.z_personal_information == True">
                                             <a data-toggle="collapse"
-                                               href="#LaboralCertificate" role="button" aria-expanded="false"
-                                               aria-controls="LaboralCertificate">
+                                               href="#LaboralInformation" role="button" aria-expanded="false"
+                                               aria-controls="LaboralInformation">
                                                 <li class="list-group-item"
-                                                    t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
-                                                    Certificado Laboral
+                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                    <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                        <span class="fa fa-address-card"/>
+                                                        Información Laboral
+                                                    </b>
                                                 </li>
                                             </a>
+                                        </t>
+                                        <t t-else=" "/>
+                                        <t t-if="p.z_absences == True">
                                             <a data-toggle="collapse"
-                                               href="#PayrollsVouchers" role="button" aria-expanded="false"
-                                               aria-controls="PayrollsVouchers">
+                                               href="#Absences" role="button" aria-expanded="false"
+                                               aria-controls="Absences">
                                                 <li class="list-group-item"
-                                                    t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
-                                                    Comprobantes de nómina
+                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                    <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                        <span class="fa fa-user-times"/>
+                                                        Ausencias
+                                                    </b>
                                                 </li>
                                             </a>
-                                            <a t-attf-href="/zue_payroll_self_management_portal/book_vacation">
+                                        </t>
+                                        <t t-else=" "/>
+                                        <t t-if="p.z_experience == True">
+                                            <a data-toggle="collapse"
+                                               href="#Resumes" role="button" aria-expanded="false"
+                                               aria-controls="Resumes">
                                                 <li class="list-group-item"
-                                                    t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
-                                                    Libro de vacaciones
+                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                    <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                        <span class="fa fa-university"/>
+                                                        Experiencia
+                                                    </b>
                                                 </li>
                                             </a>
-                                            <a t-attf-href="/zue_payroll_self_management_portal/book_cesantias">
+                                        </t>
+                                        <t t-else=" "/>
+                                        <t t-if="p.z_skills == True">
+                                            <a data-toggle="collapse"
+                                               href="#Skills" role="button" aria-expanded="false"
+                                               aria-controls="Skills">
                                                 <li class="list-group-item"
-                                                    t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
-                                                    Libro de cesantías
+                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                    <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                        <span class="fa fa-cogs"/>
+                                                        Habilidades
+                                                    </b>
                                                 </li>
                                             </a>
-                                        </ul>
-                                    </div>
-                                    <a data-toggle="collapse"
-                                       href="#LaboralInformation" role="button" aria-expanded="false"
-                                       aria-controls="LaboralInformation">
-                                        <li class="list-group-item"
-                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
-                                            <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
-                                                <span class="fa fa-address-card"/>
-                                                Información Laboral
-                                            </b>
-                                        </li>
-                                    </a>
-                                    <a data-toggle="collapse"
-                                       href="#Absences" role="button" aria-expanded="false"
-                                       aria-controls="Absences">
-                                        <li class="list-group-item"
-                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
-                                            <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
-                                                <span class="fa fa-user-times"/>
-                                                Ausencias
-                                            </b>
-                                        </li>
-                                    </a>
-                                    <a data-toggle="collapse"
-                                       href="#Resumes" role="button" aria-expanded="false"
-                                       aria-controls="Resumes">
-                                        <li class="list-group-item"
-                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
-                                            <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
-                                                <span class="fa fa-university"/>
-                                                Experiencia
-                                            </b>
-                                        </li>
-                                    </a>
-                                    <a data-toggle="collapse"
-                                       href="#Skills" role="button" aria-expanded="false"
-                                       aria-controls="Skills">
-                                        <li class="list-group-item"
-                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
-                                            <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
-                                                <span class="fa fa-cogs"/>
-                                                Habilidades
-                                            </b>
-                                        </li>
-                                    </a>
-                                    <a data-toggle="collapse"
-                                       href="#SocialSecurityDependents" role="button" aria-expanded="false"
-                                       aria-controls="SocialSecurityDependents">
-                                        <li class="list-group-item"
-                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
-                                            <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
-                                                <span class="fa fa-shield"/>
-                                                Seguridad social &amp; Dependientes
-                                            </b>
-                                        </li>
-                                    </a>
-                                    <a data-toggle="collapse"
-                                       href="#Documents" role="button" aria-expanded="false"
-                                       aria-controls="Documents">
-                                        <li class="list-group-item"
-                                            t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
-                                            <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
-                                                <span class="fa fa-book"/>
-                                                Documentos
-                                            </b>
-                                        </li>
-                                    </a>
+                                        </t>
+                                        <t t-else=" "/>
+                                        <t t-if="p.z_social_security_and_dependents == True">
+                                            <a data-toggle="collapse"
+                                               href="#SocialSecurityDependents" role="button" aria-expanded="false"
+                                               aria-controls="SocialSecurityDependents">
+                                                <li class="list-group-item"
+                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                    <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                        <span class="fa fa-shield"/>
+                                                        Seguridad social &amp; Dependientes
+                                                    </b>
+                                                </li>
+                                            </a>
+                                        </t>
+                                        <t t-else=" "/>
+                                        <t t-if="p.z_documents == True">
+                                            <a data-toggle="collapse"
+                                               href="#Documents" role="button" aria-expanded="false"
+                                               aria-controls="Documents">
+                                                <li class="list-group-item"
+                                                    t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
+                                                    <b t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
+                                                        <span class="fa fa-book"/>
+                                                        Documentos
+                                                    </b>
+                                                </li>
+                                            </a>
+                                        </t>
+                                        <t t-else=" "/>
+                                    </t>
                                     <t t-if="have_slides">
                                         <a t-attf-href="/slides">
                                             <li class="list-group-item"

@@ -23,6 +23,7 @@ class ZuePayrollSelfManagementPortal(Controller):
         obj_portal_news = request.env['hr.portal.news'].search(
             [('company_id', '=', request.env.user.company_id.id), '|', ('date_end', '=', False),
              ('date_end', '>=', date_today)])
+        obj_portal_parametrization_portal = request.env['zue.parameterization.portal.menus'].search([])
         obj_portal_design = request.env['zue.hr.employee.portal.design'].search(
             [('z_company_design_id', '=', request.env.user.company_id.id)], limit=1)
         obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)])
@@ -106,6 +107,7 @@ class ZuePayrollSelfManagementPortal(Controller):
             info_employee = {
                 'title': 'Portal de autogestión de nómina',
                 'news': obj_portal_news,
+                'parameterization_portal': obj_portal_parametrization_portal,
                 'portal_design':obj_portal_design,
                 'photo': photo,
                 'name':name,

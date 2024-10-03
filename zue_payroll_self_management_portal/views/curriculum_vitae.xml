@@ -198,14 +198,14 @@
                                 </h1>
                             </center>
                         </div>
-                        <div class="col-md-1 d-flex justify-content-center align-items-lg-center">
-                            <button type="button" class="btn btn-outline-primary" data-toggle="modal"
-                                    t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
-                                    ';color:'+str(portal_design.z_primary_color)+';'"
-                                    data-target="#modalSkill">
-                                <span class="fa fa-plus fa-1x fa-lg" title="Agregar"/>
-                            </button>
-                        </div>
+<!--                        <div class="col-md-1 d-flex justify-content-center align-items-lg-center">-->
+<!--                            <button type="button" class="btn btn-outline-primary" data-toggle="modal"-->
+<!--                                    t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+-->
+<!--                                    ';color:'+str(portal_design.z_primary_color)+';'"-->
+<!--                                    data-target="#modalSkill">-->
+<!--&lt;!&ndash;                                <span class="fa fa-plus fa-1x fa-lg" title="Agregar"/>&ndash;&gt;-->
+<!--                            </button>-->
+<!--                        </div>-->
                     </div>
                     <!-- Modal -->
                     <div class="modal fade" id="modalSkill" tabindex="-1" role="dialog"
@@ -304,12 +304,12 @@
                                         </div>
                                     </td>
                                     <td>
-                                        <button type="button" class="btn btn-outline-danger" data-toggle="modal"
-                                                t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
-                                                ';color:'+str(portal_design.z_primary_color)+';'"
-                                                t-att-data-target="'#delete_Modal'+str(sk.get('id',0))">
-                                            <span class="fa fa-trash" title="Eliminar"/>
-                                        </button>
+<!--                                        <button type="button" class="btn btn-outline-danger" data-toggle="modal"-->
+<!--                                                t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+-->
+<!--                                                ';color:'+str(portal_design.z_primary_color)+';'"-->
+<!--                                                t-att-data-target="'#delete_Modal'+str(sk.get('id',0))">-->
+<!--                                            <span class="fa fa-trash" title="Eliminar"/>-->
+<!--                                        </button>-->
                                         <!-- Modal -->
                                         <div class="modal fade" t-att-id="'delete_Modal'+str(sk.get('id',0))"
                                              tabindex="-1" role="dialog"

@@ -1,0 +1,50 @@
+<odoo>
+    <data>
+
+        <record model="ir.actions.act_window" id="action_zue_parameterization_portal_menus">
+            <field name="name">Parametrización portal menus</field>
+            <field name="res_model">zue.parameterization.portal.menus</field>
+            <field name="view_mode">tree,form</field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_parameterization_portal_menus_list">
+            <field name="name">Parametrización portal menus</field>
+            <field name="model">zue.parameterization.portal.menus</field>
+            <field name="arch" type="xml">
+                <tree>
+                    <field name="z_sequence" widget="handle"/>
+                    <field name="z_company_id"/>
+                </tree>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_parameterization_portal_menus_form">
+            <field name="name">Parametrización portal menus</field>
+            <field name="model">zue.parameterization.portal.menus</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="z_company_id"/>
+                            </group>
+                        </group>
+                        <group string="Menus a ver en Sitio Web">
+                            <group>
+                                <field name="z_reports" help="Certificado Laboral, Comprobante de nómina, Libro de vacaciones, Libro de cesantías"/>
+                                <field name="z_personal_information"/>
+                                <field name="z_absences"/>
+                                <field name="z_documents"/>
+                            </group>
+                            <group>
+                                <field name="z_experience"/>
+                                <field name="z_skills"/>
+                                <field name="z_social_security_and_dependents"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>
