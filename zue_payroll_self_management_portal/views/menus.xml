@@ -4,5 +4,6 @@
         <menuitem name="Portal" id="zue_hr_portal_web" parent="hr.menu_hr_root" sequence="70"/>
         <menuitem name="Comunicados" id="hr_portal_web_news" parent="zue_payroll_self_management_portal.zue_hr_portal_web" action="action_hr_portal_news" sequence="26"/>
         <menuitem name="Diseño" id="hr_portal_design" parent="zue_payroll_self_management_portal.zue_hr_portal_web" action="zue_action_hr_employee_portal_design" sequence="30"/>
+        <menuitem name="Parametrización portal menus" id="zue_parameterization_portal_menus" parent="zue_payroll_self_management_portal.zue_hr_portal_web" action="action_zue_parameterization_portal_menus" sequence="80"/>
     </data>
 </odoo>
