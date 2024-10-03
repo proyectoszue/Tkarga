@@ -35,6 +35,7 @@
         'views/social_security.xml',
         'views/absences_employee.xml',
         'views/actions_hr_employee_portal_design.xml',
+        'views/parameterization_portal_menus.xml',
         'views/menus.xml',
         'reports/laboral_certification.xml',
         'reports/books_reports.xml',

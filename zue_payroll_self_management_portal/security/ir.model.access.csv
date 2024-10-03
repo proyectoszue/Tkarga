@@ -8,3 +8,4 @@ access_hr_labor_certificate_history_public,hr_labor_certificate_history_public,m
 access_hr_employee_update_tmp,hr_employee_update_tmp,model_hr_employee_update_tmp,,1,1,1,1
 access_hr_portal_news,hr_portal_news,model_hr_portal_news,,1,1,1,1
 access_zue_hr_employee_portal_design,zue_hr_employee_portal_design,model_zue_hr_employee_portal_design,,1,1,1,1
+access_zue_parameterization_portal_menus,zue.parameterization.portal.menus,model_zue_parameterization_portal_menus,,1,1,1,1
