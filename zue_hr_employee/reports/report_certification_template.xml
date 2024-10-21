@@ -23,11 +23,15 @@
                             <div class="row">
                                 <ul class="list-inline mb4">
                                     <li class="list-inline-item d-inline">
-                                       <b><span class="o_force_ltr" t-field="company.name"/></b>
+                                        <b>
+                                            <span class="o_force_ltr" t-field="company.name"/>
+                                        </b>
                                     </li>
                                     <li class="list-inline-item d-inline">
                                         <b>NIT:</b>
-                                        <b><span class="o_force_ltr" t-field="company.vat"/></b>
+                                        <b>
+                                            <span class="o_force_ltr" t-field="company.vat"/>
+                                        </b>
                                     </li>
                                     <li class="list-inline-item d-inline">
                                         <b>DIRECCIÓN:</b>
@@ -44,7 +48,8 @@
                         </div>
                         <div class="watermark">
                             <img t-if="cp.z_img_watermark_file"
-                                 t-att-src="cp.get_img_watermark()" style="position: absolute;font-size: 3em;width: 100%;z-index: 1000;"/>
+                                 t-att-src="cp.get_img_watermark()"
+                                 style="position: absolute;font-size: 3em;width: 100%;z-index: 1000;"/>
                         </div>
                     </t>
 
@@ -63,7 +68,7 @@
                                 <strong>
                                     <h4>
                                         NIT:
-                                        <span t-field="o.employee_id.company_id.company_registry"/>
+                                        <span t-field="o.employee_id.company_id.company_registry"/> - <span t-field="o.employee_id.company_id.partner_id.x_digit_verification"/>
                                     </h4>
                                 </strong>
                             </p>
@@ -82,8 +87,9 @@
                                 <b>
                                     <span t-esc="o.employee_id.name"/>,
                                 </b>
-                                identificado con cédula de ciudadanía número<span
-                                    t-esc="str('{:20,.0f}'.format(int(o.employee_id.identification_id))).replace(',','.')"/>
+                                identificado con cédula de ciudadanía número
+                                <span
+                                        t-esc="str('{:20,.0f}'.format(int(o.employee_id.identification_id))).replace(',','.')"/>
                                 ,
                                 <t t-if="o.state != 'open'">
                                     laboró en nuestra compañía desde el

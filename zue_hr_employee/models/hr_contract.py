@@ -49,6 +49,8 @@ class hr_contract_concepts(models.Model):
     aplicar = fields.Selection([('15','Primera quincena'),
                                 ('30','Segunda quincena'),
                                 ('0','Siempre')],'Aplicar cobro',  required=True, help='Indica a que quincena se va a aplicar la deduccion')
+    z_view_in_certificate = fields.Selection([('0','Valor fijo'),
+                                              ('1','Multiplicar x2')],'Aplicar cobro siempre, vista en certificado laboral', default='1', required=True)
     date_start = fields.Date('Fecha Inicial')
     date_end = fields.Date('Fecha Final')
     partner_id = fields.Many2one('hr.employee.entities', 'Entidad')
@@ -478,7 +480,8 @@ class hr_contract(models.Model):
                 rule_value = sum(obj_concept.amount for obj_concept in obj_concepts)
                 for obj_concept in obj_concepts:
                     if obj_concept.aplicar == '0':
-                        rule_value *= 2
+                        if obj_concept.z_view_in_certificate != '0':
+                            rule_value *= 2
                 if obj_concept.input_id.modality_value == 'diario':
                     rule_value *= 30
                 return rule_value
@@ -508,7 +511,13 @@ class hr_contract(models.Model):
             'target':'new',
             'context': ctx
         }
-        
+
+    # Método para que un empleado pueda tener mas de un contrato al tiempo
+    # Se realiza para omitir la lógica estandar de Odoo
+    @api.constrains('employee_id', 'state', 'kanban_state', 'date_start', 'date_end')
+    def _check_current_contract(self):
+        pass
+
 #Historico generación de certificados laborales
 class hr_labor_certificate_history(models.Model):
     _name = 'hr.labor.certificate.history'
