@@ -10,7 +10,6 @@
                             <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%d de %B del %Y')"/>
                         </p>
                         <br/>
-                        <br/>
                         <p>Señores</p>
                         <br/>
                         <p>
@@ -21,9 +20,7 @@
                             <span t-field="o.z_directed_to.partner_id.x_city"/>
                         </p>
                         <br/>
-                        <br/>
                         <p>Ref. Autorización de retiro de cesantías por terminación de contrato</p>
-                        <br/>
                         <br/>
                         <p>
                             Por medio de la presente la compañia
@@ -39,7 +36,6 @@
                             fondo, por concepto de&#160;<span t-field="o.z_withdrawal_concept_total"/>
                         </p>
                         <br/>
-                        <br/>
                         <div class="col-md-12">
                             <p style="text-align:justify">Cordialmente,</p>
                             <t t-set="autorizado" t-value="o.z_contract_id.get_signature_certification()"/>
@@ -53,7 +49,6 @@
                             <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')"/>
                         </p>
                         <br/>
-                        <br/>
                         <p>Señores</p>
                         <br/>
                         <p>
@@ -64,9 +59,7 @@
                             <span t-field="o.z_directed_to.partner_id.x_city"/>
                         </p>
                         <br/>
-                        <br/>
                         <p>Ref. Autorización para retiro parcial de cesantías</p>
-                        <br/>
                         <br/>
                         <p>
                             Según lo dispuesto en el artículo 21 de la ley 1429 de 2010 (que modifico el Art. 256 del
@@ -82,23 +75,18 @@
                         <p>NOMBRE DEL FUNCIONARIO:&#160;
                             <span t-field="o.z_contract_id.employee_id.name"/>
                         </p>
-                        <br/>
                         <p>IDENTIFICACIÓN:&#160;
                             <span t-esc="str('{:20,.0f}'.format(int(o.z_contract_id.employee_id.identification_id))).replace(',','.')"/>
                         </p>
-                        <br/>
                         <p>VALOR DEL RETIRO:&#160;
                             <span t-field="o.z_withdrawal_value"  t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.z_contract_id.company_id.currency_id}"/>
                         </p>
-                        <br/>
                         <p>CONCEPTO DEL RETIRO:&#160;
                             <span t-field="o.z_withdrawal_concept_partial"/>
                         </p>
-                        <br/>
                         <p>PARA SER GIRADO A:&#160;
                             <span t-field="o.z_contract_id.employee_id.name"/>
                         </p>
-                        <br/>
                         <br/>
                         <div class="col-md-12">
                             <p style="text-align:justify">Cordialmente,</p>
