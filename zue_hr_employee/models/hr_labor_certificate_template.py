@@ -70,6 +70,10 @@ class hr_labor_certificate_template_detail(models.Model):
                                     ('biweekly', 'Quincenal'),
                                     ('monthly', 'Mensual')
                                 ], string='Frecuencia de pago', default='biweekly', required=True)
+    z_view_in_certificate = fields.Selection([('0', 'Valor fijo'),
+                                              ('1', 'Multiplicar x2')],
+                                             'Multiplicar valor contrato', default='1',
+                                             required=True)
 
     _sql_constraints = [
         ('rule_certificate_template_detail', 'UNIQUE (certificate_template_id, rule_salary_id)',

@@ -68,6 +68,7 @@
                                     <field name="average_last_months"/>
                                     <field name="z_value_contract"/>
                                     <field name="z_payment_frequency"/>
+                                    <field name="z_view_in_certificate"/>
                                 </tree>
                             </field>
                         </group>
