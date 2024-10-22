@@ -56,5 +56,5 @@ class HrContractPublic(models.Model):
     def get_accumulated_vacation_days(self):
         return self.sudo().env['hr.contract'].search([('id','=',self.id)]).get_accumulated_vacation_days()
 
-    def get_average_concept_certificate(self,salary_rule_id,last,average,z_value_contract,z_payment_frequency):
-        return self.sudo().env['hr.contract'].search([('id','=',self.id)]).get_average_concept_certificate(salary_rule_id,last,average,z_value_contract,z_payment_frequency)
+    def get_average_concept_certificate(self,salary_rule_id,last,average,z_value_contract,z_payment_frequency,z_view_in_certificate):
+        return self.sudo().env['hr.contract'].search([('id','=',self.id)]).get_average_concept_certificate(salary_rule_id,last,average,z_value_contract,z_payment_frequency,z_view_in_certificate)
