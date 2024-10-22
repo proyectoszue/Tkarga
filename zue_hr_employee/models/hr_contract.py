@@ -49,8 +49,6 @@ class hr_contract_concepts(models.Model):
     aplicar = fields.Selection([('15','Primera quincena'),
                                 ('30','Segunda quincena'),
                                 ('0','Siempre')],'Aplicar cobro',  required=True, help='Indica a que quincena se va a aplicar la deduccion')
-    z_view_in_certificate = fields.Selection([('0','Valor fijo'),
-                                              ('1','Multiplicar x2')],'Aplicar cobro siempre, vista en certificado laboral', default='1', required=True)
     date_start = fields.Date('Fecha Inicial')
     date_end = fields.Date('Fecha Final')
     partner_id = fields.Many2one('hr.employee.entities', 'Entidad')
@@ -444,7 +442,7 @@ class hr_contract(models.Model):
                 promedio = total/(len(slips_ids)/2)                            
         return promedio
 
-    def get_average_concept_certificate(self,salary_rule_id,last,average,z_value_contract,z_payment_frequency): #Promedio horas extra
+    def get_average_concept_certificate(self,salary_rule_id,last,average,z_value_contract,z_payment_frequency,z_view_in_certificate): #Promedio horas extra
         model_payslip = self.env['hr.payslip']
         model_payslip_line = self.env['hr.payslip.line']
         today = datetime.today()
@@ -480,7 +478,7 @@ class hr_contract(models.Model):
                 rule_value = sum(obj_concept.amount for obj_concept in obj_concepts)
                 for obj_concept in obj_concepts:
                     if obj_concept.aplicar == '0':
-                        if obj_concept.z_view_in_certificate != '0':
+                        if z_view_in_certificate != '0':
                             rule_value *= 2
                 if obj_concept.input_id.modality_value == 'diario':
                     rule_value *= 30
