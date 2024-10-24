@@ -92,12 +92,12 @@
                                         t-esc="str('{:20,.0f}'.format(int(o.employee_id.identification_id))).replace(',','.')"/>
                                 ,
                                 <t t-if="o.state != 'open'">
-                                    laboró en nuestra compañía desde el
+                                    laboró en nuestra compañía desde el&#160;
                                     <span t-esc="o.get_date_text(o.date_start)"/>
                                     hasta el<span t-esc="o.get_date_text(o.retirement_date)"/>,
                                 </t>
                                 <t t-else="">
-                                    labora en nuestra compañía desde el<span t-esc="o.get_date_text(o.date_start)"/>,
+                                    labora en nuestra compañía desde el&#160;<span t-esc="o.get_date_text(o.date_start)"/>,
                                 </t>
                                 mediante un&#160;
                                 <b>
@@ -205,7 +205,7 @@
                                 Se expide a solicitud del interesado
                                 <span t-esc="m.info_to"/>
                                 <br/>
-                                Para constancia se firma en la ciudad de<span
+                                Para constancia se firma en la ciudad de&#160;<span
                                     t-esc="str(o.company_id.partner_id.x_city.name)"/>, el
                                 <span t-esc="o.get_date_text(datetime.datetime.now(),1)"/>.
                             </p>
