@@ -162,7 +162,7 @@ class hr_payroll_social_security(models.Model):
                             #Variables
                             bEsAprendiz = True if obj_contract.contract_type == 'aprendizaje' else False
                             nDiasLiquidados = 0
-                            nNumeroHorasLaboradas = 0
+                            nNumeroHorasLaboradas = 0.0
                             nIngreso = False
                             nRetiro = False
                             #Sueldo
@@ -240,7 +240,9 @@ class hr_payroll_social_security(models.Model):
                                 #Obtener dias laborados normales
                                 for days in payslip.worked_days_line_ids:
                                     nDiasLiquidados	+= days.number_of_days if days.work_entry_type_id.code in ('WORK100','COMPENSATORIO') else 0
-                                    nNumeroHorasLaboradas += days.number_of_hours if days.work_entry_type_id.code in ('WORK100','COMPENSATORIO') else 0
+                                    round_hours = days.number_of_days * annual_parameters.hours_daily if days.work_entry_type_id.code in ('WORK100', 'COMPENSATORIO') else 0
+                                    nNumeroHorasLaboradas += round_hours
+                                    nNumeroHorasLaboradas = nNumeroHorasLaboradas
                                 #Obtener dias laborados con tipo de subcontrato parcial o parcial integral
                                 #if payslip.contract_id.subcontract_type in ('obra_parcial','obra_integral'):
                                 #    obj_overtime = env['hr.overtime'].search([('employee_id', '=', employee.id), ('date', '>=', date_start),('date_end', '<=', date_end)])
@@ -319,7 +321,7 @@ class hr_payroll_social_security(models.Model):
                                     'analytic_account_id': analytic_account_id.id,
                                     'branch_id':employee.branch_id.id,
                                     'nDiasLiquidados':nDiasLiquidados,
-                                    'nNumeroHorasLaboradas':nNumeroHorasLaboradas,
+                                    'nNumeroHorasLaboradas':round(nNumeroHorasLaboradas),
                                     'nIngreso':nIngreso,
                                     'nRetiro':nRetiro,
                                     'nSueldo':nSueldo,
@@ -850,7 +852,9 @@ class hr_payroll_social_security(models.Model):
                                          ('date_end', '<=', date_end)])
                                     if len(obj_overtime) > 0:
                                         nDias = round(sum(o.days_actually_worked for o in obj_overtime))#round(sum(o.shift_hours for o in obj_overtime)/8)
-                                        nNumeroHorasLaboradas = round(sum(o.days_actually_worked for o in obj_overtime)*8) #round(sum(o.shift_hours for o in obj_overtime))
+                                        round_hours = sum(o.days_actually_worked for o in obj_overtime) * annual_parameters.hours_daily  # round(sum(o.shift_hours for o in obj_overtime)) #round(sum(o.shift_hours for o in obj_overtime))
+                                        nNumeroHorasLaboradas = round_hours
+                                        nNumeroHorasLaboradas = nNumeroHorasLaboradas
                                     # Calculos valores base dependiendo los días
                                     if nDias > 0:
                                         #Documentación - http://aportesenlinea.custhelp.com/app/answers/detail/a_id/464/~/condiciones-cotizante-51
@@ -919,7 +923,7 @@ class hr_payroll_social_security(models.Model):
 
                                     result_update = {
                                         'nDiasLiquidados': nDias,
-                                        'nNumeroHorasLaboradas': nNumeroHorasLaboradas,
+                                        'nNumeroHorasLaboradas': round(nNumeroHorasLaboradas),
                                         # Salud
                                         'nValorBaseSalud': nValorBaseSalud,
                                         'nPorcAporteSaludEmpleado': nPorcAporteSaludEmpleado if nValorSaludEmpleado > 0 else 0,
