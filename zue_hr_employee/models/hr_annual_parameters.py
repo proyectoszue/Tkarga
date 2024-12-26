@@ -516,76 +516,77 @@ default_html_report_income_and_withholdings = '''
 class hr_annual_parameters(models.Model):
     _name = 'hr.annual.parameters'
     _description = 'Parámetros anuales'
+    _inherit = ['mail.thread', 'mail.activity.mixin']
 
-    year = fields.Integer('Año', required=True)
+    year = fields.Integer('Año', required=True, tracking=True)
     # Básicos Salario Minimo
-    smmlv_monthly = fields.Float('Valor mensual SMMLV', required=True)
-    smmlv_daily = fields.Float('Valor diario SMMLV', compute='_values_smmlv', store=True)
-    top_four_fsp_smmlv = fields.Float('Tope 4 salarios FSP', compute='_values_smmlv', store=True)
-    top_twenty_five_smmlv = fields.Float('Tope 25 salarios', compute='_values_smmlv', store=True)
-    top_ten_smmlv = fields.Float('Tope 10 salarios', compute='_values_smmlv', store=True)
+    smmlv_monthly = fields.Float('Valor mensual SMMLV', required=True, tracking=True)
+    smmlv_daily = fields.Float('Valor diario SMMLV', compute='_values_smmlv', store=True, tracking=True)
+    top_four_fsp_smmlv = fields.Float('Tope 4 salarios FSP', compute='_values_smmlv', store=True, tracking=True)
+    top_twenty_five_smmlv = fields.Float('Tope 25 salarios', compute='_values_smmlv', store=True, tracking=True)
+    top_ten_smmlv = fields.Float('Tope 10 salarios', compute='_values_smmlv', store=True, tracking=True)
     # Básicos Auxilio de transporte
-    transportation_assistance_monthly = fields.Float('Valor mensual Auxilio Transporte', required=True)
+    transportation_assistance_monthly = fields.Float('Valor mensual Auxilio Transporte', required=True, tracking=True)
     transportation_assistance_daily = fields.Float('Valor diario Auxilio Transporte',
-                                                   compute='_value_transportation_assistance_daily', store=True)
-    top_max_transportation_assistance = fields.Float('Tope maxímo para pago', compute='_values_smmlv', store=True)
+                                                   compute='_value_transportation_assistance_daily', store=True, tracking=True)
+    top_max_transportation_assistance = fields.Float('Tope maxímo para pago', compute='_values_smmlv', store=True, tracking=True)
     # Básicos Salario Integral
-    min_integral_salary = fields.Float('Salario mínimo integral', compute='_values_smmlv', store=True)
+    min_integral_salary = fields.Float('Salario mínimo integral', compute='_values_smmlv', store=True, tracking=True)
     porc_integral_salary = fields.Integer('Porcentaje salarial', required=True)
-    value_factor_integral_salary = fields.Float('Valor salarial', compute='_values_integral_salary', store=True)
+    value_factor_integral_salary = fields.Float('Valor salarial', compute='_values_integral_salary', store=True, tracking=True)
     value_factor_integral_performance = fields.Float('Valor prestacional', compute='_values_integral_salary',
-                                                     store=True)
+                                                     store=True, tracking=True)
     # Básicos Horas Laborales
-    hours_daily = fields.Float('Horas diarias', required=True)
-    hours_weekly = fields.Float('Horas semanales', required=True)
-    hours_fortnightly = fields.Float('Horas quincenales', required=True)
-    hours_monthly = fields.Float('Horas mensuales', required=True)
+    hours_daily = fields.Float('Horas diarias', required=True, tracking=True)
+    hours_weekly = fields.Float('Horas semanales', required=True, tracking=True)
+    hours_fortnightly = fields.Float('Horas quincenales', required=True, tracking=True)
+    hours_monthly = fields.Float('Horas mensuales', required=True, tracking=True)
     # Seguridad Social
-    weight_contribution_calculations = fields.Boolean('Cálculos de aportes al peso')
+    weight_contribution_calculations = fields.Boolean('Cálculos de aportes al peso', tracking=True)
     # Salud
-    value_porc_health_company = fields.Float('Porcentaje empresa salud', required=True)
-    value_porc_health_employee = fields.Float('Porcentaje empleado salud', required=True)
-    value_porc_health_total = fields.Float('Porcentaje total salud', compute='_value_porc_health_total', store=True)
-    value_porc_health_employee_foreign = fields.Float('Porcentaje aporte extranjero', required=True)
+    value_porc_health_company = fields.Float('Porcentaje empresa salud', required=True, tracking=True)
+    value_porc_health_employee = fields.Float('Porcentaje empleado salud', required=True, tracking=True)
+    value_porc_health_total = fields.Float('Porcentaje total salud', compute='_value_porc_health_total', store=True, tracking=True)
+    value_porc_health_employee_foreign = fields.Float('Porcentaje aporte extranjero', required=True, tracking=True)
     # Pension
-    value_porc_pension_company = fields.Float('Porcentaje empresa pensión', required=True)
-    value_porc_pension_employee = fields.Float('Porcentaje empleado pensión', required=True)
-    value_porc_pension_total = fields.Float('Porcentaje total pensión', compute='_value_porc_pension_total', store=True)
+    value_porc_pension_company = fields.Float('Porcentaje empresa pensión', required=True, tracking=True)
+    value_porc_pension_employee = fields.Float('Porcentaje empleado pensión', required=True, tracking=True)
+    value_porc_pension_total = fields.Float('Porcentaje total pensión', compute='_value_porc_pension_total', store=True, tracking=True)
     # Aportes parafiscales
-    value_porc_compensation_box_company = fields.Float('Caja de compensación', required=True)
-    value_porc_sena_company = fields.Float('SENA', required=True)
-    value_porc_icbf_company = fields.Float('ICBF', required=True)
+    value_porc_compensation_box_company = fields.Float('Caja de compensación', required=True, tracking=True)
+    value_porc_sena_company = fields.Float('SENA', required=True, tracking=True)
+    value_porc_icbf_company = fields.Float('ICBF', required=True, tracking=True)
     # Provisiones prestaciones
-    value_porc_provision_bonus = fields.Float('Prima', required=True)
-    value_porc_provision_cesantias = fields.Float('Cesantías', required=True)
-    value_porc_provision_intcesantias = fields.Float('Intereses Cesantías', required=True)
-    value_porc_provision_vacation = fields.Float('Vacaciones', required=True)
+    value_porc_provision_bonus = fields.Float('Prima', required=True, tracking=True)
+    value_porc_provision_cesantias = fields.Float('Cesantías', required=True, tracking=True)
+    value_porc_provision_intcesantias = fields.Float('Intereses Cesantías', required=True, tracking=True)
+    value_porc_provision_vacation = fields.Float('Vacaciones', required=True, tracking=True)
     # Tope Ley 1395
-    value_porc_statute_1395 = fields.Integer('Porcentaje (%)', required=True)
+    value_porc_statute_1395 = fields.Integer('Porcentaje (%)', required=True, tracking=True)
     # Tributario
     # Retención en la fuente
-    value_uvt = fields.Float('Valor UVT', required=True)
-    value_top_source_retention = fields.Float('Tope para el calculo de retención en la fuente', required=True)
+    value_uvt = fields.Float('Valor UVT', required=True, tracking=True)
+    value_top_source_retention = fields.Float('Tope para el calculo de retención en la fuente', required=True, tracking=True)
     # Incrementos
-    value_porc_increment_smlv = fields.Float('Incremento SMLV', required=True)
-    value_porc_ipc = fields.Float('Porcentaje IPC', required=True)
+    value_porc_increment_smlv = fields.Float('Incremento SMLV', required=True, tracking=True)
+    value_porc_ipc = fields.Float('Porcentaje IPC', required=True, tracking=True)
     # Certificado Ingresos/Retencion
-    taxable_year = fields.Integer(string='Año gravable')
-    gross_equity = fields.Float(string='Patrimonio bruto')
-    total_revenues = fields.Float(string='Ingresos totales')
-    credit_card = fields.Float(string='Tarjeta de crédito')
-    purchases_and_consumption = fields.Float(string='Compras y consumos')
+    taxable_year = fields.Integer(string='Año gravable', tracking=True)
+    gross_equity = fields.Float(string='Patrimonio bruto', tracking=True)
+    total_revenues = fields.Float(string='Ingresos totales', tracking=True)
+    credit_card = fields.Float(string='Tarjeta de crédito', tracking=True)
+    purchases_and_consumption = fields.Float(string='Compras y consumos', tracking=True)
     conf_certificate_income_ids = fields.One2many('hr.conf.certificate.income', 'annual_parameters_id',
-                                                  string='Configuración de reglas salariales')
+                                                  string='Configuración de reglas salariales', tracking=True)
     # HTML Certificado Ingreso y retenciones
-    report_income_and_withholdings = fields.Html('Estructura Certificado ingresos y retenciones',default=default_html_report_income_and_withholdings)
+    report_income_and_withholdings = fields.Html('Estructura Certificado ingresos y retenciones',default=default_html_report_income_and_withholdings, tracking=True)
     #PRESTACIONES SOCIALES SECTOR PUBLICO Y DISTRITAL
-    z_food_subsidy_amount = fields.Integer(string="Subsidio de alimentación")
-    z_bonus_services_rendered = fields.Integer(string="Tope Bonificación por servicios prestados (B.S.P)")
-    z_food_subsidy_tope = fields.Integer(string="Tope Subsidio de alimentación")
-    z_percentage_public = fields.Integer(string="Porcentaje Emp. Publicos")
+    z_food_subsidy_amount = fields.Integer(string="Subsidio de alimentación", tracking=True)
+    z_bonus_services_rendered = fields.Integer(string="Tope Bonificación por servicios prestados (B.S.P)", tracking=True)
+    z_food_subsidy_tope = fields.Integer(string="Tope Subsidio de alimentación", tracking=True)
+    z_percentage_public = fields.Integer(string="Porcentaje Emp. Publicos", tracking=True)
     # Grilla UPC
-    z_upc_lines_ids = fields.One2many('zue.upc.annual.parameters', 'z_upc_id', string='Líneas UPC')
+    z_upc_lines_ids = fields.One2many('zue.upc.annual.parameters', 'z_upc_id', string='Líneas UPC', tracking=True)
 
     # Metodos
     def name_get(self):
