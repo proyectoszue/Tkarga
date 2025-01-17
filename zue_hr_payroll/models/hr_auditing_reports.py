@@ -52,7 +52,7 @@ class hr_auditing_reports(models.TransientModel):
             query_report = f'''
              Select a.identification_id, a."name" as name_employee,b.date_start ,b."name" as name_contract,b.state,coalesce(b.retirement_date,'1900-01-01') as retirement_date
                 from hr_employee as a
-                inner join hr_contract as b on a.id = b.employee_id and b.date_start <= '{date_to}' and (b.state = 'open' or b.state = 'finished' or ('{date_to}' <= b.retirement_date))
+                inner join hr_contract as b on a.id = b.employee_id and b.date_start <= '{date_to}' and b.active = true and (b.state = 'open' or b.state = 'finished' or ('{date_to}' <= b.retirement_date))
                 left join hr_payslip as c on a.id = c.employee_id and c.date_from between '{date_from}' and '{date_to}'
                 where a.company_id = {self.env.company.id} and c.id is null
             '''
@@ -60,7 +60,7 @@ class hr_auditing_reports(models.TransientModel):
             query_report = f'''
             Select a.identification_id, a."name" as name_employee,b.date_start ,b."name" as name_contract,b.state,coalesce(b.retirement_date,'1900-01-01') as retirement_date
                 from hr_employee as a
-                inner join hr_contract as b on a.id = b.employee_id and b.date_start <= '{date_to}' and (b.state = 'open' or b.state = 'finished' or ('{date_to}' <= b.retirement_date))
+                inner join hr_contract as b on a.id = b.employee_id and b.date_start <= '{date_to}' and b.active = true and (b.state = 'open' or b.state = 'finished' or ('{date_to}' <= b.retirement_date))
                 left join (select distinct employee_id from hr_payroll_social_security as c
                             inner join hr_executing_social_security as d on c.id = d.executing_social_security_id
                             where c."year" = {self.year} and c."month" = '{self.month}' ) as p on a.id = p.employee_id
@@ -70,7 +70,7 @@ class hr_auditing_reports(models.TransientModel):
             query_report = f'''
             Select a.identification_id, a."name" as name_employee,b.date_start ,b."name" as name_contract,b.state,coalesce(b.retirement_date,'1900-01-01') as retirement_date
                 from hr_employee as a
-                inner join hr_contract as b on a.id = b.employee_id and b.date_start <= '{date_to}' and (b.state = 'open' or b.state = 'finished' or ('{date_to}' <= b.retirement_date))
+                inner join hr_contract as b on a.id = b.employee_id and b.date_start <= '{date_to}' and b.active = true and (b.state = 'open' or b.state = 'finished' or ('{date_to}' <= b.retirement_date))
                 left join (select distinct employee_id from hr_electronic_payroll as c
                 			inner join hr_electronic_payroll_detail as d on c.id = d.electronic_payroll_id
                 			where c."year" = {self.year} and c."month" = '{self.month}' ) as p on a.id = p.employee_id

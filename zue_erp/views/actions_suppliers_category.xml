@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <!-- Vistas Categoria proveedores -->
+      <record id="zue_menu_action_suppliers_category" model="ir.actions.act_window">
+            <field name="name">Categoría proveedores</field>
+            <field name="res_model">zue.suppliers.category</field>
+            <field name="view_mode">tree</field>
+        </record>
+
+        <record model="ir.ui.view" id="suppliers_zue_category_list">
+            <field name="name">suppliers_category_list</field>
+            <field name="model">zue.suppliers.category</field>
+            <field name="arch" type="xml">
+                <tree editable="bottom">
+                    <field name="z_category"/>
+                    <field name="z_description"/>
+                </tree>
+            </field>
+        </record>
+
+    </data>
+</odoo>

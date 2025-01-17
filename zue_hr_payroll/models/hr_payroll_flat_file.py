@@ -123,7 +123,10 @@ class hr_payroll_flat_file(models.TransientModel):
             cant_detalle = cant_detalle + 1
 
             tipo_registro = '6'
-            nit_beneficiario = nit_entidad = right(15*'0'+payslip.contract_id.employee_id.identification_id,15)
+            if payslip.contract_id.employee_id.identification_id:
+                nit_beneficiario = nit_entidad = right(15*'0'+payslip.contract_id.employee_id.identification_id,15)
+            else:
+                nit_beneficiario = nit_entidad = right(15*'0', 15)
             nombre_beneficiario = left(payslip.contract_id.employee_id.name+18*filler,18) 
             #Inf Bancaria
             banco = ''
@@ -577,7 +580,10 @@ class hr_payroll_flat_file(models.TransientModel):
             else:
                 raise ValidationError(_('El tipo de documento del empleado '+payslip.contract_id.employee_id.name+' no es valido, por favor verificar.'))
 
-            nit_beneficiario = nit_entidad = right(16 * '0' + payslip.contract_id.employee_id.identification_id, 16)
+            if payslip.contract_id.employee_id.identification_id:
+                nit_beneficiario = nit_entidad = right(16 * '0' + payslip.contract_id.employee_id.identification_id, 16)
+            else:
+                nit_beneficiario = nit_entidad = right(16 * '0', 16)
             # Inf Bancaria
             banco = ''
             cuenta_beneficiario = ''
@@ -892,7 +898,10 @@ class hr_payroll_flat_file(models.TransientModel):
                     val_write = 0 if val_write < 0 else val_write
                     valor = str(val_write).split(".")  # Eliminar decimales
                     valor_transaccion = right(16 * '0' + str(valor[0]), 16)
-                    valor_transaccion_decimal = right(2 * '0' + str(valor[1]), 2)
+                    if len(valor) > 1:
+                        valor_transaccion_decimal = right(2 * '0' + str(valor[1]), 2)
+                    else:
+                        valor_transaccion_decimal = right(2 * '0' + str(0), 2)
 
             forma_de_pago = 'A'
             codigo_oficina = '000'

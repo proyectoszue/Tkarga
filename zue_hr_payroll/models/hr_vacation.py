@@ -173,8 +173,10 @@ class Hr_payslip(models.Model):
 
                 leaves['IDLEAVE'] = leave.leave_id.id
                 leaves[leave.work_entry_type_id.code] = leave_number_of_days
-                leaves['HOLIDAYS'+leave.work_entry_type_id.code] = leave_holidays          
-                leaves['BUSINESS'+leave.work_entry_type_id.code] = leave_business_days     
+                leaves['HOLIDAYS'+leave.work_entry_type_id.code] = leave_holidays
+                leaves['BUSINESS'+leave.work_entry_type_id.code] = leave_business_days
+                leaves['THIRTYONEHOLIDAYS' + leave.work_entry_type_id.code] = leave.leave_id.days_31_holidays
+                leaves['THIRTYONEBUSINESS' + leave.work_entry_type_id.code] = leave.leave_id.days_31_business
 
                 #Días pertenecientes a la liquidación de nómina
                 if inherit_nomina != 0:
@@ -211,8 +213,8 @@ class Hr_payslip(models.Model):
                     leaves[leave.work_entry_type_id.code] = vac_days_in_payslip
                     leaves['HOLIDAYS' + leave.work_entry_type_id.code] = holidays
                     leaves['BUSINESS' + leave.work_entry_type_id.code] = business_days
-                    leaves['31HOLIDAYS' + leave.work_entry_type_id.code] = days_31_h
-                    leaves['31BUSINESS' + leave.work_entry_type_id.code] = days_31_b
+                    leaves['THIRTYONEHOLIDAYS' + leave.work_entry_type_id.code] = days_31_h
+                    leaves['THIRTYONEBUSINESS' + leave.work_entry_type_id.code] = days_31_b
 
                 leaves_time.append(leaves)
                 leave_time_ids.append(leave.leave_id.id)
@@ -268,7 +270,7 @@ class Hr_payslip(models.Model):
                 'result_qty': 1.0,
                 'result_rate': 100})
             if rule._satisfy_condition(localdict):
-                if rule.code == 'VACDISFRUTADAS' and (self.get_pay_vacations_in_payroll() == False or inherit_nomina!=0):
+                if rule.code in ['VACDISFRUTADAS','VACAC31'] and (self.get_pay_vacations_in_payroll() == False or inherit_nomina!=0):
                     initial_accrual_date = False
                     final_accrual_date = False                    
                     for leaves in leaves_time:
@@ -277,9 +279,9 @@ class Hr_payslip(models.Model):
                             obj_leave = self.env['hr.leave'].search([('id', '=', id_leave)])
                             days_vacations = leaves.get('VACDISFRUTADAS',0)
                             days_vacations_business = leaves.get('BUSINESSVACDISFRUTADAS',0)
-                            days_vacations_31_business = leaves.get('31BUSINESSVACDISFRUTADAS',0)
+                            days_vacations_31_business = leaves.get('THIRTYONEBUSINESSVACDISFRUTADAS',0)
                             days_vacations_holidays = leaves.get('HOLIDAYSVACDISFRUTADAS',0)
-                            days_vacations_31_holidays = leaves.get('31HOLIDAYSVACDISFRUTADAS',0)
+                            days_vacations_31_holidays = leaves.get('THIRTYONEHOLIDAYSVACDISFRUTADAS',0)
                         else:
                             id_leave = leaves.get('IDLEAVE')
                             obj_leave = self.env['hr.leave'].search([('id', '=', id_leave)])
@@ -303,6 +305,20 @@ class Hr_payslip(models.Model):
 
                         localdict.update({'leaves':  BrowsableObject(employee.id, leaves, self.env)})
                         amount, qty, rate = rule._compute_rule(localdict)
+                        # Validar que las vacaciones no fueron ya liquidadas
+                        if pay_vacations_in_payroll == False:
+                            obj_exists_payslip_vacation = self.env['hr.vacation'].search([
+                                ('employee_id', '=', self.employee_id.id),
+                                ('contract_id', '=', self.contract_id.id),
+                                ('payslip', '!=', False),
+                                ('leave_id', '=', obj_leave.id)])
+                            if len(obj_exists_payslip_vacation) > 0 and inherit_contrato==0:
+                                qty_history = 0
+                                for history in obj_exists_payslip_vacation:
+                                    qty_history += (history.business_units + history.holiday_units)
+                                if qty_history >= qty:
+                                    amount = 0
+                                    return result.values()
                         amount = round(amount,0) if round_payroll == False else round(amount, 2)#Se redondean los decimales de todas las reglas
                         #check if there is already a rule computed with that code
                         previous_amount = rule.code in localdict and localdict[rule.code] or 0.0

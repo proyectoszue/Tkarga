@@ -61,7 +61,7 @@ class account_move(models.Model):
                                 line_update_create = {'credit':line_net.credit + line.credit}
                         else:
                             line_update_create = {'account_id': line.z_hr_salary_rule_id.z_account_id_cxp.id,
-                                                  'debit': line_net.debit + line.debit,
+                                                  'debit': (line_net.debit + line.debit) if line.debit > 0 else (line_net.debit - line.credit),
                                                   'credit': 0}
                         record.write({'line_ids': [(0, 0, line_create),(1, line_net.id, line_update_create)]})
                         #Link de ayuda: https://www.odoo.com/documentation/15.0/es/developer/reference/backend/orm.html?highlight=many2many#odoo.fields.Command
@@ -326,7 +326,7 @@ class Hr_payslip(models.Model):
                             'zue_hr_payroll.addref_work_address_account_moves') or False
                         if addref_work_address_account_moves and slip.employee_id.address_id:
                             if slip.employee_id.address_id.parent_id:
-                                adjustment_entry_name = f"{lslip.employee_id.address_id.parent_id.vat} {slip.employee_id.address_id.display_name}|Ajuste al peso"
+                                adjustment_entry_name = f"{slip.employee_id.address_id.parent_id.vat} {slip.employee_id.address_id.display_name}|Ajuste al peso"
                             else:
                                 adjustment_entry_name = f"{slip.employee_id.address_id.vat} {slip.employee_id.address_id.display_name}|Ajuste al peso"
                         else:

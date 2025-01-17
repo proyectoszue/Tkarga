@@ -6,7 +6,10 @@ from odoo.tools import float_compare, float_is_zero
 
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
+import logging
 
+
+_logger = logging.getLogger(__name__)
 class Hr_payslip(models.Model):
     _inherit = 'hr.payslip'
 
@@ -66,11 +69,13 @@ class Hr_payslip(models.Model):
         struct_original = self.struct_id.id
         
         # 1.Devengos
+        _logger.info(f'LIQ CONTRATO Devengos {self.display_name}.')
         obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','nomina')])
         self.struct_id = obj_struct_payroll.id
         localdict, result_dev = self._get_payslip_lines(inherit_contrato_dev=1)
 
         # 2.Reglas salariales por Liq. de Contrato - Ej: Indemnizaciones
+        _logger.info(f'LIQ CONTRATO Reglas salariales {self.display_name}.')
         result_contrato = {}
         rules_dict = {}
         self.struct_id = struct_original
@@ -108,26 +113,31 @@ class Hr_payslip(models.Model):
                     }
 
         # 3.Deducciones que son base para prestaciones
+        _logger.info(f'LIQ CONTRATO Deducciones que son base para prestaciones {self.display_name}.')
         obj_struct_payroll = self.env['hr.payroll.structure'].search([('process', '=', 'nomina')])
         self.struct_id = obj_struct_payroll.id
         localdict, result_ded_bases = self._get_payslip_lines(inherit_contrato_ded_bases=1, localdict=localdict)
 
         if contract.contract_type != 'aprendizaje':
             # 4.Vacaciones
+            _logger.info(f'LIQ CONTRATO Vacaciones {self.display_name}.')
             obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','vacaciones')])
             self.struct_id = obj_struct_payroll.id
             localdict, result_vac = self._get_payslip_lines_vacation(inherit_contrato=1,localdict=localdict)
 
             if contract.modality_salary != 'integral':
                 # 5.Cesantias e intereses
+                _logger.info(f'LIQ CONTRATO Cesantias {self.display_name}.')
                 obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','cesantias')])
                 self.struct_id = obj_struct_payroll.id
                 localdict, result_cesantias = self._get_payslip_lines_cesantias(inherit_contrato=1,localdict=localdict)
+                _logger.info(f'LIQ CONTRATO Intereses Cesantias {self.display_name}.')
                 obj_struct_payroll = self.env['hr.payroll.structure'].search([('process', '=', 'intereses_cesantias')])
                 self.struct_id = obj_struct_payroll.id
                 localdict, result_intcesantias = self._get_payslip_lines_cesantias(inherit_contrato=1, localdict=localdict)
 
                 # 6.Prima
+                _logger.info(f'LIQ CONTRATO Prima {self.display_name}.')
                 obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','prima')])
                 self.struct_id = obj_struct_payroll.id
                 localdict, result_prima = self._get_payslip_lines_prima(inherit_contrato=1,localdict=localdict)
@@ -142,11 +152,13 @@ class Hr_payslip(models.Model):
             result_prima = {}
 
         # 7.Deducciones faltantes
+        _logger.info(f'LIQ CONTRATO Deducciones faltantes {self.display_name}.')
         obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','nomina')])
         self.struct_id = obj_struct_payroll.id
         localdict, result_ded = self._get_payslip_lines(inherit_contrato_ded=1,localdict=localdict)
 
         # 8.Guardar proceso
+        _logger.info(f'LIQ CONTRATO Guardar proceso {self.display_name}.')
         self.struct_id = struct_original
         result_finally = {**result_dev,**result_contrato,**result_ded_bases,**result_vac,**result_cesantias,**result_intcesantias,**result_prima,**result_ded}
         return result_finally.values()  

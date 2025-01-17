@@ -90,6 +90,8 @@
                                                 <field name="result_upload_xml" readonly="1"/>
                                                 <field name="status" readonly="1"/>
                                                 <field name="result_status" readonly="1"/>
+                                                <field name="transaction_id" readonly="1"/>
+                                                <field name="cune" readonly="1"/>
                                             </group>
                                             <group string="Procesos">
                                                 <group string="XML" attrs="{'invisible':[('status', '=', 'ACCEPTED')]}">

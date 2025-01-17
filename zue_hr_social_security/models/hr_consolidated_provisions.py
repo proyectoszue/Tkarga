@@ -43,14 +43,15 @@ class hr_consolidated_provisions(models.Model):
     def action_done(self):
         for record in self:
             query = '''
-                Select 
+                select  
                     %s as z_consolidated_provision_id,
-                    a.employee_id as z_employee_id,sum(a.value_balance) as z_total_provision,sum(a.value_balance) as z_total
-                From hr_executing_provisions_details as a
-                inner join hr_executing_provisions as b on a.executing_provisions_id = b.id 
-                where b."year" = %s and a.provision = '%s' and b.state = 'accounting'
-                group by b."year",a.employee_id,a.provision                
-            ''' % (str(record.id),str(record.z_year),record.z_provision)
+                    a.employee_id as z_employee_id,SUM(a.value_balance) as z_total_provision,SUM(a.value_balance) as z_total
+                    from hr_executing_provisions_details as a
+                    inner join hr_executing_provisions as b on a.executing_provisions_id = b.id 
+                    where b."year" = %s and a.provision = '%s' and b.state = 'accounting' and b.company_id = %s
+                group by 
+                    b."year", a.employee_id, a.provision
+            ''' % (str(record.id),str(record.z_year),record.z_provision,str(self.env.company.id))
             self.env.cr.execute(query)
             result_query = self.env.cr.dictfetchall()
             for item in result_query:

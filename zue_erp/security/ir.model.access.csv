@@ -17,3 +17,4 @@ access_zue_custom_alerts,zue.custom.alerts,model_zue_custom_alerts,,1,1,1,1
 access_zue_dates_commemorated,zue.dates.commemorated,model_zue_dates_commemorated,,1,1,1,1
 access_zue_confirm_wizard,zue.confirm.wizard,model_zue_confirm_wizard,,1,1,1,1
 access_zue_zip_code,zue.zip.code,model_zue_zip_code,,1,1,1,1
+access_zue_suppliers_category,zue.suppliers.category,model_zue_suppliers_category,,1,1,1,1

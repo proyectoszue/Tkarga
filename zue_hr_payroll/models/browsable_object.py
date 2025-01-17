@@ -364,7 +364,7 @@ class Payslips(BrowsableObject):
             date_start = date_start_process
         else:
             date_start = departure_date - relativedelta(years=1)
-        date_start = self.contract_id.date_start if date_start <= self.contract_id.date_start else date_start
+        date_start = self.contract_id.date_start if date_start <= self.contract_id.date_start else (date_start + timedelta(days=1))
         date_end = departure_date
 
         #formatear fechas

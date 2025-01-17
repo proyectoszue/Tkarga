@@ -161,9 +161,9 @@ class Hr_payslip(models.Model):
                         for change in sorted(obj_wage, key=lambda x: x.date_start): #Obtiene el ultimo salario vigente antes de la fecha de liquidacion
                             wage = change.wage
                         wage = contract.wage if wage == 0 else wage
-                        initial_process_date = self.date_cesantias if inherit_contrato != 0 else self.date_to - relativedelta(months=3)
+                        initial_process_date = (self.date_liquidacion if inherit_contrato != 0 else self.date_to) - relativedelta(months=3)
                         end_process_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
-                        obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '>=', initial_process_date),('date_start', '<=', end_process_date)])
+                        obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '>', initial_process_date),('date_start', '<=', end_process_date)])
                         if cesantias_salary_take and len(obj_wage) > 0:
                             initial_validate_date = self.date_cesantias if inherit_contrato != 0 else self.date_from
                             end_validate_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
