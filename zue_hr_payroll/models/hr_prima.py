@@ -160,24 +160,43 @@ class Hr_payslip(models.Model):
                         for change in sorted(obj_wage, key=lambda x: x.date_start):  # Obtiene el ultimo salario vigente antes de la fecha de liquidacion
                             wage = change.wage
                         wage = contract.wage if wage == 0 else wage
-                        initial_process_date = self.date_prima if inherit_contrato != 0 else self.date_from
+                        initial_process_date = (self.date_liquidacion if inherit_contrato != 0 else self.date_to) - relativedelta(months=3)
                         end_process_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
-                        obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '>=', initial_process_date), ('date_start', '<=', end_process_date)])
+                        obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '>', initial_process_date), ('date_start', '<=', end_process_date)])
                         if prima_salary_take and len(obj_wage) > 0:
-                            wage_average = 0
-                            while initial_process_date <= end_process_date:
-                                if initial_process_date.day != 31:
-                                    if initial_process_date.month == 2 and  initial_process_date.day == 28 and (initial_process_date + timedelta(days=1)).day != 29:
-                                        wage_average += (contract.get_wage_in_date(initial_process_date) / 30)*3
-                                    elif initial_process_date.month == 2 and initial_process_date.day == 29:
-                                        wage_average += (contract.get_wage_in_date(initial_process_date) / 30)*2
-                                    else:
-                                        wage_average += contract.get_wage_in_date(initial_process_date)/30
-                                initial_process_date = initial_process_date + timedelta(days=1)
-                            if dias_trabajados != 0:
-                                wage = contract.wage if wage_average == 0 else (wage_average/dias_trabajados)*30
-                            else:
-                                wage = 0
+                            initial_validate_date = self.date_prima if inherit_contrato != 0 else self.date_to - relativedelta(months=6)
+                            end_validate_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
+                            obj_wage_of_year = self.env['hr.payslip.line'].search(
+                                [('slip_id.state', 'in', ['done', 'paid']),
+                                 ('slip_id.date_from', '>=', initial_validate_date),
+                                 ('slip_id.date_from', '<=', end_validate_date), ('category_id.code', '=', 'BASIC'),
+                                 ('slip_id.contract_id', '=', contract.id)])
+                            total_wage_of_year = sum([i.total for i in obj_wage_of_year])
+                            obj_workdays_of_year = self.env['hr.payslip.worked_days'].search(
+                                [('payslip_id.state', 'in', ['done', 'paid']),
+                                 ('payslip_id.date_from', '>=', initial_validate_date),
+                                 ('payslip_id.date_from', '<=', end_validate_date),
+                                 ('work_entry_type_id.code', '=', 'WORK100'),
+                                 ('payslip_id.struct_id.process', '=', 'nomina'),
+                                 ('payslip_id.contract_id', '=', contract.id)])
+                            total_workdays_of_year = sum([i.number_of_days for i in obj_workdays_of_year])
+                            total_workdays_of_year = total_workdays_of_year if total_workdays_of_year <= 180 else 180
+                            if total_workdays_of_year > 0:
+                                wage = (total_wage_of_year / total_workdays_of_year) * 30
+                            # wage_average = 0
+                            # while initial_process_date <= end_process_date:
+                            #     if initial_process_date.day != 31:
+                            #         if initial_process_date.month == 2 and  initial_process_date.day == 28 and (initial_process_date + timedelta(days=1)).day != 29:
+                            #             wage_average += (contract.get_wage_in_date(initial_process_date) / 30)*3
+                            #         elif initial_process_date.month == 2 and initial_process_date.day == 29:
+                            #             wage_average += (contract.get_wage_in_date(initial_process_date) / 30)*2
+                            #         else:
+                            #             wage_average += contract.get_wage_in_date(initial_process_date)/30
+                            #     initial_process_date = initial_process_date + timedelta(days=1)
+                            # if dias_trabajados != 0:
+                            #     wage = contract.wage if wage_average == 0 else (wage_average/dias_trabajados)*30
+                            # else:
+                            #     wage = 0
                         auxtransporte = annual_parameters.transportation_assistance_monthly
                         auxtransporte_tope = annual_parameters.top_max_transportation_assistance
                     value_rules_base_auxtransporte_tope = localdict['payslip'].get_accumulated_prima(self.date_from,self.date_to,1)

@@ -162,7 +162,7 @@ class hr_payroll_social_security(models.Model):
                             #Variables
                             bEsAprendiz = True if obj_contract.contract_type == 'aprendizaje' else False
                             nDiasLiquidados = 0
-                            nNumeroHorasLaboradas = 0
+                            nNumeroHorasLaboradas = 0.0
                             nIngreso = False
                             nRetiro = False
                             #Sueldo
@@ -240,7 +240,9 @@ class hr_payroll_social_security(models.Model):
                                 #Obtener dias laborados normales
                                 for days in payslip.worked_days_line_ids:
                                     nDiasLiquidados	+= days.number_of_days if days.work_entry_type_id.code in ('WORK100','COMPENSATORIO') else 0
-                                    nNumeroHorasLaboradas += days.number_of_hours if days.work_entry_type_id.code in ('WORK100','COMPENSATORIO') else 0
+                                    round_hours = days.number_of_days * annual_parameters.hours_daily if days.work_entry_type_id.code in ('WORK100', 'COMPENSATORIO') else 0
+                                    nNumeroHorasLaboradas += round_hours
+                                    nNumeroHorasLaboradas = nNumeroHorasLaboradas
                                 #Obtener dias laborados con tipo de subcontrato parcial o parcial integral
                                 #if payslip.contract_id.subcontract_type in ('obra_parcial','obra_integral'):
                                 #    obj_overtime = env['hr.overtime'].search([('employee_id', '=', employee.id), ('date', '>=', date_start),('date_end', '<=', date_end)])
@@ -275,7 +277,13 @@ class hr_payroll_social_security(models.Model):
                                                     dict_social_security['BaseParafiscales'].dict['BASE'] = dict_social_security['BaseParafiscales'].dict.get('BASE', 0) + value
                                                 else:
                                                     dict_social_security['BaseParafiscales'].dict['BASE'] = dict_social_security['BaseParafiscales'].dict.get('BASE', 0) + line.total
-
+                                    # Bases seguridad social para salud y pension ley 1393
+                                    if line.salary_rule_id.category_id.code == 'DEV_SALARIAL' or line.salary_rule_id.category_id.parent_id.code == 'DEV_SALARIAL':
+                                        dict_social_security['BaseSeguridadSocial'].dict['DEV_SALARIAL'] = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_SALARIAL',0) + line.total
+                                    if line.salary_rule_id.category_id.code == 'DEV_NO_SALARIAL' or line.salary_rule_id.category_id.parent_id.code == 'DEV_NO_SALARIAL':
+                                        dict_social_security['BaseSeguridadSocial'].dict['DEV_NO_SALARIAL'] = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL',0) + line.total
+                                    if line.salary_rule_id.category_id.code == 'VNS' or line.salary_rule_id.code == 'AUX000':
+                                        dict_social_security['BaseSeguridadSocial'].dict['DEV_NO_SALARIAL'] = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL',0) - line.total
                                     #Salud
                                     nValorBaseSalud += line.total if line.salary_rule_id.base_seguridad_social else 0
                                     nValorSaludEmpleadoNomina += abs(line.total) if line.code == 'SSOCIAL001' else 0
@@ -319,7 +327,7 @@ class hr_payroll_social_security(models.Model):
                                     'analytic_account_id': analytic_account_id.id,
                                     'branch_id':employee.branch_id.id,
                                     'nDiasLiquidados':nDiasLiquidados,
-                                    'nNumeroHorasLaboradas':nNumeroHorasLaboradas,
+                                    'nNumeroHorasLaboradas':round(nNumeroHorasLaboradas),
                                     'nIngreso':nIngreso,
                                     'nRetiro':nRetiro,
                                     'nSueldo':nSueldo,
@@ -472,9 +480,19 @@ class hr_payroll_social_security(models.Model):
 
                                     #Calculos valores base dependiendo los días
                                     salario_minimo_diario = Decimal(Decimal(annual_parameters.smmlv_monthly)/Decimal(30))
+                                    # Logica ley 1393
+                                    total_base_ley_1393 = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_SALARIAL', 0)+dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL', 0)
+                                    value_porc_ley_1393 = (total_base_ley_1393/100)*annual_parameters.value_porc_statute_1395
+                                    if (dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL', 0) - value_porc_ley_1393) <= 0:
+                                        exceso_ley_1393 = 0
+                                    else:
+                                        exceso_ley_1393 = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL', 0) - value_porc_ley_1393
                                     if executing.nDiasLiquidados > 0:
                                         if dict_social_security['BaseSeguridadSocial'].dict.get('BASE', 0) > 0:
-                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['BASE']) / Decimal(executing.nDiasLiquidados))
+                                            if exceso_ley_1393 > 0:
+                                                nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict.get('DEV_SALARIAL', 0)+exceso_ley_1393) / Decimal(executing.nDiasLiquidados))
+                                            else:
+                                                nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['BASE']) / Decimal(executing.nDiasLiquidados))
                                             nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                             nValorBaseSalud = nValorDiario * executing.nDiasLiquidados
                                             nValorBaseFondoPension = nValorDiario * executing.nDiasLiquidados
@@ -850,7 +868,9 @@ class hr_payroll_social_security(models.Model):
                                          ('date_end', '<=', date_end)])
                                     if len(obj_overtime) > 0:
                                         nDias = round(sum(o.days_actually_worked for o in obj_overtime))#round(sum(o.shift_hours for o in obj_overtime)/8)
-                                        nNumeroHorasLaboradas = round(sum(o.days_actually_worked for o in obj_overtime)*8) #round(sum(o.shift_hours for o in obj_overtime))
+                                        round_hours = sum(o.days_actually_worked for o in obj_overtime) * annual_parameters.hours_daily  # round(sum(o.shift_hours for o in obj_overtime)) #round(sum(o.shift_hours for o in obj_overtime))
+                                        nNumeroHorasLaboradas = round_hours
+                                        nNumeroHorasLaboradas = nNumeroHorasLaboradas
                                     # Calculos valores base dependiendo los días
                                     if nDias > 0:
                                         #Documentación - http://aportesenlinea.custhelp.com/app/answers/detail/a_id/464/~/condiciones-cotizante-51
@@ -919,7 +939,7 @@ class hr_payroll_social_security(models.Model):
 
                                     result_update = {
                                         'nDiasLiquidados': nDias,
-                                        'nNumeroHorasLaboradas': nNumeroHorasLaboradas,
+                                        'nNumeroHorasLaboradas': round(nNumeroHorasLaboradas),
                                         # Salud
                                         'nValorBaseSalud': nValorBaseSalud,
                                         'nPorcAporteSaludEmpleado': nPorcAporteSaludEmpleado if nValorSaludEmpleado > 0 else 0,
@@ -1052,6 +1072,7 @@ class hr_payroll_social_security(models.Model):
             for emp in employee:
                 t = threading.Thread(target=self.executing_social_security_thread, args=(date_start,date_end,emp,))                
                 t.start()
+                t.join()
                 array_thread.append(t)
                 i += 1   
 

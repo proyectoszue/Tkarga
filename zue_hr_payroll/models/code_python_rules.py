@@ -942,7 +942,10 @@ result = 0.0
 obj_salary_rule = payslip.get_salary_rule('VACDISFRUTADAS',employee.type_employee.id)
 if obj_salary_rule:
     if leaves.VACDISFRUTADAS != 0.0:
-        accumulated = payslip.get_accumulated_vacation(payslip.date_from) / 360
+        if (employee.dias360(contract.date_start, payslip.date_from)) >= 360:
+            accumulated = payslip.get_accumulated_vacation(payslip.date_from) / 360
+        else:
+            accumulated = payslip.get_accumulated_vacation(payslip.date_from) / (employee.dias360(contract.date_start, payslip.date_from))
         amount = contract.wage / 30      
         result =  accumulated + amount
         result_qty = leaves.VACDISFRUTADAS
@@ -969,7 +972,7 @@ if obj_salary_rule:
         amount = contract.wage / 30      
         result =  accumulated + amount
         result_qty = leaves.HOLIDAYSVACDISFRUTADAS
-        
+
 #---------------------------------------Vacaciones Remuneradas--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('VACREMUNERADAS',employee.type_employee.id)
@@ -993,6 +996,22 @@ if obj_salary_rule:
     if employee.branch_id.name == 'Cartagena' and employee.labor_union_information:        
         obj_assistance_vacation = payslip.get_assistance_vacation(antiquity_employee)
         result = (contract.wage / 30) * obj_assistance_vacation.convention_vacation
+
+#-----------------------------------------------Prima de Vacaciones-------------------------------------------------------------
+result = 0.0
+obj_salary_rule = payslip.get_salary_rule('PRIMAVAC',employee.type_employee.id)
+if obj_salary_rule:
+    if leaves.VACDISFRUTADAS > 0:
+        result = (VACDISFRUTADAS/leaves.VACDISFRUTADAS)*leaves.BUSINESSVACDISFRUTADAS
+
+#----------------------------------------Bonificación Especial de Recreación----------------------------------------------------
+result = 0.0
+obj_salary_rule = payslip.get_salary_rule('AUX_ESPECIAL_RECREACION',employee.type_employee.id)
+if obj_salary_rule:
+    if leaves.VACDISFRUTADAS > 0:
+        days_process = 2 if leaves.BUSINESSVACDISFRUTADAS >= 15 else (leaves.BUSINESSVACDISFRUTADAS * 2) / 15
+        #result = (VACDISFRUTADAS/leaves.VACDISFRUTADAS)*days_process
+        result = (contrage.wage/30)*days_process
 
 # ---------------------------------------Vacaciones - Parcial Integral SERVAGRO --------------------------------------------------------
 result = 0.0
@@ -1183,6 +1202,48 @@ if payslip.have_compensation and contract.modality_salary == 'integral':
         vr_mas_ano = (((dias - 360.0) * 15.0)/360.0) * (salario/30.0)
     
     result = round(vr_ano + vr_mas_ano)
+
+
+#---------------------------------------Descuento UPC--------------------------------------------------------
+result = 0.0
+obj_salary_rule = payslip.get_salary_rule('DESCUENTO_UPC',employee.type_employee.id)
+aplicar = 0 if obj_salary_rule.aplicar_cobro=='30' and inherit_contrato!=0 else int(obj_salary_rule.aplicar_cobro)
+if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
+    for dependent_upc in employee.dependents_information:
+        if dependent_upc.z_upc_payment:
+            for upc_config in annual_parameters.z_upc_lines_ids:
+                age = employee.get_age_for_date(dependent_upc.date_birthday)
+                lst_validation = [
+                    ('age<1', age < 1),
+                    ('age>1 and age<=4', age > 1 and age <= 4),
+                    ('age>=5 and age<=14', age >= 5 and age <= 14),
+                    ('age>=15 and age<=18', age >= 15 and age <= 18),
+                    ('age>=19 and age<=44', age >= 19 and age <= 44),
+                    ('age>=45 and age<=49', age >= 45 and age <= 49),
+                    ('age>=50 and age<=54', age >= 50 and age <= 54),
+                    ('age>=55 and age<=59', age >= 55 and age <= 59),
+                    ('age>=60 and age<=64', age >= 60 and age <= 64),
+                    ('age>=65 and age<=69', age >= 65 and age <= 69),
+                    ('age>=70 and age<=74', age >= 70 and age <= 74),
+                    ('age>=75', age >= 75)
+                ]
+                for validation in lst_validation:
+                    if validation[1] == True and upc_config.z_age_group_upc == validation[0]:
+                        if upc_config.z_gender_upc == dependent_upc.genero:
+                            if dependent_upc.z_upc_geographic_area == 'ZN':
+                                result += upc_config.z_normal_zone_upc
+                            elif dependent_upc.z_upc_geographic_area == 'ZE':
+                                result += upc_config.z_special_zone_upc
+                            elif dependent_upc.z_upc_geographic_area == 'CD':
+                                result += upc_config.z_cities_upc
+                            elif dependent_upc.z_upc_geographic_area == 'IS':
+                                result += upc_config.z_islands_upc
+                            else:
+                                result += 0
+    if result > 0 and aplicar == 0:
+        result = (result/2)*-1
+    else:
+        result = result*-1
 
 #---------------------------------------------------------------------------------------------------------------------------------------
 #---------------------------------------------------------------------------------------------------------------------------------------

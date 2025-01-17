@@ -22,7 +22,7 @@ class hr_work_entry_refresh(models.TransientModel):
 
     date_start = fields.Date('Fecha Inicial', required=True)
     date_stop = fields.Date('Fecha Final', required=True)
-    contract_ids = fields.Many2many('hr.contract', string='Contratos', required=True, domain=[('state', '=', 'open')])
+    contract_ids = fields.Many2many('hr.contract', string='Contratos', required=True, domain=[('state', 'in', ['open','finished'])])
     # employee_id = fields.Many2one('hr.employee', 'Empleado', required=True)
     # contract_id = fields.Many2one('hr.contract', 'Contrato', required=True)
 

@@ -34,9 +34,10 @@ class hr_executing_provisions_details(models.Model):
 
 class hr_executing_provisions(models.Model):
     _name = 'hr.executing.provisions'
+    _inherit = ["mail.thread", "mail.activity.mixin"]
     _description = 'Ejecución Provisiones empleados'
 
-    year = fields.Integer('Año', required=True)
+    year = fields.Integer('Año', required=True, tracking=True)
     month = fields.Selection([('1', 'Enero'),
                             ('2', 'Febrero'),
                             ('3', 'Marzo'),
@@ -49,22 +50,22 @@ class hr_executing_provisions(models.Model):
                             ('10', 'Octubre'),
                             ('11', 'Noviembre'),
                             ('12', 'Diciembre')        
-                            ], string='Mes', required=True)
-    date_end = fields.Date('Fecha')
+                            ], string='Mes', required=True, tracking=True)
+    date_end = fields.Date('Fecha', tracking=True)
     #employee_ids = fields.Many2many('hr.employee', string='Empleados', ondelete='restrict', required=True)
-    details_ids = fields.One2many('hr.executing.provisions.details', 'executing_provisions_id',string='Ejecución')
-    time_process_float = fields.Float(string='Tiempo ejecución float')
-    time_process = fields.Char(string='Tiempo ejecución')
-    observations = fields.Text('Observaciones')
+    details_ids = fields.One2many('hr.executing.provisions.details', 'executing_provisions_id',string='Ejecución', tracking=True)
+    time_process_float = fields.Float(string='Tiempo ejecución float', tracking=True)
+    time_process = fields.Char(string='Tiempo ejecución', tracking=True)
+    observations = fields.Text('Observaciones', tracking=True)
     state = fields.Selection([
         ('draft', 'Borrador'),
         ('done', 'Realizado'),
         ('accounting', 'Contabilizado'),
-    ], string='Estado', default='draft')
-    move_id = fields.Many2one('account.move',string='Contabilidad')
+    ], string='Estado', default='draft', tracking=True)
+    move_id = fields.Many2one('account.move',string='Contabilidad', tracking=True)
 
     company_id = fields.Many2one('res.company', string='Compañía', readonly=True, required=True,
-        default=lambda self: self.env.company)
+        default=lambda self: self.env.company, tracking=True)
 
     _sql_constraints = [('provisions_period_uniq', 'unique(company_id,year,month)', 'El periodo seleccionado ya esta registrado para esta compañía, por favor verificar.')]
 
@@ -339,7 +340,7 @@ class hr_executing_provisions(models.Model):
         query = '''
             select distinct b.id 
             from hr_payslip a
-            inner join hr_contract b on a.contract_id = b.id and (b.subcontract_type != 'obra_integral' or b.subcontract_type is null) and b.id not in %s
+            inner join hr_contract b on a.contract_id = b.id and (b.subcontract_type not in ('obra_integral') or b.subcontract_type is null) and b.id not in %s
             where a.state = 'done' and a.company_id = %s and ((a.date_from >= '%s' and a.date_from <= '%s') or (a.date_to >= '%s' and a.date_to <= '%s'))
             Limit 200
         ''' % (str_contracts,self.env.company.id,date_start,date_end,date_start,date_end)
@@ -391,13 +392,13 @@ class hr_executing_provisions(models.Model):
         query = '''
                     select distinct b.id 
                     from hr_payslip a
-                    inner join hr_contract b on a.contract_id = b.id and (b.subcontract_type != 'obra_integral' or b.subcontract_type is null) and contract_type != 'aprendizaje'
+                    inner join hr_contract b on a.contract_id = b.id and (b.subcontract_type not in ('obra_integral') or b.subcontract_type is null) and contract_type != 'aprendizaje'
                     where a.state = 'done' and a.company_id = %s and ((a.date_from >= '%s' and a.date_from <= '%s') or (a.date_to >= '%s' and a.date_to <= '%s'))
                 ''' % (self.env.company.id, date_start, date_end, date_start, date_end)
         self.env.cr.execute(query)
         result_query = self.env.cr.fetchall()
 
-        if len(self.details_ids.contract_id.ids) == len(result_query):
+        if len(self.details_ids.contract_id.ids) >= len(result_query):
             self.date_end = date_end
             self.state = 'done'
 

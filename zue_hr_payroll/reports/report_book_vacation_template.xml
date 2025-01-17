@@ -86,25 +86,25 @@
                                                 <span t-esc="info.return_date"/>
                                             </td>
                                             <td>
-                                                <t t-esc="'$ {0:,.2f}'.format(info.base_value + info.base_value_money)"/>
+                                                <span t-esc="'$ {0:,.2f}'.format(info.base_value + info.base_value_money)"/>
                                             </td>
                                             <td>
-                                                <t t-esc="'{0:,.2f}'.format(info.business_units)"/>
+                                                <span t-esc="'{0:,.2f}'.format(info.business_units)"/>
                                             </td>
                                             <td>
-                                                <t t-esc="'$ {0:,.2f}'.format(info.value_business_days)"/>
+                                                <span t-esc="'$ {0:,.2f}'.format(info.value_business_days)"/>
                                             </td>
                                             <td>
-                                                <t t-esc="'{0:,.2f}'.format(info.holiday_units)"/>
+                                                <span t-esc="'{0:,.2f}'.format(info.holiday_units)"/>
                                             </td>
                                             <td>
-                                                <t t-esc="'$ {0:,.2f}'.format(info.holiday_value)"/>
+                                                <span t-esc="'$ {0:,.2f}'.format(info.holiday_value)"/>
                                             </td>
                                             <td>
-                                                <t t-esc="'{0:,.2f}'.format(info.units_of_money)"/>
+                                                <span t-esc="'{0:,.2f}'.format(info.units_of_money)"/>
                                             </td>
                                             <td>
-                                                <t t-esc="'$ {0:,.2f}'.format(info.money_value)"/>
+                                                <span t-esc="'$ {0:,.2f}'.format(info.money_value)"/>
                                             </td>
                                         </tr>
                                     </tbody>

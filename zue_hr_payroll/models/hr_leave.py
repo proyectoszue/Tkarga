@@ -131,6 +131,11 @@ class HolidaysRequest(models.Model):
                     record.accumulated_vacation_days = obj_contract.get_accumulated_vacation_days()
                     record.alert_days_vacation = False
 
+    @api.constrains('business_days', 'holiday_status_id')
+    def _check_business_days(self):
+        if self.holiday_status_id.is_vacation == True and self.business_days == 0:
+            raise ValidationError('No es posible guardar este tipo de ausencia con días hábiles en 0, por favor verificar.')
+
     @api.constrains('state', 'number_of_days', 'holiday_status_id')
     def _check_holidays(self):
         mapped_days = self.mapped('holiday_status_id').get_employees_days(self.mapped('employee_id').ids)

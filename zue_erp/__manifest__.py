@@ -24,6 +24,7 @@
 
     # always loaded
     'data': [
+        'security/groups.xml',
         'security/ir.model.access.csv',
         'views/report_execute_query.xml',
         'views/general_actions.xml',
@@ -31,6 +32,7 @@
         'views/res_users.xml',
         'views/actions_alerts.xml',
         'views/zue_confirm_wizard.xml',
+        'views/actions_suppliers_category.xml',
         'views/general_menus.xml'       
     ],
     'license': 'LGPL-3',

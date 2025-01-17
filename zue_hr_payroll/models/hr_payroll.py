@@ -90,6 +90,7 @@ class HrPayslipEmployees(models.TransientModel):
     method_schedule_pay  = fields.Selection([('bi-weekly', 'Quincenal'),
                                           ('monthly', 'Mensual'),
                                           ('other', 'Ambos')], 'Frecuencia de Pago', default='other')
+    z_process_in_chunks = fields.Boolean('Procesar en bloques de 150 empleados', default=False, help='Si el proceso de liquidación tarda demasiado en ejecutarse o no se completa, se recomienda utilizar esta opción y ejecutarlo las veces necesarias hasta que se completen todas las liquidaciones.')
     analytic_account_ids = fields.Many2many('account.analytic.account', string='Cuentas analíticas')
     z_branch_ids = fields.Many2many('zue.res.branch', string='Sucursales')
     state_contract = fields.Selection([('open','En Proceso'),('finished','Finalizado Por Liquidar')], string='Estado Contrato', default='open')
@@ -222,7 +223,16 @@ class HrPayslipEmployees(models.TransientModel):
         else:
             payslip_run = self.env['hr.payslip.run'].browse(self.env.context.get('active_id'))
 
-        obj_payslip_exists = self.env['hr.payslip'].search([('payslip_run_id','in',payslip_run.ids)])
+        if self.z_process_in_chunks:
+            obj_lote_payslip = self.env['hr.payslip'].search([('payslip_run_id', 'in', payslip_run.ids)])
+            if len(obj_lote_payslip) > 0:
+                employees = self.with_context(active_test=False).employee_ids.filtered(lambda x: x.id not in obj_lote_payslip.employee_id.ids)[:150]
+            else:
+                employees = self.with_context(active_test=False).employee_ids[:150]
+            obj_payslip_exists = self.env['hr.payslip'].search([('payslip_run_id','in',payslip_run.ids),('employee_id','in',employees.ids)])
+        else:
+            obj_payslip_exists = self.env['hr.payslip'].search([('payslip_run_id', 'in', payslip_run.ids)])
+            employees = self.with_context(active_test=False).employee_ids
         if len(obj_payslip_exists) > 0:
             _logger.info(f'PROCESAMIENTOS DE NÓMINAS / LOTES - ERROR - SE INTENTO DUPLICAR LOS REGISTROS.')
             return {
@@ -232,7 +242,6 @@ class HrPayslipEmployees(models.TransientModel):
                 'res_id': payslip_run.id,
             }
 
-        employees = self.with_context(active_test=False).employee_ids
         if not employees:
             raise UserError(_("You must select employee(s) to generate payslip(s)."))
 
@@ -325,7 +334,8 @@ class HrPayslipEmployees(models.TransientModel):
 
         #Finalización del proceso
         payslip_run.time_process = str_time_process
-        payslip_run.state = 'verify'
+        if not self.z_process_in_chunks:
+            payslip_run.state = 'verify'
 
         return {
             'type': 'ir.actions.act_window',
@@ -608,24 +618,22 @@ class Hr_payslip(models.Model):
                     march_work_hours_ordered = sorted(march_work_hours.items(), key=lambda x: x[1])
                     march_biggest_work = march_work_hours_ordered[-1][0] if march_work_hours_ordered else 0
                     #Proceso a realizar
-                    #if march_biggest_work == 0 or biggest_work != march_biggest_work: #Si la ausencia no continua hasta marzo se agregan 2 días trabajados para completar los 30 días en febrero
-                    # 25/02/2023 | Se realiza que siempre cree 2 días laborados para completar  los 30 dias ignorando si la ausencia continua en marzo
-                    # Por ende se comenta la funcionalidad anterior.
-                    work_entry_type = self.env['hr.work.entry.type'].search([('code','=','WORK100')])
-                    attendance_line = {
-                        'sequence': work_entry_type.sequence,
-                        'work_entry_type_id': work_entry_type.id,
-                        'number_of_days': days_summary,
-                        'number_of_hours': hours_summary,
-                        'amount': 0,
-                    }
-                    worked_days_lines |= worked_days_lines.new(attendance_line)
-                    # else: #Si la ausencia continua hasta marzo se agregan 2 días de la ausencia para completar los 30 días en febrero
-                    #     work_entry_type = self.env['hr.work.entry.type'].search([('id', '=', biggest_work)])
-                    #     for february_days in worked_days_lines:
-                    #         if february_days.work_entry_type_id.code == work_entry_type.code:
-                    #             february_days.number_of_days = february_days.number_of_days + days_summary  # Se agregan 2 días
-                    #             february_days.number_of_hours = february_days.number_of_hours + hours_summary  # Se agregan 16 horas
+                    if march_biggest_work == 0 or biggest_work != march_biggest_work: #Si la ausencia no continua hasta marzo se agregan 2 días trabajados para completar los 30 días en febrero
+                        work_entry_type = self.env['hr.work.entry.type'].search([('code','=','WORK100')])
+                        attendance_line = {
+                            'sequence': work_entry_type.sequence,
+                            'work_entry_type_id': work_entry_type.id,
+                            'number_of_days': days_summary,
+                            'number_of_hours': hours_summary,
+                            'amount': 0,
+                        }
+                        worked_days_lines |= worked_days_lines.new(attendance_line)
+                    else: #Si la ausencia continua hasta marzo se agregan 2 días de la ausencia para completar los 30 días en febrero
+                        work_entry_type = self.env['hr.work.entry.type'].search([('id', '=', biggest_work)])
+                        for february_days in worked_days_lines:
+                            if february_days.work_entry_type_id.code == work_entry_type.code:
+                                february_days.number_of_days = february_days.number_of_days + days_summary  # Se agregan 2 días
+                                february_days.number_of_hours = february_days.number_of_hours + hours_summary  # Se agregan 16 horas
             #return worked_days_lines
             res = []
             for w in worked_days_lines:
@@ -1281,6 +1289,10 @@ class Hr_payslip(models.Model):
 
         #Contabilización
         self._action_create_account_move()
+        for record in self:
+            if record.move_id:
+                if record.move_id.date > fields.Date.today():
+                    record.move_id.write({'auto_post': True})
         #Actualizar en la tabla de prestamos la cuota pagada
         for record in self:
             obj_payslip_line = self.env['hr.payslip.line'].search([('slip_id', '=', record.id),('loan_id', '!=', False)])

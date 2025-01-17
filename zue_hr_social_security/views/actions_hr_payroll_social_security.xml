@@ -261,6 +261,11 @@
                             <field name="work_center_social_security_id" attrs="{'invisible':[('presentation_form', '=', 'U')]}" domain="[('branch_social_security_id', '=', branch_social_security_id)]"/>                            
                         </group>
                     </sheet>
+                    <div class="oe_chatter">
+                        <field name="message_follower_ids" widget="mail_followers" groups="base.group_user"/>
+                        <field name="activity_ids" widget="mail_activity"/>
+                        <field name="message_ids" widget="mail_thread"/>
+                    </div>
                 </form>
             </field>
         </record>
