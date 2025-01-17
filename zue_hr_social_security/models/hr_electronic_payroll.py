@@ -33,7 +33,7 @@ class hr_electronic_adjust_payroll_detail(models.Model):
     _inherit = 'hr.electronic.adjust.payroll.detail'
 
     def get_consolidated_provisions(self, provision):
-        if self.electronic_payroll_id.month == '12':
+        if self.electronic_adjust_payroll_id.electronic_payroll_id.month == '12':
             obj_consolidated = self.env['hr.consolidated.provisions.detail'].search(
                 [('z_consolidated_provision_id.z_year', '=', self.electronic_adjust_payroll_id.electronic_payroll_id.year),
                  ('z_consolidated_provision_id.z_provision', '=', provision),

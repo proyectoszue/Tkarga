@@ -4,7 +4,7 @@
     <record id="view_partner_zue_erp_form" model="ir.ui.view">
         <field name="name">res.partner.zue.erp.form.inherit</field>
         <field name="model">res.partner</field>
-        <field name="priority">40</field>
+        <field name="priority">10</field>
         <field name="inherit_id" ref="base.view_partner_form"/>
         <field name="arch" type="xml">
             <xpath expr="//form[1]/sheet[1]/group[1]/group[1]/span[1]" position="before">

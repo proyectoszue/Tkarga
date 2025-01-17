@@ -134,6 +134,7 @@
                 <xpath expr="//form[1]/group[4]/field[@name='employee_ids']" position="replace">
                     <field name="struct_process" invisible="1"/>
                     <group>
+                        <field name="z_process_in_chunks"/>
                         <field name="method_schedule_pay" widget="radio"/>
                         <field name="analytic_account_ids" widget="many2many_tags"/>
                         <field name="z_branch_ids" widget="many2many_tags"/>

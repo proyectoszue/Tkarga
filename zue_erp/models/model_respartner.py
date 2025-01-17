@@ -319,11 +319,12 @@ class ResPartner(models.Model):
                 obj_ind = self.search([('is_company', '=', False),('vat','=',record.vat)])
                 if obj_ind:
                     for tercer in obj_ind:
-                        if tercer.parent_id.vat != record.vat:
-                            cant_vat_ind = cant_vat_ind + 1
-                            if tercer.id != record.id:
-                                name_tercer = tercer.name
-                                user_create = tercer.create_uid.name
+                        if tercer.parent_id:
+                            if tercer.parent_id.vat != record.vat:
+                                cant_vat_ind = cant_vat_ind + 1
+                                if tercer.id != record.id:
+                                    name_tercer = tercer.name
+                                    user_create = tercer.create_uid.name
 
                 objArchivado_ind = self.search([('is_company', '=', False),('vat','=',record.vat),('active','=',False)])
                 if objArchivado_ind:
