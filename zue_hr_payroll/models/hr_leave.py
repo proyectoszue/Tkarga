@@ -289,10 +289,19 @@ class zue_hr_leave_extension_wizard(models.Model):
     z_eps_value = fields.Float('Valor pagado por la EPS')
     z_payment_date = fields.Date('Fecha de pago')
 
-    def authorized_extension(self):
-        #Validar si requiere adjunto
+    @api.constrains("z_new_date_end", "z_leave_id", "z_attachment")
+    def validate_authorized_extension(self):
+        # Validar que la nueva fecha final sea mayor a la fecha final anterior
+        if self.z_new_date_end <= self.z_leave_id.request_date_to:
+            raise ValidationError(_('La nueva fecha de la ausencia debe ser mayor a la última fecha final.'))
+        for exists_extension in self.z_leave_id.z_leave_extension_ids:
+            if self.z_new_date_end <= exists_extension.z_new_date_end and self.id != exists_extension.id:
+                raise ValidationError(_('La nueva fecha de la ausencia debe ser mayor a la última fecha final.'))
+        # Validar si requiere adjunto
         if self.z_leave_id.holiday_status_id.obligatory_attachment and not self.z_attachment:
-            raise ValidationError(_('Es obligatorio agregar un adjunto para la prorroga de la ausencia ' + self.z_leave_id.display_name + '.'))
+            raise ValidationError(_('Es obligatorio agregar un adjunto para la prórroga de la ausencia ' + self.z_leave_id.display_name + '.'))
+
+    def authorized_extension(self):
         #Convertir ausencia en borrador para realizar la modificación
         self.z_leave_id.action_refuse()
         self.z_leave_id.action_draft()
