@@ -367,6 +367,14 @@ class hr_contract(models.Model):
                 wage_in_date = change.wage
         return wage_in_date
 
+    # Verificar historico de cargo
+    def get_job_in_date(self, process_date):
+        job_in_date = self.job_id
+        for change in sorted(self.change_wage_ids, key=lambda x: x.date_start):
+            if process_date >= change.date_start:
+                job_in_date = change.job_id
+        return job_in_date
+
     #Metodos para el reporte de certificado laboral
 
     def generate_labor_certificate(self):
