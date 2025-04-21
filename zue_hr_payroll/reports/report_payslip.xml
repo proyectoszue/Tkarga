@@ -78,7 +78,7 @@
                                     <b>Cargo:</b>
                                 </td>
                                 <td style="border:none;">
-                                    <span t-esc="o.employee_id.contract_ids.filtered(lambda c: c.state == 'open').get_job_in_date(o.date_to).name"/>
+                                    <span t-esc="o.employee_id.contract_ids.filtered(lambda c: c.state == 'open').get_job_in_date(o.date_to)"/>
                                 </td>
                                 <td style="border:none;">
                                     <b>Referencia:</b>
