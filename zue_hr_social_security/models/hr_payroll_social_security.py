@@ -626,6 +626,8 @@ class hr_payroll_social_security(models.Model):
                                         if nValorBaseFondoPension > 0:
                                             nValorBaseFondoPensionTotal = dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL', 0)  # BASEnValorBaseFondoPensionTotal = dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL', 0) #BASE
                                             if contract_id.modality_salary == 'integral':
+                                                if exceso_ley_1393 > 0:
+                                                    nValorBaseFondoPensionTotal = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_SALARIAL',0) + exceso_ley_1393
                                                 porc_integral_salary = annual_parameters.porc_integral_salary / 100
                                                 nValorBaseFondoPensionTotal = nValorBaseFondoPensionTotal * porc_integral_salary
                                                 nValorBaseFondoPensionTotal = annual_parameters.top_twenty_five_smmlv if nValorBaseFondoPensionTotal >= annual_parameters.top_twenty_five_smmlv else nValorBaseFondoPensionTotal
