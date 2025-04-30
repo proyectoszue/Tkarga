@@ -315,6 +315,8 @@ class hr_employee(models.Model):
     indicador_especial_id = fields.Many2one('hr.indicador.especial.pila','Indicador tarifa especial pensiones', tracking=True)
     cost_assumed_by  = fields.Selection([('partner', 'Cliente'),
                                         ('company', 'Compañía')], 'Costo asumido por', tracking=True)
+    # Reforma pensional
+    z_transitional_regime = fields.Boolean('Pertenece a régimen de transición', tracking=True)
     #Licencia de conducción
     licencia_rh = fields.Selection([('op','O+'),('ap','A+'),('bp','B+'),('abp','AB+'),('on','O-'),('an','A-'),('bn','B-'),('abn','AB-')],'Tipo de sangre', tracking=True)
     licencia_categoria = fields.Selection([('a1','A1'),('a2','A2'),('b1','B1'),('b2','B2'),('b3','B3'),('c1','C1'),('c2','C2'),('c3','C3')],'Categoria', tracking=True)
@@ -415,7 +417,7 @@ class hr_employee(models.Model):
             if record.identification_id != record.partner_encab_id.vat:
                 raise UserError(_('El número de identificación debe ser igual al tercero seleccionado.'))
 
-    @api.constrains('tipo_coti_id','social_security_entities','subtipo_coti_id')
+    @api.constrains('tipo_coti_id','social_security_entities','subtipo_coti_id','z_transitional_regime')
     def _check_social_security_entities(self):
         for record in self:
             if record.tipo_coti_id or record.subtipo_coti_id:
@@ -446,10 +448,27 @@ class hr_employee(models.Model):
 
                 # Validar PENSIÓN
                 if obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidates_solidarity_fund:
-                    if qty_pension == 0:
-                        raise ValidationError(_('El empleado no tiene entidad Pensión asignada, por favor verificar.'))
                     if qty_pension > 1:
                         raise ValidationError(_('El empleado tiene más de una entidad Pensión asignada, por favor verificar.'))
+                    obj_pension_regime = self.env['hr.employee.entities'].search([('z_pension_transitional_regime', '=', True)], limit=1)
+                    if len(obj_pension_regime) == 1 and not record.z_transitional_regime:
+                        if qty_pension == 0:
+                            self.env['hr.contract.setting'].create(
+                                {
+                                    'contrib_id': self.env['hr.contribution.register'].search([('type_entities','=','pension')],limit=1).id,
+                                    'partner_id': obj_pension_regime.id,
+                                    'date_change': False,#fields.Datetime.now(),
+                                    'employee_id': record.id
+                                }
+                            )
+                        else:
+                            for entity in record.social_security_entities:
+                                if entity.contrib_id.type_entities == 'pension':
+                                    entity.partner_id = obj_pension_regime.id
+                    else:
+                        if qty_pension == 0:
+                            raise ValidationError(_('El empleado no tiene entidad Pensión asignada, por favor verificar.'))
+
 
                 # Validar ARL/ARP - Se comenta debido a que se maneja por compañia
                 #if obj_parameterization_contributors.liquidated_arl:
