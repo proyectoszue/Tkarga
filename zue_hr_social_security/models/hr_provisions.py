@@ -7,9 +7,8 @@ from odoo.exceptions import UserError, ValidationError
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 
-
+import math
 import odoo
-import threading
 
 class hr_executing_provisions_details(models.Model):
     _name = 'hr.executing.provisions.details'
@@ -57,6 +56,7 @@ class hr_executing_provisions(models.Model):
     time_process_float = fields.Float(string='Tiempo ejecución float', tracking=True)
     time_process = fields.Char(string='Tiempo ejecución', tracking=True)
     observations = fields.Text('Observaciones', tracking=True)
+    employees_per_batch = fields.Integer(string='# de Empleados por lote a ejecutar', default=100, required=True)
     state = fields.Selection([
         ('draft', 'Borrador'),
         ('done', 'Realizado'),
@@ -75,227 +75,228 @@ class hr_executing_provisions(models.Model):
             result.append((record.id, "Periodo {}-{}".format(record.month,str(record.year))))
         return result
   
-    def executing_provisions_thread(self,date_start,date_end,struct_vacaciones,struct_prima,struct_cesantias,struct_intcesantias,contracts):
-        with odoo.api.Environment.manage():
-            registry = odoo.registry(self._cr.dbname)
-            with registry.cursor() as cr:
-                env = api.Environment(cr, SUPERUSER_ID, {})
-                
-                for obj_contract in contracts:
-                    contract = env['hr.contract'].search([('id', '=', obj_contract.id)])
-                    try:
-                        result_cesantias = {}
-                        result_intcesantias = {}
-                        result_prima = {}
-                        result_vac = {}
-                        retirement_date = contract.retirement_date
-                        date_end_without_31 = date_end - timedelta(days=1) if date_end.day == 31 else date_end
+    def executing_provisions_savepoint(self,date_start,date_end,struct_vacaciones,struct_prima,struct_cesantias,struct_intcesantias,contracts):
+        with self.env.cr.savepoint():
+            for obj_contract in contracts:
+                contract = self.env['hr.contract'].search([('id', '=', obj_contract.id)])
+                try:
+                    result_cesantias = {}
+                    result_intcesantias = {}
+                    result_prima = {}
+                    result_vac = {}
+                    retirement_date = contract.retirement_date
+                    date_end_without_31 = date_end - timedelta(days=1) if date_end.day == 31 else date_end
 
-                        #Obtener fecha cesantias
-                        date_cesantias = contract.date_start
-                        if retirement_date == False:
-                            obj_cesantias = env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<',date_end),('final_accrual_date','<',date_end_without_31)])
+                    #Obtener fecha cesantias
+                    date_cesantias = contract.date_start
+                    if retirement_date == False:
+                        obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<=',date_end),('final_accrual_date','<=',date_end_without_31)])
+                    else:
+                        if retirement_date >= date_end:
+                            obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<=', date_end),('final_accrual_date', '<=', date_end_without_31)])
                         else:
-                            if retirement_date >= date_end:
-                                obj_cesantias = env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', date_end),('final_accrual_date', '<', date_end_without_31)])
-                            else:
-                                obj_cesantias = env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date)])
-                        if obj_cesantias:
-                            for history in sorted(obj_cesantias, key=lambda x: x.final_accrual_date):
-                                date_cesantias = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_cesantias else date_cesantias             
+                            obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<=', retirement_date)])
+                    if obj_cesantias:
+                        for history in sorted(obj_cesantias, key=lambda x: x.final_accrual_date):
+                            date_cesantias = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_cesantias else date_cesantias
 
-                        #Obtener fecha prima
-                        date_prima = contract.date_start
-                        if retirement_date == False:
-                            obj_prima = env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<',date_end),('final_accrual_date','<',date_end_without_31)])
+                    #Obtener fecha prima
+                    date_prima = contract.date_start
+                    if retirement_date == False:
+                        obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<=',date_end),('final_accrual_date','<=',date_end_without_31)])
+                    else:
+                        if retirement_date >= date_end:
+                            obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<=', date_end),('final_accrual_date', '<=', date_end_without_31)])
                         else:
-                            if retirement_date >= date_end:
-                                obj_prima = env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', date_end),('final_accrual_date', '<', date_end_without_31)])
-                            else:
-                                obj_prima = env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date)])
-                        if obj_prima:
-                            for history in sorted(obj_prima, key=lambda x: x.final_accrual_date):
-                                date_prima = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_prima else date_prima                                   
+                            obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<=', retirement_date)])
+                    if obj_prima:
+                        for history in sorted(obj_prima, key=lambda x: x.final_accrual_date):
+                            date_prima = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_prima else date_prima
 
-                        #Obtener fecha vacaciones
-                        date_vacation = contract.date_start
-                        if retirement_date == False:
-                            obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', date_end), ('departure_date', '<=', date_end)])
+                    #Obtener fecha vacaciones
+                    date_vacation = contract.date_start
+                    if retirement_date == False:
+                        obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id), ('departure_date', '<=', date_end)])
+                    else:
+                        if retirement_date >= date_end:
+                            obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('departure_date', '<=', date_end)])
                         else:
-                            if retirement_date >= date_end:
-                                obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', date_end), ('departure_date', '<=', date_end)])
-                            else:
-                                obj_vacation = env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date),('departure_date', '<=', retirement_date)])
-                        if obj_vacation:
-                            for history in sorted(obj_vacation, key=lambda x: x.final_accrual_date):
-                                if history.leave_id:
-                                    if history.leave_id.holiday_status_id.unpaid_absences == False:
-                                        date_vacation = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_vacation else date_vacation
-                                else:
+                            obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('departure_date', '<=', retirement_date)])
+                    if obj_vacation:
+                        for history in sorted(obj_vacation, key=lambda x: x.final_accrual_date):
+                            if history.leave_id:
+                                if history.leave_id.holiday_status_id.unpaid_absences == False:
                                     date_vacation = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_vacation else date_vacation
+                            else:
+                                date_vacation = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_vacation else date_vacation
 
-                        if retirement_date == False:
+                    if retirement_date == False:
+                        date_to_process = date_end
+                    else:
+                        if retirement_date >= date_end:
                             date_to_process = date_end
                         else:
-                            if retirement_date >= date_end:
-                                date_to_process = date_end
+                            date_to_process = retirement_date
+
+                    #Simular liquidación de cesantias
+                    Payslip = self.env['hr.payslip']
+                    default_values = Payslip.default_get(Payslip.fields_get())
+                    values = dict(default_values, **{
+                            'employee_id': contract.employee_id.id,
+                            'date_cesantias':date_cesantias,
+                            'date_prima': date_prima,
+                            'date_vacaciones':date_vacation,
+                            'date_from': date_start,
+                            'date_to': date_to_process,
+                            'date_liquidacion':date_to_process,
+                            'contract_id': contract.id,
+                            'struct_id': struct_cesantias.id
+                        })
+                    payslip = self.env['hr.payslip'].new(values)
+                    payslip._onchange_employee()
+                    values = payslip._convert_to_write(payslip._cache)
+                    obj_provision = Payslip.create(values)
+
+                    if contract.contract_type != 'aprendizaje':
+                        if contract.modality_salary != 'integral':
+                            #Cesantias
+                            obj_provision.write({'struct_id': struct_cesantias.id})
+                            localdict,result_cesantias = obj_provision._get_payslip_lines_cesantias(inherit_contrato=1)
+                            # Intereses de Cesantias
+                            obj_provision.write({'struct_id': struct_intcesantias.id})
+                            localdict, result_intcesantias = obj_provision._get_payslip_lines_cesantias(inherit_contrato=1)
+                            #Prima
+                            obj_provision.write({'struct_id': struct_prima.id})
+                            localdict,result_prima = obj_provision._get_payslip_lines_prima(inherit_contrato=1)
+                        #Vacaciones
+                        obj_provision.write({'struct_id': struct_vacaciones.id})
+                        localdict,result_vac = obj_provision._get_payslip_lines_vacation(inherit_contrato=1)
+
+
+                    obj_provision.action_payslip_cancel()
+                    obj_provision.unlink()
+
+                    #Guardar resultado
+                    result_finally = {**result_cesantias,**result_intcesantias,**result_prima,**result_vac}
+
+                    #Restar las provisiones anteriores
+                    for line in result_finally.values():
+                        if line['code'] in ['CESANTIAS','INTCESANTIAS','PRIMA','VACCONTRATO']:
+                            if line['code'] == 'CESANTIAS':
+                                provision = 'cesantias'
+                            if line['code'] == 'INTCESANTIAS':
+                                provision = 'intcesantias'
+                            if line['code'] == 'PRIMA':
+                                provision = 'prima'
+                            if line['code'] == 'VACCONTRATO':
+                                provision = 'vacaciones'
+
+                            #Obtener provisiones anteriores que afectan el valor
+                            date_month_ant = date_start - timedelta(days=1)
+
+                            obj_provisions = self.env['hr.executing.provisions.details']
+
+                            executing_provisions = self.env['hr.executing.provisions.details'].search(
+                                [('executing_provisions_id.state', 'in', ['done', 'accounting']),
+                                 ('executing_provisions_id', '!=', self.id),
+                                 ('executing_provisions_id.date_end', '=', date_month_ant),
+                                 ('provision', '=', provision), ('contract_id', '=', contract.id)])
+                            value_balance = sum([i.current_payable_value for i in obj_provisions.browse(executing_provisions.ids)])
+                            amount_ant = sum([i.amount for i in obj_provisions.browse(executing_provisions.ids)])
+                            #Obtener pagos realizados en el mes
+                            code_filter = [provision.upper()] if provision != 'vacaciones' else ['VACCONTRATO','VACDISFRUTADAS','VACREMUNERADAS']
+
+                            obj_payslip = self.env['hr.payslip.line']
+                            lines_payslip = self.env['hr.payslip.line'].search(
+                                [('slip_id.state', '=', 'done'), ('slip_id.date_from', '>=', date_start),
+                                 ('slip_id.date_from', '<=', date_end), ('code', 'in', code_filter),
+                                 ('slip_id.contract_id', '=', contract.id),('is_history_reverse','=',False)])
+                            lines_payslip += self.env['hr.payslip.line'].search(
+                                [('slip_id.state', '=', 'done'), ('slip_id.date_to', '>=', date_start),
+                                 ('slip_id.date_to', '<=', date_end), ('code', 'in', code_filter),
+                                 ('slip_id.contract_id', '=', contract.id),('is_history_reverse','=',False),
+                                 ('id','not in',lines_payslip.ids),
+                                 ('slip_id.struct_id.process','in',['cesantias','intereses_cesantias','prima'])])
+                            if len(lines_payslip) > 0:
+                                value_payments = sum([i.total for i in obj_payslip.browse(lines_payslip.ids)])
                             else:
-                                date_to_process = retirement_date
+                                value_payments = 0
 
-                        #Simular liquidación de cesantias
-                        Payslip = env['hr.payslip']
-                        default_values = Payslip.default_get(Payslip.fields_get())
-                        values = dict(default_values, **{
+                            #Calcular valor a pagar actual
+                            amount = round((line['amount'] * line['quantity'] * line['rate'])/100,0)
+
+                            # ------------------------
+                            # 19/01/2022 - Luis Buitrón | Carolina Rincón : Se comenta buscar los pagos historicos
+                            #  debido a que solamente debe tener en cuenta los pagos realizados en el mes
+                            # ------------------------
+                            #obj_provisions = self.env['hr.executing.provisions.details']
+                            #executing_provisions = self.env['hr.executing.provisions.details'].search(
+                            #    [('executing_provisions_id.state', 'in', ['done', 'accounting']),
+                            #     ('executing_provisions_id', '!=', self.id),('value_payments','>',0),
+                            #     ('provision', '=', provision), ('contract_id', '=', contract.id)])
+
+                            #if len(executing_provisions) > 0:
+                            #    payable_value = sum([i.value_payments for i in obj_provisions.browse(executing_provisions.ids)])
+                            #    current_payable_value = amount - (payable_value+value_payments)
+                            #else:
+                            if value_payments > 0 and provision == 'vacaciones':
+                                current_payable_value = value_balance - value_payments
+                            else:
+                                current_payable_value = amount - value_payments
+                                current_payable_value = current_payable_value if current_payable_value > 0 else 0
+
+                            #Valor provision Mes
+                            if value_payments > 0 and current_payable_value < 0 and provision == 'vacaciones':
+                                value_provision = abs(current_payable_value)
+                                current_payable_value = 0
+                            elif value_payments > 0 and current_payable_value >=0 and provision == 'vacaciones':
+                                value_provision = amount - current_payable_value
+                                current_payable_value = amount
+                            elif value_payments == 0 and current_payable_value >= 0 and provision == 'vacaciones':
+                                value_provision = amount - value_balance#amount_ant
+                            else:
+                                value_provision = amount - value_balance
+
+                            if line['quantity'] <= 0 and provision == 'vacaciones':
+                                line['quantity'] = 0
+                                value_provision, current_payable_value, amount = 0, 0, 0
+
+                            #Obtener ultima liquidacion del mes para traer la cuenta analitica utilizada
+                            obj_last_payslip = self.env['hr.payslip']
+                            last_lines_payslip = self.env['hr.payslip'].search(
+                                [('state', '=', 'done'), ('date_from', '>=', date_start),
+                                 ('date_from', '<=', date_end),('contract_id', '=', contract.id)])
+                            last_lines_payslip += self.env['hr.payslip'].search(
+                                [('state', '=', 'done'), ('date_to', '>=', date_start),
+                                 ('date_to', '<=', date_end),('contract_id', '=', contract.id), ('id', 'not in', last_lines_payslip.ids),
+                                 ('struct_id.process', 'in', ['cesantias', 'intereses_cesantias', 'prima'])])
+                            analytic_account_id = contract.analytic_account_id
+                            for last_payslip in sorted(last_lines_payslip,key=lambda x: x.date_to):
+                                analytic_account_id = last_payslip.analytic_account_id
+
+                            #Guardar valores
+                            values_details = {
+                                'executing_provisions_id':self.id,
+                                'provision': provision,
                                 'employee_id': contract.employee_id.id,
-                                'date_cesantias':date_cesantias,
-                                'date_prima': date_prima,
-                                'date_vacaciones':date_vacation,
-                                'date_from': date_start,
-                                'date_to': date_to_process,
-                                'date_liquidacion':date_to_process,
                                 'contract_id': contract.id,
-                                'struct_id': struct_cesantias.id
-                            })
-                        payslip = env['hr.payslip'].new(values)
-                        payslip._onchange_employee()
-                        values = payslip._convert_to_write(payslip._cache)
-                        obj_provision = Payslip.create(values)
-                        
-                        if contract.contract_type != 'aprendizaje':
-                            if contract.modality_salary != 'integral':
-                                #Cesantias
-                                obj_provision.write({'struct_id': struct_cesantias.id})
-                                localdict,result_cesantias = obj_provision._get_payslip_lines_cesantias(inherit_contrato=1)
-                                # Intereses de Cesantias
-                                obj_provision.write({'struct_id': struct_intcesantias.id})
-                                localdict, result_intcesantias = obj_provision._get_payslip_lines_cesantias(inherit_contrato=1)
-                                #Prima
-                                obj_provision.write({'struct_id': struct_prima.id})
-                                localdict,result_prima = obj_provision._get_payslip_lines_prima(inherit_contrato=1)
-                            #Vacaciones
-                            obj_provision.write({'struct_id': struct_vacaciones.id})
-                            localdict,result_vac = obj_provision._get_payslip_lines_vacation(inherit_contrato=1)
+                                'analytic_account_id': analytic_account_id.id,
+                                'value_wage': contract.wage,
+                                'value_base': line['amount_base'],
+                                'time': line['quantity'],
+                                'value_balance': value_provision,
+                                'value_payments': value_payments,
+                                'current_payable_value': current_payable_value,
+                                'amount': amount
+                            }
+                            self.env['hr.executing.provisions.details'].create(values_details)
 
-
-                        obj_provision.action_payslip_cancel()
-                        obj_provision.unlink()
-                        
-                        #Guardar resultado
-                        result_finally = {**result_cesantias,**result_intcesantias,**result_prima,**result_vac}
-                        
-                        #Restar las provisiones anteriores
-                        for line in result_finally.values():
-                            if line['code'] in ['CESANTIAS','INTCESANTIAS','PRIMA','VACCONTRATO']:
-                                if line['code'] == 'CESANTIAS':
-                                    provision = 'cesantias'
-                                if line['code'] == 'INTCESANTIAS':
-                                    provision = 'intcesantias'
-                                if line['code'] == 'PRIMA':
-                                    provision = 'prima'
-                                if line['code'] == 'VACCONTRATO':
-                                    provision = 'vacaciones'
-
-                                #Obtener provisiones anteriores que afectan el valor
-                                date_month_ant = date_start - timedelta(days=1)
-
-                                obj_provisions = env['hr.executing.provisions.details']
-
-                                executing_provisions = env['hr.executing.provisions.details'].search(
-                                    [('executing_provisions_id.state', 'in', ['done', 'accounting']),
-                                     ('executing_provisions_id', '!=', self.id),
-                                     ('executing_provisions_id.date_end', '=', date_month_ant),
-                                     ('provision', '=', provision), ('contract_id', '=', contract.id)])
-                                value_balance = sum([i.current_payable_value for i in obj_provisions.browse(executing_provisions.ids)])
-                                amount_ant = sum([i.amount for i in obj_provisions.browse(executing_provisions.ids)])
-                                #Obtener pagos realizados en el mes
-                                code_filter = [provision.upper()] if provision != 'vacaciones' else ['VACCONTRATO','VACDISFRUTADAS','VACREMUNERADAS']
-
-                                obj_payslip = env['hr.payslip.line']
-                                lines_payslip = env['hr.payslip.line'].search(
-                                    [('slip_id.state', '=', 'done'), ('slip_id.date_from', '>=', date_start),
-                                     ('slip_id.date_from', '<=', date_end), ('code', 'in', code_filter),
-                                     ('slip_id.contract_id', '=', contract.id),('is_history_reverse','=',False)])
-                                lines_payslip += env['hr.payslip.line'].search(
-                                    [('slip_id.state', '=', 'done'), ('slip_id.date_to', '>=', date_start),
-                                     ('slip_id.date_to', '<=', date_end), ('code', 'in', code_filter),
-                                     ('slip_id.contract_id', '=', contract.id),('is_history_reverse','=',False),
-                                     ('id','not in',lines_payslip.ids),
-                                     ('slip_id.struct_id.process','in',['cesantias','intereses_cesantias','prima'])])
-                                if len(lines_payslip) > 0:
-                                    value_payments = sum([i.total for i in obj_payslip.browse(lines_payslip.ids)])
-                                else:
-                                    value_payments = 0
-
-                                #Calcular valor a pagar actual
-                                amount = round((line['amount'] * line['quantity'] * line['rate'])/100,0)
-
-                                # ------------------------
-                                # 19/01/2022 - Luis Buitrón | Carolina Rincón : Se comenta buscar los pagos historicos
-                                #  debido a que solamente debe tener en cuenta los pagos realizados en el mes
-                                # ------------------------
-                                #obj_provisions = env['hr.executing.provisions.details']
-                                #executing_provisions = env['hr.executing.provisions.details'].search(
-                                #    [('executing_provisions_id.state', 'in', ['done', 'accounting']),
-                                #     ('executing_provisions_id', '!=', self.id),('value_payments','>',0),
-                                #     ('provision', '=', provision), ('contract_id', '=', contract.id)])
-
-                                #if len(executing_provisions) > 0:
-                                #    payable_value = sum([i.value_payments for i in obj_provisions.browse(executing_provisions.ids)])
-                                #    current_payable_value = amount - (payable_value+value_payments)
-                                #else:
-                                if value_payments > 0 and provision == 'vacaciones':
-                                    current_payable_value = value_balance - value_payments
-                                else:
-                                    current_payable_value = amount - value_payments
-
-                                #Valor provision Mes
-                                if value_payments > 0 and current_payable_value < 0 and provision == 'vacaciones':
-                                    value_provision = abs(current_payable_value)
-                                    current_payable_value = 0
-                                elif value_payments > 0 and current_payable_value >=0 and provision == 'vacaciones':
-                                    value_provision = amount - current_payable_value
-                                    current_payable_value = amount
-                                elif value_payments == 0 and current_payable_value >= 0 and provision == 'vacaciones':
-                                    value_provision = amount - value_balance#amount_ant
-                                else:
-                                    value_provision = amount - value_balance
-
-                                #Obtener ultima liquidacion del mes para traer la cuenta analitica utilizada
-                                obj_last_payslip = env['hr.payslip']
-                                last_lines_payslip = env['hr.payslip'].search(
-                                    [('state', '=', 'done'), ('date_from', '>=', date_start),
-                                     ('date_from', '<=', date_end),('contract_id', '=', contract.id)])
-                                last_lines_payslip += env['hr.payslip'].search(
-                                    [('state', '=', 'done'), ('date_to', '>=', date_start),
-                                     ('date_to', '<=', date_end),('contract_id', '=', contract.id), ('id', 'not in', last_lines_payslip.ids),
-                                     ('struct_id.process', 'in', ['cesantias', 'intereses_cesantias', 'prima'])])
-                                analytic_account_id = contract.analytic_account_id
-                                for last_payslip in sorted(last_lines_payslip,key=lambda x: x.date_to):
-                                    analytic_account_id = last_payslip.analytic_account_id
-
-                                #Guardar valores
-                                values_details = {
-                                    'executing_provisions_id':self.id,
-                                    'provision': provision,
-                                    'employee_id': contract.employee_id.id,
-                                    'contract_id': contract.id,
-                                    'analytic_account_id': analytic_account_id.id,
-                                    'value_wage': contract.wage,
-                                    'value_base': line['amount_base'],
-                                    'time': line['quantity'],
-                                    'value_balance': value_provision,
-                                    'value_payments': value_payments,
-                                    'current_payable_value': current_payable_value,
-                                    'amount': amount
-                                }
-                                env['hr.executing.provisions.details'].create(values_details)
-                    
-                    except Exception as e:
-                        msg = 'ERROR: '+str(e.args[0])+' en el contrato '+contract.name+'.'
-                        if self.observations:
-                            self.observations = self.observations + '\n' + msg
-                        else:
-                            self.observations = msg
+                except Exception as e:
+                    msg = 'ERROR: '+str(e.args[0])+' en el contrato '+contract.name+'.'
+                    if self.observations:
+                        self.observations = self.observations + '\n' + msg
+                    else:
+                        self.observations = msg
 
     def executing_provisions(self):
         #Eliminar ejecución
@@ -342,8 +343,8 @@ class hr_executing_provisions(models.Model):
             from hr_payslip a
             inner join hr_contract b on a.contract_id = b.id and (b.subcontract_type not in ('obra_integral') or b.subcontract_type is null) and b.id not in %s
             where a.state = 'done' and a.company_id = %s and ((a.date_from >= '%s' and a.date_from <= '%s') or (a.date_to >= '%s' and a.date_to <= '%s'))
-            Limit 200
-        ''' % (str_contracts,self.env.company.id,date_start,date_end,date_start,date_end)
+            Limit %s
+        ''' % (str_contracts,self.env.company.id,date_start,date_end,date_start,date_end,self.employees_per_batch)
 
         self.env.cr.execute(query)
         result_query = self.env.cr.fetchall()
@@ -354,33 +355,20 @@ class hr_executing_provisions(models.Model):
         obj_contracts = self.env['hr.contract'].search([('id', 'in', contract_ids)])
 
         #Guardo los contratos en lotes de a 20
-        contracts_array, i, j = [], 0 , 20            
+        limit_employees_per_batch = int(math.ceil(self.employees_per_batch/5)) if self.employees_per_batch > 100 else self.employees_per_batch
+        contracts_array, i, j = [], 0 , limit_employees_per_batch
         while i <= len(obj_contracts):                
             contracts_array.append(obj_contracts[i:j])
             i = j
-            j += 20   
+            j += limit_employees_per_batch
 
-        #Los lotes anteriores, los separo en los de 5, para ejecutar un maximo de 5 hilos
-        contracts_array_def, i, j = [], 0 , 5            
-        while i <= len(contracts_array):                
-            contracts_array_def.append(contracts_array[i:j])
-            i = j
-            j += 5  
-
-        #----------------------------Recorrer contratos por multihilos
+        #----------------------------Recorrer contratos por savepoints
         date_start_process = datetime.now()
         date_finally_process = datetime.now()
         i = 1
-        for contracts in contracts_array_def:
-            array_thread = []
-            for contract in contracts:
-                t = threading.Thread(target=self.executing_provisions_thread, args=(date_start,date_end,struct_vacaciones,struct_prima,struct_cesantias,struct_intcesantias,contract,))
-                t.start()
-                array_thread.append(t)
-                i += 1
 
-            for hilo in array_thread:
-                hilo.join()
+        for contract in contracts_array:
+            self.executing_provisions_savepoint(date_start,date_end,struct_vacaciones,struct_prima,struct_cesantias,struct_intcesantias,contract)
 
         date_finally_process = datetime.now()
         time_process = date_finally_process - date_start_process
