@@ -587,6 +587,8 @@ class hr_annual_parameters(models.Model):
     z_percentage_public = fields.Integer(string="Porcentaje Emp. Publicos", tracking=True)
     # Grilla UPC
     z_upc_lines_ids = fields.One2many('zue.upc.annual.parameters', 'z_upc_id', string='Líneas UPC', tracking=True)
+    # Grilla Fondo de solidaridad y subsistencia
+    z_fds_lines_ids = fields.One2many('zue.fds.annual.parameters', 'z_fds_id', string='Líneas Fondo de solidaridad y subsistencia', tracking=True)
 
     # Metodos
     def name_get(self):
@@ -676,3 +678,15 @@ class zue_upc_annual_parameters(models.Model):
     z_islands_upc = fields.Float(string="Islas")
     z_gender_upc = fields.Selection([('masculino', 'Masculino'), ('femenino', 'Femenino'), ('otro', 'Otro')],
                                     string="Genero", required=True)
+
+class zue_fds_annual_parameters(models.Model):
+    _name = 'zue.fds.annual.parameters'
+    _description = 'Parámetros anuales Fondo de Solidaridad y Subsistencia'
+
+    z_fds_id = fields.Many2one('hr.annual.parameters', string="Fondo de solidaridad y subsistencia")
+    z_initial_value = fields.Float('Rango inicial')
+    z_final_value = fields.Float('Rango final')
+    #z_reform_change = fields.Boolean('Cambio de reforma')
+    z_porcentage_solidarity_fund = fields.Float('Porcentaje Fondo de solidaridad')
+    z_porcentage_subsistence_fund = fields.Float('Porcentaje Fondo de subsistencia')
+
