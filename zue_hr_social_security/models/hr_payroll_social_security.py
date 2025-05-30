@@ -12,7 +12,6 @@ import base64
 import io
 import xlsxwriter
 import odoo
-import threading
 import math
 
 class BrowsableObject(object):
@@ -49,6 +48,7 @@ class hr_payroll_social_security(models.Model):
             ('done', 'Realizado'),
             ('accounting', 'Contabilizado'),
         ], string='Estado', default='draft', tracking=True)
+    employees_per_batch = fields.Integer(string='# de Empleados por lote a ejecutar', default=100, required=True)
     #Proceso
     executing_social_security_ids = fields.One2many('hr.executing.social.security', 'executing_social_security_id', string='Ejecución', tracking=True)
     errors_social_security_ids = fields.One2many('hr.errors.social.security', 'executing_social_security_id', string='Advertencias', tracking=True)
@@ -76,947 +76,943 @@ class hr_payroll_social_security(models.Model):
             result.append((record.id, "Periodo {}-{}".format(record.month,str(record.year))))
         return result
 
-    def executing_social_security_thread(self,date_start,date_end,obj_employee):
-        with odoo.api.Environment.manage():
-            registry = odoo.registry(self._cr.dbname)
-            with registry.cursor() as cr:
-                env = api.Environment(cr, SUPERUSER_ID, {})
-                
-                def roundup100(amount):
-                    return math.ceil(amount / 100.0) * 100
+    def executing_social_security_savepoint(self,date_start,date_end,obj_employee):
+        with self.env.cr.savepoint():
+            def roundup100(amount):
+                return math.ceil(amount / 100.0) * 100
 
-                def roundupdecimal(amount):
-                    return math.ceil(amount)
+            def roundupdecimal(amount):
+                return math.ceil(amount)
 
-                #Obtener parametros anuales
-                annual_parameters = env['hr.annual.parameters'].search([('year', '=', date_start.year)])
+            #Obtener parametros anuales
+            annual_parameters = self.env['hr.annual.parameters'].search([('year', '=', date_start.year)])
 
-                #Recorre empleados y realizar la respectiva lógica
-                for o_employee in obj_employee:
-                    employee = env['hr.employee'].search([('id','=',o_employee.id)])
-                    try:
-                        #Obtener contratos
-                        obj_contracts = env['hr.contract'].search([('state','=','close'),('employee_id','=',employee.id),('retirement_date','>=',date_start),('retirement_date','<=',date_end+relativedelta(months=1))], limit = 1)
-                        obj_contracts += env['hr.contract'].search([('state','=','open'), ('employee_id', '=', employee.id), ('date_start', '<=', date_end)])
-                        obj_contracts += env['hr.contract'].search([('state', '=', 'finished'), ('employee_id', '=', employee.id),('date_end', '>=', date_start),('date_end', '<=', date_end + relativedelta(months=1))], limit=1)
+            #Recorre empleados y realizar la respectiva lógica
+            for o_employee in obj_employee:
+                employee = self.env['hr.employee'].search([('id','=',o_employee.id)])
+                try:
+                    #Obtener contratos
+                    obj_contracts = self.env['hr.contract'].search([('state','=','close'),('employee_id','=',employee.id),('retirement_date','>=',date_start),('retirement_date','<=',date_end+relativedelta(months=1))], limit = 1)
+                    obj_contracts += self.env['hr.contract'].search([('state','=','open'), ('employee_id', '=', employee.id), ('date_start', '<=', date_end)])
+                    obj_contracts += self.env['hr.contract'].search([('state', '=', 'finished'), ('employee_id', '=', employee.id),('date_end', '>=', date_start),('date_end', '<=', date_end + relativedelta(months=1))], limit=1)
 
-                        for obj_contract in obj_contracts:
-                            #Obtener nóminas en ese rango de fechas
-                            obj_payslip = env['hr.payslip'].search([('state','=','done'),('employee_id','=',employee.id),('contract_id','=',obj_contract.id)])
-                            obj_payslip = obj_payslip.filtered(lambda p: (p.date_from >= date_start and p.date_from <= date_end) or (p.date_to >= date_start and p.date_to <= date_end))
+                    for obj_contract in obj_contracts:
+                        #Obtener nóminas en ese rango de fechas
+                        obj_payslip = self.env['hr.payslip'].search([('state','=','done'),('employee_id','=',employee.id),('contract_id','=',obj_contract.id)])
+                        obj_payslip = obj_payslip.filtered(lambda p: (p.date_from >= date_start and p.date_from <= date_end) or (p.date_to >= date_start and p.date_to <= date_end))
 
-                            #Primero, encontró una entrada de trabajo que no excedió el intervalo.
-                            datetime_start = datetime.combine(date_start, datetime.min.time())
-                            datetime_end = datetime.combine(date_end, datetime.max.time())
-                            work_entries = env['hr.work.entry'].search(
-                                [
-                                    ('state', 'in', ['validated', 'draft']),
-                                    ('date_start', '>=', datetime_start),
-                                    ('date_stop', '<=', datetime_end),
-                                    ('contract_id', '=', obj_contract.id),
-                                    ('leave_id','!=',False)
-                                ]
-                            )
-                            #En segundo lugar, encontró entradas de trabajo que exceden el intervalo y calculan la duración correcta.
-                            work_entries += env['hr.work.entry'].search(
-                                [
-                                    '&', '&', '&',
-                                    ('leave_id','!=',False),
-                                    ('state', 'in', ['validated', 'draft']),
-                                    ('contract_id', '=', obj_contract.id),
-                                    '|', '|', '&', '&',
-                                    ('date_start', '>=', datetime_start),
-                                    ('date_start', '<', datetime_end),
-                                    ('date_stop', '>', datetime_end),
-                                    '&', '&',
-                                    ('date_start', '<', datetime_start),
-                                    ('date_stop', '<=', datetime_end),
-                                    ('date_stop', '>', datetime_start),
-                                    '&',
-                                    ('date_start', '<', datetime_start),
-                                    ('date_stop', '>', datetime_end),
-                                ]
-                            )
+                        #Primero, encontró una entrada de trabajo que no excedió el intervalo.
+                        datetime_start = datetime.combine(date_start, datetime.min.time())
+                        datetime_end = datetime.combine(date_end, datetime.max.time())
+                        work_entries = self.env['hr.work.entry'].search(
+                            [
+                                ('state', 'in', ['validated', 'draft']),
+                                ('date_start', '>=', datetime_start),
+                                ('date_stop', '<=', datetime_end),
+                                ('contract_id', '=', obj_contract.id),
+                                ('leave_id','!=',False)
+                            ]
+                        )
+                        #En segundo lugar, encontró entradas de trabajo que exceden el intervalo y calculan la duración correcta.
+                        work_entries += self.env['hr.work.entry'].search(
+                            [
+                                '&', '&', '&',
+                                ('leave_id','!=',False),
+                                ('state', 'in', ['validated', 'draft']),
+                                ('contract_id', '=', obj_contract.id),
+                                '|', '|', '&', '&',
+                                ('date_start', '>=', datetime_start),
+                                ('date_start', '<', datetime_end),
+                                ('date_stop', '>', datetime_end),
+                                '&', '&',
+                                ('date_start', '<', datetime_start),
+                                ('date_stop', '<=', datetime_end),
+                                ('date_stop', '>', datetime_start),
+                                '&',
+                                ('date_start', '<', datetime_start),
+                                ('date_stop', '>', datetime_end),
+                            ]
+                        )
 
-                            # Obtener parametrización de cotizantes
-                            # Obtener tipo y subtipo de cotizante de acuerdo a la fecha
-                            obj_tipo_coti = employee.tipo_coti_id
-                            obj_subtipo_coti = employee.subtipo_coti_id
-                            obj_history_social_security = self.env['zue.hr.history.employee.social.security'].search([('z_employee_id.id','=',employee.id)])
-                            if len(obj_history_social_security) > 0: #and obj_contract.state != 'open' and obj_contract.id != employee.contract_id.id:
-                                for history_ss in sorted(obj_history_social_security, key=lambda x: x.z_date_change):
-                                    if obj_contract.state != 'open' and obj_contract.id != employee.contract_id.id:
-                                        if obj_contract.date_start >= history_ss.z_date_change and employee.contract_id.date_start <= history_ss.z_date_change and date_start >= history_ss.z_date_change and date_end <= history_ss.z_date_change:
-                                            obj_tipo_coti = history_ss.z_tipo_coti_id
-                                            obj_subtipo_coti = history_ss.z_subtipo_coti_id
-                                            break
-                                    else:
-                                        if datetime_start.date() < history_ss.z_date_change:
-                                            obj_tipo_coti = history_ss.z_tipo_coti_id
-                                            obj_subtipo_coti = history_ss.z_subtipo_coti_id
-                                            break
-
-                            obj_parameterization_contributors = env['hr.parameterization.of.contributors'].search(
-                                [('type_of_contributor', '=', obj_tipo_coti.id),
-                                 ('contributor_subtype', '=', obj_subtipo_coti.id)], limit=1)
-                            #Variables
-                            bEsAprendiz = True if obj_contract.contract_type == 'aprendizaje' else False
-                            nDiasLiquidados = 0
-                            nNumeroHorasLaboradas = 0.0
-                            nIngreso = False
-                            nRetiro = False
-                            #Sueldo
-                            nSueldo = obj_contract.wage
-                            #Listas y diccionarios
-                            category_news = ['INCAPACIDAD','LICENCIA_NO_REMUNERADA','LICENCIA_REMUNERADA','LICENCIA_MATERNIDAD','VACACIONES','ACCIDENTE_TRABAJO']
-                            dict_social_security = {
-                                'BaseSeguridadSocial':BrowsableObject(employee.id, {}, env),
-                                'BaseParafiscales':BrowsableObject(employee.id, {}, env),
-                                'Dias':BrowsableObject(employee.id, {}, env)
-                            }
-                            #Valores
-                            nValorBaseSalud,nValorBaseFondoPension,nValorBaseARP,nValorBaseCajaCom,nValorBaseSENA,nValorBaseICBF = 0,0,0,0,0,0
-                            nValorSaludEmpleadoNomina,nValorPensionEmpleadoNomina,nAporteVoluntarioPension,nValorFondoSolidaridad,nValorFondoSubsistencia = 0,0,0,0,0
-                            #Entidades
-                            TerceroEPS,TerceroPension,TerceroFondoSolidaridad,TerceroFondoSubsistencia = False,False,False,False
-                            TerceroCesantias,TerceroCajaCompensacion,TerceroARP,TerceroSENA,TerceroICBF = False,False,False,False,False
-                            for entity in employee.social_security_entities:
-                                if entity.contrib_id.type_entities == 'eps': # Salud
-                                    TerceroEPS = entity.partner_id
-                                if entity.contrib_id.type_entities == 'pension': # Pension
-                                    TerceroPension = entity.partner_id
-                                if entity.contrib_id.type_entities == 'solidaridad': # Solidaridad
-                                    TerceroFondoSolidaridad = entity.partner_id
-                                if entity.contrib_id.type_entities == 'subsistencia': # Subsistencia
-                                    TerceroFondoSubsistencia = entity.partner_id
-                                if entity.contrib_id.type_entities == 'caja': # Caja de compensación
-                                    TerceroCajaCompensacion = entity.partner_id
-                                if entity.contrib_id.type_entities == 'riesgo': # Aseguradora de riesgos laborales
-                                    TerceroARP = entity.partner_id
-                                if entity.contrib_id.type_entities == 'cesantias': # Cesantias
-                                    TerceroCesantias = entity.partner_id
-
-                            id_type_entities_sena = env['hr.contribution.register'].search([('type_entities','=','sena')], limit=1).id
-                            TerceroSENA = env['hr.employee.entities'].search([('types_entities','in',[id_type_entities_sena])]) # SENA
-                            id_type_entities_icbf = env['hr.contribution.register'].search([('type_entities','=','icbf')], limit=1).id
-                            TerceroICBF = env['hr.employee.entities'].search([('types_entities','in',[id_type_entities_icbf])]) #  ICBF
-
-                            leave_list = []
-                            leave_time_ids = []
-                            for leave in work_entries:
-                                if leave.leave_id.id not in leave_time_ids:
-                                    #Obtener fechas y dias
-                                    request_date_from = leave.leave_id.request_date_from if leave.leave_id.request_date_from >= date_start else date_start
-                                    request_date_to = leave.leave_id.request_date_to if leave.leave_id.request_date_to <= date_end else date_end
-                                    if request_date_from.month == 2 and request_date_to.month == 2:
-                                        number_of_days = (request_date_to-request_date_from).days + 1
-                                    else:
-                                        number_of_days = self.dias360(request_date_from,request_date_to)
-
-                                    leave_dict = {'id':leave.leave_id.id,
-                                                    'type':leave.leave_id.holiday_status_id.code,
-                                                    'date_start': request_date_from,
-                                                    'date_end': request_date_to,
-                                                    'days':  number_of_days,
-                                                    'days_totals': leave.leave_id.number_of_days
-                                                }
-                                    leave_list.append(leave_dict)
-                                    leave_time_ids.append(leave.leave_id.id)
-
-                            cant_payslip = 0
-                            for payslip in obj_payslip:
-                                #Variables
-                                cant_payslip += 1
-                                contract_id = payslip.contract_id
-                                analytic_account_id = payslip.analytic_account_id
-
-                                #Obtener si es un ingreso o un retiro
-                                if payslip.contract_id.date_start:
-                                    nIngreso = True if payslip.contract_id.date_start.month == date_start.month and payslip.contract_id.date_start.year == date_start.year else False
-                                if payslip.contract_id.retirement_date:
-                                    nRetiro = True if payslip.contract_id.retirement_date.month == date_start.month and payslip.contract_id.retirement_date.year == date_start.year else False
-                                if payslip.contract_id.date_end and nRetiro == False:
-                                    nRetiro = True if payslip.contract_id.date_end.month == date_start.month and payslip.contract_id.date_end.year == date_start.year else False
-                                #Obtener dias laborados normales
-                                for days in payslip.worked_days_line_ids:
-                                    nDiasLiquidados	+= days.number_of_days if days.work_entry_type_id.code in ('WORK100','COMPENSATORIO') else 0
-                                    round_hours = days.number_of_days * annual_parameters.hours_daily if days.work_entry_type_id.code in ('WORK100', 'COMPENSATORIO') else 0
-                                    nNumeroHorasLaboradas += round_hours
-                                    nNumeroHorasLaboradas = nNumeroHorasLaboradas
-                                #Obtener dias laborados con tipo de subcontrato parcial o parcial integral
-                                #if payslip.contract_id.subcontract_type in ('obra_parcial','obra_integral'):
-                                #    obj_overtime = env['hr.overtime'].search([('employee_id', '=', employee.id), ('date', '>=', date_start),('date_end', '<=', date_end)])
-                                #    if len(obj_overtime) > 0:
-                                #        nDiasLiquidados = round(sum(o.days_actually_worked for o in obj_overtime))#round(sum(o.shift_hours for o in obj_overtime) / 8)
-                                #        nNumeroHorasLaboradas = round(sum(o.days_actually_worked for o in obj_overtime)*8)#round(sum(o.shift_hours for o in obj_overtime))
-                                #Obtener valores
-                                for line in payslip.line_ids:
-                                    #Bases seguridad social
-                                    if line.salary_rule_id.base_seguridad_social:
-                                        dict_social_security['BaseSeguridadSocial'].dict['TOTAL'] = dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL', 0) + line.total
-                                        if line.salary_rule_id.category_id.code in category_news:
-                                            dict_social_security['BaseSeguridadSocial'].dict[line.salary_rule_id.category_id.code] = dict_social_security['BaseSeguridadSocial'].dict.get(line.salary_rule_id.category_id.code, 0) + line.total
-                                            dict_social_security['BaseSeguridadSocial'].dict['DIAS_'+line.salary_rule_id.category_id.code] = dict_social_security['BaseSeguridadSocial'].dict.get('DIAS_'+line.salary_rule_id.category_id.code, 0) + line.quantity
-                                        else:
-                                            if payslip.date_from >= date_start and payslip.date_from <= date_end:
-                                                if line.salary_rule_id.category_id.code == 'BASIC' and contract_id.modality_salary == 'integral':
-                                                    value = (line.total*annual_parameters.porc_integral_salary)/100
-                                                    dict_social_security['BaseSeguridadSocial'].dict['BASE'] = dict_social_security['BaseSeguridadSocial'].dict.get('BASE', 0) + value
-                                                else:
-                                                    dict_social_security['BaseSeguridadSocial'].dict['BASE'] = dict_social_security['BaseSeguridadSocial'].dict.get('BASE', 0) + line.total
-                                    #Bases parafiscales
-                                    if line.salary_rule_id.base_parafiscales:
-                                        dict_social_security['BaseParafiscales'].dict['TOTAL'] = dict_social_security['BaseParafiscales'].dict.get('TOTAL', 0) + line.total
-                                        if line.salary_rule_id.category_id.code in category_news:
-                                            dict_social_security['BaseParafiscales'].dict[line.salary_rule_id.category_id.code] = dict_social_security['BaseParafiscales'].dict.get(line.salary_rule_id.category_id.code, 0) + line.total
-                                            dict_social_security['BaseParafiscales'].dict['DIAS_'+line.salary_rule_id.category_id.code] = dict_social_security['BaseParafiscales'].dict.get('DIAS_'+line.salary_rule_id.category_id.code, 0) + line.quantity
-                                        else:
-                                            if payslip.date_from >= date_start and payslip.date_from <= date_end:
-                                                if line.salary_rule_id.category_id.code == 'BASIC' and contract_id.modality_salary == 'integral':
-                                                    value = (line.total*annual_parameters.porc_integral_salary)/100
-                                                    dict_social_security['BaseParafiscales'].dict['BASE'] = dict_social_security['BaseParafiscales'].dict.get('BASE', 0) + value
-                                                else:
-                                                    dict_social_security['BaseParafiscales'].dict['BASE'] = dict_social_security['BaseParafiscales'].dict.get('BASE', 0) + line.total
-                                    # Bases seguridad social para salud y pension ley 1393
-                                    if line.salary_rule_id.category_id.code == 'DEV_SALARIAL' or line.salary_rule_id.category_id.parent_id.code == 'DEV_SALARIAL':
-                                        dict_social_security['BaseSeguridadSocial'].dict['DEV_SALARIAL'] = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_SALARIAL',0) + line.total
-                                    if line.salary_rule_id.category_id.code == 'DEV_NO_SALARIAL' or line.salary_rule_id.category_id.parent_id.code == 'DEV_NO_SALARIAL':
-                                        dict_social_security['BaseSeguridadSocial'].dict['DEV_NO_SALARIAL'] = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL',0) + line.total
-                                    if line.salary_rule_id.category_id.code == 'VNS' or line.salary_rule_id.code == 'AUX000':
-                                        dict_social_security['BaseSeguridadSocial'].dict['DEV_NO_SALARIAL'] = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL',0) - line.total
-                                    #Salud
-                                    nValorBaseSalud += line.total if line.salary_rule_id.base_seguridad_social else 0
-                                    nValorSaludEmpleadoNomina += abs(line.total) if line.code == 'SSOCIAL001' else 0
-                                    #Pension y fondo de solidaridad
-                                    nValorBaseFondoPension += line.total if line.salary_rule_id.base_seguridad_social else 0
-                                    nValorPensionEmpleadoNomina += abs(line.total) if line.code == 'SSOCIAL002' else 0
-                                    nAporteVoluntarioPension += abs(line.total) if line.salary_rule_id.code == 'AVP' else 0
-                                    nValorFondoSubsistencia += abs(line.total) if line.code == 'SSOCIAL003' else 0
-                                    nValorFondoSolidaridad += abs(line.total) if line.code == 'SSOCIAL004' else 0
-                                    #ARL
-                                    nValorBaseARP += line.total if line.salary_rule_id.base_seguridad_social else 0
-                                    nPorcAporteARP = payslip.contract_id.risk_id.percent
-                                    #Caja de compensación
-                                    nValorBaseCajaCom += line.total if line.salary_rule_id.base_parafiscales else 0
-                                    #SENA & ICBF
-                                    nValorBaseSENA += line.total if line.salary_rule_id.base_parafiscales else 0
-                                    nValorBaseICBF += line.total if line.salary_rule_id.base_parafiscales else 0
-
-                            if cant_payslip > 0 and obj_tipo_coti.code != '51': # Proceso para tipos de cotizante diferente a 51 - Trabajador de Tiempo Parcial
-                                #Validar que la suma de los dias sea igual a 30 y en caso de se superior restar en los dias liquidados la diferencia
-                                nDiasTotales = nDiasLiquidados
-                                nDiasRetiro = 0 # Historia: Ajuste seguridad social unidades laboradas
-                                for leave in leave_list:
-                                    nDiasTotales += leave['days'] if leave['type'] != 'COMPENSATORIO' else 0
-
-                                if nRetiro and payslip.contract_id.retirement_date:
-                                    if payslip.contract_id.retirement_date.day < nDiasTotales:
-                                        nDiasRetiro = (30 - payslip.contract_id.retirement_date.day) if (30 - nDiasTotales) < 0 else (nDiasTotales - payslip.contract_id.retirement_date.day)
-
-                                if nIngreso == False and nRetiro == False and self.month == '2':
-                                    nDiasLiquidados = (nDiasLiquidados-(nDiasTotales-30)) if (30-nDiasTotales) < 0 else (nDiasLiquidados+(30-nDiasTotales))
+                        # Obtener parametrización de cotizantes
+                        # Obtener tipo y subtipo de cotizante de acuerdo a la fecha
+                        obj_tipo_coti = employee.tipo_coti_id
+                        obj_subtipo_coti = employee.subtipo_coti_id
+                        obj_history_social_security = self.env['zue.hr.history.employee.social.security'].search([('z_employee_id.id','=',employee.id)])
+                        if len(obj_history_social_security) > 0: #and obj_contract.state != 'open' and obj_contract.id != employee.contract_id.id:
+                            for history_ss in sorted(obj_history_social_security, key=lambda x: x.z_date_change):
+                                if obj_contract.state != 'open' and obj_contract.id != employee.contract_id.id:
+                                    if obj_contract.date_start >= history_ss.z_date_change and employee.contract_id.date_start <= history_ss.z_date_change and date_start >= history_ss.z_date_change and date_end <= history_ss.z_date_change:
+                                        obj_tipo_coti = history_ss.z_tipo_coti_id
+                                        obj_subtipo_coti = history_ss.z_subtipo_coti_id
+                                        break
                                 else:
-                                    nDiasLiquidados = (nDiasLiquidados - (nDiasTotales - 30)) if (30 - nDiasTotales) < 0 else nDiasLiquidados
-                                nDiasLiquidados = nDiasLiquidados-nDiasRetiro
-                                #Guardar linea principal
-                                result = {
-                                    'executing_social_security_id': self.id,
-                                    'employee_id':employee.id,
-                                    'dependent_upc_id': False,
-                                    'contract_id': contract_id.id,
-                                    'analytic_account_id': analytic_account_id.id,
-                                    'branch_id':employee.branch_id.id,
-                                    'nDiasLiquidados':nDiasLiquidados,
-                                    'nNumeroHorasLaboradas':round(nNumeroHorasLaboradas),
-                                    'nIngreso':nIngreso,
-                                    'nRetiro':nRetiro,
-                                    'nSueldo':nSueldo,
-                                    #Salud
-                                    'TerceroEPS':TerceroEPS.id if TerceroEPS else False,
-                                    'nValorBaseSalud':nValorBaseSalud,
-                                    'nValorSaludEmpleadoNomina':nValorSaludEmpleadoNomina,
-                                    #Pension
-                                    'TerceroPension':TerceroPension.id if TerceroPension else False,
-                                    'nValorBaseFondoPension':nValorBaseFondoPension,
-                                    'nValorPensionEmpleadoNomina':nValorPensionEmpleadoNomina+nValorFondoSubsistencia+nValorFondoSolidaridad,
-                                    'cAVP': True if nAporteVoluntarioPension > 0 else False,
-                                    'nAporteVoluntarioPension': nAporteVoluntarioPension,
-                                    #Fondo Solidaridad y Subsistencia
-                                    'TerceroFondoSolidaridad': TerceroFondoSolidaridad.id if TerceroFondoSolidaridad else TerceroPension.id if TerceroPension else False,
-                                    #ARP/ARL - Administradora de riesgos profesionales/laborales
-                                    'TerceroARP':TerceroARP.id if TerceroARP else False,
-                                    'nValorBaseARP':nValorBaseARP,
-                                    #Caja de Compensación
-                                    'TerceroCajaCom': TerceroCajaCompensacion.id if TerceroCajaCompensacion else False,
-                                    'nValorBaseCajaCom':nValorBaseCajaCom,
-                                    #SENA & ICBF
-                                    'cExonerado1607': employee.company_id.exonerated_law_1607 if bEsAprendiz == False and nSueldo < (annual_parameters.smmlv_monthly*10) else False,
-                                    'TerceroSENA': TerceroSENA.id if TerceroSENA else False,
-                                    'nValorBaseSENA':nValorBaseSENA,
-                                    'TerceroICBF': TerceroICBF.id if TerceroICBF else False,
-                                    'nValorBaseICBF':nValorBaseICBF,
-                                }
+                                    if datetime_start.date() < history_ss.z_date_change:
+                                        obj_tipo_coti = history_ss.z_tipo_coti_id
+                                        obj_subtipo_coti = history_ss.z_subtipo_coti_id
+                                        break
 
-                                obj_executing = env['hr.executing.social.security'].create(result)
+                        obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
+                            [('type_of_contributor', '=', obj_tipo_coti.id),
+                             ('contributor_subtype', '=', obj_subtipo_coti.id)], limit=1)
+                        #Variables
+                        bEsAprendiz = True if obj_contract.contract_type == 'aprendizaje' else False
+                        nDiasLiquidados = 0
+                        nNumeroHorasLaboradas = 0.0
+                        nIngreso = False
+                        nRetiro = False
+                        #Sueldo
+                        nSueldo = obj_contract.wage
+                        #Listas y diccionarios
+                        category_news = ['INCAPACIDAD','LICENCIA_NO_REMUNERADA','LICENCIA_REMUNERADA','LICENCIA_MATERNIDAD','VACACIONES','ACCIDENTE_TRABAJO']
+                        dict_social_security = {
+                            'BaseSeguridadSocial':BrowsableObject(employee.id, {}, self.env),
+                            'BaseParafiscales':BrowsableObject(employee.id, {}, self.env),
+                            'Dias':BrowsableObject(employee.id, {}, self.env)
+                        }
+                        #Valores
+                        nValorBaseSalud,nValorBaseFondoPension,nValorBaseARP,nValorBaseCajaCom,nValorBaseSENA,nValorBaseICBF = 0,0,0,0,0,0
+                        nValorSaludEmpleadoNomina,nValorPensionEmpleadoNomina,nAporteVoluntarioPension,nValorFondoSolidaridad,nValorFondoSubsistencia = 0,0,0,0,0
+                        #Entidades
+                        TerceroEPS,TerceroPension,TerceroFondoSolidaridad,TerceroFondoSubsistencia = False,False,False,False
+                        TerceroCesantias,TerceroCajaCompensacion,TerceroARP,TerceroSENA,TerceroICBF = False,False,False,False,False
+                        for entity in employee.social_security_entities:
+                            if entity.contrib_id.type_entities == 'eps': # Salud
+                                TerceroEPS = entity.partner_id
+                            if entity.contrib_id.type_entities == 'pension': # Pension
+                                TerceroPension = entity.partner_id
+                            if entity.contrib_id.type_entities == 'solidaridad': # Solidaridad
+                                TerceroFondoSolidaridad = entity.partner_id
+                            if entity.contrib_id.type_entities == 'subsistencia': # Subsistencia
+                                TerceroFondoSubsistencia = entity.partner_id
+                            if entity.contrib_id.type_entities == 'caja': # Caja de compensación
+                                TerceroCajaCompensacion = entity.partner_id
+                            if entity.contrib_id.type_entities == 'riesgo': # Aseguradora de riesgos laborales
+                                TerceroARP = entity.partner_id
+                            if entity.contrib_id.type_entities == 'cesantias': # Cesantias
+                                TerceroCesantias = entity.partner_id
 
-                                #Una vez creada la linea principal, se obtienen las ausencias con sus respectivas fechas y se recalculan las lineas
-                                for leave in leave_list:
-                                    result['leave_id'] = leave['id']
-                                    result['nDiasLiquidados'] = 0
+                        id_type_entities_sena = self.env['hr.contribution.register'].search([('type_entities','=','sena')], limit=1).id
+                        TerceroSENA = self.env['hr.employee.entities'].search([('types_entities','in',[id_type_entities_sena])]) # SENA
+                        id_type_entities_icbf = self.env['hr.contribution.register'].search([('type_entities','=','icbf')], limit=1).id
+                        TerceroICBF = self.env['hr.employee.entities'].search([('types_entities','in',[id_type_entities_icbf])]) #  ICBF
+
+                        leave_list = []
+                        leave_time_ids = []
+                        for leave in work_entries:
+                            if leave.leave_id.id not in leave_time_ids:
+                                #Obtener fechas y dias
+                                request_date_from = leave.leave_id.request_date_from if leave.leave_id.request_date_from >= date_start else date_start
+                                request_date_to = leave.leave_id.request_date_to if leave.leave_id.request_date_to <= date_end else date_end
+                                if request_date_from.month == 2 and request_date_to.month == 2:
+                                    number_of_days = (request_date_to-request_date_from).days + 1
+                                else:
+                                    number_of_days = self.dias360(request_date_from,request_date_to)
+
+                                leave_dict = {'id':leave.leave_id.id,
+                                                'type':leave.leave_id.holiday_status_id.code,
+                                                'date_start': request_date_from,
+                                                'date_end': request_date_to,
+                                                'days':  number_of_days,
+                                                'days_totals': leave.leave_id.number_of_days
+                                            }
+                                leave_list.append(leave_dict)
+                                leave_time_ids.append(leave.leave_id.id)
+
+                        cant_payslip = 0
+                        for payslip in obj_payslip:
+                            #Variables
+                            cant_payslip += 1
+                            contract_id = payslip.contract_id
+                            analytic_account_id = payslip.analytic_account_id
+
+                            #Obtener si es un ingreso o un retiro
+                            if payslip.contract_id.date_start:
+                                nIngreso = True if payslip.contract_id.date_start.month == date_start.month and payslip.contract_id.date_start.year == date_start.year else False
+                            if payslip.contract_id.retirement_date:
+                                nRetiro = True if payslip.contract_id.retirement_date.month == date_start.month and payslip.contract_id.retirement_date.year == date_start.year else False
+                            if payslip.contract_id.date_end and nRetiro == False:
+                                nRetiro = True if payslip.contract_id.date_end.month == date_start.month and payslip.contract_id.date_end.year == date_start.year else False
+                            #Obtener dias laborados normales
+                            for days in payslip.worked_days_line_ids:
+                                nDiasLiquidados	+= days.number_of_days if days.work_entry_type_id.code in ('WORK100','COMPENSATORIO') else 0
+                                round_hours = days.number_of_days * annual_parameters.hours_daily if days.work_entry_type_id.code in ('WORK100', 'COMPENSATORIO') else 0
+                                nNumeroHorasLaboradas += round_hours
+                                nNumeroHorasLaboradas = nNumeroHorasLaboradas
+                            #Obtener dias laborados con tipo de subcontrato parcial o parcial integral
+                            #if payslip.contract_id.subcontract_type in ('obra_parcial','obra_integral'):
+                            #    obj_overtime = self.env['hr.overtime'].search([('employee_id', '=', employee.id), ('date', '>=', date_start),('date_end', '<=', date_end)])
+                            #    if len(obj_overtime) > 0:
+                            #        nDiasLiquidados = round(sum(o.days_actually_worked for o in obj_overtime))#round(sum(o.shift_hours for o in obj_overtime) / 8)
+                            #        nNumeroHorasLaboradas = round(sum(o.days_actually_worked for o in obj_overtime)*8)#round(sum(o.shift_hours for o in obj_overtime))
+                            #Obtener valores
+                            for line in payslip.line_ids:
+                                #Bases seguridad social
+                                if line.salary_rule_id.base_seguridad_social:
+                                    dict_social_security['BaseSeguridadSocial'].dict['TOTAL'] = dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL', 0) + line.total
+                                    if line.salary_rule_id.category_id.code in category_news:
+                                        dict_social_security['BaseSeguridadSocial'].dict[line.salary_rule_id.category_id.code] = dict_social_security['BaseSeguridadSocial'].dict.get(line.salary_rule_id.category_id.code, 0) + line.total
+                                        dict_social_security['BaseSeguridadSocial'].dict['DIAS_'+line.salary_rule_id.category_id.code] = dict_social_security['BaseSeguridadSocial'].dict.get('DIAS_'+line.salary_rule_id.category_id.code, 0) + line.quantity
+                                    else:
+                                        if payslip.date_from >= date_start and payslip.date_from <= date_end:
+                                            if line.salary_rule_id.category_id.code == 'BASIC' and contract_id.modality_salary == 'integral':
+                                                value = (line.total*annual_parameters.porc_integral_salary)/100
+                                                dict_social_security['BaseSeguridadSocial'].dict['BASE'] = dict_social_security['BaseSeguridadSocial'].dict.get('BASE', 0) + value
+                                            else:
+                                                dict_social_security['BaseSeguridadSocial'].dict['BASE'] = dict_social_security['BaseSeguridadSocial'].dict.get('BASE', 0) + line.total
+                                #Bases parafiscales
+                                if line.salary_rule_id.base_parafiscales:
+                                    dict_social_security['BaseParafiscales'].dict['TOTAL'] = dict_social_security['BaseParafiscales'].dict.get('TOTAL', 0) + line.total
+                                    if line.salary_rule_id.category_id.code in category_news:
+                                        dict_social_security['BaseParafiscales'].dict[line.salary_rule_id.category_id.code] = dict_social_security['BaseParafiscales'].dict.get(line.salary_rule_id.category_id.code, 0) + line.total
+                                        dict_social_security['BaseParafiscales'].dict['DIAS_'+line.salary_rule_id.category_id.code] = dict_social_security['BaseParafiscales'].dict.get('DIAS_'+line.salary_rule_id.category_id.code, 0) + line.quantity
+                                    else:
+                                        if payslip.date_from >= date_start and payslip.date_from <= date_end:
+                                            if line.salary_rule_id.category_id.code == 'BASIC' and contract_id.modality_salary == 'integral':
+                                                value = (line.total*annual_parameters.porc_integral_salary)/100
+                                                dict_social_security['BaseParafiscales'].dict['BASE'] = dict_social_security['BaseParafiscales'].dict.get('BASE', 0) + value
+                                            else:
+                                                dict_social_security['BaseParafiscales'].dict['BASE'] = dict_social_security['BaseParafiscales'].dict.get('BASE', 0) + line.total
+                                # Bases seguridad social para salud y pension ley 1393
+                                if line.salary_rule_id.category_id.code == 'DEV_SALARIAL' or line.salary_rule_id.category_id.parent_id.code == 'DEV_SALARIAL':
+                                    dict_social_security['BaseSeguridadSocial'].dict['DEV_SALARIAL'] = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_SALARIAL',0) + line.total
+                                if line.salary_rule_id.category_id.code == 'DEV_NO_SALARIAL' or line.salary_rule_id.category_id.parent_id.code == 'DEV_NO_SALARIAL':
+                                    dict_social_security['BaseSeguridadSocial'].dict['DEV_NO_SALARIAL'] = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL',0) + line.total
+                                if line.salary_rule_id.category_id.code == 'VNS' or line.salary_rule_id.code == 'AUX000':
+                                    dict_social_security['BaseSeguridadSocial'].dict['DEV_NO_SALARIAL'] = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL',0) - line.total
+                                #Salud
+                                nValorBaseSalud += line.total if line.salary_rule_id.base_seguridad_social else 0
+                                nValorSaludEmpleadoNomina += abs(line.total) if line.code == 'SSOCIAL001' else 0
+                                #Pension y fondo de solidaridad
+                                nValorBaseFondoPension += line.total if line.salary_rule_id.base_seguridad_social else 0
+                                nValorPensionEmpleadoNomina += abs(line.total) if line.code == 'SSOCIAL002' else 0
+                                nAporteVoluntarioPension += abs(line.total) if line.salary_rule_id.code == 'AVP' and employee.z_transitional_regime else 0
+                                nValorFondoSubsistencia += abs(line.total) if line.code == 'SSOCIAL003' else 0
+                                nValorFondoSolidaridad += abs(line.total) if line.code == 'SSOCIAL004' else 0
+                                #ARL
+                                nValorBaseARP += line.total if line.salary_rule_id.base_seguridad_social else 0
+                                nPorcAporteARP = payslip.contract_id.risk_id.percent
+                                #Caja de compensación
+                                nValorBaseCajaCom += line.total if line.salary_rule_id.base_parafiscales else 0
+                                #SENA & ICBF
+                                nValorBaseSENA += line.total if line.salary_rule_id.base_parafiscales else 0
+                                nValorBaseICBF += line.total if line.salary_rule_id.base_parafiscales else 0
+
+                        if cant_payslip > 0 and obj_tipo_coti.code != '51': # Proceso para tipos de cotizante diferente a 51 - Trabajador de Tiempo Parcial
+                            #Validar que la suma de los dias sea igual a 30 y en caso de se superior restar en los dias liquidados la diferencia
+                            nDiasTotales = nDiasLiquidados
+                            nDiasRetiro = 0 # Historia: Ajuste seguridad social unidades laboradas
+                            for leave in leave_list:
+                                nDiasTotales += leave['days'] if leave['type'] != 'COMPENSATORIO' else 0
+
+                            if nRetiro and payslip.contract_id.retirement_date:
+                                if payslip.contract_id.retirement_date.day < nDiasTotales:
+                                    nDiasRetiro = (30 - payslip.contract_id.retirement_date.day) if (30 - nDiasTotales) < 0 else (nDiasTotales - payslip.contract_id.retirement_date.day)
+
+                            if nIngreso == False and nRetiro == False and self.month == '2':
+                                nDiasLiquidados = (nDiasLiquidados-(nDiasTotales-30)) if (30-nDiasTotales) < 0 else (nDiasLiquidados+(30-nDiasTotales))
+                            else:
+                                nDiasLiquidados = (nDiasLiquidados - (nDiasTotales - 30)) if (30 - nDiasTotales) < 0 else nDiasLiquidados
+                            nDiasLiquidados = nDiasLiquidados-nDiasRetiro
+                            #Guardar linea principal
+                            result = {
+                                'executing_social_security_id': self.id,
+                                'employee_id':employee.id,
+                                'dependent_upc_id': False,
+                                'contract_id': contract_id.id,
+                                'analytic_account_id': analytic_account_id.id,
+                                'branch_id':employee.branch_id.id,
+                                'nDiasLiquidados':nDiasLiquidados,
+                                'nNumeroHorasLaboradas':round(nNumeroHorasLaboradas),
+                                'nIngreso':nIngreso,
+                                'nRetiro':nRetiro,
+                                'nSueldo':nSueldo,
+                                #Salud
+                                'TerceroEPS':TerceroEPS.id if TerceroEPS else False,
+                                'nValorBaseSalud':nValorBaseSalud,
+                                'nValorSaludEmpleadoNomina':nValorSaludEmpleadoNomina,
+                                #Pension
+                                'TerceroPension':TerceroPension.id if TerceroPension else False,
+                                'nValorBaseFondoPension':nValorBaseFondoPension,
+                                'nValorPensionEmpleadoNomina':nValorPensionEmpleadoNomina+nValorFondoSubsistencia+nValorFondoSolidaridad,
+                                'cAVP': True if nAporteVoluntarioPension > 0 else False,
+                                'nAporteVoluntarioPension': nAporteVoluntarioPension,
+                                #Fondo Solidaridad y Subsistencia
+                                'TerceroFondoSolidaridad': TerceroFondoSolidaridad.id if TerceroFondoSolidaridad else TerceroPension.id if TerceroPension else False,
+                                #ARP/ARL - Administradora de riesgos profesionales/laborales
+                                'TerceroARP':TerceroARP.id if TerceroARP else False,
+                                'nValorBaseARP':nValorBaseARP,
+                                #Caja de Compensación
+                                'TerceroCajaCom': TerceroCajaCompensacion.id if TerceroCajaCompensacion else False,
+                                'nValorBaseCajaCom':nValorBaseCajaCom,
+                                #SENA & ICBF
+                                'cExonerado1607': employee.company_id.exonerated_law_1607 if bEsAprendiz == False and nSueldo < (annual_parameters.smmlv_monthly*10) else False,
+                                'TerceroSENA': TerceroSENA.id if TerceroSENA else False,
+                                'nValorBaseSENA':nValorBaseSENA,
+                                'TerceroICBF': TerceroICBF.id if TerceroICBF else False,
+                                'nValorBaseICBF':nValorBaseICBF,
+                            }
+
+                            obj_executing = self.env['hr.executing.social.security'].create(result)
+
+                            #Una vez creada la linea principal, se obtienen las ausencias con sus respectivas fechas y se recalculan las lineas
+                            for leave in leave_list:
+                                result['leave_id'] = leave['id']
+                                result['nDiasLiquidados'] = 0
+                                result['nNumeroHorasLaboradas'] = 0
+                                #Incapacidad EPS
+                                nDiasIncapacidadEPS = leave['days'] if leave['type'] in ('EGA','EGH') else 0 # Categoria: INCAPACIDAD
+                                dict_social_security['Dias'].dict['nDiasIncapacidadEPS'] = dict_social_security['Dias'].dict.get('nDiasIncapacidadEPS', 0) + nDiasIncapacidadEPS
+                                result['nDiasIncapacidadEPS'] = nDiasIncapacidadEPS
+                                result['dFechaInicioIGE'] = leave['date_start'] if leave['type'] in ('EGA','EGH') else False
+                                result['dFechaFinIGE'] = leave['date_end'] if leave['type'] in ('EGA','EGH') else False
+                                #Licencia
+                                nDiasLicencia = leave['days'] if leave['type'] in ('LICENCIA_NO_REMUNERADA','INAS_INJU','SANCION','SUSP_CONTRATO','DNR') else 0 # Categoria: LICENCIA_NO_REMUNERADA
+                                dict_social_security['Dias'].dict['nDiasLicencia'] = dict_social_security['Dias'].dict.get('nDiasLicencia', 0) + nDiasLicencia
+                                result['nDiasLicencia'] = nDiasLicencia
+                                result['dFechaInicioSLN'] = leave['date_start'] if leave['type'] in ('LICENCIA_NO_REMUNERADA','INAS_INJU','SANCION','SUSP_CONTRATO','DNR') else False
+                                result['dFechaFinSLN'] = leave['date_end'] if leave['type'] in ('LICENCIA_NO_REMUNERADA','INAS_INJU','SANCION','SUSP_CONTRATO','DNR') else False
+                                #Licencia Remunerada
+                                nDiasLicenciaRenumerada = leave['days'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','REP_VACACIONES') else 0 # Categoria: LICENCIA_REMUNERADA
+                                dict_social_security['Dias'].dict['nDiasLicenciaRenumerada'] = dict_social_security['Dias'].dict.get('nDiasLicenciaRenumerada', 0) + nDiasLicenciaRenumerada
+                                result['nDiasLicenciaRenumerada']	= nDiasLicenciaRenumerada
+                                result['dFechaInicioVACLR'] = leave['date_start'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS','REP_VACACIONES') else False
+                                result['dFechaFinVACLR'] = leave['date_end'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS','REP_VACACIONES') else False
+                                #Maternida
+                                nDiasMaternidad = leave['days'] if leave['type'] in ('MAT','PAT') else 0 # Categoria: LICENCIA_MATERNIDAD
+                                dict_social_security['Dias'].dict['nDiasMaternidad'] = dict_social_security['Dias'].dict.get('nDiasMaternidad', 0) + nDiasMaternidad
+                                result['nDiasMaternidad'] = nDiasMaternidad
+                                result['dFechaInicioLMA'] = leave['date_start'] if leave['type'] in ('MAT','PAT') else False
+                                result['dFechaFinLMA'] = leave['date_end'] if leave['type'] in ('MAT','PAT') else False
+                                #Vacaciones
+                                nDiasVacaciones = leave['days'] if leave['type'] == 'VACDISFRUTADAS' else 0 # Categoria: VACACIONES
+                                dict_social_security['Dias'].dict['nDiasVacaciones'] = dict_social_security['Dias'].dict.get('nDiasVacaciones', 0) + nDiasVacaciones
+                                result['nDiasVacaciones'] = nDiasVacaciones
+                                result['dFechaInicioVACLR'] = leave['date_start'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS','REP_VACACIONES') else False
+                                result['dFechaFinVACLR'] = leave['date_end'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS','REP_VACACIONES') else False
+                                #ARL
+                                nDiasIncapacidadARP = leave['days'] if leave['type'] in ('EP','AT') else 0 # Categoria: ACCIDENTE_TRABAJO
+                                dict_social_security['Dias'].dict['nDiasIncapacidadARP'] = dict_social_security['Dias'].dict.get('nDiasIncapacidadARP', 0) + nDiasIncapacidadARP
+                                result['nDiasIncapacidadARP'] = nDiasIncapacidadARP
+                                result['dFechaInicioIRL'] = leave['date_start'] if leave['type'] in ('EP','AT') else False
+                                result['dFechaFinIRL'] = leave['date_end'] if leave['type'] in ('EP','AT') else False
+
+                                #Ingreso & Retiro - cuando existen novedades
+                                nDiasAusencias = nDiasIncapacidadEPS+nDiasLicencia+nDiasLicenciaRenumerada+nDiasMaternidad+nDiasVacaciones+nDiasIncapacidadARP
+                                result['nIngreso'] = False if nDiasAusencias > 0 else result['nIngreso']
+                                result['nRetiro'] = False if nDiasAusencias > 0 else result['nRetiro']
+
+                                obj_executing += self.env['hr.executing.social.security'].create(result)
+
+                            #Una vez creada la linea principal, se obtienen los dependientes con UPC se recalculan las lineas
+                            for dependent_upc in employee.dependents_information:
+                                if dependent_upc.z_upc_payment:
+                                    nValorUPC = 0
+                                    result['dependent_upc_id'] = dependent_upc.id
                                     result['nNumeroHorasLaboradas'] = 0
-                                    #Incapacidad EPS
-                                    nDiasIncapacidadEPS = leave['days'] if leave['type'] in ('EGA','EGH') else 0 # Categoria: INCAPACIDAD
-                                    dict_social_security['Dias'].dict['nDiasIncapacidadEPS'] = dict_social_security['Dias'].dict.get('nDiasIncapacidadEPS', 0) + nDiasIncapacidadEPS
-                                    result['nDiasIncapacidadEPS'] = nDiasIncapacidadEPS
-                                    result['dFechaInicioIGE'] = leave['date_start'] if leave['type'] in ('EGA','EGH') else False
-                                    result['dFechaFinIGE'] = leave['date_end'] if leave['type'] in ('EGA','EGH') else False
-                                    #Licencia
-                                    nDiasLicencia = leave['days'] if leave['type'] in ('LICENCIA_NO_REMUNERADA','INAS_INJU','SANCION','SUSP_CONTRATO','DNR') else 0 # Categoria: LICENCIA_NO_REMUNERADA
-                                    dict_social_security['Dias'].dict['nDiasLicencia'] = dict_social_security['Dias'].dict.get('nDiasLicencia', 0) + nDiasLicencia
-                                    result['nDiasLicencia'] = nDiasLicencia
-                                    result['dFechaInicioSLN'] = leave['date_start'] if leave['type'] in ('LICENCIA_NO_REMUNERADA','INAS_INJU','SANCION','SUSP_CONTRATO','DNR') else False
-                                    result['dFechaFinSLN'] = leave['date_end'] if leave['type'] in ('LICENCIA_NO_REMUNERADA','INAS_INJU','SANCION','SUSP_CONTRATO','DNR') else False
-                                    #Licencia Remunerada
-                                    nDiasLicenciaRenumerada = leave['days'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','REP_VACACIONES') else 0 # Categoria: LICENCIA_REMUNERADA
-                                    dict_social_security['Dias'].dict['nDiasLicenciaRenumerada'] = dict_social_security['Dias'].dict.get('nDiasLicenciaRenumerada', 0) + nDiasLicenciaRenumerada
-                                    result['nDiasLicenciaRenumerada']	= nDiasLicenciaRenumerada
-                                    result['dFechaInicioVACLR'] = leave['date_start'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS','REP_VACACIONES') else False
-                                    result['dFechaFinVACLR'] = leave['date_end'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS','REP_VACACIONES') else False
-                                    #Maternida
-                                    nDiasMaternidad = leave['days'] if leave['type'] in ('MAT','PAT') else 0 # Categoria: LICENCIA_MATERNIDAD
-                                    dict_social_security['Dias'].dict['nDiasMaternidad'] = dict_social_security['Dias'].dict.get('nDiasMaternidad', 0) + nDiasMaternidad
-                                    result['nDiasMaternidad'] = nDiasMaternidad
-                                    result['dFechaInicioLMA'] = leave['date_start'] if leave['type'] in ('MAT','PAT') else False
-                                    result['dFechaFinLMA'] = leave['date_end'] if leave['type'] in ('MAT','PAT') else False
-                                    #Vacaciones
-                                    nDiasVacaciones = leave['days'] if leave['type'] == 'VACDISFRUTADAS' else 0 # Categoria: VACACIONES
-                                    dict_social_security['Dias'].dict['nDiasVacaciones'] = dict_social_security['Dias'].dict.get('nDiasVacaciones', 0) + nDiasVacaciones
-                                    result['nDiasVacaciones'] = nDiasVacaciones
-                                    result['dFechaInicioVACLR'] = leave['date_start'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS','REP_VACACIONES') else False
-                                    result['dFechaFinVACLR'] = leave['date_end'] if leave['type'] in ('LICENCIA_REMUNERADA','LUTO','VACDISFRUTADAS','REP_VACACIONES') else False
-                                    #ARL
-                                    nDiasIncapacidadARP = leave['days'] if leave['type'] in ('EP','AT') else 0 # Categoria: ACCIDENTE_TRABAJO
-                                    dict_social_security['Dias'].dict['nDiasIncapacidadARP'] = dict_social_security['Dias'].dict.get('nDiasIncapacidadARP', 0) + nDiasIncapacidadARP
-                                    result['nDiasIncapacidadARP'] = nDiasIncapacidadARP
-                                    result['dFechaInicioIRL'] = leave['date_start'] if leave['type'] in ('EP','AT') else False
-                                    result['dFechaFinIRL'] = leave['date_end'] if leave['type'] in ('EP','AT') else False
+                                    for upc_config in annual_parameters.z_upc_lines_ids:
+                                        age = employee.get_age_for_date(dependent_upc.date_birthday)
+                                        lst_validation = [
+                                            ('age<1', age < 1),
+                                            ('age>1 and age<=4', age > 1 and age <= 4),
+                                            ('age>=5 and age<=14', age >= 5 and age <= 14),
+                                            ('age>=15 and age<=18', age >= 15 and age <= 18),
+                                            ('age>=19 and age<=44', age >= 19 and age <= 44),
+                                            ('age>=45 and age<=49', age >= 45 and age <= 49),
+                                            ('age>=50 and age<=54', age >= 50 and age <= 54),
+                                            ('age>=55 and age<=59', age >= 55 and age <= 59),
+                                            ('age>=60 and age<=64', age >= 60 and age <= 64),
+                                            ('age>=65 and age<=69', age >= 65 and age <= 69),
+                                            ('age>=70 and age<=74', age >= 70 and age <= 74),
+                                            ('age>=75', age >= 75)
+                                        ]
+                                        for validation in lst_validation:
+                                            if validation[1] == True and upc_config.z_age_group_upc == validation[0]:
+                                                if upc_config.z_gender_upc == dependent_upc.genero:
+                                                    if dependent_upc.z_upc_geographic_area == 'ZN':
+                                                        nValorUPC = upc_config.z_normal_zone_upc
+                                                    elif dependent_upc.z_upc_geographic_area == 'ZE':
+                                                        nValorUPC = upc_config.z_special_zone_upc
+                                                    elif dependent_upc.z_upc_geographic_area == 'CD':
+                                                        nValorUPC = upc_config.z_cities_upc
+                                                    elif dependent_upc.z_upc_geographic_area == 'IS':
+                                                        nValorUPC = upc_config.z_islands_upc
+                                                    else:
+                                                        nValorUPC = 0
+                                    result['nValorUPC'] = nValorUPC
+                                    result['nDiasLiquidados'] = 0
+                                    obj_executing += self.env['hr.executing.social.security'].create(result)
 
-                                    #Ingreso & Retiro - cuando existen novedades
-                                    nDiasAusencias = nDiasIncapacidadEPS+nDiasLicencia+nDiasLicenciaRenumerada+nDiasMaternidad+nDiasVacaciones+nDiasIncapacidadARP
-                                    result['nIngreso'] = False if nDiasAusencias > 0 else result['nIngreso']
-                                    result['nRetiro'] = False if nDiasAusencias > 0 else result['nRetiro']
+                            #Recorrer items creados
+                            cant_items = len(obj_executing)
+                            item = 1
+                            #Valores TOTALES
+                            nValorSaludTotalEmpleado,nValorSaludTotalEmpresa = 0,0
+                            nValorPensioTotalEmpleado,nValorPensionTotalEmpresa,nValorTotalFondos = 0,0,0
+                            nValorSaludTotal,nValorPensionTotal = 0,0
+                            nRedondeoDecimalesDif = 5 # Max diferencia de decimales
+                            #Verificar si existe retiro sin tener dias trabajados
+                            if nRetiro == True:
+                                for executing_ret in sorted(obj_executing, key=lambda x: (x.nDiasLiquidados, x.nDiasIncapacidadEPS, x.nDiasVacaciones, x.nDiasMaternidad,x.nDiasIncapacidadARP, x.nDiasLicenciaRenumerada, x.nDiasLicencia)):
+                                    if executing_ret.nDiasLiquidados == 0 and executing_ret.nDiasIncapacidadEPS == 0 and executing_ret.nDiasLicencia == 0 and executing_ret.nDiasLicenciaRenumerada == 0 and executing_ret.nDiasMaternidad == 0 and executing_ret.nDiasVacaciones == 0 and executing_ret.nDiasIncapacidadARP == 0:
+                                        nDiasLiquidados_totales = sum([x.nDiasLiquidados for x in obj_executing])
+                                        if nDiasLiquidados_totales == 0:
+                                            executing_ret.write({'nDiasLiquidados': 1})
+                            #Ejecución de valores
+                            for executing in sorted(obj_executing,key=lambda x: (x.nDiasLiquidados,x.nDiasIncapacidadEPS,x.nDiasVacaciones,x.nDiasMaternidad,x.nDiasIncapacidadARP,x.nDiasLicenciaRenumerada,x.nDiasLicencia)):
+                                #Valores
+                                nPorcAporteSaludEmpleado,nPorcAporteSaludEmpresa,nValorBaseSalud,nValorSaludEmpleado,nValorSaludEmpresa = 0,0,0,0,0
+                                nPorcAportePensionEmpleado,nPorcAportePensionEmpresa,nValorBaseFondoPension,nValorPensionEmpleado,nValorPensionEmpresa = 0,0,0,0,0
+                                nPorcFondoSolidaridad,nValorFondoSolidaridad,nValorFondoSubsistencia = 0,0,0
+                                nValorBaseARP,nValorARP = 0,0
+                                nValorBaseCajaCom,nPorcAporteCajaCom,nValorCajaCom = 0,0,0
+                                nValorBaseSENA,nPorcAporteSENA,nValorSENA = 0,0,0
+                                nValorBaseICBF,nPorcAporteICBF,nValorICBF = 0,0,0
+                                #Dias
+                                nDiasLicencia = executing.nDiasLicencia
+                                nDiasVacaciones = executing.nDiasVacaciones
+                                nDiasAusencias = executing.nDiasIncapacidadEPS+executing.nDiasLicencia+executing.nDiasLicenciaRenumerada+executing.nDiasMaternidad+executing.nDiasIncapacidadARP
+                                nDias = executing.nDiasLiquidados+executing.nDiasIncapacidadEPS+executing.nDiasLicencia+executing.nDiasLicenciaRenumerada+executing.nDiasMaternidad+executing.nDiasVacaciones+executing.nDiasIncapacidadARP
 
-                                    obj_executing += env['hr.executing.social.security'].create(result)
-
-                                #Una vez creada la linea principal, se obtienen los dependientes con UPC se recalculan las lineas
-                                for dependent_upc in employee.dependents_information:
-                                    if dependent_upc.z_upc_payment:
-                                        nValorUPC = 0
-                                        result['dependent_upc_id'] = dependent_upc.id
-                                        result['nNumeroHorasLaboradas'] = 0
-                                        for upc_config in annual_parameters.z_upc_lines_ids:
-                                            age = employee.get_age_for_date(dependent_upc.date_birthday)
-                                            lst_validation = [
-                                                ('age<1', age < 1),
-                                                ('age>1 and age<=4', age > 1 and age <= 4),
-                                                ('age>=5 and age<=14', age >= 5 and age <= 14),
-                                                ('age>=15 and age<=18', age >= 15 and age <= 18),
-                                                ('age>=19 and age<=44', age >= 19 and age <= 44),
-                                                ('age>=45 and age<=49', age >= 45 and age <= 49),
-                                                ('age>=50 and age<=54', age >= 50 and age <= 54),
-                                                ('age>=55 and age<=59', age >= 55 and age <= 59),
-                                                ('age>=60 and age<=64', age >= 60 and age <= 64),
-                                                ('age>=65 and age<=69', age >= 65 and age <= 69),
-                                                ('age>=70 and age<=74', age >= 70 and age <= 74),
-                                                ('age>=75', age >= 75)
-                                            ]
-                                            for validation in lst_validation:
-                                                if validation[1] == True and upc_config.z_age_group_upc == validation[0]:
-                                                    if upc_config.z_gender_upc == dependent_upc.genero:
-                                                        if dependent_upc.z_upc_geographic_area == 'ZN':
-                                                            nValorUPC = upc_config.z_normal_zone_upc
-                                                        elif dependent_upc.z_upc_geographic_area == 'ZE':
-                                                            nValorUPC = upc_config.z_special_zone_upc
-                                                        elif dependent_upc.z_upc_geographic_area == 'CD':
-                                                            nValorUPC = upc_config.z_cities_upc
-                                                        elif dependent_upc.z_upc_geographic_area == 'IS':
-                                                            nValorUPC = upc_config.z_islands_upc
-                                                        else:
-                                                            nValorUPC = 0
-                                        result['nValorUPC'] = nValorUPC
-                                        result['nDiasLiquidados'] = 0
-                                        obj_executing += env['hr.executing.social.security'].create(result)
-
-                                #Recorrer items creados
-                                cant_items = len(obj_executing)
-                                item = 1
-                                #Valores TOTALES
-                                nValorSaludTotalEmpleado,nValorSaludTotalEmpresa = 0,0
-                                nValorPensioTotalEmpleado,nValorPensionTotalEmpresa,nValorTotalFondos = 0,0,0
-                                nValorSaludTotal,nValorPensionTotal = 0,0
-                                nRedondeoDecimalesDif = 5 # Max diferencia de decimales
-                                #Verificar si existe retiro sin tener dias trabajados
-                                if nRetiro == True:
-                                    for executing_ret in sorted(obj_executing, key=lambda x: (x.nDiasLiquidados, x.nDiasIncapacidadEPS, x.nDiasVacaciones, x.nDiasMaternidad,x.nDiasIncapacidadARP, x.nDiasLicenciaRenumerada, x.nDiasLicencia)):
-                                        if executing_ret.nDiasLiquidados == 0 and executing_ret.nDiasIncapacidadEPS == 0 and executing_ret.nDiasLicencia == 0 and executing_ret.nDiasLicenciaRenumerada == 0 and executing_ret.nDiasMaternidad == 0 and executing_ret.nDiasVacaciones == 0 and executing_ret.nDiasIncapacidadARP == 0:
-                                            nDiasLiquidados_totales = sum([x.nDiasLiquidados for x in obj_executing])
-                                            if nDiasLiquidados_totales == 0:
-                                                executing_ret.write({'nDiasLiquidados': 1})
-                                #Ejecución de valores
-                                for executing in sorted(obj_executing,key=lambda x: (x.nDiasLiquidados,x.nDiasIncapacidadEPS,x.nDiasVacaciones,x.nDiasMaternidad,x.nDiasIncapacidadARP,x.nDiasLicenciaRenumerada,x.nDiasLicencia)):
-                                    #Valores
-                                    nPorcAporteSaludEmpleado,nPorcAporteSaludEmpresa,nValorBaseSalud,nValorSaludEmpleado,nValorSaludEmpresa = 0,0,0,0,0
-                                    nPorcAportePensionEmpleado,nPorcAportePensionEmpresa,nValorBaseFondoPension,nValorPensionEmpleado,nValorPensionEmpresa = 0,0,0,0,0
-                                    nPorcFondoSolidaridad,nValorFondoSolidaridad,nValorFondoSubsistencia = 0,0,0
-                                    nValorBaseARP,nValorARP = 0,0
-                                    nValorBaseCajaCom,nPorcAporteCajaCom,nValorCajaCom = 0,0,0
-                                    nValorBaseSENA,nPorcAporteSENA,nValorSENA = 0,0,0
-                                    nValorBaseICBF,nPorcAporteICBF,nValorICBF = 0,0,0
-                                    #Dias
-                                    nDiasLicencia = executing.nDiasLicencia
-                                    nDiasVacaciones = executing.nDiasVacaciones
-                                    nDiasAusencias = executing.nDiasIncapacidadEPS+executing.nDiasLicencia+executing.nDiasLicenciaRenumerada+executing.nDiasMaternidad+executing.nDiasIncapacidadARP
-                                    nDias = executing.nDiasLiquidados+executing.nDiasIncapacidadEPS+executing.nDiasLicencia+executing.nDiasLicenciaRenumerada+executing.nDiasMaternidad+executing.nDiasVacaciones+executing.nDiasIncapacidadARP
-
-                                    #Calculos valores base dependiendo los días
-                                    salario_minimo_diario = Decimal(Decimal(annual_parameters.smmlv_monthly)/Decimal(30))
-                                    # Logica ley 1393
-                                    total_base_ley_1393 = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_SALARIAL', 0)+dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL', 0)
-                                    value_porc_ley_1393 = (total_base_ley_1393/100)*annual_parameters.value_porc_statute_1395
-                                    if (dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL', 0) - value_porc_ley_1393) <= 0:
-                                        exceso_ley_1393 = 0
-                                    else:
-                                        exceso_ley_1393 = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL', 0) - value_porc_ley_1393
-                                    if executing.nDiasLiquidados > 0:
-                                        if dict_social_security['BaseSeguridadSocial'].dict.get('BASE', 0) > 0:
-                                            if exceso_ley_1393 > 0:
-                                                if contract_id.modality_salary == 'integral':
-                                                    total_ley = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_SALARIAL', 0) + exceso_ley_1393
-                                                    porc_integral_salary = annual_parameters.porc_integral_salary / 100
-                                                    total_ley = total_ley * porc_integral_salary
-                                                    total_validation = annual_parameters.top_twenty_five_smmlv if total_ley >= annual_parameters.top_twenty_five_smmlv else total_ley
-                                                    nValorDiario = Decimal(Decimal(total_validation) / Decimal(executing.nDiasLiquidados))
-                                                else:
-                                                    nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict.get('DEV_SALARIAL', 0)+exceso_ley_1393) / Decimal(executing.nDiasLiquidados))
-                                            else:
-                                                nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['BASE']) / Decimal(executing.nDiasLiquidados))
-                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
-                                            nValorBaseSalud = nValorDiario * executing.nDiasLiquidados
-                                            nValorBaseFondoPension = nValorDiario * executing.nDiasLiquidados
-                                            nValorBaseARP = nValorDiario * executing.nDiasLiquidados
-                                        if dict_social_security['BaseParafiscales'].dict.get('BASE', 0) > 0:
-                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['BASE']) / Decimal(executing.nDiasLiquidados))
-                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
-                                            nValorBaseCajaCom = nValorDiario * executing.nDiasLiquidados
-                                            nValorBaseSENA = nValorDiario * executing.nDiasLiquidados
-                                            nValorBaseICBF = nValorDiario * executing.nDiasLiquidados
-
-                                    if executing.nDiasIncapacidadEPS > 0:
-                                        if dict_social_security['BaseSeguridadSocial'].dict.get('INCAPACIDAD', 0) > 0:
-                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['INCAPACIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadEPS']))
-                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
-                                            nValorBaseSalud = nValorDiario * executing.nDiasIncapacidadEPS
-                                            nValorBaseFondoPension = nValorDiario * executing.nDiasIncapacidadEPS
-                                            nValorBaseARP = nValorDiario * executing.nDiasIncapacidadEPS
-                                        if dict_social_security['BaseParafiscales'].dict.get('INCAPACIDAD',0) > 0:
-                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['INCAPACIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadEPS']))
-                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
-                                            nValorBaseCajaCom = nValorDiario * executing.nDiasIncapacidadEPS
-                                            nValorBaseSENA = nValorDiario * executing.nDiasIncapacidadEPS
-                                            nValorBaseICBF = nValorDiario * executing.nDiasIncapacidadEPS
-
-                                    if executing.nDiasLicencia > 0:
-                                        if dict_social_security['BaseSeguridadSocial'].dict.get('LICENCIA_NO_REMUNERADA', 0) > 0:
-                                            nValorBaseSalud = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
-                                            nValorBaseFondoPension = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
-                                            nValorBaseARP = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
-                                        if dict_social_security['BaseParafiscales'].dict.get('LICENCIA_NO_REMUNERADA', 0) > 0:
-                                            nValorBaseCajaCom = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
-                                            nValorBaseSENA = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
-                                            nValorBaseICBF = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
-
-                                    if executing.nDiasLicenciaRenumerada > 0:
-                                        if dict_social_security['BaseSeguridadSocial'].dict.get('LICENCIA_REMUNERADA', 0) > 0:
-                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicenciaRenumerada']))
-                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
-                                            nValorBaseSalud = nValorDiario * executing.nDiasLicenciaRenumerada
-                                            nValorBaseFondoPension = nValorDiario * executing.nDiasLicenciaRenumerada
-                                            nValorBaseARP = nValorDiario * executing.nDiasLicenciaRenumerada
-                                        if dict_social_security['BaseParafiscales'].dict.get('LICENCIA_REMUNERADA', 0) > 0:
-                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicenciaRenumerada']))
-                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
-                                            nValorBaseCajaCom = nValorDiario * executing.nDiasLicenciaRenumerada
-                                            nValorBaseSENA = nValorDiario * executing.nDiasLicenciaRenumerada
-                                            nValorBaseICBF = nValorDiario * executing.nDiasLicenciaRenumerada
-
-                                    if executing.nDiasMaternidad > 0:
-                                        if dict_social_security['BaseSeguridadSocial'].dict.get('LICENCIA_MATERNIDAD', 0) > 0:
-                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_MATERNIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasMaternidad']))
-                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
-                                            nValorBaseSalud = nValorDiario * executing.nDiasMaternidad
-                                            nValorBaseFondoPension = nValorDiario * executing.nDiasMaternidad
-                                            nValorBaseARP = nValorDiario * executing.nDiasMaternidad
-                                        if dict_social_security['BaseParafiscales'].dict.get('LICENCIA_MATERNIDAD', 0) > 0:
-                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_MATERNIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasMaternidad']))
-                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
-                                            nValorBaseCajaCom = nValorDiario * executing.nDiasMaternidad
-                                            nValorBaseSENA = nValorDiario * executing.nDiasMaternidad
-                                            nValorBaseICBF = nValorDiario * executing.nDiasMaternidad
-
-                                    if executing.nDiasVacaciones > 0:
-                                        if dict_social_security['BaseSeguridadSocial'].dict.get('VACACIONES', 0) > 0:
-                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['VACACIONES']) / Decimal(dict_social_security['BaseSeguridadSocial'].dict['DIAS_VACACIONES']))
-                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
-                                            nValorBaseSalud = nValorDiario * executing.nDiasVacaciones
-                                            nValorBaseFondoPension = nValorDiario * executing.nDiasVacaciones
-                                            nValorBaseARP = nValorDiario * executing.nDiasVacaciones
-                                        if dict_social_security['BaseParafiscales'].dict.get('VACACIONES',0) > 0:
-                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['VACACIONES']) / Decimal(dict_social_security['BaseParafiscales'].dict['DIAS_VACACIONES']))
-                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
-                                            nValorBaseCajaCom = nValorDiario * executing.nDiasVacaciones
-                                            nValorBaseSENA = nValorDiario * executing.nDiasVacaciones
-                                            nValorBaseICBF = nValorDiario * executing.nDiasVacaciones
-
-                                    if executing.nDiasIncapacidadARP > 0:
-                                        if dict_social_security['BaseSeguridadSocial'].dict.get('ACCIDENTE_TRABAJO', 0) > 0:
-                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['ACCIDENTE_TRABAJO']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadARP']))
-                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
-                                            nValorBaseSalud = nValorDiario * executing.nDiasIncapacidadARP
-                                            nValorBaseFondoPension = nValorDiario * executing.nDiasIncapacidadARP
-                                            nValorBaseARP = nValorDiario * executing.nDiasIncapacidadARP
-                                        if dict_social_security['BaseParafiscales'].dict.get('ACCIDENTE_TRABAJO',0) > 0:
-                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['ACCIDENTE_TRABAJO']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadARP']))
-                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
-                                            nValorBaseCajaCom = nValorDiario * executing.nDiasIncapacidadARP
-                                            nValorBaseSENA = nValorDiario * executing.nDiasIncapacidadARP
-                                            nValorBaseICBF = nValorDiario * executing.nDiasIncapacidadARP
-
-                                    valor_base_sueldo =(Decimal(executing.nSueldo) / Decimal(30)) * Decimal(nDias)
-                                    #----------------CALCULOS SALUD
-                                    if obj_parameterization_contributors.liquidated_eps_employee or obj_parameterization_contributors.liquidates_eps_company:
-                                        if nValorBaseSalud == 0:
-                                            nValorBaseSalud = float(roundupdecimal(valor_base_sueldo))
-                                        else:
-                                            nValorBaseSalud = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseSalud) < nRedondeoDecimalesDif else roundupdecimal(nValorBaseSalud))
-                                        #nValorBaseSalud = (valor_base_sueldo) if nValorBaseSalud == 0 else (nValorBaseSalud)
-                                        if nValorBaseSalud > 0:
-                                            nValorBaseSalud = annual_parameters.top_twenty_five_smmlv if nValorBaseSalud >= annual_parameters.top_twenty_five_smmlv else nValorBaseSalud
-                                            if bEsAprendiz == False:
-                                                nPorcAporteSaludEmpleado = annual_parameters.value_porc_health_employee
-                                                nValorSaludEmpleado = nValorBaseSalud*(nPorcAporteSaludEmpleado/100) if nDiasLicencia==0 else 0
-                                            else:
-                                                nValorSaludEmpleado = 0
-                                            if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and (nValorBaseSalud >= (annual_parameters.smmlv_monthly*10) or dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL',0) >= (annual_parameters.smmlv_monthly*10))) or bEsAprendiz == True:
-                                                nPorcAporteSaludEmpresa = annual_parameters.value_porc_health_company if not bEsAprendiz else annual_parameters.value_porc_health_employee+annual_parameters.value_porc_health_company
-                                                nValorSaludEmpresa = nValorBaseSalud*(nPorcAporteSaludEmpresa/100)
-                                            else:
-                                                nPorcAporteSaludEmpresa,nValorSaludEmpresa = 0,0
-                                            nValorSaludTotal += (nValorSaludEmpleado+nValorSaludEmpresa)
-                                            nValorSaludTotalEmpleado += nValorSaludEmpleado
-                                            nValorSaludTotalEmpresa += nValorSaludEmpresa
-                                    else:
-                                        nValorBaseSalud = 0
-                                    #----------------CALCULOS PENSION
-                                    if bEsAprendiz == False and obj_subtipo_coti.not_contribute_pension == False and (obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidates_solidarity_fund):
-                                        if nValorBaseFondoPension == 0:
-                                            nValorBaseFondoPension = float(roundupdecimal(valor_base_sueldo))
-                                        else:
-                                            nValorBaseFondoPension = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseFondoPension) < nRedondeoDecimalesDif else roundupdecimal(nValorBaseFondoPension))
-                                        #nValorBaseFondoPension = (valor_base_sueldo) if nValorBaseFondoPension == 0 else (nValorBaseFondoPension)
-                                        if nValorBaseFondoPension > 0:
-                                            nValorBaseFondoPensionTotal = dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL', 0)  # BASEnValorBaseFondoPensionTotal = dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL', 0) #BASE
+                                #Calculos valores base dependiendo los días
+                                salario_minimo_diario = Decimal(Decimal(annual_parameters.smmlv_monthly)/Decimal(30))
+                                # Logica ley 1393
+                                total_base_ley_1393 = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_SALARIAL', 0)+dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL', 0)
+                                value_porc_ley_1393 = (total_base_ley_1393/100)*annual_parameters.value_porc_statute_1395
+                                if (dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL', 0) - value_porc_ley_1393) <= 0:
+                                    exceso_ley_1393 = 0
+                                else:
+                                    exceso_ley_1393 = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL', 0) - value_porc_ley_1393
+                                if executing.nDiasLiquidados > 0:
+                                    if dict_social_security['BaseSeguridadSocial'].dict.get('BASE', 0) > 0:
+                                        if exceso_ley_1393 > 0:
                                             if contract_id.modality_salary == 'integral':
-                                                if exceso_ley_1393 > 0:
-                                                    nValorBaseFondoPensionTotal = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_SALARIAL',0) + exceso_ley_1393
+                                                total_ley = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_SALARIAL', 0) + exceso_ley_1393
                                                 porc_integral_salary = annual_parameters.porc_integral_salary / 100
-                                                nValorBaseFondoPensionTotal = nValorBaseFondoPensionTotal * porc_integral_salary
-                                                nValorBaseFondoPensionTotal = annual_parameters.top_twenty_five_smmlv if nValorBaseFondoPensionTotal >= annual_parameters.top_twenty_five_smmlv else nValorBaseFondoPensionTotal
-                                                nValorBaseFondoPension = annual_parameters.top_twenty_five_smmlv if nValorBaseFondoPension >= annual_parameters.top_twenty_five_smmlv else nValorBaseFondoPension
+                                                total_ley = total_ley * porc_integral_salary
+                                                total_validation = annual_parameters.top_twenty_five_smmlv if total_ley >= annual_parameters.top_twenty_five_smmlv else total_ley
+                                                nValorDiario = Decimal(Decimal(total_validation) / Decimal(executing.nDiasLiquidados))
                                             else:
-                                                nValorBaseFondoPensionTotal = annual_parameters.top_twenty_five_smmlv if nValorBaseFondoPensionTotal >= annual_parameters.top_twenty_five_smmlv else nValorBaseFondoPensionTotal
-                                                nValorBaseFondoPension = annual_parameters.top_twenty_five_smmlv if nValorBaseFondoPension >= annual_parameters.top_twenty_five_smmlv else nValorBaseFondoPension
-                                            nPorcAportePensionEmpleado = annual_parameters.value_porc_pension_employee if executing.nDiasLicencia == 0 else 0
-                                            nPorcAportePensionEmpresa = annual_parameters.value_porc_pension_company if executing.nDiasLicencia == 0 else annual_parameters.value_porc_pension_company + annual_parameters.value_porc_pension_employee
-                                            nValorPensionEmpleado = nValorBaseFondoPension*(nPorcAportePensionEmpleado/100) if nDiasLicencia==0 else 0
-                                            nValorPensionEmpresa = nValorBaseFondoPension*(nPorcAportePensionEmpresa/100)
-                                            nValorPensionTotal += (nValorPensionEmpleado+nValorPensionEmpresa)
-                                            nValorPensioTotalEmpleado += nValorPensionEmpleado
-                                            nValorPensionTotalEmpresa += nValorPensionEmpresa
-                                            #Calculos fondo solidaridad
-                                            if (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) >= 4 and (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) < 16:
-                                                nPorcFondoSolidaridad = 1
-                                            if  (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) >= 16 and (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) <= 17:
-                                                nPorcFondoSolidaridad = 1.2
-                                            if  (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) > 17 and (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) <= 18:
-                                                nPorcFondoSolidaridad = 1.4
-                                            if  (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) > 18 and (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) <= 19:
-                                                nPorcFondoSolidaridad = 1.6
-                                            if  (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) > 19 and (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) <= 20:
-                                                nPorcFondoSolidaridad = 1.8
-                                            if  (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) > 20:
-                                                nPorcFondoSolidaridad = 2
-                                            if nPorcFondoSolidaridad > 0:
-                                                if contract_id.modality_salary == 'integral' and nPorcFondoSolidaridad == 2:
-                                                    nValorFondoSolidaridad = roundup100(nValorBaseFondoPension * 0.005)
-                                                    nValorFondoSubsistencia = roundup100(nValorBaseFondoPension * 0.015)
-                                                    nValorTotalFondos += (nValorFondoSolidaridad + nValorFondoSubsistencia)
-                                                else:
-                                                    nPorcFondoSolidaridadCalculo = (nPorcFondoSolidaridad/100)-0.005
-                                                    nValorFondoSolidaridad = roundup100(nValorBaseFondoPension*0.005)
-                                                    nValorFondoSubsistencia = roundup100(nValorBaseFondoPension*nPorcFondoSolidaridadCalculo)
-                                                    nValorTotalFondos += (nValorFondoSolidaridad + nValorFondoSubsistencia)
+                                                nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict.get('DEV_SALARIAL', 0)+exceso_ley_1393) / Decimal(executing.nDiasLiquidados))
+                                        else:
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['BASE']) / Decimal(executing.nDiasLiquidados))
+                                        nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
+                                        nValorBaseSalud = nValorDiario * executing.nDiasLiquidados
+                                        nValorBaseFondoPension = nValorDiario * executing.nDiasLiquidados
+                                        nValorBaseARP = nValorDiario * executing.nDiasLiquidados
+                                    if dict_social_security['BaseParafiscales'].dict.get('BASE', 0) > 0:
+                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['BASE']) / Decimal(executing.nDiasLiquidados))
+                                        nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
+                                        nValorBaseCajaCom = nValorDiario * executing.nDiasLiquidados
+                                        nValorBaseSENA = nValorDiario * executing.nDiasLiquidados
+                                        nValorBaseICBF = nValorDiario * executing.nDiasLiquidados
+
+                                if executing.nDiasIncapacidadEPS > 0:
+                                    if dict_social_security['BaseSeguridadSocial'].dict.get('INCAPACIDAD', 0) > 0:
+                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['INCAPACIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadEPS']))
+                                        nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
+                                        nValorBaseSalud = nValorDiario * executing.nDiasIncapacidadEPS
+                                        nValorBaseFondoPension = nValorDiario * executing.nDiasIncapacidadEPS
+                                        nValorBaseARP = nValorDiario * executing.nDiasIncapacidadEPS
+                                    if dict_social_security['BaseParafiscales'].dict.get('INCAPACIDAD',0) > 0:
+                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['INCAPACIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadEPS']))
+                                        nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
+                                        nValorBaseCajaCom = nValorDiario * executing.nDiasIncapacidadEPS
+                                        nValorBaseSENA = nValorDiario * executing.nDiasIncapacidadEPS
+                                        nValorBaseICBF = nValorDiario * executing.nDiasIncapacidadEPS
+
+                                if executing.nDiasLicencia > 0:
+                                    if dict_social_security['BaseSeguridadSocial'].dict.get('LICENCIA_NO_REMUNERADA', 0) > 0:
+                                        nValorBaseSalud = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
+                                        nValorBaseFondoPension = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
+                                        nValorBaseARP = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
+                                    if dict_social_security['BaseParafiscales'].dict.get('LICENCIA_NO_REMUNERADA', 0) > 0:
+                                        nValorBaseCajaCom = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
+                                        nValorBaseSENA = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
+                                        nValorBaseICBF = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
+
+                                if executing.nDiasLicenciaRenumerada > 0:
+                                    if dict_social_security['BaseSeguridadSocial'].dict.get('LICENCIA_REMUNERADA', 0) > 0:
+                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicenciaRenumerada']))
+                                        nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
+                                        nValorBaseSalud = nValorDiario * executing.nDiasLicenciaRenumerada
+                                        nValorBaseFondoPension = nValorDiario * executing.nDiasLicenciaRenumerada
+                                        nValorBaseARP = nValorDiario * executing.nDiasLicenciaRenumerada
+                                    if dict_social_security['BaseParafiscales'].dict.get('LICENCIA_REMUNERADA', 0) > 0:
+                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicenciaRenumerada']))
+                                        nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
+                                        nValorBaseCajaCom = nValorDiario * executing.nDiasLicenciaRenumerada
+                                        nValorBaseSENA = nValorDiario * executing.nDiasLicenciaRenumerada
+                                        nValorBaseICBF = nValorDiario * executing.nDiasLicenciaRenumerada
+
+                                if executing.nDiasMaternidad > 0:
+                                    if dict_social_security['BaseSeguridadSocial'].dict.get('LICENCIA_MATERNIDAD', 0) > 0:
+                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_MATERNIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasMaternidad']))
+                                        nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
+                                        nValorBaseSalud = nValorDiario * executing.nDiasMaternidad
+                                        nValorBaseFondoPension = nValorDiario * executing.nDiasMaternidad
+                                        nValorBaseARP = nValorDiario * executing.nDiasMaternidad
+                                    if dict_social_security['BaseParafiscales'].dict.get('LICENCIA_MATERNIDAD', 0) > 0:
+                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_MATERNIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasMaternidad']))
+                                        nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
+                                        nValorBaseCajaCom = nValorDiario * executing.nDiasMaternidad
+                                        nValorBaseSENA = nValorDiario * executing.nDiasMaternidad
+                                        nValorBaseICBF = nValorDiario * executing.nDiasMaternidad
+
+                                if executing.nDiasVacaciones > 0:
+                                    if dict_social_security['BaseSeguridadSocial'].dict.get('VACACIONES', 0) > 0:
+                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['VACACIONES']) / Decimal(dict_social_security['BaseSeguridadSocial'].dict['DIAS_VACACIONES']))
+                                        nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
+                                        nValorBaseSalud = nValorDiario * executing.nDiasVacaciones
+                                        nValorBaseFondoPension = nValorDiario * executing.nDiasVacaciones
+                                        nValorBaseARP = nValorDiario * executing.nDiasVacaciones
+                                    if dict_social_security['BaseParafiscales'].dict.get('VACACIONES',0) > 0:
+                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['VACACIONES']) / Decimal(dict_social_security['BaseParafiscales'].dict['DIAS_VACACIONES']))
+                                        nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
+                                        nValorBaseCajaCom = nValorDiario * executing.nDiasVacaciones
+                                        nValorBaseSENA = nValorDiario * executing.nDiasVacaciones
+                                        nValorBaseICBF = nValorDiario * executing.nDiasVacaciones
+
+                                if executing.nDiasIncapacidadARP > 0:
+                                    if dict_social_security['BaseSeguridadSocial'].dict.get('ACCIDENTE_TRABAJO', 0) > 0:
+                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['ACCIDENTE_TRABAJO']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadARP']))
+                                        nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
+                                        nValorBaseSalud = nValorDiario * executing.nDiasIncapacidadARP
+                                        nValorBaseFondoPension = nValorDiario * executing.nDiasIncapacidadARP
+                                        nValorBaseARP = nValorDiario * executing.nDiasIncapacidadARP
+                                    if dict_social_security['BaseParafiscales'].dict.get('ACCIDENTE_TRABAJO',0) > 0:
+                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['ACCIDENTE_TRABAJO']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadARP']))
+                                        nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
+                                        nValorBaseCajaCom = nValorDiario * executing.nDiasIncapacidadARP
+                                        nValorBaseSENA = nValorDiario * executing.nDiasIncapacidadARP
+                                        nValorBaseICBF = nValorDiario * executing.nDiasIncapacidadARP
+
+                                valor_base_sueldo =(Decimal(executing.nSueldo) / Decimal(30)) * Decimal(nDias)
+                                #----------------CALCULOS SALUD
+                                if obj_parameterization_contributors.liquidated_eps_employee or obj_parameterization_contributors.liquidates_eps_company:
+                                    if nValorBaseSalud == 0:
+                                        nValorBaseSalud = float(roundupdecimal(valor_base_sueldo))
                                     else:
-                                        nValorBaseFondoPension = 0
-                                    #----------------CALCULOS ARP
-                                    if obj_parameterization_contributors.liquidated_arl:
-                                        if nValorBaseARP == 0:
-                                            nValorBaseARP = float(roundupdecimal(valor_base_sueldo))
+                                        nValorBaseSalud = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseSalud) < nRedondeoDecimalesDif else roundupdecimal(nValorBaseSalud))
+                                    #nValorBaseSalud = (valor_base_sueldo) if nValorBaseSalud == 0 else (nValorBaseSalud)
+                                    if nValorBaseSalud > 0:
+                                        nValorBaseSalud = annual_parameters.top_twenty_five_smmlv if nValorBaseSalud >= annual_parameters.top_twenty_five_smmlv else nValorBaseSalud
+                                        if bEsAprendiz == False:
+                                            nPorcAporteSaludEmpleado = annual_parameters.value_porc_health_employee
+                                            nValorSaludEmpleado = nValorBaseSalud*(nPorcAporteSaludEmpleado/100) if nDiasLicencia==0 else 0
                                         else:
-                                            nValorBaseARP = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseARP) < nRedondeoDecimalesDif else roundupdecimal(nValorBaseARP))
-                                        #nValorBaseARP = (valor_base_sueldo) if nValorBaseARP == 0 else (nValorBaseARP)
-                                        nValorBaseARP = annual_parameters.top_twenty_five_smmlv if nValorBaseARP >= annual_parameters.top_twenty_five_smmlv else nValorBaseARP
-                                        if nValorBaseARP > 0 and nDiasAusencias == 0 and nDiasVacaciones == 0:
-                                            nValorARP = roundup100(nValorBaseARP * nPorcAporteARP / 100)
+                                            nValorSaludEmpleado = 0
+                                        if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and (nValorBaseSalud >= (annual_parameters.smmlv_monthly*10) or dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL',0) >= (annual_parameters.smmlv_monthly*10))) or bEsAprendiz == True:
+                                            nPorcAporteSaludEmpresa = annual_parameters.value_porc_health_company if not bEsAprendiz else annual_parameters.value_porc_health_employee+annual_parameters.value_porc_health_company
+                                            nValorSaludEmpresa = nValorBaseSalud*(nPorcAporteSaludEmpresa/100)
+                                        else:
+                                            nPorcAporteSaludEmpresa,nValorSaludEmpresa = 0,0
+                                        nValorSaludTotal += (nValorSaludEmpleado+nValorSaludEmpresa)
+                                        nValorSaludTotalEmpleado += nValorSaludEmpleado
+                                        nValorSaludTotalEmpresa += nValorSaludEmpresa
+                                else:
+                                    nValorBaseSalud = 0
+                                #----------------CALCULOS PENSION
+                                if bEsAprendiz == False and obj_subtipo_coti.not_contribute_pension == False and (obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidates_solidarity_fund):
+                                    if nValorBaseFondoPension == 0:
+                                        nValorBaseFondoPension = float(roundupdecimal(valor_base_sueldo))
                                     else:
-                                        nValorBaseARP = 0
-                                    #----------------CALCULOS CAJA DE COMPENSACIÓN
-                                    if bEsAprendiz == False and obj_parameterization_contributors.liquidated_compensation_fund:
-                                        if nValorBaseCajaCom == 0:
-                                            nValorBaseCajaCom = float(roundupdecimal(valor_base_sueldo))
+                                        nValorBaseFondoPension = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseFondoPension) < nRedondeoDecimalesDif else roundupdecimal(nValorBaseFondoPension))
+                                    #nValorBaseFondoPension = (valor_base_sueldo) if nValorBaseFondoPension == 0 else (nValorBaseFondoPension)
+                                    if nValorBaseFondoPension > 0:
+                                        nValorBaseFondoPensionTotal = dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL', 0)  # BASEnValorBaseFondoPensionTotal = dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL', 0) #BASE
+                                        if contract_id.modality_salary == 'integral':
+                                            if exceso_ley_1393 > 0:
+                                                nValorBaseFondoPensionTotal = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_SALARIAL',0) + exceso_ley_1393
+                                            porc_integral_salary = annual_parameters.porc_integral_salary / 100
+                                            nValorBaseFondoPensionTotal = nValorBaseFondoPensionTotal * porc_integral_salary
+                                            nValorBaseFondoPensionTotal = annual_parameters.top_twenty_five_smmlv if nValorBaseFondoPensionTotal >= annual_parameters.top_twenty_five_smmlv else nValorBaseFondoPensionTotal
+                                            nValorBaseFondoPension = annual_parameters.top_twenty_five_smmlv if nValorBaseFondoPension >= annual_parameters.top_twenty_five_smmlv else nValorBaseFondoPension
                                         else:
-                                            nValorBaseCajaCom = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseCajaCom) < nRedondeoDecimalesDif else roundupdecimal(nValorBaseCajaCom))
-                                        #nValorBaseCajaCom = (valor_base_sueldo) if nValorBaseCajaCom == 0 else (nValorBaseCajaCom)
-                                        if nValorBaseCajaCom > 0 and nDiasAusencias-executing.nDiasLicenciaRenumerada == 0:
-                                            nPorcAporteCajaCom = annual_parameters.value_porc_compensation_box_company
-                                            nValorCajaCom = roundup100(nValorBaseCajaCom * nPorcAporteCajaCom / 100)
+                                            nValorBaseFondoPensionTotal = annual_parameters.top_twenty_five_smmlv if nValorBaseFondoPensionTotal >= annual_parameters.top_twenty_five_smmlv else nValorBaseFondoPensionTotal
+                                            nValorBaseFondoPension = annual_parameters.top_twenty_five_smmlv if nValorBaseFondoPension >= annual_parameters.top_twenty_five_smmlv else nValorBaseFondoPension
+                                        nPorcAportePensionEmpleado = annual_parameters.value_porc_pension_employee if executing.nDiasLicencia == 0 else 0
+                                        nPorcAportePensionEmpresa = annual_parameters.value_porc_pension_company if executing.nDiasLicencia == 0 else annual_parameters.value_porc_pension_company + annual_parameters.value_porc_pension_employee
+                                        nValorPensionEmpleado = nValorBaseFondoPension*(nPorcAportePensionEmpleado/100) if nDiasLicencia==0 else 0
+                                        nValorPensionEmpresa = nValorBaseFondoPension*(nPorcAportePensionEmpresa/100)
+                                        nValorPensionTotal += (nValorPensionEmpleado+nValorPensionEmpresa)
+                                        nValorPensioTotalEmpleado += nValorPensionEmpleado
+                                        nValorPensionTotalEmpresa += nValorPensionEmpresa
+                                        #Calculos fondo solidaridad
+                                        if (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) >= 4 and (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) < 16:
+                                            nPorcFondoSolidaridad = 1
+                                        if  (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) >= 16 and (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) <= 17:
+                                            nPorcFondoSolidaridad = 1.2
+                                        if  (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) > 17 and (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) <= 18:
+                                            nPorcFondoSolidaridad = 1.4
+                                        if  (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) > 18 and (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) <= 19:
+                                            nPorcFondoSolidaridad = 1.6
+                                        if  (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) > 19 and (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) <= 20:
+                                            nPorcFondoSolidaridad = 1.8
+                                        if  (nValorBaseFondoPensionTotal/annual_parameters.smmlv_monthly) > 20:
+                                            nPorcFondoSolidaridad = 2
+                                        if nPorcFondoSolidaridad > 0:
+                                            if contract_id.modality_salary == 'integral' and nPorcFondoSolidaridad == 2:
+                                                nValorFondoSolidaridad = roundup100(nValorBaseFondoPension * 0.005)
+                                                nValorFondoSubsistencia = roundup100(nValorBaseFondoPension * 0.015)
+                                                nValorTotalFondos += (nValorFondoSolidaridad + nValorFondoSubsistencia)
+                                            else:
+                                                nPorcFondoSolidaridadCalculo = (nPorcFondoSolidaridad/100)-0.005
+                                                nValorFondoSolidaridad = roundup100(nValorBaseFondoPension*0.005)
+                                                nValorFondoSubsistencia = roundup100(nValorBaseFondoPension*nPorcFondoSolidaridadCalculo)
+                                                nValorTotalFondos += (nValorFondoSolidaridad + nValorFondoSubsistencia)
+                                else:
+                                    nValorBaseFondoPension = 0
+                                #----------------CALCULOS ARP
+                                if obj_parameterization_contributors.liquidated_arl:
+                                    if nValorBaseARP == 0:
+                                        nValorBaseARP = float(roundupdecimal(valor_base_sueldo))
                                     else:
-                                        nValorBaseCajaCom = 0
-                                    #----------------CALCULOS SENA & ICBF
-                                    if bEsAprendiz == False and obj_parameterization_contributors.liquidated_sena and obj_parameterization_contributors.liquidated_icbf:
-                                        if nValorBaseSENA == 0:
-                                            nValorBaseSENA = float(roundupdecimal(valor_base_sueldo))
-                                        else:
-                                            nValorBaseSENA = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseSENA) < nRedondeoDecimalesDif else roundupdecimal(nValorBaseSENA))
-                                        #nValorBaseSENA = ((executing.nValorBaseSENA / 30) * nDias) if nValorBaseSENA == 0 else (nValorBaseSENA)
-                                        if nValorBaseICBF == 0:
-                                            nValorBaseICBF = float(roundupdecimal(valor_base_sueldo))
-                                        else:
-                                            nValorBaseICBF = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseICBF) < nRedondeoDecimalesDif else roundupdecimal(nValorBaseICBF))
-                                        #nValorBaseICBF = ((executing.nValorBaseICBF / 30) * nDias) if nValorBaseICBF == 0 else (nValorBaseICBF)
-                                        if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and (nValorBaseSENA >= (annual_parameters.smmlv_monthly*10) or dict_social_security['BaseParafiscales'].dict.get('TOTAL',0) >= (annual_parameters.smmlv_monthly*10))):
-                                            if nValorBaseSENA > 0 and nDiasAusencias == 0:
-                                                nPorcAporteSENA = annual_parameters.value_porc_sena_company
-                                                nValorSENA = roundup100(nValorBaseSENA * nPorcAporteSENA / 100)
-                                            if nValorBaseICBF > 0 and nDiasAusencias == 0:
-                                                nPorcAporteICBF = annual_parameters.value_porc_icbf_company
-                                                nValorICBF = roundup100(nValorBaseICBF * nPorcAporteICBF / 100)
-                                        else:
-                                            nValorBaseSENA,nValorBaseICBF = 0,0
-                                            nPorcAporteSENA,nValorSENA = 0,0
-                                            nPorcAporteICBF,nValorICBF = 0,0
+                                        nValorBaseARP = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseARP) < nRedondeoDecimalesDif else roundupdecimal(nValorBaseARP))
+                                    #nValorBaseARP = (valor_base_sueldo) if nValorBaseARP == 0 else (nValorBaseARP)
+                                    nValorBaseARP = annual_parameters.top_twenty_five_smmlv if nValorBaseARP >= annual_parameters.top_twenty_five_smmlv else nValorBaseARP
+                                    if nValorBaseARP > 0 and nDiasAusencias == 0 and nDiasVacaciones == 0:
+                                        nValorARP = roundup100(nValorBaseARP * nPorcAporteARP / 100)
+                                else:
+                                    nValorBaseARP = 0
+                                #----------------CALCULOS CAJA DE COMPENSACIÓN
+                                if bEsAprendiz == False and obj_parameterization_contributors.liquidated_compensation_fund:
+                                    if nValorBaseCajaCom == 0:
+                                        nValorBaseCajaCom = float(roundupdecimal(valor_base_sueldo))
+                                    else:
+                                        nValorBaseCajaCom = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseCajaCom) < nRedondeoDecimalesDif else roundupdecimal(nValorBaseCajaCom))
+                                    #nValorBaseCajaCom = (valor_base_sueldo) if nValorBaseCajaCom == 0 else (nValorBaseCajaCom)
+                                    if nValorBaseCajaCom > 0 and nDiasAusencias-executing.nDiasLicenciaRenumerada == 0:
+                                        nPorcAporteCajaCom = annual_parameters.value_porc_compensation_box_company
+                                        nValorCajaCom = roundup100(nValorBaseCajaCom * nPorcAporteCajaCom / 100)
+                                else:
+                                    nValorBaseCajaCom = 0
+                                #----------------CALCULOS SENA & ICBF
+                                if bEsAprendiz == False and obj_parameterization_contributors.liquidated_sena and obj_parameterization_contributors.liquidated_icbf:
+                                    if nValorBaseSENA == 0:
+                                        nValorBaseSENA = float(roundupdecimal(valor_base_sueldo))
+                                    else:
+                                        nValorBaseSENA = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseSENA) < nRedondeoDecimalesDif else roundupdecimal(nValorBaseSENA))
+                                    #nValorBaseSENA = ((executing.nValorBaseSENA / 30) * nDias) if nValorBaseSENA == 0 else (nValorBaseSENA)
+                                    if nValorBaseICBF == 0:
+                                        nValorBaseICBF = float(roundupdecimal(valor_base_sueldo))
+                                    else:
+                                        nValorBaseICBF = float(roundupdecimal(valor_base_sueldo) if abs((valor_base_sueldo) - nValorBaseICBF) < nRedondeoDecimalesDif else roundupdecimal(nValorBaseICBF))
+                                    #nValorBaseICBF = ((executing.nValorBaseICBF / 30) * nDias) if nValorBaseICBF == 0 else (nValorBaseICBF)
+                                    if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and (nValorBaseSENA >= (annual_parameters.smmlv_monthly*10) or dict_social_security['BaseParafiscales'].dict.get('TOTAL',0) >= (annual_parameters.smmlv_monthly*10))):
+                                        if nValorBaseSENA > 0 and nDiasAusencias == 0:
+                                            nPorcAporteSENA = annual_parameters.value_porc_sena_company
+                                            nValorSENA = roundup100(nValorBaseSENA * nPorcAporteSENA / 100)
+                                        if nValorBaseICBF > 0 and nDiasAusencias == 0:
+                                            nPorcAporteICBF = annual_parameters.value_porc_icbf_company
+                                            nValorICBF = roundup100(nValorBaseICBF * nPorcAporteICBF / 100)
                                     else:
                                         nValorBaseSENA,nValorBaseICBF = 0,0
+                                        nPorcAporteSENA,nValorSENA = 0,0
+                                        nPorcAporteICBF,nValorICBF = 0,0
+                                else:
+                                    nValorBaseSENA,nValorBaseICBF = 0,0
 
-                                    result_update = {
-                                        #Ingreso o Retiro / Se marca la novedad en la segunda linea cuando los dias liquidados son 0
-                                        'nIngreso': nIngreso if nDiasLiquidados == 0 and executing.nDiasLiquidados == 0 and item == 2 else executing.nIngreso,
-                                        'nRetiro': nRetiro  if nDiasLiquidados == 0 and executing.nDiasLiquidados == 0 and item == 2 else executing.nRetiro,
-                                        #Salud
-                                        'nValorBaseSalud':nValorBaseSalud,
-                                        'nPorcAporteSaludEmpleado': nPorcAporteSaludEmpleado if nValorSaludEmpleado > 0 else 0,
-                                        'nValorSaludEmpleado':nValorSaludEmpleado,
-                                        'nPorcAporteSaludEmpresa':nPorcAporteSaludEmpresa if nValorSaludEmpresa > 0 else 0,
-                                        'nValorSaludEmpresa':nValorSaludEmpresa,
-                                        'nValorSaludEmpleadoNomina': 0,
-                                        #Pension
-                                        'nValorBaseFondoPension':nValorBaseFondoPension,
-                                        'nPorcAportePensionEmpleado': nPorcAportePensionEmpleado if nValorPensionEmpleado > 0 else 0,
-                                        'nValorPensionEmpleado':nValorPensionEmpleado,
-                                        'nPorcAportePensionEmpresa': nPorcAportePensionEmpresa if nValorPensionEmpresa > 0 else 0,
-                                        'nValorPensionEmpresa':nValorPensionEmpresa,
-                                        'nValorPensionEmpleadoNomina': 0,
-                                        'cAVP': False if nDiasLiquidados == 0 and executing.nDiasLiquidados == 0 else executing.cAVP,
-                                        'nAporteVoluntarioPension': 0 if nDiasLiquidados == 0 and executing.nDiasLiquidados == 0 else executing.nAporteVoluntarioPension,
-                                        #Fondo Solidaridad y Subsistencia
-                                        'nPorcFondoSolidaridad': nPorcFondoSolidaridad,
-                                        'nValorFondoSolidaridad':nValorFondoSolidaridad,
-                                        'nValorFondoSubsistencia':nValorFondoSubsistencia,
-                                        #ARP/ARL - Administradora de riesgos profesionales/laborales
-                                        'nValorBaseARP':nValorBaseARP,
-                                        'nPorcAporteARP':nPorcAporteARP if nValorARP > 0 else 0,
-                                        'nValorARP':nValorARP,
-                                        #Caja de Compensación
-                                        'nValorBaseCajaCom':nValorBaseCajaCom,
-                                        'nPorcAporteCajaCom':nPorcAporteCajaCom if nValorCajaCom > 0 else 0,
-                                        'nValorCajaCom':nValorCajaCom,
-                                        #SENA & ICBF
-                                        'cExonerado1607': executing.cExonerado1607 if nValorBaseSalud < (annual_parameters.smmlv_monthly * 10) else False,
-                                        'nValorBaseSENA':nValorBaseSENA,
-                                        'nPorcAporteSENA':nPorcAporteSENA if nValorSENA > 0 else 0,
-                                        'nValorSENA':nValorSENA,
-                                        'nValorBaseICBF':nValorBaseICBF,
-                                        'nPorcAporteICBF':nPorcAporteICBF if nValorICBF > 0 else 0,
-                                        'nValorICBF':nValorICBF,
-                                    }
-
-                                    if item == cant_items:
-                                        result_update['nValorSaludTotal'] = roundup100(nValorSaludTotal)
-                                        result_update['nValorPensionTotal'] = roundup100(nValorPensionTotal)
-                                        result_update['nValorSaludEmpleadoNomina'] = executing.nValorSaludEmpleadoNomina
-                                        result_update['nValorPensionEmpleadoNomina'] = executing.nValorPensionEmpleadoNomina
-                                        result_update['nDiferenciaSalud'] = (roundup100(nValorSaludTotal) - (nValorSaludTotalEmpleado+nValorSaludTotalEmpresa)) + (nValorSaludTotalEmpleado-executing.nValorSaludEmpleadoNomina)
-                                        result_update['nDiferenciaPension'] = (roundup100(nValorPensionTotal) - (nValorPensioTotalEmpleado+nValorPensionTotalEmpresa)) + ((nValorPensioTotalEmpleado+nValorTotalFondos)-executing.nValorPensionEmpleadoNomina)
-
-                                    executing.write(result_update)
-
-                                    if executing.nDiasLiquidados == 0 and executing.nDiasIncapacidadEPS == 0 and executing.nDiasLicencia == 0 and executing.nDiasLicenciaRenumerada == 0 and executing.nDiasMaternidad == 0 and executing.nDiasVacaciones == 0 and executing.nDiasIncapacidadARP == 0 and executing.dependent_upc_id == False:
-                                        executing.unlink()
-
-                                    item += 1
-                            elif cant_payslip > 0 and obj_tipo_coti.code == '51': # Proceso para el tipo de cotizante 51 - Trabajador de Tiempo Parcial:
-                                # Guardar linea principal
-                                result = {
-                                    'executing_social_security_id': self.id,
-                                    'employee_id': employee.id,
-                                    'contract_id': contract_id.id,
-                                    'analytic_account_id': analytic_account_id.id,
-                                    'branch_id': employee.branch_id.id,
-                                    'nDiasLiquidados': nDiasLiquidados,
-                                    'nNumeroHorasLaboradas': nNumeroHorasLaboradas,
-                                    'nIngreso': nIngreso,
-                                    'nRetiro': nRetiro,
-                                    'nSueldo': nSueldo,
-                                    # Salud
-                                    'TerceroEPS': TerceroEPS.id if TerceroEPS else False,
-                                    'nValorBaseSalud': nValorBaseSalud,
-                                    'nValorSaludEmpleadoNomina': nValorSaludEmpleadoNomina,
-                                    # Pension
-                                    'TerceroPension': TerceroPension.id if TerceroPension else False,
-                                    'nValorBaseFondoPension': nValorBaseFondoPension,
-                                    'nValorPensionEmpleadoNomina': nValorPensionEmpleadoNomina + nValorFondoSubsistencia + nValorFondoSolidaridad,
-                                    # Fondo Solidaridad y Subsistencia
-                                    'TerceroFondoSolidaridad': TerceroFondoSolidaridad.id if TerceroFondoSolidaridad else TerceroPension.id if TerceroPension else False,
-                                    # ARP/ARL - Administradora de riesgos profesionales/laborales
-                                    'TerceroARP': TerceroARP.id if TerceroARP else False,
-                                    'nValorBaseARP': nValorBaseARP,
-                                    # Caja de Compensación
-                                    'TerceroCajaCom': TerceroCajaCompensacion.id if TerceroCajaCompensacion else False,
-                                    'nValorBaseCajaCom': nValorBaseCajaCom,
-                                    # SENA & ICBF
-                                    'cExonerado1607': employee.company_id.exonerated_law_1607 if bEsAprendiz == False and nSueldo < (
-                                                annual_parameters.smmlv_monthly * 10) else False,
-                                    'TerceroSENA': TerceroSENA.id if TerceroSENA else False,
-                                    'nValorBaseSENA': nValorBaseSENA,
-                                    'TerceroICBF': TerceroICBF.id if TerceroICBF else False,
-                                    'nValorBaseICBF': nValorBaseICBF,
+                                result_update = {
+                                    #Ingreso o Retiro / Se marca la novedad en la segunda linea cuando los dias liquidados son 0
+                                    'nIngreso': nIngreso if nDiasLiquidados == 0 and executing.nDiasLiquidados == 0 and item == 2 else executing.nIngreso,
+                                    'nRetiro': nRetiro  if nDiasLiquidados == 0 and executing.nDiasLiquidados == 0 and item == 2 else executing.nRetiro,
+                                    #Salud
+                                    'nValorBaseSalud':nValorBaseSalud,
+                                    'nPorcAporteSaludEmpleado': nPorcAporteSaludEmpleado if nValorSaludEmpleado > 0 else 0,
+                                    'nValorSaludEmpleado':nValorSaludEmpleado,
+                                    'nPorcAporteSaludEmpresa':nPorcAporteSaludEmpresa if nValorSaludEmpresa > 0 else 0,
+                                    'nValorSaludEmpresa':nValorSaludEmpresa,
+                                    'nValorSaludEmpleadoNomina': 0,
+                                    #Pension
+                                    'nValorBaseFondoPension':nValorBaseFondoPension,
+                                    'nPorcAportePensionEmpleado': nPorcAportePensionEmpleado if nValorPensionEmpleado > 0 else 0,
+                                    'nValorPensionEmpleado':nValorPensionEmpleado,
+                                    'nPorcAportePensionEmpresa': nPorcAportePensionEmpresa if nValorPensionEmpresa > 0 else 0,
+                                    'nValorPensionEmpresa':nValorPensionEmpresa,
+                                    'nValorPensionEmpleadoNomina': 0,
+                                    'cAVP': False if nDiasLiquidados == 0 and executing.nDiasLiquidados == 0 else executing.cAVP,
+                                    'nAporteVoluntarioPension': 0 if nDiasLiquidados == 0 and executing.nDiasLiquidados == 0 else executing.nAporteVoluntarioPension,
+                                    #Fondo Solidaridad y Subsistencia
+                                    'nPorcFondoSolidaridad': nPorcFondoSolidaridad,
+                                    'nValorFondoSolidaridad':nValorFondoSolidaridad,
+                                    'nValorFondoSubsistencia':nValorFondoSubsistencia,
+                                    #ARP/ARL - Administradora de riesgos profesionales/laborales
+                                    'nValorBaseARP':nValorBaseARP,
+                                    'nPorcAporteARP':nPorcAporteARP if nValorARP > 0 else 0,
+                                    'nValorARP':nValorARP,
+                                    #Caja de Compensación
+                                    'nValorBaseCajaCom':nValorBaseCajaCom,
+                                    'nPorcAporteCajaCom':nPorcAporteCajaCom if nValorCajaCom > 0 else 0,
+                                    'nValorCajaCom':nValorCajaCom,
+                                    #SENA & ICBF
+                                    'cExonerado1607': executing.cExonerado1607 if nValorBaseSalud < (annual_parameters.smmlv_monthly * 10) else False,
+                                    'nValorBaseSENA':nValorBaseSENA,
+                                    'nPorcAporteSENA':nPorcAporteSENA if nValorSENA > 0 else 0,
+                                    'nValorSENA':nValorSENA,
+                                    'nValorBaseICBF':nValorBaseICBF,
+                                    'nPorcAporteICBF':nPorcAporteICBF if nValorICBF > 0 else 0,
+                                    'nValorICBF':nValorICBF,
                                 }
-                                # Una vez creada la linea principal, se obtienen las ausencias con sus respectivas fechas
-                                nDiasIncapacidadEPS,nDiasLicencia,nDiasLicenciaRenumerada,nDiasMaternidad,nDiasVacaciones,nDiasIncapacidadARP = 0,0,0,0,0,0
-                                for leave in leave_list:
-                                    # Incapacidad EPS
-                                    nDiasIncapacidadEPS = nDiasIncapacidadEPS+leave['days'] if leave['type'] in ('EGA', 'EGH') else nDiasIncapacidadEPS  # Categoria: INCAPACIDAD
-                                    dict_social_security['Dias'].dict['nDiasIncapacidadEPS'] = nDiasIncapacidadEPS
-                                    result['nDiasIncapacidadEPS'] = nDiasIncapacidadEPS
-                                    result['dFechaInicioIGE'] = leave['date_start'] if leave['type'] in ('EGA', 'EGH') else result.get('dFechaInicioIGE', False)
-                                    result['dFechaFinIGE'] = leave['date_end'] if leave['type'] in ('EGA', 'EGH') else result.get('dFechaFinIGE', False)
-                                    # Licencia
-                                    nDiasLicencia = nDiasLicencia+leave['days'] if leave['type'] in ('LICENCIA_NO_REMUNERADA', 'INAS_INJU', 'SANCION','SUSP_CONTRATO','DNR') else nDiasLicencia # Categoria: LICENCIA_NO_REMUNERADA
-                                    dict_social_security['Dias'].dict['nDiasLicencia'] = nDiasLicencia
-                                    result['nDiasLicencia'] = nDiasLicencia
-                                    result['dFechaInicioSLN'] = leave['date_start'] if leave['type'] in ('LICENCIA_NO_REMUNERADA', 'INAS_INJU', 'SANCION', 'SUSP_CONTRATO','DNR') else result.get('dFechaInicioSLN', False)
-                                    result['dFechaFinSLN'] = leave['date_end'] if leave['type'] in ('LICENCIA_NO_REMUNERADA', 'INAS_INJU', 'SANCION', 'SUSP_CONTRATO','DNR') else result.get('dFechaFinSLN', False)
-                                    # Licencia Remunerada
-                                    nDiasLicenciaRenumerada = nDiasLicenciaRenumerada+leave['days'] if leave['type'] in ('LICENCIA_REMUNERADA', 'LUTO','REP_VACACIONES') else nDiasLicenciaRenumerada  # Categoria: LICENCIA_REMUNERADA
-                                    dict_social_security['Dias'].dict['nDiasLicenciaRenumerada'] = nDiasLicenciaRenumerada
-                                    result['nDiasLicenciaRenumerada'] = nDiasLicenciaRenumerada
-                                    result['dFechaInicioVACLR'] = leave['date_start'] if leave['type'] in ('LICENCIA_REMUNERADA', 'LUTO', 'VACDISFRUTADAS', 'REP_VACACIONES') else result.get('dFechaInicioVACLR', False)
-                                    result['dFechaFinVACLR'] = leave['date_end'] if leave['type'] in ('LICENCIA_REMUNERADA', 'LUTO', 'VACDISFRUTADAS', 'REP_VACACIONES') else result.get('dFechaFinVACLR', False)
-                                    # Maternida
-                                    nDiasMaternidad = nDiasMaternidad+leave['days'] if leave['type'] in ('MAT', 'PAT') else nDiasMaternidad # Categoria: LICENCIA_MATERNIDAD
-                                    dict_social_security['Dias'].dict['nDiasMaternidad'] = nDiasMaternidad
-                                    result['nDiasMaternidad'] = nDiasMaternidad
-                                    result['dFechaInicioLMA'] = leave['date_start'] if leave['type'] in ('MAT', 'PAT') else result.get('dFechaInicioLMA', False)
-                                    result['dFechaFinLMA'] = leave['date_end'] if leave['type'] in ('MAT', 'PAT') else result.get('dFechaFinLMA', False)
-                                    # Vacaciones
-                                    nDiasVacaciones = nDiasVacaciones+leave['days'] if leave['type'] == 'VACDISFRUTADAS' else nDiasVacaciones  # Categoria: VACACIONES
-                                    dict_social_security['Dias'].dict['nDiasVacaciones'] = nDiasVacaciones
-                                    result['nDiasVacaciones'] = nDiasVacaciones
-                                    result['dFechaInicioVACLR'] = leave['date_start'] if leave['type'] in ('LICENCIA_REMUNERADA', 'LUTO', 'VACDISFRUTADAS', 'REP_VACACIONES') else result.get('dFechaInicioVACLR', False)
-                                    result['dFechaFinVACLR'] = leave['date_end'] if leave['type'] in ('LICENCIA_REMUNERADA', 'LUTO', 'VACDISFRUTADAS', 'REP_VACACIONES') else result.get('dFechaFinVACLR', False)
-                                    # ARL
-                                    nDiasIncapacidadARP = nDiasIncapacidadARP+leave['days'] if leave['type'] in ('EP', 'AT') else nDiasIncapacidadARP # Categoria: ACCIDENTE_TRABAJO
-                                    dict_social_security['Dias'].dict['nDiasIncapacidadARP'] = nDiasIncapacidadARP
-                                    result['nDiasIncapacidadARP'] = nDiasIncapacidadARP
-                                    result['dFechaInicioIRL'] = leave['date_start'] if leave['type'] in ('EP', 'AT') else result.get('dFechaInicioIRL', False)
-                                    result['dFechaFinIRL'] = leave['date_end'] if leave['type'] in ('EP', 'AT') else result.get('dFechaFinIRL', False)
 
-                                obj_executing = env['hr.executing.social.security'].create(result)
-
-                                # Valores TOTALES
-                                nValorSaludTotalEmpleado, nValorSaludTotalEmpresa = 0, 0
-                                nValorPensioTotalEmpleado, nValorPensionTotalEmpresa, nValorTotalFondos = 0, 0, 0
-                                nValorSaludTotal, nValorPensionTotal = 0, 0
-                                nRedondeoDecimalesDif = 5  # Max diferencia de decimales
-                                for executing in obj_executing:
-                                    # Valores
-                                    nPorcAporteSaludEmpleado, nPorcAporteSaludEmpresa, nValorBaseSalud, nValorSaludEmpleado, nValorSaludEmpresa = 0, 0, 0, 0, 0
-                                    nPorcAportePensionEmpleado, nPorcAportePensionEmpresa, nValorBaseFondoPension, nValorPensionEmpleado, nValorPensionEmpresa = 0, 0, 0, 0, 0
-                                    nPorcFondoSolidaridad, nValorFondoSolidaridad, nValorFondoSubsistencia = 0, 0, 0
-                                    nValorBaseARP, nValorARP = 0, 0
-                                    nValorBaseCajaCom, nPorcAporteCajaCom, nValorCajaCom = 0, 0, 0
-                                    nValorBaseSENA, nPorcAporteSENA, nValorSENA = 0, 0, 0
-                                    nValorBaseICBF, nPorcAporteICBF, nValorICBF = 0, 0, 0
-                                    # Dias
-                                    nDiasLicencia = executing.nDiasLicencia
-                                    nDiasVacaciones = executing.nDiasVacaciones
-                                    nDiasAusencias = executing.nDiasIncapacidadEPS + executing.nDiasLicencia + executing.nDiasLicenciaRenumerada + executing.nDiasMaternidad + executing.nDiasIncapacidadARP
-                                    nDias = executing.nDiasLiquidados + executing.nDiasIncapacidadEPS + executing.nDiasLicencia + executing.nDiasLicenciaRenumerada + executing.nDiasMaternidad + executing.nDiasVacaciones + executing.nDiasIncapacidadARP
-
-                                    obj_overtime = env['hr.overtime'].search(
-                                        [('employee_id', '=', employee.id), ('date', '>=', date_start),
-                                         ('date_end', '<=', date_end)])
-                                    if len(obj_overtime) > 0:
-                                        nDias = round(sum(o.days_actually_worked for o in obj_overtime))#round(sum(o.shift_hours for o in obj_overtime)/8)
-                                        round_hours = sum(o.days_actually_worked for o in obj_overtime) * annual_parameters.hours_daily  # round(sum(o.shift_hours for o in obj_overtime)) #round(sum(o.shift_hours for o in obj_overtime))
-                                        nNumeroHorasLaboradas = round_hours
-                                        nNumeroHorasLaboradas = nNumeroHorasLaboradas
-                                    # Calculos valores base dependiendo los días
-                                    if nDias > 0:
-                                        #Documentación - http://aportesenlinea.custhelp.com/app/answers/detail/a_id/464/~/condiciones-cotizante-51
-                                        nValorBaseSalud = 0
-                                        nValorBaseFondoPension = 0
-                                        nValorBaseARP = annual_parameters.smmlv_monthly  # "IBC Riesgos Laborales" debe ser igual a un salario mínimo legal mensual vigente.
-                                        nValorBaseCajaCom = 0
-                                        nValorBaseSENA = 0
-                                        nValorBaseICBF = 0
-                                        nValorBaseFondoPension = obj_tipo_coti.get_value_cotizante_51(date_start.year,nDias)
-                                        nValorBaseCajaCom = obj_tipo_coti.get_value_cotizante_51(date_start.year,nDias)
-                                        # ----------------CALCULOS SALUD
-                                        if nValorBaseSalud > 0:
-                                            if bEsAprendiz == False:
-                                                nPorcAporteSaludEmpleado = annual_parameters.value_porc_health_employee
-                                                nValorSaludEmpleado = nValorBaseSalud * (nPorcAporteSaludEmpleado / 100)
-                                            else:
-                                                nValorSaludEmpleado = 0
-                                            if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and nValorBaseSalud >= (annual_parameters.smmlv_monthly * 10)) or bEsAprendiz == True:
-                                                nPorcAporteSaludEmpresa = annual_parameters.value_porc_health_company if not bEsAprendiz else annual_parameters.value_porc_health_employee + annual_parameters.value_porc_health_company
-                                                nValorSaludEmpresa = nValorBaseSalud * (nPorcAporteSaludEmpresa / 100)
-                                            else:
-                                                nPorcAporteSaludEmpresa, nValorSaludEmpresa = 0, 0
-                                            nValorSaludTotal += (nValorSaludEmpleado + nValorSaludEmpresa)
-                                            nValorSaludTotalEmpleado += nValorSaludEmpleado
-                                            nValorSaludTotalEmpresa += nValorSaludEmpresa
-                                        # ----------------CALCULOS PENSION
-                                        if bEsAprendiz == False and obj_subtipo_coti.not_contribute_pension == False:
-                                            if nValorBaseFondoPension > 0:
-                                                nPorcAportePensionEmpleado = annual_parameters.value_porc_pension_employee
-                                                nPorcAportePensionEmpresa = annual_parameters.value_porc_pension_company
-                                                nValorPensionEmpleado = nValorBaseFondoPension * (nPorcAportePensionEmpleado / 100)
-                                                nValorPensionEmpresa = nValorBaseFondoPension * (nPorcAportePensionEmpresa / 100)
-                                                nValorPensionTotal += (nValorPensionEmpleado + nValorPensionEmpresa)
-                                                nValorPensioTotalEmpleado += nValorPensionEmpleado
-                                                nValorPensionTotalEmpresa += nValorPensionEmpresa
-                                        else:
-                                            nValorBaseFondoPension = 0
-                                        # ----------------CALCULOS ARP
-                                        if nValorBaseARP > 0:
-                                            nValorARP = roundup100(nValorBaseARP * nPorcAporteARP / 100)
-                                        # ----------------CALCULOS CAJA DE COMPENSACIÓN
-                                        if bEsAprendiz == False:
-                                            if nValorBaseCajaCom > 0:
-                                                nPorcAporteCajaCom = annual_parameters.value_porc_compensation_box_company
-                                                nValorCajaCom = roundup100(nValorBaseCajaCom * nPorcAporteCajaCom / 100)
-                                        else:
-                                            nValorBaseCajaCom = 0
-                                        # ----------------CALCULOS SENA & ICBF
-                                        if bEsAprendiz == False:
-                                            if not employee.company_id.exonerated_law_1607 or (
-                                                    employee.company_id.exonerated_law_1607 and nValorBaseSENA >= (
-                                                    annual_parameters.smmlv_monthly * 10)):
-                                                if nValorBaseSENA > 0:
-                                                    nPorcAporteSENA = annual_parameters.value_porc_sena_company
-                                                    nValorSENA = roundup100(nValorBaseSENA * nPorcAporteSENA / 100)
-                                                if nValorBaseICBF > 0:
-                                                    nPorcAporteICBF = annual_parameters.value_porc_icbf_company
-                                                    nValorICBF = roundup100(nValorBaseICBF * nPorcAporteICBF / 100)
-                                            else:
-                                                nValorBaseSENA, nValorBaseICBF = 0, 0
-                                                nPorcAporteSENA, nValorSENA = 0, 0
-                                                nPorcAporteICBF, nValorICBF = 0, 0
-                                        else:
-                                            nValorBaseSENA, nValorBaseICBF = 0, 0
-
-                                    result_update = {
-                                        'nDiasLiquidados': nDias,
-                                        'nNumeroHorasLaboradas': round(nNumeroHorasLaboradas),
-                                        # Salud
-                                        'nValorBaseSalud': nValorBaseSalud,
-                                        'nPorcAporteSaludEmpleado': nPorcAporteSaludEmpleado if nValorSaludEmpleado > 0 else 0,
-                                        'nValorSaludEmpleado': nValorSaludEmpleado,
-                                        'nPorcAporteSaludEmpresa': nPorcAporteSaludEmpresa if nValorSaludEmpresa > 0 else 0,
-                                        'nValorSaludEmpresa': nValorSaludEmpresa,
-                                        # Pension
-                                        'nValorBaseFondoPension': nValorBaseFondoPension,
-                                        'nPorcAportePensionEmpleado': nPorcAportePensionEmpleado if nValorPensionEmpleado > 0 else 0,
-                                        'nValorPensionEmpleado': nValorPensionEmpleado,
-                                        'nPorcAportePensionEmpresa': nPorcAportePensionEmpresa if nValorPensionEmpresa > 0 else 0,
-                                        'nValorPensionEmpresa': nValorPensionEmpresa,
-                                        # Fondo Solidaridad y Subsistencia
-                                        'nPorcFondoSolidaridad': nPorcFondoSolidaridad,
-                                        'nValorFondoSolidaridad': nValorFondoSolidaridad,
-                                        'nValorFondoSubsistencia': nValorFondoSubsistencia,
-                                        # ARP/ARL - Administradora de riesgos profesionales/laborales
-                                        'nValorBaseARP': nValorBaseARP,
-                                        'nPorcAporteARP': nPorcAporteARP if nValorARP > 0 else 0,
-                                        'nValorARP': nValorARP,
-                                        # Caja de Compensación
-                                        'nValorBaseCajaCom': nValorBaseCajaCom,
-                                        'nPorcAporteCajaCom': nPorcAporteCajaCom if nValorCajaCom > 0 else 0,
-                                        'nValorCajaCom': nValorCajaCom,
-                                        # SENA & ICBF
-                                        'nValorBaseSENA': nValorBaseSENA,
-                                        'nPorcAporteSENA': nPorcAporteSENA if nValorSENA > 0 else 0,
-                                        'nValorSENA': nValorSENA,
-                                        'nValorBaseICBF': nValorBaseICBF,
-                                        'nPorcAporteICBF': nPorcAporteICBF if nValorICBF > 0 else 0,
-                                        'nValorICBF': nValorICBF,
-                                    }
-
+                                if item == cant_items:
                                     result_update['nValorSaludTotal'] = roundup100(nValorSaludTotal)
                                     result_update['nValorPensionTotal'] = roundup100(nValorPensionTotal)
                                     result_update['nValorSaludEmpleadoNomina'] = executing.nValorSaludEmpleadoNomina
                                     result_update['nValorPensionEmpleadoNomina'] = executing.nValorPensionEmpleadoNomina
-                                    result_update['nDiferenciaSalud'] = (roundup100(nValorSaludTotal) - (nValorSaludTotalEmpleado + nValorSaludTotalEmpresa)) + (nValorSaludTotalEmpleado - executing.nValorSaludEmpleadoNomina)
-                                    result_update['nDiferenciaPension'] = (roundup100(nValorPensionTotal) - (nValorPensioTotalEmpleado + nValorPensionTotalEmpresa)) + ((nValorPensioTotalEmpleado + nValorTotalFondos) - executing.nValorPensionEmpleadoNomina)
-                                    executing.write(result_update)
-                            else:
-                                result = {
-                                    'executing_social_security_id': self.id,
-                                    'employee_id':employee.id,
-                                    'branch_id':employee.branch_id.id,
-                                    'description': 'No se encontraron liquidaciones para el empleado, por favor verificar'
+                                    result_update['nDiferenciaSalud'] = (roundup100(nValorSaludTotal) - (nValorSaludTotalEmpleado+nValorSaludTotalEmpresa)) + (nValorSaludTotalEmpleado-executing.nValorSaludEmpleadoNomina)
+                                    result_update['nDiferenciaPension'] = (roundup100(nValorPensionTotal) - (nValorPensioTotalEmpleado+nValorPensionTotalEmpresa)) + ((nValorPensioTotalEmpleado+nValorTotalFondos)-executing.nValorPensionEmpleadoNomina)
+
+                                executing.write(result_update)
+
+                                if executing.nDiasLiquidados == 0 and executing.nDiasIncapacidadEPS == 0 and executing.nDiasLicencia == 0 and executing.nDiasLicenciaRenumerada == 0 and executing.nDiasMaternidad == 0 and executing.nDiasVacaciones == 0 and executing.nDiasIncapacidadARP == 0 and executing.dependent_upc_id == False:
+                                    executing.unlink()
+
+                                item += 1
+                        elif cant_payslip > 0 and obj_tipo_coti.code == '51': # Proceso para el tipo de cotizante 51 - Trabajador de Tiempo Parcial:
+                            # Guardar linea principal
+                            result = {
+                                'executing_social_security_id': self.id,
+                                'employee_id': employee.id,
+                                'contract_id': contract_id.id,
+                                'analytic_account_id': analytic_account_id.id,
+                                'branch_id': employee.branch_id.id,
+                                'nDiasLiquidados': nDiasLiquidados,
+                                'nNumeroHorasLaboradas': nNumeroHorasLaboradas,
+                                'nIngreso': nIngreso,
+                                'nRetiro': nRetiro,
+                                'nSueldo': nSueldo,
+                                # Salud
+                                'TerceroEPS': TerceroEPS.id if TerceroEPS else False,
+                                'nValorBaseSalud': nValorBaseSalud,
+                                'nValorSaludEmpleadoNomina': nValorSaludEmpleadoNomina,
+                                # Pension
+                                'TerceroPension': TerceroPension.id if TerceroPension else False,
+                                'nValorBaseFondoPension': nValorBaseFondoPension,
+                                'nValorPensionEmpleadoNomina': nValorPensionEmpleadoNomina + nValorFondoSubsistencia + nValorFondoSolidaridad,
+                                # Fondo Solidaridad y Subsistencia
+                                'TerceroFondoSolidaridad': TerceroFondoSolidaridad.id if TerceroFondoSolidaridad else TerceroPension.id if TerceroPension else False,
+                                # ARP/ARL - Administradora de riesgos profesionales/laborales
+                                'TerceroARP': TerceroARP.id if TerceroARP else False,
+                                'nValorBaseARP': nValorBaseARP,
+                                # Caja de Compensación
+                                'TerceroCajaCom': TerceroCajaCompensacion.id if TerceroCajaCompensacion else False,
+                                'nValorBaseCajaCom': nValorBaseCajaCom,
+                                # SENA & ICBF
+                                'cExonerado1607': employee.company_id.exonerated_law_1607 if bEsAprendiz == False and nSueldo < (
+                                            annual_parameters.smmlv_monthly * 10) else False,
+                                'TerceroSENA': TerceroSENA.id if TerceroSENA else False,
+                                'nValorBaseSENA': nValorBaseSENA,
+                                'TerceroICBF': TerceroICBF.id if TerceroICBF else False,
+                                'nValorBaseICBF': nValorBaseICBF,
+                            }
+                            # Una vez creada la linea principal, se obtienen las ausencias con sus respectivas fechas
+                            nDiasIncapacidadEPS,nDiasLicencia,nDiasLicenciaRenumerada,nDiasMaternidad,nDiasVacaciones,nDiasIncapacidadARP = 0,0,0,0,0,0
+                            for leave in leave_list:
+                                # Incapacidad EPS
+                                nDiasIncapacidadEPS = nDiasIncapacidadEPS+leave['days'] if leave['type'] in ('EGA', 'EGH') else nDiasIncapacidadEPS  # Categoria: INCAPACIDAD
+                                dict_social_security['Dias'].dict['nDiasIncapacidadEPS'] = nDiasIncapacidadEPS
+                                result['nDiasIncapacidadEPS'] = nDiasIncapacidadEPS
+                                result['dFechaInicioIGE'] = leave['date_start'] if leave['type'] in ('EGA', 'EGH') else result.get('dFechaInicioIGE', False)
+                                result['dFechaFinIGE'] = leave['date_end'] if leave['type'] in ('EGA', 'EGH') else result.get('dFechaFinIGE', False)
+                                # Licencia
+                                nDiasLicencia = nDiasLicencia+leave['days'] if leave['type'] in ('LICENCIA_NO_REMUNERADA', 'INAS_INJU', 'SANCION','SUSP_CONTRATO','DNR') else nDiasLicencia # Categoria: LICENCIA_NO_REMUNERADA
+                                dict_social_security['Dias'].dict['nDiasLicencia'] = nDiasLicencia
+                                result['nDiasLicencia'] = nDiasLicencia
+                                result['dFechaInicioSLN'] = leave['date_start'] if leave['type'] in ('LICENCIA_NO_REMUNERADA', 'INAS_INJU', 'SANCION', 'SUSP_CONTRATO','DNR') else result.get('dFechaInicioSLN', False)
+                                result['dFechaFinSLN'] = leave['date_end'] if leave['type'] in ('LICENCIA_NO_REMUNERADA', 'INAS_INJU', 'SANCION', 'SUSP_CONTRATO','DNR') else result.get('dFechaFinSLN', False)
+                                # Licencia Remunerada
+                                nDiasLicenciaRenumerada = nDiasLicenciaRenumerada+leave['days'] if leave['type'] in ('LICENCIA_REMUNERADA', 'LUTO','REP_VACACIONES') else nDiasLicenciaRenumerada  # Categoria: LICENCIA_REMUNERADA
+                                dict_social_security['Dias'].dict['nDiasLicenciaRenumerada'] = nDiasLicenciaRenumerada
+                                result['nDiasLicenciaRenumerada'] = nDiasLicenciaRenumerada
+                                result['dFechaInicioVACLR'] = leave['date_start'] if leave['type'] in ('LICENCIA_REMUNERADA', 'LUTO', 'VACDISFRUTADAS', 'REP_VACACIONES') else result.get('dFechaInicioVACLR', False)
+                                result['dFechaFinVACLR'] = leave['date_end'] if leave['type'] in ('LICENCIA_REMUNERADA', 'LUTO', 'VACDISFRUTADAS', 'REP_VACACIONES') else result.get('dFechaFinVACLR', False)
+                                # Maternida
+                                nDiasMaternidad = nDiasMaternidad+leave['days'] if leave['type'] in ('MAT', 'PAT') else nDiasMaternidad # Categoria: LICENCIA_MATERNIDAD
+                                dict_social_security['Dias'].dict['nDiasMaternidad'] = nDiasMaternidad
+                                result['nDiasMaternidad'] = nDiasMaternidad
+                                result['dFechaInicioLMA'] = leave['date_start'] if leave['type'] in ('MAT', 'PAT') else result.get('dFechaInicioLMA', False)
+                                result['dFechaFinLMA'] = leave['date_end'] if leave['type'] in ('MAT', 'PAT') else result.get('dFechaFinLMA', False)
+                                # Vacaciones
+                                nDiasVacaciones = nDiasVacaciones+leave['days'] if leave['type'] == 'VACDISFRUTADAS' else nDiasVacaciones  # Categoria: VACACIONES
+                                dict_social_security['Dias'].dict['nDiasVacaciones'] = nDiasVacaciones
+                                result['nDiasVacaciones'] = nDiasVacaciones
+                                result['dFechaInicioVACLR'] = leave['date_start'] if leave['type'] in ('LICENCIA_REMUNERADA', 'LUTO', 'VACDISFRUTADAS', 'REP_VACACIONES') else result.get('dFechaInicioVACLR', False)
+                                result['dFechaFinVACLR'] = leave['date_end'] if leave['type'] in ('LICENCIA_REMUNERADA', 'LUTO', 'VACDISFRUTADAS', 'REP_VACACIONES') else result.get('dFechaFinVACLR', False)
+                                # ARL
+                                nDiasIncapacidadARP = nDiasIncapacidadARP+leave['days'] if leave['type'] in ('EP', 'AT') else nDiasIncapacidadARP # Categoria: ACCIDENTE_TRABAJO
+                                dict_social_security['Dias'].dict['nDiasIncapacidadARP'] = nDiasIncapacidadARP
+                                result['nDiasIncapacidadARP'] = nDiasIncapacidadARP
+                                result['dFechaInicioIRL'] = leave['date_start'] if leave['type'] in ('EP', 'AT') else result.get('dFechaInicioIRL', False)
+                                result['dFechaFinIRL'] = leave['date_end'] if leave['type'] in ('EP', 'AT') else result.get('dFechaFinIRL', False)
+
+                            obj_executing = self.env['hr.executing.social.security'].create(result)
+
+                            # Valores TOTALES
+                            nValorSaludTotalEmpleado, nValorSaludTotalEmpresa = 0, 0
+                            nValorPensioTotalEmpleado, nValorPensionTotalEmpresa, nValorTotalFondos = 0, 0, 0
+                            nValorSaludTotal, nValorPensionTotal = 0, 0
+                            nRedondeoDecimalesDif = 5  # Max diferencia de decimales
+                            for executing in obj_executing:
+                                # Valores
+                                nPorcAporteSaludEmpleado, nPorcAporteSaludEmpresa, nValorBaseSalud, nValorSaludEmpleado, nValorSaludEmpresa = 0, 0, 0, 0, 0
+                                nPorcAportePensionEmpleado, nPorcAportePensionEmpresa, nValorBaseFondoPension, nValorPensionEmpleado, nValorPensionEmpresa = 0, 0, 0, 0, 0
+                                nPorcFondoSolidaridad, nValorFondoSolidaridad, nValorFondoSubsistencia = 0, 0, 0
+                                nValorBaseARP, nValorARP = 0, 0
+                                nValorBaseCajaCom, nPorcAporteCajaCom, nValorCajaCom = 0, 0, 0
+                                nValorBaseSENA, nPorcAporteSENA, nValorSENA = 0, 0, 0
+                                nValorBaseICBF, nPorcAporteICBF, nValorICBF = 0, 0, 0
+                                # Dias
+                                nDiasLicencia = executing.nDiasLicencia
+                                nDiasVacaciones = executing.nDiasVacaciones
+                                nDiasAusencias = executing.nDiasIncapacidadEPS + executing.nDiasLicencia + executing.nDiasLicenciaRenumerada + executing.nDiasMaternidad + executing.nDiasIncapacidadARP
+                                nDias = executing.nDiasLiquidados + executing.nDiasIncapacidadEPS + executing.nDiasLicencia + executing.nDiasLicenciaRenumerada + executing.nDiasMaternidad + executing.nDiasVacaciones + executing.nDiasIncapacidadARP
+
+                                obj_overtime = self.env['hr.overtime'].search(
+                                    [('employee_id', '=', employee.id), ('date', '>=', date_start),
+                                     ('date_end', '<=', date_end)])
+                                if len(obj_overtime) > 0:
+                                    nDias = round(sum(o.days_actually_worked for o in obj_overtime))#round(sum(o.shift_hours for o in obj_overtime)/8)
+                                    round_hours = sum(o.days_actually_worked for o in obj_overtime) * annual_parameters.hours_daily  # round(sum(o.shift_hours for o in obj_overtime)) #round(sum(o.shift_hours for o in obj_overtime))
+                                    nNumeroHorasLaboradas = round_hours
+                                    nNumeroHorasLaboradas = nNumeroHorasLaboradas
+                                # Calculos valores base dependiendo los días
+                                if nDias > 0:
+                                    #Documentación - http://aportesenlinea.custhelp.com/app/answers/detail/a_id/464/~/condiciones-cotizante-51
+                                    nValorBaseSalud = 0
+                                    nValorBaseFondoPension = 0
+                                    nValorBaseARP = annual_parameters.smmlv_monthly  # "IBC Riesgos Laborales" debe ser igual a un salario mínimo legal mensual vigente.
+                                    nValorBaseCajaCom = 0
+                                    nValorBaseSENA = 0
+                                    nValorBaseICBF = 0
+                                    nValorBaseFondoPension = obj_tipo_coti.get_value_cotizante_51(date_start.year,nDias)
+                                    nValorBaseCajaCom = obj_tipo_coti.get_value_cotizante_51(date_start.year,nDias)
+                                    # ----------------CALCULOS SALUD
+                                    if nValorBaseSalud > 0:
+                                        if bEsAprendiz == False:
+                                            nPorcAporteSaludEmpleado = annual_parameters.value_porc_health_employee
+                                            nValorSaludEmpleado = nValorBaseSalud * (nPorcAporteSaludEmpleado / 100)
+                                        else:
+                                            nValorSaludEmpleado = 0
+                                        if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and nValorBaseSalud >= (annual_parameters.smmlv_monthly * 10)) or bEsAprendiz == True:
+                                            nPorcAporteSaludEmpresa = annual_parameters.value_porc_health_company if not bEsAprendiz else annual_parameters.value_porc_health_employee + annual_parameters.value_porc_health_company
+                                            nValorSaludEmpresa = nValorBaseSalud * (nPorcAporteSaludEmpresa / 100)
+                                        else:
+                                            nPorcAporteSaludEmpresa, nValorSaludEmpresa = 0, 0
+                                        nValorSaludTotal += (nValorSaludEmpleado + nValorSaludEmpresa)
+                                        nValorSaludTotalEmpleado += nValorSaludEmpleado
+                                        nValorSaludTotalEmpresa += nValorSaludEmpresa
+                                    # ----------------CALCULOS PENSION
+                                    if bEsAprendiz == False and obj_subtipo_coti.not_contribute_pension == False:
+                                        if nValorBaseFondoPension > 0:
+                                            nPorcAportePensionEmpleado = annual_parameters.value_porc_pension_employee
+                                            nPorcAportePensionEmpresa = annual_parameters.value_porc_pension_company
+                                            nValorPensionEmpleado = nValorBaseFondoPension * (nPorcAportePensionEmpleado / 100)
+                                            nValorPensionEmpresa = nValorBaseFondoPension * (nPorcAportePensionEmpresa / 100)
+                                            nValorPensionTotal += (nValorPensionEmpleado + nValorPensionEmpresa)
+                                            nValorPensioTotalEmpleado += nValorPensionEmpleado
+                                            nValorPensionTotalEmpresa += nValorPensionEmpresa
+                                    else:
+                                        nValorBaseFondoPension = 0
+                                    # ----------------CALCULOS ARP
+                                    if nValorBaseARP > 0:
+                                        nValorARP = roundup100(nValorBaseARP * nPorcAporteARP / 100)
+                                    # ----------------CALCULOS CAJA DE COMPENSACIÓN
+                                    if bEsAprendiz == False:
+                                        if nValorBaseCajaCom > 0:
+                                            nPorcAporteCajaCom = annual_parameters.value_porc_compensation_box_company
+                                            nValorCajaCom = roundup100(nValorBaseCajaCom * nPorcAporteCajaCom / 100)
+                                    else:
+                                        nValorBaseCajaCom = 0
+                                    # ----------------CALCULOS SENA & ICBF
+                                    if bEsAprendiz == False:
+                                        if not employee.company_id.exonerated_law_1607 or (
+                                                employee.company_id.exonerated_law_1607 and nValorBaseSENA >= (
+                                                annual_parameters.smmlv_monthly * 10)):
+                                            if nValorBaseSENA > 0:
+                                                nPorcAporteSENA = annual_parameters.value_porc_sena_company
+                                                nValorSENA = roundup100(nValorBaseSENA * nPorcAporteSENA / 100)
+                                            if nValorBaseICBF > 0:
+                                                nPorcAporteICBF = annual_parameters.value_porc_icbf_company
+                                                nValorICBF = roundup100(nValorBaseICBF * nPorcAporteICBF / 100)
+                                        else:
+                                            nValorBaseSENA, nValorBaseICBF = 0, 0
+                                            nPorcAporteSENA, nValorSENA = 0, 0
+                                            nPorcAporteICBF, nValorICBF = 0, 0
+                                    else:
+                                        nValorBaseSENA, nValorBaseICBF = 0, 0
+
+                                result_update = {
+                                    'nDiasLiquidados': nDias,
+                                    'nNumeroHorasLaboradas': round(nNumeroHorasLaboradas),
+                                    # Salud
+                                    'nValorBaseSalud': nValorBaseSalud,
+                                    'nPorcAporteSaludEmpleado': nPorcAporteSaludEmpleado if nValorSaludEmpleado > 0 else 0,
+                                    'nValorSaludEmpleado': nValorSaludEmpleado,
+                                    'nPorcAporteSaludEmpresa': nPorcAporteSaludEmpresa if nValorSaludEmpresa > 0 else 0,
+                                    'nValorSaludEmpresa': nValorSaludEmpresa,
+                                    # Pension
+                                    'nValorBaseFondoPension': nValorBaseFondoPension,
+                                    'nPorcAportePensionEmpleado': nPorcAportePensionEmpleado if nValorPensionEmpleado > 0 else 0,
+                                    'nValorPensionEmpleado': nValorPensionEmpleado,
+                                    'nPorcAportePensionEmpresa': nPorcAportePensionEmpresa if nValorPensionEmpresa > 0 else 0,
+                                    'nValorPensionEmpresa': nValorPensionEmpresa,
+                                    # Fondo Solidaridad y Subsistencia
+                                    'nPorcFondoSolidaridad': nPorcFondoSolidaridad,
+                                    'nValorFondoSolidaridad': nValorFondoSolidaridad,
+                                    'nValorFondoSubsistencia': nValorFondoSubsistencia,
+                                    # ARP/ARL - Administradora de riesgos profesionales/laborales
+                                    'nValorBaseARP': nValorBaseARP,
+                                    'nPorcAporteARP': nPorcAporteARP if nValorARP > 0 else 0,
+                                    'nValorARP': nValorARP,
+                                    # Caja de Compensación
+                                    'nValorBaseCajaCom': nValorBaseCajaCom,
+                                    'nPorcAporteCajaCom': nPorcAporteCajaCom if nValorCajaCom > 0 else 0,
+                                    'nValorCajaCom': nValorCajaCom,
+                                    # SENA & ICBF
+                                    'nValorBaseSENA': nValorBaseSENA,
+                                    'nPorcAporteSENA': nPorcAporteSENA if nValorSENA > 0 else 0,
+                                    'nValorSENA': nValorSENA,
+                                    'nValorBaseICBF': nValorBaseICBF,
+                                    'nPorcAporteICBF': nPorcAporteICBF if nValorICBF > 0 else 0,
+                                    'nValorICBF': nValorICBF,
                                 }
-                                try:
-                                    env['hr.errors.social.security'].create(result)
-                                except:
-                                    self.env['hr.errors.social.security'].create(result)
-                    except Exception as e:
-                        result = {
-                            'executing_social_security_id': self.id,
-                            'employee_id':employee.id,
-                            'branch_id':employee.branch_id.id,
-                            'description': str(e.args[0])
-                        }
-                        try:
-                            env['hr.errors.social.security'].create(result)
-                        except:
-                            self.env['hr.errors.social.security'].create(result)
+
+                                result_update['nValorSaludTotal'] = roundup100(nValorSaludTotal)
+                                result_update['nValorPensionTotal'] = roundup100(nValorPensionTotal)
+                                result_update['nValorSaludEmpleadoNomina'] = executing.nValorSaludEmpleadoNomina
+                                result_update['nValorPensionEmpleadoNomina'] = executing.nValorPensionEmpleadoNomina
+                                result_update['nDiferenciaSalud'] = (roundup100(nValorSaludTotal) - (nValorSaludTotalEmpleado + nValorSaludTotalEmpresa)) + (nValorSaludTotalEmpleado - executing.nValorSaludEmpleadoNomina)
+                                result_update['nDiferenciaPension'] = (roundup100(nValorPensionTotal) - (nValorPensioTotalEmpleado + nValorPensionTotalEmpresa)) + ((nValorPensioTotalEmpleado + nValorTotalFondos) - executing.nValorPensionEmpleadoNomina)
+                                executing.write(result_update)
+                        else:
+                            result = {
+                                'executing_social_security_id': self.id,
+                                'employee_id':employee.id,
+                                'branch_id':employee.branch_id.id,
+                                'description': 'No se encontraron liquidaciones para el empleado, por favor verificar'
+                            }
+                            try:
+                                self.env['hr.errors.social.security'].create(result)
+                            except:
+                                self.env['hr.errors.social.security'].create(result)
+                except Exception as e:
+                    result = {
+                        'executing_social_security_id': self.id,
+                        'employee_id':employee.id,
+                        'branch_id':employee.branch_id.id,
+                        'description': str(e.args[0])
+                    }
+                    try:
+                        self.env['hr.errors.social.security'].create(result)
+                    except:
+                        self.env['hr.errors.social.security'].create(result)
     
     def executing_social_security(self,employee_id=0):
         #Eliminar ejecución
         if employee_id == 0:
             self.env['hr.errors.social.security'].search([('executing_social_security_id','=',self.id)]).unlink()
-            self.env['hr.executing.social.security'].search([('executing_social_security_id','=',self.id)]).unlink()
+            # self.env['hr.executing.social.security'].search([('executing_social_security_id','=',self.id)]).unlink()
         else:
             self.env['hr.errors.social.security'].search([('executing_social_security_id', '=', self.id),('employee_id','=',employee_id)]).unlink()
             self.env['hr.executing.social.security'].search([('executing_social_security_id', '=', self.id),('employee_id','=',employee_id)]).unlink()
@@ -1036,12 +1032,16 @@ class hr_payroll_social_security(models.Model):
 
         #Obtener empleados que tuvieron liquidaciones en el mes
         if employee_id == 0:
+            str_employees = '(0)'
+            if len(self.executing_social_security_ids) > 0:
+                str_employees = str(self.executing_social_security_ids.employee_id.ids).replace('[', '(').replace(']', ')')
             query = '''
                 select distinct b.id 
                 from hr_payslip a 
-                inner join hr_employee b on a.employee_id = b.id
+                inner join hr_employee b on a.employee_id = b.id and b.id not in %s
                 where a.state = 'done' and a.company_id = %s and ((a.date_from >= '%s' and a.date_from <= '%s') or (a.date_to >= '%s' and a.date_to <= '%s'))
-            ''' % (self.company_id.id,date_start,date_end,date_start,date_end)
+                Limit %s
+            ''' % (str_employees, self.company_id.id,date_start,date_end,date_start,date_end,self.employees_per_batch)
         else:
             query = '''
                 select distinct b.id 
@@ -1059,40 +1059,34 @@ class hr_payroll_social_security(models.Model):
         obj_employee = self.env['hr.employee'].search([('id', 'in', employee_ids)])
         
         #Guardo los empleados en lotes de a 20
-        employee_array, i, j = [], 0 , 20            
+        limit_employees_per_batch = int(math.ceil(self.employees_per_batch / 5)) if self.employees_per_batch > 100 else self.employees_per_batch
+        employee_array, i, j = [], 0 , limit_employees_per_batch
         while i <= len(obj_employee):                
             employee_array.append(obj_employee[i:j])
             i = j
-            j += 20   
+            j += limit_employees_per_batch
 
-        #Los lotes anteriores, los separo en los de 5, para ejecutar un maximo de 5 hilos
-        employee_array_def, i, j = [], 0 , 5            
-        while i <= len(employee_array):                
-            employee_array_def.append(employee_array[i:j])
-            i = j
-            j += 5  
-
-        #----------------------------Recorrer multihilos
+        #----------------------------Recorrer savepoints
         date_start_process = datetime.now()
         date_finally_process = datetime.now()
-        i = 1
-        for employee in employee_array_def:
-            array_thread = []
-            for emp in employee:
-                t = threading.Thread(target=self.executing_social_security_thread, args=(date_start,date_end,emp,))                
-                t.start()
-                t.join()
-                array_thread.append(t)
-                i += 1   
 
-            for hilo in array_thread:
-                hilo.join()
+        for emp in employee_array:
+            self.executing_social_security_savepoint(date_start,date_end,emp)
 
         date_finally_process = datetime.now()
         time_process = date_finally_process - date_start_process
         time_process = time_process.seconds / 60
 
-        if employee_id == 0:
+        query_verify = '''
+            select distinct b.id 
+            from hr_payslip a 
+            inner join hr_employee b on a.employee_id = b.id
+            where a.state = 'done' and a.company_id = %s and ((a.date_from >= '%s' and a.date_from <= '%s') or (a.date_to >= '%s' and a.date_to <= '%s'))
+        ''' % (self.company_id.id, date_start, date_end, date_start, date_end)
+        self.env.cr.execute(query_verify)
+        result_query_verify = self.env.cr.fetchall()
+
+        if employee_id == 0 and len(self.executing_social_security_ids.employee_id.ids) >= len(result_query_verify):
             self.time_process = "El proceso se demoro {:.2f} minutos.".format(time_process)
             self.state = 'done'
 
