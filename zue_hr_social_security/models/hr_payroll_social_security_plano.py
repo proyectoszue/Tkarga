@@ -12,7 +12,6 @@ import base64
 import io
 import xlsxwriter
 import odoo
-import threading
 import math
 
 class hr_payroll_social_security(models.Model):
@@ -320,7 +319,7 @@ class hr_payroll_social_security(models.Model):
             cIGE = 'X' if item.nDiasIncapacidadEPS > 0 else ' '
             cLMA = 'X' if item.nDiasMaternidad > 0 else ' '
             cVAC = 'X' if item.nDiasVacaciones > 0 else 'L' if item.nDiasLicenciaRenumerada > 0 else ' '
-            cAVP = 'X' if item.nDiasLiquidados > 0 and item.cAVP and item.nAporteVoluntarioPension > 0 else ' '
+            cAVP = 'X' if item.nDiasLiquidados > 0 and item.cAVP and item.nAporteVoluntarioPension > 0 and item.employee_id.z_transitional_regime else ' '
             cVCT = ' '
             IRL = right('00'+str(item.nDiasIncapacidadARP),2)
 
@@ -398,7 +397,7 @@ class hr_payroll_social_security(models.Model):
                 cTarifaPension = left(str((item.nPorcAportePensionEmpleado + item.nPorcAportePensionEmpresa) / 100 ) + '0'*7, 7 )
 
                 cValorAportePension = right('0'*9+str(roundup100(item.nValorPensionEmpresa + item.nValorPensionEmpleado)).split('.')[0],9)
-                cAporteVoluntarioPension = right('0'*9+str(roundup100(item.nAporteVoluntarioPension)).split('.')[0],9) if item.nDiasLiquidados > 0 and item.cAVP and item.nAporteVoluntarioPension > 0 else '0'*9
+                cAporteVoluntarioPension = right('0'*9+str(roundup100(item.nAporteVoluntarioPension)).split('.')[0],9) if item.nDiasLiquidados > 0 and item.cAVP and item.nAporteVoluntarioPension > 0 and item.employee_id.z_transitional_regime else '0'*9
                 cCotizacionVoluntariaEmpresaPension = '0'*9
 
                 cValorAportePensionTotal = right('0'*9+str(roundup100(item.nValorPensionEmpresa + item.nValorPensionEmpleado + item.nAporteVoluntarioPension)).split('.')[0],9)
