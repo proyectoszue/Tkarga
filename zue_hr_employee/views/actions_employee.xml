@@ -250,7 +250,6 @@
                             <field name="date_of_residence_abroad" attrs="{'invisible':[('residente', '=', False)]}"/>
                             <field name="indicador_especial_id"/>
                             <field name="z_transitional_regime"/>
-                            <field name="z_reform_change"/>
                         </group>
                         <newline/>
                         <group name="entidad" string="Entidades">

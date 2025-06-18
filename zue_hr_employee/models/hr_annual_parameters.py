@@ -686,7 +686,6 @@ class zue_fds_annual_parameters(models.Model):
     z_fds_id = fields.Many2one('hr.annual.parameters', string="Fondo de solidaridad y subsistencia")
     z_initial_value = fields.Float('Rango inicial')
     z_final_value = fields.Float('Rango final')
-    #z_reform_change = fields.Boolean('Cambio de reforma')
     z_porcentage_solidarity_fund = fields.Float('Porcentaje Fondo de solidaridad')
     z_porcentage_subsistence_fund = fields.Float('Porcentaje Fondo de subsistencia')
 
