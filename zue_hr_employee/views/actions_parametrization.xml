@@ -301,7 +301,6 @@
                                         <tree editable="bottom">
                                             <field name="z_initial_value"/>
                                             <field name="z_final_value"/>
-<!--                                            <field name="z_reform_change"/>-->
                                             <field name="z_porcentage_solidarity_fund"/>
                                             <field name="z_porcentage_subsistence_fund"/>
                                         </tree>

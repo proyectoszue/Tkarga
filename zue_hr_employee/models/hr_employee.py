@@ -317,7 +317,6 @@ class hr_employee(models.Model):
                                         ('company', 'Compañía')], 'Costo asumido por', tracking=True)
     # Reforma pensional
     z_transitional_regime = fields.Boolean('Pertenece a régimen de transición', tracking=True)
-    z_reform_change = fields.Boolean('Cambio de reforma')
     #Licencia de conducción
     licencia_rh = fields.Selection([('op','O+'),('ap','A+'),('bp','B+'),('abp','AB+'),('on','O-'),('an','A-'),('bn','B-'),('abn','AB-')],'Tipo de sangre', tracking=True)
     licencia_categoria = fields.Selection([('a1','A1'),('a2','A2'),('b1','B1'),('b2','B2'),('b3','B3'),('c1','C1'),('c2','C2'),('c3','C3')],'Categoria', tracking=True)
