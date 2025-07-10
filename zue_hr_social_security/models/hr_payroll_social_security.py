@@ -587,7 +587,7 @@ class hr_payroll_social_security(models.Model):
                                         nValorBaseSENA = nValorDiario * executing.nDiasIncapacidadARP
                                         nValorBaseICBF = nValorDiario * executing.nDiasIncapacidadARP
 
-                                valor_base_sueldo =(Decimal(executing.nSueldo) / Decimal(30)) * Decimal(nDias)
+                                valor_base_sueldo =(Decimal(executing.nSueldo) / Decimal(30)) * Decimal(nDias).quantize(Decimal(1), rounding=ROUND_HALF_UP)
                                 #----------------CALCULOS SALUD
                                 if obj_parameterization_contributors.liquidated_eps_employee or obj_parameterization_contributors.liquidates_eps_company:
                                     if nValorBaseSalud == 0:
