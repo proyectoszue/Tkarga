@@ -286,7 +286,7 @@ class hr_payroll_social_security(models.Model):
                                 #Pension y fondo de solidaridad
                                 nValorBaseFondoPension += line.total if line.salary_rule_id.base_seguridad_social else 0
                                 nValorPensionEmpleadoNomina += abs(line.total) if line.code == 'SSOCIAL002' else 0
-                                nAporteVoluntarioPension += abs(line.total) if line.salary_rule_id.code == 'AVP' and employee.z_transitional_regime else 0
+                                nAporteVoluntarioPension += abs(line.total) if line.salary_rule_id.code == 'AVP' else 0
                                 nValorFondoSubsistencia += abs(line.total) if line.code == 'SSOCIAL003' else 0
                                 nValorFondoSolidaridad += abs(line.total) if line.code == 'SSOCIAL004' else 0
                                 #ARL
