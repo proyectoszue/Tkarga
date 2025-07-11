@@ -315,6 +315,7 @@ class hr_employee(models.Model):
     indicador_especial_id = fields.Many2one('hr.indicador.especial.pila','Indicador tarifa especial pensiones', tracking=True)
     cost_assumed_by  = fields.Selection([('partner', 'Cliente'),
                                         ('company', 'Compañía')], 'Costo asumido por', tracking=True)
+
     #Licencia de conducción
     licencia_rh = fields.Selection([('op','O+'),('ap','A+'),('bp','B+'),('abp','AB+'),('on','O-'),('an','A-'),('bn','B-'),('abn','AB-')],'Tipo de sangre', tracking=True)
     licencia_categoria = fields.Selection([('a1','A1'),('a2','A2'),('b1','B1'),('b2','B2'),('b3','B3'),('c1','C1'),('c2','C2'),('c3','C3')],'Categoria', tracking=True)

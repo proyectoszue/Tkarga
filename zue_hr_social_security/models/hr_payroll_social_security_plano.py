@@ -12,7 +12,6 @@ import base64
 import io
 import xlsxwriter
 import odoo
-import threading
 import math
 
 class hr_payroll_social_security(models.Model):

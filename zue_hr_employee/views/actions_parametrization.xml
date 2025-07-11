@@ -295,6 +295,18 @@
                                     </page>
                                 </notebook>
                             </page>
+                            <page string="Fondo de solidaridad y subsistencia">
+                                <group>
+                                    <field name="z_fds_lines_ids" nolabel="1">
+                                        <tree editable="bottom">
+                                            <field name="z_initial_value"/>
+                                            <field name="z_final_value"/>
+                                            <field name="z_porcentage_solidarity_fund"/>
+                                            <field name="z_porcentage_subsistence_fund"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                            </page>
                         </notebook>
                     </sheet>
                     <div class="oe_chatter">
