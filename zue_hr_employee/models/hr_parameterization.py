@@ -78,7 +78,6 @@ class hr_employee_entities(models.Model):
     code_pila_exterior = fields.Char('Código PILA Reside en el exterior')
     order = fields.Selection([('territorial', 'Orden Territorial'),
                              ('nacional', 'Orden Nacional')], 'Orden de la entidad')
-    z_pension_transitional_regime = fields.Boolean('Fondo de pensiones régimen de transición')
 
     _sql_constraints = [('change_partner_uniq', 'unique(partner_id)', 'Ya existe una entidad asociada a este tercero, por favor verificar')]         
 
