@@ -138,46 +138,55 @@ class hr_executing_provisions(models.Model):
                         else:
                             date_to_process = retirement_date
 
-                    #Simular liquidación de cesantias
-                    Payslip = self.env['hr.payslip']
-                    default_values = Payslip.default_get(Payslip.fields_get())
-                    values = dict(default_values, **{
-                            'employee_id': contract.employee_id.id,
-                            'date_cesantias':date_cesantias,
-                            'date_prima': date_prima,
-                            'date_vacaciones':date_vacation,
-                            'date_from': date_start,
-                            'date_to': date_to_process,
-                            'date_liquidacion':date_to_process,
-                            'contract_id': contract.id,
-                            'struct_id': struct_cesantias.id
-                        })
-                    payslip = self.env['hr.payslip'].new(values)
-                    payslip._onchange_employee()
-                    values = payslip._convert_to_write(payslip._cache)
-                    obj_provision = Payslip.create(values)
+                    #Simular liquidación de contrato
+                    obj_liq_contract_exists = self.env['hr.payslip'].search(
+                        [('contract_id', '=', contract.id), ('struct_id.process', '=', 'contrato'),
+                         ('date_liquidacion', '>=', date_start), ('date_liquidacion', '<=', date_end)], limit=1)
+                    if len(obj_liq_contract_exists) == 1:
+                        result_finally = {}
+                        for liq in obj_liq_contract_exists.line_ids:
+                            liq_dict = {liq.copy_data()[0]['code']:liq.copy_data()[0]}
+                            result_finally = {**result_finally, **liq_dict}
+                    else:
+                        Payslip = self.env['hr.payslip']
+                        default_values = Payslip.default_get(Payslip.fields_get())
+                        values = dict(default_values, **{
+                                'employee_id': contract.employee_id.id,
+                                'date_cesantias':date_cesantias,
+                                'date_prima': date_prima,
+                                'date_vacaciones':date_vacation,
+                                'date_from': date_start,
+                                'date_to': date_to_process,
+                                'date_liquidacion':date_to_process,
+                                'contract_id': contract.id,
+                                'struct_id': struct_cesantias.id
+                            })
+                        payslip = self.env['hr.payslip'].new(values)
+                        payslip._onchange_employee()
+                        values = payslip._convert_to_write(payslip._cache)
+                        obj_provision = Payslip.create(values)
 
-                    if contract.contract_type != 'aprendizaje':
-                        if contract.modality_salary != 'integral':
-                            #Cesantias
-                            obj_provision.write({'struct_id': struct_cesantias.id})
-                            localdict,result_cesantias = obj_provision._get_payslip_lines_cesantias(inherit_contrato=1)
-                            # Intereses de Cesantias
-                            obj_provision.write({'struct_id': struct_intcesantias.id})
-                            localdict, result_intcesantias = obj_provision._get_payslip_lines_cesantias(inherit_contrato=1)
-                            #Prima
-                            obj_provision.write({'struct_id': struct_prima.id})
-                            localdict,result_prima = obj_provision._get_payslip_lines_prima(inherit_contrato=1)
-                        #Vacaciones
-                        obj_provision.write({'struct_id': struct_vacaciones.id})
-                        localdict,result_vac = obj_provision._get_payslip_lines_vacation(inherit_contrato=1)
+                        if contract.contract_type != 'aprendizaje':
+                            if contract.modality_salary != 'integral':
+                                #Cesantias
+                                obj_provision.write({'struct_id': struct_cesantias.id})
+                                localdict,result_cesantias = obj_provision._get_payslip_lines_cesantias(inherit_contrato=1)
+                                # Intereses de Cesantias
+                                obj_provision.write({'struct_id': struct_intcesantias.id})
+                                localdict, result_intcesantias = obj_provision._get_payslip_lines_cesantias(inherit_contrato=1)
+                                #Prima
+                                obj_provision.write({'struct_id': struct_prima.id})
+                                localdict,result_prima = obj_provision._get_payslip_lines_prima(inherit_contrato=1)
+                            #Vacaciones
+                            obj_provision.write({'struct_id': struct_vacaciones.id})
+                            localdict,result_vac = obj_provision._get_payslip_lines_vacation(inherit_contrato=1)
 
 
-                    obj_provision.action_payslip_cancel()
-                    obj_provision.unlink()
+                        obj_provision.action_payslip_cancel()
+                        obj_provision.unlink()
 
-                    #Guardar resultado
-                    result_finally = {**result_cesantias,**result_intcesantias,**result_prima,**result_vac}
+                        #Guardar resultado
+                        result_finally = {**result_cesantias,**result_intcesantias,**result_prima,**result_vac}
 
                     #Restar las provisiones anteriores
                     for line in result_finally.values():
