@@ -40,7 +40,7 @@ class hr_payroll_social_security(models.Model):
                             ('9', 'Septiembre'),
                             ('10', 'Octubre'),
                             ('11', 'Noviembre'),
-                            ('12', 'Diciembre')        
+                            ('12', 'Diciembre')
                             ], string='Mes', required=True, tracking=True)
     observations = fields.Text('Observaciones', tracking=True)
     state = fields.Selection([
@@ -152,6 +152,8 @@ class hr_payroll_social_security(models.Model):
                                         obj_subtipo_coti = history_ss.z_subtipo_coti_id
                                         break
 
+                        obj_tipo_coti = employee.tipo_coti_id if len(obj_tipo_coti) == 0 else obj_tipo_coti
+                        obj_subtipo_coti = employee.subtipo_coti_id if len(obj_subtipo_coti) == 0 else obj_subtipo_coti
                         obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
                             [('type_of_contributor', '=', obj_tipo_coti.id),
                              ('contributor_subtype', '=', obj_subtipo_coti.id)], limit=1)
@@ -282,10 +284,34 @@ class hr_payroll_social_security(models.Model):
                                     dict_social_security['BaseSeguridadSocial'].dict['DEV_NO_SALARIAL'] = dict_social_security['BaseSeguridadSocial'].dict.get('DEV_NO_SALARIAL',0) - line.total
                                 #Salud
                                 nValorBaseSalud += line.total if line.salary_rule_id.base_seguridad_social else 0
-                                nValorSaludEmpleadoNomina += abs(line.total) if line.code == 'SSOCIAL001' else 0
-                                #Pension y fondo de solidaridad
-                                nValorBaseFondoPension += line.total if line.salary_rule_id.base_seguridad_social else 0
-                                nValorPensionEmpleadoNomina += abs(line.total) if line.code == 'SSOCIAL002' else 0
+                                # nValorSaludEmpleadoNomina += abs(line.total) if line.code == 'SSOCIAL001' else 0
+                                if line.code == 'SSOCIAL001':
+                                    # Calcular días dentro del período de nómina
+                                    period_days = self.dias360(max(line.date_from, date_start), min(line.date_to, date_end))
+                                    period_days = 1 if period_days == 0 else period_days
+                                    # Obtener totalidad de días
+                                    if payslip.struct_id.process == 'vacaciones':
+                                        total_days = self.dias360(line.date_from, line.date_to)
+                                        total_days = 1 if total_days == 0 else total_days
+                                    else:
+                                        total_days = self.dias360(line.date_from, line.date_to)
+                                        total_days = 1 if total_days == 0 else total_days
+                                    nValorSaludEmpleadoNomina += abs(line.total) * (period_days / total_days)
+                                    # Pension y fondo de solidaridad
+                                    nValorBaseFondoPension += line.total if line.salary_rule_id.base_seguridad_social else 0
+                                    # nValorPensionEmpleadoNomina += abs(line.total) if line.code == 'SSOCIAL002' else 0
+                                    if line.code == 'SSOCIAL002':
+                                        # Calcular días dentro del período de nómina
+                                        period_days = self.dias360(max(line.date_from, date_start), min(line.date_to, date_end))
+                                        period_days = 1 if period_days == 0 else period_days
+                                        # Obtener totalidad de días
+                                        if payslip.struct_id.process == 'vacaciones':
+                                            total_days = self.dias360(line.date_from, line.date_to)
+                                            total_days = 1 if total_days == 0 else total_days
+                                        else:
+                                            total_days = self.dias360(line.date_from, line.date_to)
+                                            total_days = 1 if total_days == 0 else total_days
+                                        nValorPensionEmpleadoNomina += abs(line.total) * (period_days / total_days)
                                 nAporteVoluntarioPension += abs(line.total) if line.salary_rule_id.code == 'AVP' else 0
                                 nValorFondoSubsistencia += abs(line.total) if line.code == 'SSOCIAL003' else 0
                                 nValorFondoSolidaridad += abs(line.total) if line.code == 'SSOCIAL004' else 0
@@ -356,12 +382,14 @@ class hr_payroll_social_security(models.Model):
                             obj_executing = self.env['hr.executing.social.security'].create(result)
 
                             #Una vez creada la linea principal, se obtienen las ausencias con sus respectivas fechas y se recalculan las lineas
+                            nDiasIncapacidadEPSTotal = 0
                             for leave in leave_list:
                                 result['leave_id'] = leave['id']
                                 result['nDiasLiquidados'] = 0
                                 result['nNumeroHorasLaboradas'] = 0
                                 #Incapacidad EPS
                                 nDiasIncapacidadEPS = leave['days'] if leave['type'] in ('EGA','EGH') else 0 # Categoria: INCAPACIDAD
+                                nDiasIncapacidadEPSTotal += leave['days_totals'] if leave['type'] in ('EGA', 'EGH') else 0
                                 dict_social_security['Dias'].dict['nDiasIncapacidadEPS'] = dict_social_security['Dias'].dict.get('nDiasIncapacidadEPS', 0) + nDiasIncapacidadEPS
                                 result['nDiasIncapacidadEPS'] = nDiasIncapacidadEPS
                                 result['dFechaInicioIGE'] = leave['date_start'] if leave['type'] in ('EGA','EGH') else False
@@ -509,14 +537,25 @@ class hr_payroll_social_security(models.Model):
 
                                 if executing.nDiasIncapacidadEPS > 0:
                                     if dict_social_security['BaseSeguridadSocial'].dict.get('INCAPACIDAD', 0) > 0:
-                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['INCAPACIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadEPS']))
-                                        nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
+                                        if nDiasIncapacidadEPSTotal >= 180:
+                                            nValorDiario = salario_minimo_diario
+                                        else:
+                                            nValorDiario = Decimal(Decimal(
+                                                dict_social_security['BaseSeguridadSocial'].dict[
+                                                    'INCAPACIDAD']) / Decimal(
+                                                dict_social_security['Dias'].dict['nDiasIncapacidadEPS']))
+                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                         nValorBaseSalud = nValorDiario * executing.nDiasIncapacidadEPS
                                         nValorBaseFondoPension = nValorDiario * executing.nDiasIncapacidadEPS
                                         nValorBaseARP = nValorDiario * executing.nDiasIncapacidadEPS
-                                    if dict_social_security['BaseParafiscales'].dict.get('INCAPACIDAD',0) > 0:
-                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['INCAPACIDAD']) / Decimal(dict_social_security['Dias'].dict['nDiasIncapacidadEPS']))
-                                        nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
+                                    if dict_social_security['BaseParafiscales'].dict.get('INCAPACIDAD', 0) > 0:
+                                        if nDiasIncapacidadEPSTotal >= 180:
+                                            nValorDiario = salario_minimo_diario
+                                        else:
+                                            nValorDiario = Decimal(Decimal(
+                                                dict_social_security['BaseParafiscales'].dict['INCAPACIDAD']) / Decimal(
+                                                dict_social_security['Dias'].dict['nDiasIncapacidadEPS']))
+                                            nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                         nValorBaseCajaCom = nValorDiario * executing.nDiasIncapacidadEPS
                                         nValorBaseSENA = nValorDiario * executing.nDiasIncapacidadEPS
                                         nValorBaseICBF = nValorDiario * executing.nDiasIncapacidadEPS
@@ -587,7 +626,11 @@ class hr_payroll_social_security(models.Model):
                                         nValorBaseSENA = nValorDiario * executing.nDiasIncapacidadARP
                                         nValorBaseICBF = nValorDiario * executing.nDiasIncapacidadARP
 
-                                valor_base_sueldo =(Decimal(executing.nSueldo) / Decimal(30)) * Decimal(nDias).quantize(Decimal(1), rounding=ROUND_HALF_UP)
+                                if executing.nDiasIncapacidadEPS > 0 and nDiasIncapacidadEPSTotal >= 180:
+                                    valor_base_sueldo = salario_minimo_diario * executing.nDiasIncapacidadEPS
+                                else:
+                                    #valor_base_sueldo = (Decimal(executing.nSueldo) / Decimal(30)) * Decimal(nDias)
+                                    valor_base_sueldo = ((Decimal(executing.nSueldo) / Decimal(30)) * Decimal(nDias)).quantize(Decimal(1), rounding=ROUND_HALF_UP)
                                 #----------------CALCULOS SALUD
                                 if obj_parameterization_contributors.liquidated_eps_employee or obj_parameterization_contributors.liquidates_eps_company:
                                     if nValorBaseSalud == 0:
@@ -597,13 +640,13 @@ class hr_payroll_social_security(models.Model):
                                     #nValorBaseSalud = (valor_base_sueldo) if nValorBaseSalud == 0 else (nValorBaseSalud)
                                     if nValorBaseSalud > 0:
                                         nValorBaseSalud = annual_parameters.top_twenty_five_smmlv if nValorBaseSalud >= annual_parameters.top_twenty_five_smmlv else nValorBaseSalud
-                                        if bEsAprendiz == False:
+                                        if obj_parameterization_contributors.liquidated_eps_employee:
                                             nPorcAporteSaludEmpleado = annual_parameters.value_porc_health_employee
                                             nValorSaludEmpleado = nValorBaseSalud*(nPorcAporteSaludEmpleado/100) if nDiasLicencia==0 else 0
                                         else:
                                             nValorSaludEmpleado = 0
                                         if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and (nValorBaseSalud >= (annual_parameters.smmlv_monthly*10) or dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL',0) >= (annual_parameters.smmlv_monthly*10))) or bEsAprendiz == True:
-                                            nPorcAporteSaludEmpresa = annual_parameters.value_porc_health_company if not bEsAprendiz else annual_parameters.value_porc_health_employee+annual_parameters.value_porc_health_company
+                                            nPorcAporteSaludEmpresa = annual_parameters.value_porc_health_company if not bEsAprendiz or (bEsAprendiz and obj_parameterization_contributors.liquidates_eps_company) else annual_parameters.value_porc_health_employee+annual_parameters.value_porc_health_company
                                             nValorSaludEmpresa = nValorBaseSalud*(nPorcAporteSaludEmpresa/100)
                                         else:
                                             nPorcAporteSaludEmpresa,nValorSaludEmpresa = 0,0
@@ -613,7 +656,7 @@ class hr_payroll_social_security(models.Model):
                                 else:
                                     nValorBaseSalud = 0
                                 #----------------CALCULOS PENSION
-                                if bEsAprendiz == False and obj_subtipo_coti.not_contribute_pension == False and (obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidates_solidarity_fund):
+                                if obj_subtipo_coti.not_contribute_pension == False and (obj_parameterization_contributors.liquidate_employee_pension or obj_parameterization_contributors.liquidated_company_pension or obj_parameterization_contributors.liquidates_solidarity_fund):
                                     if nValorBaseFondoPension == 0:
                                         nValorBaseFondoPension = float(roundupdecimal(valor_base_sueldo))
                                     else:
@@ -676,7 +719,7 @@ class hr_payroll_social_security(models.Model):
                                 else:
                                     nValorBaseARP = 0
                                 #----------------CALCULOS CAJA DE COMPENSACIÓN
-                                if bEsAprendiz == False and obj_parameterization_contributors.liquidated_compensation_fund:
+                                if obj_parameterization_contributors.liquidated_compensation_fund:
                                     if nValorBaseCajaCom == 0:
                                         nValorBaseCajaCom = float(roundupdecimal(valor_base_sueldo))
                                     else:
@@ -688,7 +731,7 @@ class hr_payroll_social_security(models.Model):
                                 else:
                                     nValorBaseCajaCom = 0
                                 #----------------CALCULOS SENA & ICBF
-                                if bEsAprendiz == False and obj_parameterization_contributors.liquidated_sena and obj_parameterization_contributors.liquidated_icbf:
+                                if obj_parameterization_contributors.liquidated_sena and obj_parameterization_contributors.liquidated_icbf:
                                     if nValorBaseSENA == 0:
                                         nValorBaseSENA = float(roundupdecimal(valor_base_sueldo))
                                     else:
@@ -765,7 +808,7 @@ class hr_payroll_social_security(models.Model):
 
                                 executing.write(result_update)
 
-                                if executing.nDiasLiquidados == 0 and executing.nDiasIncapacidadEPS == 0 and executing.nDiasLicencia == 0 and executing.nDiasLicenciaRenumerada == 0 and executing.nDiasMaternidad == 0 and executing.nDiasVacaciones == 0 and executing.nDiasIncapacidadARP == 0 and executing.dependent_upc_id == False:
+                                if executing.nDiasLiquidados == 0 and executing.nDiasIncapacidadEPS == 0 and executing.nDiasLicencia == 0 and executing.nDiasLicenciaRenumerada == 0 and executing.nDiasMaternidad == 0 and executing.nDiasVacaciones == 0 and executing.nDiasIncapacidadARP == 0 and not executing.dependent_upc_id:
                                     executing.unlink()
 
                                 item += 1
@@ -1007,7 +1050,7 @@ class hr_payroll_social_security(models.Model):
                         self.env['hr.errors.social.security'].create(result)
                     except:
                         self.env['hr.errors.social.security'].create(result)
-    
+
     def executing_social_security(self,employee_id=0):
         #Eliminar ejecución
         if employee_id == 0:
@@ -1020,11 +1063,11 @@ class hr_payroll_social_security(models.Model):
         #Obtener fechas del periodo seleccionado
         date_start = '01/'+str(self.month)+'/'+str(self.year)
         try:
-            date_start = datetime.strptime(date_start, '%d/%m/%Y')       
+            date_start = datetime.strptime(date_start, '%d/%m/%Y')
 
             date_end = date_start + relativedelta(months=1)
             date_end = date_end - timedelta(days=1)
-            
+
             date_start = date_start.date()
             date_end = date_end.date()
         except:
@@ -1057,11 +1100,11 @@ class hr_payroll_social_security(models.Model):
         for result in result_query:
             employee_ids.append(result)
         obj_employee = self.env['hr.employee'].search([('id', 'in', employee_ids)])
-        
+
         #Guardo los empleados en lotes de a 20
         limit_employees_per_batch = int(math.ceil(self.employees_per_batch / 5)) if self.employees_per_batch > 100 else self.employees_per_batch
         employee_array, i, j = [], 0 , limit_employees_per_batch
-        while i <= len(obj_employee):                
+        while i <= len(obj_employee):
             employee_array.append(obj_employee[i:j])
             i = j
             j += limit_employees_per_batch
