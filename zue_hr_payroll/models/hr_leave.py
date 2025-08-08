@@ -221,7 +221,29 @@ class HolidaysRequest(models.Model):
             vals['employee_identification'] = obj_employee.identification_id            
         
         res = super(HolidaysRequest, self).create(vals)
+        res.validate_number_of_days_child_care_license()
         return res
+
+    def write(self, vals):
+        res = super().write(vals)
+        self.validate_number_of_days_child_care_license()
+        return res
+
+    def validate_number_of_days_child_care_license(self):
+        for record in self:
+            if not record.holiday_status_id or record.holiday_status_id.code != 'LICENCIA_CUIDADO_NIÑEZ':
+                continue
+            year_start = datetime(datetime.today().year, 1, 1).date()
+            year_end = datetime(datetime.today().year, 12, 31).date()
+            # Obtener ausencias aprobadas
+            validate_leaves = self.env['hr.leave'].search([
+                ('employee_id', '=', record.employee_id.id), ('holiday_status_id', '=', record.holiday_status_id.id), ('state', '=', 'validate'),
+                ('request_date_from', '>=', year_start), ('request_date_to', '<=', year_end), ('id', '!=', record.id)
+            ])
+            accumulated_days = sum(validate_leaves.mapped('number_of_days'))
+            updated_total = accumulated_days + record.number_of_days
+            if updated_total > 10:
+                raise ValidationError(f'El empleado ha tomado {accumulated_days} días de licencia por cuidado de la niñez. Agregar esta solicitud excedería el límite anual de 10 días.')
 
     def add_extension(self):
         return {
