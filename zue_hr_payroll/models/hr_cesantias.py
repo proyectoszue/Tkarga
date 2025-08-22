@@ -98,7 +98,11 @@ class Hr_payslip(models.Model):
         employee = self.employee_id
         contract = self.contract_id
 
-        if contract.modality_salary == 'integral' or contract.contract_type == 'aprendizaje' or contract.subcontract_type == 'obra_integral':
+        obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
+            [('type_of_contributor', '=', employee.tipo_coti_id.id),
+             ('contributor_subtype', '=', employee.subtipo_coti_id.id)], limit=1)
+
+        if len(obj_parameterization_contributors) == 0 or (len(obj_parameterization_contributors) > 0 and not obj_parameterization_contributors.liquidated_provisions) or contract.modality_salary == 'integral' or contract.subcontract_type == 'obra_integral':
             return result.values()
 
         year = self.date_from.year
