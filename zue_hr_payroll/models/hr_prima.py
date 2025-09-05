@@ -88,6 +88,10 @@ class Hr_payslip(models.Model):
         employee = self.employee_id
         contract = self.contract_id
 
+        obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
+            [('type_of_contributor', '=', employee.tipo_coti_id.id),
+             ('contributor_subtype', '=', employee.subtipo_coti_id.id)], limit=1)
+
         # Se eliminan registros actuales para el periodo ejecutado de Retención en la fuente
         self.env['hr.employee.deduction.retention'].search(
             [('employee_id', '=', employee.id), ('year', '=', self.date_to.year),
@@ -95,7 +99,7 @@ class Hr_payslip(models.Model):
         self.env['hr.employee.rtefte'].search([('employee_id', '=', employee.id), ('year', '=', self.date_to.year),
                                                ('month', '=', self.date_to.month)]).unlink()
 
-        if contract.modality_salary == 'integral' or contract.contract_type == 'aprendizaje' or contract.subcontract_type == 'obra_integral':
+        if len(obj_parameterization_contributors) == 0 or (len(obj_parameterization_contributors) > 0 and not obj_parameterization_contributors.liquidated_provisions) or contract.modality_salary == 'integral' or contract.subcontract_type == 'obra_integral':
             return result.values()
 
         year = self.date_from.year
@@ -164,7 +168,7 @@ class Hr_payslip(models.Model):
                         end_process_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
                         obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '>', initial_process_date), ('date_start', '<=', end_process_date)])
                         if prima_salary_take and len(obj_wage) > 0:
-                            initial_validate_date = self.date_prima if inherit_contrato != 0 else self.date_to - relativedelta(months=6)
+                            initial_validate_date = self.date_prima if inherit_contrato != 0 else self.date_to - timedelta(days=180)
                             end_validate_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
                             obj_wage_of_year = self.env['hr.payslip.line'].search(
                                 [('slip_id.state', 'in', ['done', 'paid']),
