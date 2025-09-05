@@ -166,7 +166,32 @@ class hr_executing_provisions(models.Model):
                         values = payslip._convert_to_write(payslip._cache)
                         obj_provision = Payslip.create(values)
 
-                        if contract.contract_type != 'aprendizaje':
+                        # Obtener parametrización de cotizantes
+                        # Obtener tipo y subtipo de cotizante de acuerdo a la fecha
+                        datetime_start = datetime.combine(date_start, datetime.min.time())
+                        obj_tipo_coti = contract.employee_id.tipo_coti_id
+                        obj_subtipo_coti = contract.employee_id.subtipo_coti_id
+                        obj_history_social_security = self.env['zue.hr.history.employee.social.security'].search([('z_employee_id.id', '=', contract.employee_id.id)])
+                        if len(obj_history_social_security) > 0:
+                            for history_ss in sorted(obj_history_social_security, key=lambda x: x.z_date_change):
+                                if contract.state != 'open' and contract.id != contract.employee_id.contract_id.id:
+                                    if contract.date_start >= history_ss.z_date_change and contract.employee_id.contract_id.date_start <= history_ss.z_date_change and date_start >= history_ss.z_date_change and date_end <= history_ss.z_date_change:
+                                        obj_tipo_coti = history_ss.z_tipo_coti_id
+                                        obj_subtipo_coti = history_ss.z_subtipo_coti_id
+                                        break
+                                else:
+                                    if datetime_start.date() < history_ss.z_date_change:
+                                        obj_tipo_coti = history_ss.z_tipo_coti_id
+                                        obj_subtipo_coti = history_ss.z_subtipo_coti_id
+                                        break
+
+                        obj_tipo_coti = contract.employee_id.tipo_coti_id if len(obj_tipo_coti) == 0 else obj_tipo_coti
+                        obj_subtipo_coti = contract.employee_id.subtipo_coti_id if len(obj_subtipo_coti) == 0 else obj_subtipo_coti
+                        obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
+                            [('type_of_contributor', '=', obj_tipo_coti.id),
+                             ('contributor_subtype', '=', obj_subtipo_coti.id)], limit=1)
+
+                        if len(obj_parameterization_contributors) > 0 and obj_parameterization_contributors.liquidated_provisions:
                             if contract.modality_salary != 'integral':
                                 #Cesantias
                                 obj_provision.write({'struct_id': struct_cesantias.id})
@@ -389,7 +414,9 @@ class hr_executing_provisions(models.Model):
         query = '''
                     select distinct b.id 
                     from hr_payslip a
-                    inner join hr_contract b on a.contract_id = b.id and (b.subcontract_type not in ('obra_integral') or b.subcontract_type is null) and contract_type != 'aprendizaje'
+                    inner join hr_contract b on a.contract_id = b.id and (b.subcontract_type not in ('obra_integral') or b.subcontract_type is null)
+                    inner join hr_employee c on a.employee_id = c.id
+                    inner join hr_parameterization_of_contributors d on c.tipo_coti_id = d.type_of_contributor and c.subtipo_coti_id = d.contributor_subtype and d.liquidated_provisions = true
                     where a.state = 'done' and a.company_id = %s and ((a.date_from >= '%s' and a.date_from <= '%s') or (a.date_to >= '%s' and a.date_to <= '%s'))
                 ''' % (self.env.company.id, date_start, date_end, date_start, date_end)
         self.env.cr.execute(query)

@@ -120,6 +120,7 @@
                                 <field name="liquidated_aux_transport"/>
                                 <field name="liquidated_sena"/>
                                 <field name="liquidated_icbf"/>
+                                <field name="liquidated_provisions"/>
                             </group>
                         </group>
                     </sheet>
