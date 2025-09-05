@@ -300,18 +300,18 @@ class hr_payroll_social_security(models.Model):
                                     # Pension y fondo de solidaridad
                                     nValorBaseFondoPension += line.total if line.salary_rule_id.base_seguridad_social else 0
                                     # nValorPensionEmpleadoNomina += abs(line.total) if line.code == 'SSOCIAL002' else 0
-                                    if line.code == 'SSOCIAL002':
-                                        # Calcular días dentro del período de nómina
-                                        period_days = self.dias360(max(line.date_from, date_start), min(line.date_to, date_end))
-                                        period_days = 1 if period_days == 0 else period_days
-                                        # Obtener totalidad de días
-                                        if payslip.struct_id.process == 'vacaciones':
-                                            total_days = self.dias360(line.date_from, line.date_to)
-                                            total_days = 1 if total_days == 0 else total_days
-                                        else:
-                                            total_days = self.dias360(line.date_from, line.date_to)
-                                            total_days = 1 if total_days == 0 else total_days
-                                        nValorPensionEmpleadoNomina += abs(line.total) * (period_days / total_days)
+                                if line.code == 'SSOCIAL002':
+                                    # Calcular días dentro del período de nómina
+                                    period_days = self.dias360(max(line.date_from, date_start), min(line.date_to, date_end))
+                                    period_days = 1 if period_days == 0 else period_days
+                                    # Obtener totalidad de días
+                                    if payslip.struct_id.process == 'vacaciones':
+                                        total_days = self.dias360(line.date_from, line.date_to)
+                                        total_days = 1 if total_days == 0 else total_days
+                                    else:
+                                        total_days = self.dias360(line.date_from, line.date_to)
+                                        total_days = 1 if total_days == 0 else total_days
+                                    nValorPensionEmpleadoNomina += abs(line.total) * (period_days / total_days)
                                 nAporteVoluntarioPension += abs(line.total) if line.salary_rule_id.code == 'AVP' else 0
                                 nValorFondoSubsistencia += abs(line.total) if line.code == 'SSOCIAL003' else 0
                                 nValorFondoSolidaridad += abs(line.total) if line.code == 'SSOCIAL004' else 0
@@ -1132,6 +1132,19 @@ class hr_payroll_social_security(models.Model):
         if employee_id == 0 and len(self.executing_social_security_ids.employee_id.ids) >= len(result_query_verify):
             self.time_process = "El proceso se demoro {:.2f} minutos.".format(time_process)
             self.state = 'done'
+        else:
+            self.env['hr.errors.social.security'].search([('executing_social_security_id', '=', self.id), ('description', '=', 'EMPLEADO FALTANTE POR EJECUTAR')]).unlink()
+            ids_execute = set(self.executing_social_security_ids.employee_id.ids)
+            ids_x_execute = set([tupla[0] for tupla in result_query_verify])
+            ids_diff = list(ids_x_execute - ids_execute)
+            for diff in ids_diff:
+                result = {
+                    'executing_social_security_id': self.id,
+                    'employee_id': diff,
+                    'branch_id': False,
+                    'description': 'EMPLEADO FALTANTE POR EJECUTAR'
+                }
+                self.env['hr.errors.social.security'].create(result)
 
     def get_accounting(self):
         line_ids = []
