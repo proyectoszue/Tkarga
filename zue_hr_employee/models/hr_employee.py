@@ -53,6 +53,7 @@ class hr_parameterization_of_contributors(models.Model):
     liquidated_sena = fields.Boolean('Liquida SENA')
     liquidated_icbf = fields.Boolean('Liquida ICBF')
     liquidated_compensation_fund = fields.Boolean('Liquida Caja de Compensación')
+    liquidated_provisions = fields.Boolean('Liquida Provisiones')
 
     _sql_constraints = [('parameterization_type_of_contributor_uniq', 'unique(type_of_contributor,contributor_subtype)', 'Ya existe esta parametrizacion de tipo de cotizante y subtipo de cotizante, por favor verficar.')]
 
