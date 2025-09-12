@@ -202,6 +202,7 @@ class hr_contract(models.Model):
     sequence = fields.Char(string="Secuencia", default="/", readonly=True)
     retirement_date = fields.Date('Fecha retiro', tracking=True)
     z_employer_replacement_date = fields.Date('Fecha de sustitución patronal', tracking=True)
+    z_previous_start_date = fields.Date('Fecha inicial del beneficio', tracking=True)
     change_wage_ids = fields.One2many('hr.contract.change.wage', 'contract_id', 'Cambios salario', copy=True)
     concepts_ids = fields.One2many('hr.contract.concepts', 'contract_id', 'Devengos & Deducciones', copy=True)
     contract_modification_history = fields.One2many('hr.contractual.modifications', 'contract_id','Modificaciones contractuales', copy=True)
