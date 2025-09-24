@@ -93,12 +93,11 @@ class Hr_payslip(models.Model):
              ('contributor_subtype', '=', employee.subtipo_coti_id.id)], limit=1)
 
         # Se eliminan registros actuales para el periodo ejecutado de Retención en la fuente
-        # Se comenta en base a la historia Validar bases de retención cuando la liquidación esta registrada
-        # self.env['hr.employee.deduction.retention'].search(
-        #     [('employee_id', '=', employee.id), ('year', '=', self.date_to.year),
-        #      ('month', '=', self.date_to.month)]).unlink()
-        # self.env['hr.employee.rtefte'].search([('employee_id', '=', employee.id), ('year', '=', self.date_to.year),
-        #                                        ('month', '=', self.date_to.month)]).unlink()
+        self.env['hr.employee.deduction.retention'].search(
+            [('employee_id', '=', employee.id), ('year', '=', self.date_to.year),
+             ('month', '=', self.date_to.month)]).unlink()
+        self.env['hr.employee.rtefte'].search([('employee_id', '=', employee.id), ('year', '=', self.date_to.year),
+                                               ('month', '=', self.date_to.month)]).unlink()
 
         if len(obj_parameterization_contributors) == 0 or (len(obj_parameterization_contributors) > 0 and not obj_parameterization_contributors.liquidated_provisions) or contract.modality_salary == 'integral' or contract.subcontract_type == 'obra_integral':
             return result.values()

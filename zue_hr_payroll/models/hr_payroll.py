@@ -700,9 +700,8 @@ class Hr_payslip(models.Model):
         annual_parameters = self.env['hr.annual.parameters'].search([('year', '=', year)])
 
         #Se eliminan registros actuales para el periodo ejecutado de Retención en la fuente
-        # Se comenta en base a la historia Validar bases de retención cuando la liquidación esta registrada
-        #self.env['hr.employee.deduction.retention'].search([('employee_id', '=', employee.id),('year', '=', self.date_from.year),('month', '=', self.date_from.month)]).unlink()
-        #self.env['hr.employee.rtefte'].search([('employee_id', '=', employee.id),('year', '=', self.date_from.year),('month', '=', self.date_from.month)]).unlink()
+        self.env['hr.employee.deduction.retention'].search([('employee_id', '=', employee.id),('year', '=', self.date_from.year),('month', '=', self.date_from.month)]).unlink()
+        self.env['hr.employee.rtefte'].search([('employee_id', '=', employee.id),('year', '=', self.date_from.year),('month', '=', self.date_from.month)]).unlink()
 
         #Se obtienen las entradas de trabajo
         date_from = datetime.combine(self.date_from, datetime.min.time())
