@@ -7,9 +7,6 @@
                 <t t-name="hr_payroll.report_payslip">
                     <t t-set="o" t-value="o.with_context(lang=o.employee_id.address_home_id.lang or o.env.lang)"/>
                     <div class="page" style="font-style: normal; font-size: 12px;">
-                        <t t-set="basic_salary" t-value="o.employee_id.contract_ids.get_wage_in_date(o.date_to) or 0.0"/>
-                        <t t-set="hours_months" t-value="sum([wd.number_of_hours for wd in o.worked_days_line_ids.filtered(lambda w: w.work_entry_type_id.code == 'WORK100')]) or 0.0"/>
-                        <t t-set="standard_hour_value" t-value="basic_salary / (hours_months or 1.0)"/>
                         <h6 style="text-align:center;">
                             <b>DESPRENDIBLE DE NÓMINA</b>
                         </h6>
@@ -89,12 +86,8 @@
                                 <td style="border:none;">
                                     <span t-field="o.number"/>
                                 </td>
-                                <td style="border:none;">
-                                    <b>Valor hora estándar:</b>
-                                </td>
-                                <td style="border:none;">
-                                    <span t-esc="standard_hour_value" t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
-                                </td>
+                                <td style="border:none;"/>
+                                <td style="border:none;"/>
                             </tr>
                         </table>
 
@@ -130,7 +123,6 @@
                                     <th>ENTIDAD</th>
                                     <th>TIPO</th>
                                     <th>CANT.</th>
-                                    <th>UNITARIOS</th>
                                     <th>DEVENGADOS</th>
                                     <th>DEDUCIDOS</th>
                                 </tr>
@@ -210,20 +202,6 @@
                                                         </t>
                                                         <t t-else="">
                                                             <span t-field="line.quantity"/>
-                                                        </t>
-                                                    </t>
-                                                </td>
-                                                <t t-set="unit_val_worked_days" t-value="(line.quantity and (line.total / worked_days.number_of_days)) or 0.0"/>
-                                                <t t-set="unit_val" t-value="(line.quantity and (line.total / line.quantity)) or 0.0"/>
-                                                <td style="width: 14%">
-                                                    <!-- Valores unitarios para salario básico-->
-                                                    <t t-if="line.quantity and line.code == 'BASIC'">
-                                                        <span t-esc="unit_val_worked_days" t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
-                                                    </t>
-                                                    <!-- Valores unitarios para otras categorías-->
-                                                    <t t-else="">
-                                                        <t t-if="line.quantity and unit_val">
-                                                            <span t-esc="unit_val" t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
                                                         </t>
                                                     </t>
                                                 </td>
