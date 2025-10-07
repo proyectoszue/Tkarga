@@ -11,6 +11,7 @@ import base64
 import io
 import uuid
 import time
+import unicodedata
 
 class hr_electronic_payroll_detail(models.Model):
     _name = 'hr.electronic.payroll.detail'
@@ -68,6 +69,28 @@ class hr_electronic_payroll_detail(models.Model):
                 xml = xml.decode('utf-8').replace('SchemaLocation=""','SchemaLocation="" xsi:schemaLocation="dian:gov:co:facturaelectronica:NominaIndividual NominaIndividualElectronicaXSD.xsd"')
                 xml = xml.replace('<UBLExtensions> </UBLExtensions>','<ext:UBLExtensions/>')
                 xml = bytes(xml, 'utf-8')
+            try:
+                if isinstance(xml, str):
+                    xml = xml.encode('utf-8')
+                root = etree.fromstring(xml)
+                for el in root.iter():
+                    # Textos
+                    if el.text:
+                        el.text = self.electronic_payroll_id._normalize_string(el.text)
+                    if el.tail:
+                        el.tail = self.electronic_payroll_id._normalize_string(el.tail)
+                    # Atributos
+                    if el.attrib:
+                        for k in list(el.attrib.keys()):
+                            el.attrib[k] = self.electronic_payroll_id._normalize_string(el.attrib[k])
+                xml = etree.tostring(
+                    root,
+                    encoding='UTF-8',
+                    xml_declaration=True,
+                    pretty_print=False
+                )
+            except Exception as _e:
+                pass
 
             filename = f'NominaElectronica{str(self.electronic_payroll_id.year)}-{self.electronic_payroll_id.month}_{str(self.employee_id.identification_id)}.xml'
             self.write({
@@ -460,6 +483,14 @@ class hr_electronic_payroll(models.Model):
         for record in self:
             result.append((record.id, "Nómina Electrónica | Periodo {}-{}".format(record.month,str(record.year))))
         return result
+
+    def _normalize_string(self, value):
+        # Normalizar los caracteres especiales:
+        if not value:
+            return ''
+        normalized = unicodedata.normalize('NFD', value)
+        normalized = normalized.encode('ascii', 'ignore').decode('utf-8')
+        return normalized
 
     def executing_electronic_payroll(self):
         # Eliminar ejecución
