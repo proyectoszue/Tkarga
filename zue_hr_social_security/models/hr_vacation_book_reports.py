@@ -162,7 +162,13 @@ class hr_vacation_book(models.TransientModel):
                 # La columna 8 y 9 es Fecha Ingreso y Retiro por ende se guarda su valor en la variable date_start y date_end
                 date_start = row if aument_columns == 8 else date_start
                 date_end_employee = row if aument_columns == 9 and str(type(row)).find('date') > -1 else date_end_employee
-                obj_hr_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee_id), ('departure_date', '<=', date_end_employee)])
+                obj_hr_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee_id), ('departure_date', '<=', date_end_employee), ('contract_id.state', '=', 'open')])
+                # Obtener fecha final de causación más reciente
+                latest_final_accrual_date = max(obj_hr_vacation.mapped('final_accrual_date')) + timedelta(days=1) if len(obj_hr_vacation) > 0 else date_start
+                try:
+                    days_labor_final_accrual_date = self.dias360(latest_final_accrual_date, date_end_employee)
+                except:
+                    days_labor_final_accrual_date = 0
                 if aument_columns <= 9:
                     if str(type(row)).find('date') > -1:
                         sheet.write_datetime(aument_rows, aument_columns, row, date_format)
@@ -184,17 +190,21 @@ class hr_vacation_book(models.TransientModel):
                     elif aument_columns == 14: # Valor Dias disfrutados
                         value_business_days = sum([i.value_business_days for i in
                                                self.env['hr.vacation'].search([('employee_id', '=', employee_id),
-                                                                               ('departure_date', '<=', date_end_employee)])])
+                                                                               ('departure_date', '<=', date_end_employee),
+                                                                               ('contract_id.state', '=', 'open')])])
                         sheet.write(aument_rows, aument_columns,value_business_days)
                     elif aument_columns == 15: # Valor Dias remunerados
                         money_value = sum([i.money_value for i in
                                                    self.env['hr.vacation'].search([('employee_id', '=', employee_id),
-                                                                                   ('departure_date', '<=', date_end_employee)])])
+                                                                                   ('departure_date', '<=', date_end_employee),
+                                                                                   ('contract_id.state', '=', 'open')])])
                         sheet.write(aument_rows, aument_columns,money_value)
                     elif aument_columns == 16: # Días de Vacaciones Adeudados
-                        sheet.write(aument_rows, aument_columns,(days_labor-days_paid))
+                        #sheet.write(aument_rows, aument_columns,(days_labor-days_paid))
+                        sheet.write(aument_rows, aument_columns, (days_labor_final_accrual_date))
                     elif aument_columns == 17: # Dias de vacaciones pendientes
-                        sheet.write(aument_rows, aument_columns,(((days_labor-days_paid)*15)/360))
+                        #sheet.write(aument_rows, aument_columns,(((days_labor-days_paid)*15)/360))
+                        sheet.write(aument_rows, aument_columns, (((days_labor_final_accrual_date) * 15) / 360))
                     elif aument_columns == 18: # Valor a pagar
                         sheet.write(aument_rows, aument_columns,row)
                 # Ajustar tamaño columna
