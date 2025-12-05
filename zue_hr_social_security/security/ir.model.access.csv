@@ -1,6 +1,7 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
 access_hr_payroll_social_security,hr.payroll.social.security,model_hr_payroll_social_security,,1,1,1,1
 access_hr_executing_provisions,hr.executing.provisions,model_hr_executing_provisions,,1,1,1,1
+access_hr_errors_provisions,hr.errors.provisions,model_hr_errors_provisions,,1,1,1,1
 access_hr_executing_provisions_details,hr.executing.provisions.details,model_hr_executing_provisions_details,,1,1,1,1
 access_hr_executing_social_security,hr.executing.social.security,model_hr_executing_social_security,,1,1,1,1
 access_hr_errors_social_security,hr.errors.social.security,model_hr_errors_social_security,,1,1,1,1
