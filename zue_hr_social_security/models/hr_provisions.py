@@ -66,6 +66,7 @@ class hr_executing_provisions(models.Model):
 
     company_id = fields.Many2one('res.company', string='Compañía', readonly=True, required=True,
         default=lambda self: self.env.company, tracking=True)
+    errors_provisions_ids = fields.One2many('hr.errors.provisions', 'executing_provisions_id', string='Errores')
 
     _sql_constraints = [('provisions_period_uniq', 'unique(company_id,year,month)', 'El periodo seleccionado ya esta registrado para esta compañía, por favor verificar.')]
 
@@ -327,6 +328,13 @@ class hr_executing_provisions(models.Model):
 
                 except Exception as e:
                     msg = 'ERROR: '+str(e.args[0])+' en el contrato '+contract.name+'.'
+                    result = {
+                        'executing_provisions_id': self.id,
+                        'employee_id': contract.employee_id.id,
+                        'branch_id': False,
+                        'description': str(e.args[0])
+                    }
+                    self.env['hr.errors.provisions'].create(result)
                     if self.observations:
                         self.observations = self.observations + '\n' + msg
                     else:
@@ -335,7 +343,8 @@ class hr_executing_provisions(models.Model):
     def executing_provisions(self):
         #Eliminar ejecución
         #self.env['hr.executing.provisions.details'].search([('executing_provisions_id','=',self.id)]).unlink()
-
+        self.env['hr.errors.provisions'].search([('executing_provisions_id', '=', self.id)]).unlink()
+        #self.env['hr.executing.provisions'].search([('executing_provisions_id', '=', self.id)]).unlink()
         #Obtener fechas del periodo seleccionado
         date_start = '01/'+str(self.month)+'/'+str(self.year)
         try:
@@ -425,6 +434,20 @@ class hr_executing_provisions(models.Model):
         if len(self.details_ids.contract_id.ids) >= len(result_query):
             self.date_end = date_end
             self.state = 'done'
+        else:
+            self.env['hr.errors.provisions'].search([('executing_provisions_id', '=', self.id), ('description', '=', 'EMPLEADO FALTANTE POR EJECUTAR')]).unlink()
+            ids_execute = set(self.details_ids.mapped('contract_id').ids)
+            ids_x_execute = set(int(tupla[0]) for tupla in result_query)
+            ids_diff = list(ids_x_execute - ids_execute)
+            missing_contracts = self.env['hr.contract'].browse(ids_diff)
+            for diff in missing_contracts:
+                result = {
+                    'executing_provisions_id': self.id,
+                    'employee_id': diff.employee_id.id if diff.employee_id else False,
+                    'contract_id': diff.id,
+                    'description': 'EMPLEADO FALTANTE POR EJECUTAR'
+                }
+                self.env['hr.errors.provisions'].create(result)
 
     def get_accounting(self):
         line_ids = []
@@ -537,6 +560,7 @@ class hr_executing_provisions(models.Model):
 
     def cancel_process(self):
         #Eliminar ejecución
+        self.env['hr.errors.provisions'].search([('executing_provisions_id', '=', self.id)]).unlink()
         self.env['hr.executing.provisions.details'].search([('executing_provisions_id', '=', self.id)]).unlink()
         return self.write({'state':'draft','time_process':''})
 
@@ -553,3 +577,11 @@ class hr_executing_provisions(models.Model):
                 raise ValidationError(_('No se puede eliminar la provisión debido a que su estado es diferente de borrador.'))
         return super(hr_executing_provisions, self).unlink()
 
+class hr_errors_provisions(models.Model):
+    _name = 'hr.errors.provisions'
+    _description = 'Ejecución de provisiones errores'
+
+    executing_provisions_id =  fields.Many2one('hr.executing.provisions', 'Ejecución de provisiones', required=True, ondelete='cascade')
+    employee_id = fields.Many2one('hr.employee', 'Empleado',required=True, ondelete='cascade',)
+    contract_id =  fields.Many2one('hr.contract', 'Contrato')
+    description = fields.Text('Observación')
