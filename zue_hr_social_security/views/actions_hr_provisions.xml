@@ -71,6 +71,17 @@
                                     </tree>
                                 </field>
                             </page>
+                            <page string="Advertencias" name="advertencias">
+                                <group>
+                                    <field name="errors_provisions_ids" readonly="1" nolabel="1">
+                                        <tree>
+                                            <field name="employee_id"/>
+                                            <field name="contract_id" optional="show"/>
+                                            <field name="description" optional="show"/>
+                                        </tree>
+                                    </field>
+                                </group>
+                            </page>
                         </notebook>
                         <group>
                             <field name="move_id" readonly="1"/>
