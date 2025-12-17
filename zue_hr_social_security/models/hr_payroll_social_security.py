@@ -86,6 +86,7 @@ class hr_payroll_social_security(models.Model):
 
             #Obtener parametros anuales
             annual_parameters = self.env['hr.annual.parameters'].search([('year', '=', date_start.year)])
+            enable_ibc_previous_month = annual_parameters.z_enable_ibc_previous_month
 
             #Recorre empleados y realizar la respectiva lógica
             for o_employee in obj_employee:
@@ -99,6 +100,7 @@ class hr_payroll_social_security(models.Model):
                     for obj_contract in obj_contracts:
                         #Obtener nóminas en ese rango de fechas
                         obj_payslip = self.env['hr.payslip'].search([('state','=','done'),('employee_id','=',employee.id),('contract_id','=',obj_contract.id)])
+                        obj_payslip_month_ant = obj_payslip.filtered(lambda p: (p.date_from >= date_start - relativedelta(months=1) and p.date_from <= date_start - timedelta(days=1)) or (p.date_to >= date_start - relativedelta(months=1) and p.date_to <= date_start - timedelta(days=1)))
                         obj_payslip = obj_payslip.filtered(lambda p: (p.date_from >= date_start and p.date_from <= date_end) or (p.date_to >= date_start and p.date_to <= date_end))
 
                         #Primero, encontró una entrada de trabajo que no excedió el intervalo.
@@ -169,6 +171,8 @@ class hr_payroll_social_security(models.Model):
                         category_news = ['INCAPACIDAD','LICENCIA_NO_REMUNERADA','LICENCIA_REMUNERADA','LICENCIA_MATERNIDAD','VACACIONES','ACCIDENTE_TRABAJO']
                         dict_social_security = {
                             'BaseSeguridadSocial':BrowsableObject(employee.id, {}, self.env),
+                            'BaseSeguridadSocialMesAnterior':BrowsableObject(employee.id, {}, self.env),
+                            'BaseParafiscalesMesAnterior':BrowsableObject(employee.id, {}, self.env),
                             'BaseParafiscales':BrowsableObject(employee.id, {}, self.env),
                             'Dias':BrowsableObject(employee.id, {}, self.env)
                         }
@@ -323,6 +327,43 @@ class hr_payroll_social_security(models.Model):
                                 #SENA & ICBF
                                 nValorBaseSENA += line.total if line.salary_rule_id.base_parafiscales else 0
                                 nValorBaseICBF += line.total if line.salary_rule_id.base_parafiscales else 0
+
+                        if enable_ibc_previous_month:
+                            for payslip in obj_payslip_month_ant:
+                                for line in payslip.line_ids:
+                                    #Bases seguridad social
+                                    if line.salary_rule_id.base_seguridad_social:
+                                        dict_social_security['BaseSeguridadSocialMesAnterior'].dict['TOTAL'] = dict_social_security['BaseSeguridadSocialMesAnterior'].dict.get('TOTAL', 0) + line.total
+                                        if line.salary_rule_id.category_id.code in category_news:
+                                            dict_social_security['BaseSeguridadSocialMesAnterior'].dict[line.salary_rule_id.category_id.code] = dict_social_security['BaseSeguridadSocialMesAnterior'].dict.get(line.salary_rule_id.category_id.code, 0) + line.total
+                                            dict_social_security['BaseSeguridadSocialMesAnterior'].dict['DIAS_'+line.salary_rule_id.category_id.code] = dict_social_security['BaseSeguridadSocialMesAnterior'].dict.get('DIAS_'+line.salary_rule_id.category_id.code, 0) + line.quantity
+                                        else:
+                                            if payslip.date_from >= date_start - relativedelta(months=1) and payslip.date_from <= date_start - timedelta(days=1):
+                                                if line.salary_rule_id.category_id.code == 'BASIC' and contract_id.modality_salary == 'integral':
+                                                    value = (line.total*annual_parameters.porc_integral_salary)/100
+                                                    dict_social_security['BaseSeguridadSocialMesAnterior'].dict['BASE'] = dict_social_security['BaseSeguridadSocialMesAnterior'].dict.get('BASE', 0) + value
+                                                else:
+                                                    dict_social_security['BaseSeguridadSocialMesAnterior'].dict['BASE'] = dict_social_security['BaseSeguridadSocialMesAnterior'].dict.get('BASE', 0) + line.total
+                                    #Bases parafiscales
+                                    if line.salary_rule_id.base_parafiscales:
+                                        dict_social_security['BaseParafiscalesMesAnterior'].dict['TOTAL'] = dict_social_security['BaseParafiscalesMesAnterior'].dict.get('TOTAL', 0) + line.total
+                                        if line.salary_rule_id.category_id.code in category_news:
+                                            dict_social_security['BaseParafiscalesMesAnterior'].dict[line.salary_rule_id.category_id.code] = dict_social_security['BaseParafiscalesMesAnterior'].dict.get(line.salary_rule_id.category_id.code, 0) + line.total
+                                            dict_social_security['BaseParafiscalesMesAnterior'].dict['DIAS_'+line.salary_rule_id.category_id.code] = dict_social_security['BaseParafiscalesMesAnterior'].dict.get('DIAS_'+line.salary_rule_id.category_id.code, 0) + line.quantity
+                                        else:
+                                            if payslip.date_from >= date_start - relativedelta(months=1) and payslip.date_from <= date_start - timedelta(days=1):
+                                                if line.salary_rule_id.category_id.code == 'BASIC' and contract_id.modality_salary == 'integral':
+                                                    value = (line.total*annual_parameters.porc_integral_salary)/100
+                                                    dict_social_security['BaseParafiscalesMesAnterior'].dict['BASE'] = dict_social_security['BaseParafiscalesMesAnterior'].dict.get('BASE', 0) + value
+                                                else:
+                                                    dict_social_security['BaseParafiscalesMesAnterior'].dict['BASE'] = dict_social_security['BaseParafiscalesMesAnterior'].dict.get('BASE', 0) + line.total
+                                    # Bases seguridad social para salud y pension ley 1393
+                                    if line.salary_rule_id.category_id.code == 'DEV_SALARIAL' or line.salary_rule_id.category_id.parent_id.code == 'DEV_SALARIAL':
+                                        dict_social_security['BaseSeguridadSocialMesAnterior'].dict['DEV_SALARIAL'] = dict_social_security['BaseSeguridadSocialMesAnterior'].dict.get('DEV_SALARIAL',0) + line.total
+                                    if line.salary_rule_id.category_id.code == 'DEV_NO_SALARIAL' or line.salary_rule_id.category_id.parent_id.code == 'DEV_NO_SALARIAL':
+                                        dict_social_security['BaseSeguridadSocialMesAnterior'].dict['DEV_NO_SALARIAL'] = dict_social_security['BaseSeguridadSocialMesAnterior'].dict.get('DEV_NO_SALARIAL',0) + line.total
+                                    if line.salary_rule_id.category_id.code == 'VNS' or line.salary_rule_id.code == 'AUX000':
+                                        dict_social_security['BaseSeguridadSocialMesAnterior'].dict['DEV_NO_SALARIAL'] = dict_social_security['BaseSeguridadSocialMesAnterior'].dict.get('DEV_NO_SALARIAL',0) - line.total
 
                         if cant_payslip > 0 and obj_tipo_coti.code != '51': # Proceso para tipos de cotizante diferente a 51 - Trabajador de Tiempo Parcial
                             #Validar que la suma de los dias sea igual a 30 y en caso de se superior restar en los dias liquidados la diferencia
@@ -561,10 +602,16 @@ class hr_payroll_social_security(models.Model):
                                         nValorBaseICBF = nValorDiario * executing.nDiasIncapacidadEPS
 
                                 if executing.nDiasLicencia > 0:
-                                    if dict_social_security['BaseSeguridadSocial'].dict.get('LICENCIA_NO_REMUNERADA', 0) > 0:
-                                        nValorBaseSalud = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
-                                        nValorBaseFondoPension = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
-                                        nValorBaseARP = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
+                                    if enable_ibc_previous_month:
+                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocialMesAnterior'].dict['BASE']) / 30)
+                                        nValorBaseSalud = nValorDiario * executing.nDiasLicencia
+                                        nValorBaseFondoPension = nValorDiario * executing.nDiasLicencia
+                                        nValorBaseARP = nValorDiario * executing.nDiasLicencia
+                                    else:
+                                        if dict_social_security['BaseSeguridadSocial'].dict.get('LICENCIA_NO_REMUNERADA', 0) > 0:
+                                            nValorBaseSalud = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
+                                            nValorBaseFondoPension = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
+                                            nValorBaseARP = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
                                     if dict_social_security['BaseParafiscales'].dict.get('LICENCIA_NO_REMUNERADA', 0) > 0:
                                         nValorBaseCajaCom = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
                                         nValorBaseSENA = Decimal(Decimal(dict_social_security['BaseParafiscales'].dict['LICENCIA_NO_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicencia'])) * executing.nDiasLicencia
@@ -572,7 +619,11 @@ class hr_payroll_social_security(models.Model):
 
                                 if executing.nDiasLicenciaRenumerada > 0:
                                     if dict_social_security['BaseSeguridadSocial'].dict.get('LICENCIA_REMUNERADA', 0) > 0:
-                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicenciaRenumerada']))
+                                        if enable_ibc_previous_month:
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocialMesAnterior'].dict['BASE']) / 30)
+                                        else:
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicenciaRenumerada']))
+                                        #nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['LICENCIA_REMUNERADA']) / Decimal(dict_social_security['Dias'].dict['nDiasLicenciaRenumerada']))
                                         nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                         nValorBaseSalud = nValorDiario * executing.nDiasLicenciaRenumerada
                                         nValorBaseFondoPension = nValorDiario * executing.nDiasLicenciaRenumerada
@@ -600,7 +651,10 @@ class hr_payroll_social_security(models.Model):
 
                                 if executing.nDiasVacaciones > 0:
                                     if dict_social_security['BaseSeguridadSocial'].dict.get('VACACIONES', 0) > 0:
-                                        nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['VACACIONES']) / Decimal(dict_social_security['BaseSeguridadSocial'].dict['DIAS_VACACIONES']))
+                                        if enable_ibc_previous_month:
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocialMesAnterior'].dict['BASE']) / 30)
+                                        else:
+                                            nValorDiario = Decimal(Decimal(dict_social_security['BaseSeguridadSocial'].dict['VACACIONES']) / Decimal(dict_social_security['BaseSeguridadSocial'].dict['DIAS_VACACIONES']))
                                         nValorDiario = nValorDiario if nValorDiario >= salario_minimo_diario else salario_minimo_diario
                                         nValorBaseSalud = nValorDiario * executing.nDiasVacaciones
                                         nValorBaseFondoPension = nValorDiario * executing.nDiasVacaciones

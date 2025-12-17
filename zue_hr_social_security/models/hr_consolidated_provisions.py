@@ -7,7 +7,6 @@ from dateutil.relativedelta import relativedelta
 
 
 import odoo
-import threading
 
 class hr_consolidated_provisions(models.Model):
     _name = 'hr.consolidated.provisions'

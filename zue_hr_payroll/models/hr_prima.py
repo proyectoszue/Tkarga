@@ -100,7 +100,10 @@ class Hr_payslip(models.Model):
                                                ('month', '=', self.date_to.month)]).unlink()
 
         if len(obj_parameterization_contributors) == 0 or (len(obj_parameterization_contributors) > 0 and not obj_parameterization_contributors.liquidated_provisions) or contract.modality_salary == 'integral' or contract.subcontract_type == 'obra_integral':
-            return result.values()
+            if inherit_contrato == 0:
+                return result.values()
+            else:
+                return localdict, result
 
         year = self.date_from.year
         annual_parameters = self.env['hr.annual.parameters'].search([('year', '=', year)])

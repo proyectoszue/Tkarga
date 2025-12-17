@@ -10,6 +10,7 @@ access_hr_calculation_rtefte_ordinary,hr.calculation.rtefte.ordinary,model_hr_ca
 access_hr_employee_rtefte,hr.employee.rtefte,model_hr_employee_rtefte,,1,1,1,1
 access_zue_payroll_flat_file_backup,zue.payroll.flat.file.backup,model_zue_payroll_flat_file_backup,,1,0,1,0
 access_hr_vacation,hr.vacation,model_hr_vacation,,1,1,1,1
+access_hr_vacation_period_caused,hr.vacation.period.caused,model_hr_vacation_period_caused,,1,1,1,1
 access_hr_novelties_different_concepts,hr.novelties.different.concepts,model_hr_novelties_different_concepts,,1,1,1,1
 access_hr_novelties_independents,hr.novelties.independents,model_hr_novelties_independents,,1,1,1,1
 access_hr_payroll_posting,hr.payroll.posting,model_hr_payroll_posting,,1,1,1,1
@@ -45,3 +46,4 @@ access_zue_massive_generation_contracts,zue.massive.generation.contracts,model_z
 access_zue_executing_contracts,zue.executing.contracts,model_zue_executing_contracts,,1,1,1,1
 access_zue_employer_replacement,zue.employer.replacement,model_zue_employer_replacement,,1,1,1,1
 access_zue_work_income_and_pensions,zue.work.income.and.pensions,model_zue_work_income_and_pensions,,1,1,1,1
+access_zue_comparative_payroll_batch_report,zue.comparative.payroll.batch.report,model_zue_comparative_payroll_batch_report,,1,1,1,1

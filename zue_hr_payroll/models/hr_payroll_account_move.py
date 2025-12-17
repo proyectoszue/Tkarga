@@ -94,7 +94,7 @@ class Hr_payslip(models.Model):
             'analytic_account_id': analytic_account_id,
             'z_hr_salary_rule_id': line.salary_rule_id.id,
             'z_hr_struct_id_id': line.slip_id.struct_id.id,
-            'tax_base_amount': sum([i.result_calculation for i in line.slip_id.rtefte_id.deduction_retention.filtered(lambda x: x.concept_deduction_code == 'TOTAL_ING_BASE_O')]) if line.salary_rule_id.code == 'RETFTE001' or line.salary_rule_id.code == 'RETFTE_PRIMA001' else 0,
+            'tax_base_amount': sum([i.result_calculation for i in line.slip_id.rtefte_id.deduction_retention.filtered(lambda x: x.concept_deduction_code == 'SUBTOTAL_IBR3_O')]) if line.salary_rule_id.code == 'RETFTE001' or line.salary_rule_id.code == 'RETFTE_PRIMA001' else 0,
             # line.salary_rule_id.analytic_account_id.id or line.slip_id.contract_id.analytic_account_id.id,
         }
 

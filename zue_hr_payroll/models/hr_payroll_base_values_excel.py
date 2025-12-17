@@ -49,6 +49,7 @@ class Hr_payslip(models.Model):
     def base_values_export_excel(self):
         query_vacaciones = ''
         query_vacaciones_dinero = ''
+        query_vacaciones_period_caused = False
         query_prima = ''
         query_cesantias = ''
 
@@ -81,6 +82,7 @@ class Hr_payslip(models.Model):
             date_start = self.contract_id.date_start if date_start <= self.contract_id.date_start else date_start
             date_end = self.date_liquidacion
             query_cesantias = self.get_query('base_cesantias', date_start, date_end)
+            query_vacaciones_period_caused = self.employee_id.company_id.z_holidays_based_period_caused
         else:
             raise ValidationError(_('Esta estructura salarial no posee exportación de valores base a excel.'))
 
@@ -156,6 +158,44 @@ class Hr_payslip(models.Model):
                 array_header_table.append(dict)
             sheet_vacaciones_dinero.add_table(0, 0, aument_rows - 1, len(columns) - 1,
                                   {'style': 'Table Style Medium 2', 'columns': array_header_table})
+        if query_vacaciones_period_caused:
+            columns = ['Fecha Inicial', 'Fecha Final', 'Salario', 'Salario Diario', 'Variable', 'Variable Diario', 'Total']
+            sheet_vacaciones_period_caused = book.add_worksheet('VACACIONES PERIODOS CAUSADOS')
+            # Agregar columnas
+            aument_columns = 0
+            for column in columns:
+                sheet_vacaciones_period_caused.write(0, aument_columns, column)
+                aument_columns = aument_columns + 1
+
+            # Agregar Información generada en la consulta
+            self._cr.execute(query_vacaciones_dinero)
+            result_query = self._cr.dictfetchall()
+            aument_columns = 0
+            aument_rows = 1
+            for vacation_period_caused in self.z_vacation_period_caused_ids:
+                sheet_vacaciones_period_caused.write_datetime(aument_rows, 0, vacation_period_caused.z_date_start, date_format)
+                sheet_vacaciones_period_caused.set_column(0, 0, len(str(vacation_period_caused.z_date_start)) + 10)
+                sheet_vacaciones_period_caused.write_datetime(aument_rows, 1, vacation_period_caused.z_date_end,date_format)
+                sheet_vacaciones_period_caused.set_column(1, 1, len(str(vacation_period_caused.z_date_end)) + 10)
+                sheet_vacaciones_period_caused.write(aument_rows, 2, vacation_period_caused.z_wage)
+                sheet_vacaciones_period_caused.set_column(2, 2, len(str(vacation_period_caused.z_wage))+10)
+                sheet_vacaciones_period_caused.write(aument_rows, 3, vacation_period_caused.z_daily_wage)
+                sheet_vacaciones_period_caused.set_column(3, 3, len(str(vacation_period_caused.z_daily_wage)) + 10)
+                sheet_vacaciones_period_caused.write(aument_rows, 4, vacation_period_caused.z_variable)
+                sheet_vacaciones_period_caused.set_column(4, 4, len(str(vacation_period_caused.z_variable)) + 10)
+                sheet_vacaciones_period_caused.write(aument_rows, 5, vacation_period_caused.z_daily_variable)
+                sheet_vacaciones_period_caused.set_column(5, 5, len(str(vacation_period_caused.z_daily_variable)) + 10)
+                sheet_vacaciones_period_caused.write(aument_rows, 6, vacation_period_caused.z_amount)
+                sheet_vacaciones_period_caused.set_column(6, 6, len(str(vacation_period_caused.z_amount)) + 10)
+                aument_rows = aument_rows + 1
+            # Convertir en tabla
+            array_header_table = []
+            aument_rows = 2 if aument_rows == 1 else aument_rows
+            for i in columns:
+                dict = {'header': i}
+                array_header_table.append(dict)
+            sheet_vacaciones_period_caused.add_table(0, 0, aument_rows - 1, len(columns) - 1,
+                                              {'style': 'Table Style Medium 2', 'columns': array_header_table})
         if query_prima != '':
             columns = ['Regla Salarial', 'Fecha', 'Valor', 'Origen']
             sheet_prima = book.add_worksheet('PRIMA')

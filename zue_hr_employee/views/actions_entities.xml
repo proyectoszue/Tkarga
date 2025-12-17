@@ -70,6 +70,7 @@
                             <field name="code_pila_ccf" modifiers="{}"/>
                             <field name="code_pila_regimen" modifiers="{}"/>
                             <field name="code_pila_exterior" modifiers="{}"/>
+                            <field name="z_pension_transitional_regime" modifiers="{}"/>
                             <field name="order" modifiers="{}" widget='radio'/>
                             <separator/>
                         </group>

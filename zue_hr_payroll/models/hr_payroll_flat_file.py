@@ -229,7 +229,7 @@ class hr_payroll_flat_file(models.TransientModel):
                     banco = right(9*'0'+bank.bank_id.bic,9)
                     cuenta_beneficiario = left(str(bank.acc_number).replace("-","")+17*' ',17)
                     indicador_lugar_pago = 'S'
-                    tipo_transaccion = '37' if bank.type_account == 'A' else '27' # 27: Abono a cuenta corriente / 37: Abono a cuenta ahorros 
+                    tipo_transaccion = '37' if bank.type_account == 'A'  else ('57' if bank.type_account == 'N' else '27')# 27: Abono a cuenta corriente / 37: Abono a cuenta ahorros / 57: Nequi
             if cuenta_beneficiario == '':
                 raise ValidationError(_('El empleado '+payslip.contract_id.employee_id.name+' no tiene configurada la información bancaria, por favor verificar.'))
             #Obtener valor de transacción 
