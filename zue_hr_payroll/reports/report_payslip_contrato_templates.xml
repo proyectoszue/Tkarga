@@ -75,11 +75,12 @@
                                     <b>Cuenta bancaria:</b>
                                     <span t-field="o.employee_id.address_home_id.bank_ids.filtered(lambda bank: bank.is_main == True and bank.company_id == o.employee_id.company_id).acc_number"/>
                                 </p>
-<!--                                <p style="line-height:15px;margin:10px;font-size: 100%;">-->
-<!--                                    <b>Dias laborados</b>-->
-<!--                                    :-->
+                                <p style="line-height:15px;margin:10px;font-size: 100%;">
+                                    <b>Dias laborados</b>
+                                    :
 <!--                                    <span t-esc="(o.date_liquidacion - o.contract_id.date_start).days+1"/>-->
-<!--                                </p>-->
+                                    <span t-esc="o.dias360(o.contract_id.date_start, o.date_liquidacion)"/>
+                                </p>
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
                                     <b>Fecha retiro</b>
                                     :

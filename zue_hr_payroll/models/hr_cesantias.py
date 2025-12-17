@@ -103,7 +103,10 @@ class Hr_payslip(models.Model):
              ('contributor_subtype', '=', employee.subtipo_coti_id.id)], limit=1)
 
         if len(obj_parameterization_contributors) == 0 or (len(obj_parameterization_contributors) > 0 and not obj_parameterization_contributors.liquidated_provisions) or contract.modality_salary == 'integral' or contract.subcontract_type == 'obra_integral':
-            return result.values()
+            if inherit_contrato == 0:
+                return result.values()
+            else:
+                return localdict, result
 
         year = self.date_from.year
         annual_parameters = self.env['hr.annual.parameters'].search([('year', '=', year)])
@@ -244,14 +247,14 @@ class Hr_payslip(models.Model):
 
                 amount = round(amount,0) if round_payroll == False else round(amount, 2)
                 if self.z_is_advance_severance and self.z_value_advance_severance > 0:
-                    if rule.code == 'CESANTIAS':
+                    if rule.code == 'CESANTIAS' or rule.code == 'INTCESANTIAS':
                         if self.z_value_advance_severance > (amount * qty * rate / 100.0):
                             raise ValidationError(f'No se puede hacer el avance ya que el valor es superior a lo permitido ({(amount * qty * rate / 100.0)})')
                         equivalent_days = (self.z_value_advance_severance * qty) / (amount * qty * rate / 100.0)
                         amount,amount_base,qty = (self.z_value_advance_severance)/round(equivalent_days,0),0,round(equivalent_days,0)
                         self.date_to = self.date_from + timedelta(days=equivalent_days)
-                    if rule.code == 'INTCESANTIAS':
-                        amount, amount_base, qty = 0, 0, 0
+                        if rule.code == 'INTCESANTIAS':
+                            rate = 12
                 #check if there is already a rule computed with that code
                 previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
                 #set/overwrite the amount computed for this rule in the localdict

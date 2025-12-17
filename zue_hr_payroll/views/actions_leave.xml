@@ -68,8 +68,11 @@
                 <xpath expr="//form[1]/sheet[1]/group[1]/group[1]/label[1]" position="before">
                     <xpath expr="//field[@name='employee_id']" position="move"/>
                 </xpath>
+                <xpath expr="//field[@name='request_date_from']" position="attributes">
+                    <attribute name="required">1</attribute>
+                </xpath>
                 <xpath expr="//field[@name='request_date_to']" position="attributes">
-                    <attribute name="attrs">{"invisible": ["|",["request_unit_half","=",True],["request_unit_hours","=",True]], "readonly": ["|",["state","not in",["draft","confirm"]],["is_vacation","=",True]]}</attribute>
+                    <attribute name="attrs">{"required": [('is_vacation', '=',  False)], "invisible": ["|",["request_unit_half","=",True],["request_unit_hours","=",True]], "readonly": ["|",["state","not in",["draft","confirm"]],["is_vacation","=",True]]}</attribute>
                     <attribute name="force_save">True</attribute>
                 </xpath>
                  <xpath expr="//field[@name='number_of_days']" position="attributes">

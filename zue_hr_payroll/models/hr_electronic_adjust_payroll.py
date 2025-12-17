@@ -232,7 +232,7 @@ class hr_electronic_adjust_payroll_detail(models.Model):
                 raise ValidationError(_('Error al descargar el archivo, intente mas tarde.'))
         elif operator == 'FacturaTech':
             if self.resource_type_document == 'PDF':
-                result = obj_ws.connection_requests(username, password, self.electronic_adjust_payroll_id.electronic_payroll_id.prefix, self.item)
+                result = obj_ws.connection_requests(username, password, self.electronic_adjust_payroll_id.prefix_adjust, self.item)
                 if result.find('<documentBase64 xsi:type="xsd:string">') > -1:
                     download_data = result[result.find('<documentBase64 xsi:type="xsd:string">') + len(
                         '<documentBase64 xsi:type="xsd:string">'):result.find('</documentBase64>')]
@@ -282,7 +282,7 @@ class hr_electronic_adjust_payroll_detail(models.Model):
             if operator == 'Carvajal':
                 raise ValidationError(_('Carvajal no tiene esta funcionalidad.'))
             elif operator == 'FacturaTech':
-                result = obj_ws.connection_requests(username, password, self.electronic_adjust_payroll_id.electronic_payroll_id.prefix, self.item, not_show_errors=1)
+                result = obj_ws.connection_requests(username, password, self.electronic_adjust_payroll_id.prefix_adjust, self.item, not_show_errors=1)
                 if result.find('<resourceData xsi:type="xsd:string">') > -1:
                     cune = result[result.find('<resourceData xsi:type="xsd:string">') + len('<resourceData xsi:type="xsd:string">'):result.find('</resourceData>')]
                     self.cune = cune
@@ -480,6 +480,7 @@ class hr_electronic_adjust_payroll(models.Model):
     company_id = fields.Many2one(related='electronic_payroll_id.company_id', string='Compañía', store=True)
     # Proceso
     prefix = fields.Char(related='electronic_payroll_id.prefix',string='Prefijo', store=True)
+    prefix_adjust = fields.Char(string='Prefijo ajuste')
     qty_failed = fields.Integer(string='Cantidad Fallidos / Sin Respuesta', default=0, copy=False)
     qty_done = fields.Integer(string='Cantidad Aceptados', default=0, copy=False)
     executing_electronic_adjust_payroll_ids = fields.One2many('hr.electronic.adjust.payroll.detail', 'electronic_adjust_payroll_id',
@@ -545,9 +546,9 @@ class hr_electronic_adjust_payroll(models.Model):
         inner join hr_electronic_payroll as b on a.electronic_payroll_id = b.id and b.prefix = '%s'
         union
         Select coalesce(max(a.item),0) as next_item from hr_electronic_adjust_payroll_detail as a 
-        inner join hr_electronic_adjust_payroll as b on a.electronic_adjust_payroll_id = b.id and b.prefix = '%s' and b.id != %s
+        inner join hr_electronic_adjust_payroll as b on a.electronic_adjust_payroll_id = b.id and (b.prefix = '%s' or b.prefix_adjust = '%s') 
         ) as a        
-        ''' % (self.prefix,self.prefix,self.id)
+        ''' % (self.prefix_adjust,self.prefix_adjust,self.id)
         self.env.cr.execute(query_max_item)
         res_max_item = self.env.cr.fetchone()
         max_item = res_max_item[0] or 0
@@ -556,10 +557,10 @@ class hr_electronic_adjust_payroll(models.Model):
         for employee in obj_employee:
             obj_contracts = self.env['hr.contract']
             # Obtener contrato activo
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'open'), ('employee_id', '=', employee.id), ('date_start', '<=', date_end)])
+            obj_contracts += self.env['hr.contract'].search([('state', '=', 'open'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id), ('date_start', '<=', date_end + relativedelta(months=1))])
             # Obtener contratos finalizados en el mes
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id', '=', employee.id), ('retirement_date', '<=', date_end)])
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'finished'), ('employee_id', '=', employee.id), ('date_end', '<=', date_end)])
+            obj_contracts += self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id), ('retirement_date', '<=', date_end + relativedelta(months=1))])
+            obj_contracts += self.env['hr.contract'].search([('state', '=', 'finished'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id), ('date_end', '<=', date_end + relativedelta(months=1))])
             for obj_contract in obj_contracts:
                 item += 1
                 # Obtener nóminas en ese rango de fechas
@@ -577,8 +578,8 @@ class hr_electronic_adjust_payroll(models.Model):
                     'contract_id':obj_contract.id,
                     'electronic_adjust_payroll_detail_id':self.electronic_payroll_detail_ids.filtered(lambda x: x.employee_id.id == employee.id).id,
                     'item':item+max_item,
-                    'sequence': self.prefix+''+str(item+max_item),
-                    'nonce': 'ZUE_NOMINAELECTRONICA_AJUSTE_'+self.prefix+''+str(item+max_item),
+                    'sequence': self.prefix_adjust+''+str(item+max_item),
+                    'nonce': 'ZUE_NOMINAELECTRONICA_AJUSTE_'+self.prefix_adjust+''+str(item+max_item),
                     'payslip_ids':[(6, 0, obj_payslip.ids)]
                 }
 

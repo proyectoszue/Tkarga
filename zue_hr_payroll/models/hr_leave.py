@@ -165,7 +165,7 @@ class HolidaysRequest(models.Model):
         for record in self:
             if record.unpaid_absences:
                 days_unpaid_absences = record.number_of_days
-                days_vacation_represent = round((days_unpaid_absences * 15) / 365,0)
+                days_vacation_represent = round((days_unpaid_absences * 15) / 360,0)
                 if days_vacation_represent > 0:
                     # Obtener contrato y ultimo historico de vacaciones
                     obj_contract = self.env['hr.contract'].search([('employee_id','=',record.employee_id.id),('state','=','open')])

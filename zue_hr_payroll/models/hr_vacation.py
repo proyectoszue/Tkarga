@@ -49,6 +49,20 @@ class hr_vacation(models.Model):
         res = super(hr_vacation, self).create(vals)
         return res
 
+class hr_vacation_period_caused(models.Model):
+    _name = 'hr.vacation.period.caused'
+    _description = 'Vacaciones con la base del periodo causado en liquidación de contrato'
+
+    z_slip_id = fields.Many2one('hr.payslip', string='Liq de contrato', required=True, ondelete="cascade")
+    z_date_start = fields.Date(string='Fecha Inicio', required=True)
+    z_date_end = fields.Date(string='Fecha Fin', required=True)
+    z_wage = fields.Float(string='Salario')
+    z_daily_wage = fields.Float(string='Salario Diario')
+    z_variable = fields.Float(string='Variable')
+    z_daily_variable = fields.Float(string='Variable diario')
+    z_base = fields.Float(string='Base')
+    z_amount = fields.Float(string='Monto a pagar')
+
 class hr_payslip_paid_vacation(models.Model):
     _name = 'hr.payslip.paid.vacation'
     _description = 'Liquidación vacaciones remuneradas'
@@ -92,8 +106,17 @@ class Hr_payslip_line(models.Model):
 class Hr_payslip(models.Model):
     _inherit = 'hr.payslip'
 
-    paid_vacation_ids = fields.One2many('hr.payslip.paid.vacation', 'slip_id',string='Vacaciones remuneradas')
+    paid_vacation_ids = fields.One2many('hr.payslip.paid.vacation', 'slip_id', string='Vacaciones remuneradas')
     refund_date = fields.Date(string='Fecha reintegro')
+    z_vacation_period_caused_ids = fields.One2many('hr.vacation.period.caused', 'z_slip_id', string='Vacaciones con la base del periodo causado en liquidación de contrato')
+
+    def unlink(self):
+        for record in self:
+            if record.state not in ('draft', 'cancel'):
+                raise UserError("Solo se pueden eliminar recibos en estado 'Borrador' o 'Cancelado'.")
+            if record.z_vacation_period_caused_ids:
+                record.z_vacation_period_caused_ids.sudo().unlink()
+        return super(Hr_payslip, self).unlink()
 
     #--------------------------------------------------LIQUIDACIÓN DE VACACIONES---------------------------------------------------------#
 
@@ -347,7 +370,7 @@ class Hr_payslip(models.Model):
                                 [('star_date', '>=', initial_accrual_date), ('end_date', '<=', self.date_to),
                                  ('employee_id', '=', self.employee_id.id),
                                  ('leave_type_id.unpaid_absences', '=', True)])])
-                            days = ((days_vacations_business+days_vacations_31_business) * 365) / 15
+                            days = ((days_vacations_business+days_vacations_31_business) * 360) / 15
                             final_accrual_date = initial_accrual_date + timedelta(days=(days+dias_ausencias)-1)
                         else:
                             obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee.id)])     
@@ -372,7 +395,7 @@ class Hr_payslip(models.Model):
                                 [('star_date', '>=', initial_accrual_date), ('end_date', '<=', self.date_to),
                                  ('employee_id', '=', self.employee_id.id),
                                  ('leave_type_id.unpaid_absences', '=', True)])])
-                            days = ((days_vacations_business+days_vacations_31_business) * 365) / 15
+                            days = ((days_vacations_business+days_vacations_31_business) * 360) / 15
                             final_accrual_date = initial_accrual_date + timedelta(days=(days+dias_ausencias)-1)
                             #dias360 = self.dias360(initial_accrual_date,final_accrual_date)
 
@@ -443,7 +466,7 @@ class Hr_payslip(models.Model):
                                 [('star_date', '>=', initial_accrual_date), ('end_date', '<=', self.date_to),
                                  ('employee_id', '=', self.employee_id.id),
                                  ('leave_type_id.unpaid_absences', '=', True)])])
-                            days = (days_vacations * 365) / 15
+                            days = (days_vacations * 360) / 15
                             final_accrual_date = initial_accrual_date + timedelta(days=(days+dias_ausencias)-1)
                         else:
                             obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee.id)])     
@@ -468,7 +491,7 @@ class Hr_payslip(models.Model):
                                 [('star_date', '>=', initial_accrual_date), ('end_date', '<=', self.date_to),
                                  ('employee_id', '=', self.employee_id.id),
                                  ('leave_type_id.unpaid_absences', '=', True)])])
-                            days = (days_vacations * 365) / 15
+                            days = (days_vacations * 360) / 15
                             #for obj_leave in leaves_all_obj:
                             final_accrual_date = initial_accrual_date + timedelta(days=(days+dias_ausencias)-1)
                             #dias360 = self.dias360(initial_accrual_date,final_accrual_date)
@@ -497,42 +520,109 @@ class Hr_payslip(models.Model):
                     initial_accrual_date = False
                     final_accrual_date = False
 
-                    if rule.code == 'VACCONTRATO' and inherit_contrato != 0:    
-                        amount_base = amount
-                        initial_accrual_date = self.date_vacaciones
-                        final_accrual_date = self.date_liquidacion
-                        acumulados_promedio = 0
-                        dias_trabajados = self.dias360(self.date_vacaciones, self.date_liquidacion)
-                        dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_vacaciones),('date_to','<=',self.date_liquidacion),('state','=','validate'),('employee_id','=',self.employee_id.id),('unpaid_absences','=',True)])])
-                        dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_vacaciones), ('end_date', '<=', self.date_liquidacion),('employee_id', '=', self.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
-                        dias_liquidacion = dias_trabajados - dias_ausencias
-
-                        if (self.date_liquidacion - contract.date_start).days <= 365:
-                            dias_contract = self.dias360(contract.date_start, self.date_liquidacion)#int((self.date_liquidacion - contract.date_start).days)-1
-                            if dias_contract > 0:
-                                acumulados_promedio = (amount_base/dias_contract)*30 # dias_liquidacion // HISTORIA: Promedio de la base variable no tome ausentismos
+                    if rule.code == 'VACCONTRATO' and inherit_contrato != 0:
+                        holidays_based_period_caused = employee.company_id.z_holidays_based_period_caused
+                        if holidays_based_period_caused:
+                            self.env['hr.vacation.period.caused'].search([('z_slip_id','=',self.id)]).unlink()
+                            # 1. Obtener fecha final de causacion de vacaciones y/o fecha inicial de contrato
+                            retirement_date = contract.retirement_date
+                            date_vacation = contract.date_start
+                            if retirement_date == False:
+                                obj_vacation = self.env['hr.vacation'].search(
+                                    [('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),
+                                     ('final_accrual_date', '<', self.date_liquidacion), ('departure_date', '<=', self.date_liquidacion)])
                             else:
-                                acumulados_promedio = 0
+                                if retirement_date >= self.date_liquidacion:
+                                    obj_vacation = self.env['hr.vacation'].search(
+                                        [('employee_id', '=', contract.employee_id.id),
+                                         ('contract_id', '=', contract.id), ('final_accrual_date', '<', self.date_liquidacion),
+                                         ('departure_date', '<=', self.date_liquidacion)])
+                                else:
+                                    obj_vacation = self.env['hr.vacation'].search(
+                                        [('employee_id', '=', contract.employee_id.id),
+                                         ('contract_id', '=', contract.id),
+                                         ('final_accrual_date', '<', retirement_date),
+                                         ('departure_date', '<=', retirement_date)])
+                            if obj_vacation:
+                                for history in sorted(obj_vacation, key=lambda x: x.final_accrual_date):
+                                    if history.leave_id:
+                                        if history.leave_id.holiday_status_id.unpaid_absences == False:
+                                            date_vacation = history.final_accrual_date + timedelta(
+                                                days=1) if history.final_accrual_date > date_vacation else date_vacation
+                                    else:
+                                        date_vacation = history.final_accrual_date + timedelta(
+                                            days=1) if history.final_accrual_date > date_vacation else date_vacation
+                            # 2. Obtener las fechas de los periodos a causar
+                            initial_accrual_date = date_vacation
+                            final_accrual_date = self.date_liquidacion
+                            lst_period_caused = []
+                            i_period_caused = 0
+                            while date_vacation < final_accrual_date:
+                                start_date_vacation = date_vacation+timedelta(days=i_period_caused)
+                                date_vacation = date_vacation+relativedelta(years=1)
+                                date_vacation = final_accrual_date if date_vacation >= final_accrual_date else date_vacation
+                                lst_period_caused.append((start_date_vacation, date_vacation))
+                                i_period_caused = 1
+                            # 3. Obtener los valores de salarios, variable y total a liquidar por cada periodo causado
+                            amount = 0
+                            amount_base = 0
+                            qty = 1
+                            dias_ausencias = 0
+                            for period_caused in lst_period_caused:
+                                wage_period_caused = contract.get_wage_in_date(period_caused[1])
+                                variable_period_caused = Payslips(employee.id, self, self.env).get_accumulated_vacation_money(period_caused[1], period_caused[0])
+                                days_period_caused = self.dias360(period_caused[0], period_caused[1])
+                                dict_period_caused = {
+                                    'z_slip_id': self.id,
+                                    'z_date_start': period_caused[0],
+                                    'z_date_end': period_caused[1],
+                                    'z_wage': wage_period_caused,
+                                    'z_daily_wage': wage_period_caused/30,
+                                    'z_variable': variable_period_caused,
+                                    'z_daily_variable': variable_period_caused/days_period_caused,
+                                }
+                                if days_period_caused > 360:
+                                    days_period_caused = 360
+                                dict_period_caused['z_base'] = dict_period_caused['z_daily_wage']+dict_period_caused['z_daily_variable']
+                                dict_period_caused['z_amount'] = dict_period_caused['z_base']*((days_period_caused*15)/360)
+                                amount += dict_period_caused['z_amount']
+                                self.env['hr.vacation.period.caused'].create(dict_period_caused)
                         else:
-                            acumulados_promedio = amount_base/12
+                            amount_base = amount
+                            initial_accrual_date = self.date_vacaciones
+                            final_accrual_date = self.date_liquidacion
+                            acumulados_promedio = 0
+                            dias_trabajados = self.dias360(self.date_vacaciones, self.date_liquidacion)
+                            dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_vacaciones),('date_to','<=',self.date_liquidacion),('state','=','validate'),('employee_id','=',self.employee_id.id),('unpaid_absences','=',True)])])
+                            dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_vacaciones), ('end_date', '<=', self.date_liquidacion),('employee_id', '=', self.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
+                            dias_liquidacion = dias_trabajados - dias_ausencias
 
-                        # wage = 0
-                        # if contract.subcontract_type not in ('obra_parcial', 'obra_integral'):
-                        #     wage = contract.wage
-                        wage = 0
-                        obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '<', self.date_to)])
-                        for change in sorted(obj_wage, key=lambda x: x.date_start):  # Obtiene el ultimo salario vigente antes de la fecha de liquidacion
-                            wage = change.wage
+                            if (self.date_liquidacion - contract.date_start).days <= 365:
+                                dias_contract = self.dias360(contract.date_start, self.date_liquidacion)#int((self.date_liquidacion - contract.date_start).days)-1
+                                if dias_contract > 0:
+                                    acumulados_promedio = (amount_base/dias_contract)*30 # dias_liquidacion // HISTORIA: Promedio de la base variable no tome ausentismos
+                                else:
+                                    acumulados_promedio = 0
+                            else:
+                                acumulados_promedio = amount_base/12
 
-                        if contract.subcontract_type not in ('obra_parcial', 'obra_integral'):
-                            wage = contract.wage if wage == 0 else wage
-                        else:
+                            # wage = 0
+                            # if contract.subcontract_type not in ('obra_parcial', 'obra_integral'):
+                            #     wage = contract.wage
                             wage = 0
+                            obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '<', self.date_to)])
+                            for change in sorted(obj_wage, key=lambda x: x.date_start):  # Obtiene el ultimo salario vigente antes de la fecha de liquidacion
+                                wage = change.wage
 
-                        amount_base = wage + acumulados_promedio
+                            if contract.subcontract_type not in ('obra_parcial', 'obra_integral'):
+                                wage = contract.wage if wage == 0 else wage
+                            else:
+                                wage = 0
 
-                        amount = round(amount_base / 720, 0) if round_payroll == False else amount_base / 720
-                        qty = dias_liquidacion
+                            amount_base = wage + acumulados_promedio
+
+                            amount = round(amount_base / 720, 0) if round_payroll == False else amount_base / 720
+                            qty = dias_liquidacion
 
                     amount = round(amount,0) if round_payroll == False else round(amount, 2) #Se redondean los decimales de todas las reglas
                     #check if there is already a rule computed with that code

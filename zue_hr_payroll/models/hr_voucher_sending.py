@@ -63,51 +63,48 @@ class hr_voucher_sending(models.Model):
         return result
 
     def create_document_inmemory(self,records):
-        with odoo.api.Environment.manage():
-            registry = odoo.registry(self._cr.dbname)
-            with registry.cursor() as cr:
-                env = api.Environment(cr, SUPERUSER_ID, {})
-                _logger.info(f'(START) HILO/REGISTRO - Envio de comprobantes, cantidad: {len(records)}')
-                for payslip in records:
-                    obj_payslip = env['hr.payslip'].search([('id', '=', payslip)])
-                    try:
-                        report = obj_payslip.struct_id.report_id
-                        pdf_content, content_type = report._render_qweb_pdf(obj_payslip.id)
-                        pdf_name = obj_payslip.struct_id.name +' - '+obj_payslip.employee_id.name+' - '+str(obj_payslip.date_to) + '.pdf'
+        with self.env.cr.savepoint():
+            _logger.info(f'(START) HILO/REGISTRO - Envio de comprobantes, cantidad: {len(records)}')
+            for payslip in records:
+                obj_payslip = self.env['hr.payslip'].search([('id', '=', payslip)])
+                try:
+                    report = obj_payslip.struct_id.report_id
+                    pdf_content, content_type = report._render_qweb_pdf(obj_payslip.id)
+                    pdf_name = obj_payslip.struct_id.name +' - '+obj_payslip.employee_id.name+' - '+str(obj_payslip.date_to) + '.pdf'
 
-                        email_vals = {}
-                        identificacion  = obj_payslip.employee_id.identification_id
-                        nombre_empleado = obj_payslip.employee_id.name
-                        correo_envio    = obj_payslip.employee_id.work_email
-                        # body message
-                        message = "Estimado "+ nombre_empleado + "<br/><br/>"
-                        message += "Adjunto encontrará la información de la última liquidación y pago de su nómina.<br/><br/><br/>"
-                        message += "Por favor no responda este correo, esto es un mensaje automático."
-                        pdf_content = base64.b64encode(pdf_content)
+                    email_vals = {}
+                    identificacion  = obj_payslip.employee_id.identification_id
+                    nombre_empleado = obj_payslip.employee_id.name
+                    correo_envio    = obj_payslip.employee_id.work_email
+                    # body message
+                    message = "Estimado "+ nombre_empleado + "<br/><br/>"
+                    message += "Adjunto encontrará la información de la última liquidación y pago de su nómina.<br/><br/><br/>"
+                    message += "Por favor no responda este correo, esto es un mensaje automático."
+                    pdf_content = base64.b64encode(pdf_content)
 
-                        data_attach = {'name':"Comprobante_nomina_"+identificacion+"_"+obj_payslip.name+".pdf", 'type':'binary', 'datas':pdf_content,'res_name':pdf_name,'store_fname':pdf_name,'res_model':'hr.payslip','res_id':obj_payslip.id}
-                        atts_id = env['ir.attachment'].create(data_attach)
-                        if atts_id:
-                            email_vals.update({'subject':self.subject,
-                                                'email_to': correo_envio,
-                                                'email_from': self.env.user.email, 
-                                                'body_html':message.encode('utf-8'),
-                                                'payroll_voucher': True,
-                                                'payroll_voucher_id': self.id,
-                                                'attachment_ids': [(6, 0, [atts_id.id])] })
-                            # create and send email
-                            if email_vals:
-                                email_id = env['mail.mail'].create(email_vals)
-                                if email_id:
-                                    email_id.send()                    
-                    except Exception as error:
-                        values = {
-                            'voucher_id': self.id,
-                            'payslip_id': obj_payslip.id,
-                            'description': str(e.args[0])
-                        }
-                        env['hr.voucher.sending.failed'].create(values)
-                _logger.info(f'(END) HILO/REGISTRO - Envio de comprobantes, cantidad: {len(records)}')
+                    data_attach = {'name':"Comprobante_nomina_"+identificacion+"_"+obj_payslip.name+".pdf", 'type':'binary', 'datas':pdf_content,'res_name':pdf_name,'store_fname':pdf_name,'res_model':'hr.payslip','res_id':obj_payslip.id}
+                    atts_id = self.env['ir.attachment'].create(data_attach)
+                    if atts_id:
+                        email_vals.update({'subject':self.subject,
+                                            'email_to': correo_envio,
+                                            'email_from': self.env.user.email,
+                                            'body_html':message.encode('utf-8'),
+                                            'payroll_voucher': True,
+                                            'payroll_voucher_id': self.id,
+                                            'attachment_ids': [(6, 0, [atts_id.id])] })
+                        # create and send email
+                        if email_vals:
+                            email_id = self.env['mail.mail'].create(email_vals)
+                            if email_id:
+                                email_id.send()
+                except Exception as error:
+                    values = {
+                        'voucher_id': self.id,
+                        'payslip_id': obj_payslip.id,
+                        'description': str(e.args[0])
+                    }
+                    self.env['hr.voucher.sending.failed'].create(values)
+            _logger.info(f'(END) HILO/REGISTRO - Envio de comprobantes, cantidad: {len(records)}')
 
     def generate_voucher(self):
         self.env['hr.voucher.sending.failed'].search([('voucher_id', '=', self.id)]).unlink()
@@ -124,20 +121,22 @@ class hr_voucher_sending(models.Model):
                 j += 100
             #Enviar comprobantes en los lotes ejecutados
             for send in payslips_array:
-                t = threading.Thread(target=self.create_document_inmemory, args=(send,))
-                array_thread.append(t)
-                t.start()
+                self.create_document_inmemory(send)
+                # t = threading.Thread(target=self.create_document_inmemory, args=(send,))
+                # array_thread.append(t)
+                # t.start()
 
-            for hilo in array_thread:
-                hilo.join()
+            # for hilo in array_thread:
+            #     hilo.join()
         else:
             send = [self.payslip_id.id]
-            t = threading.Thread(target=self.create_document_inmemory, args=(send,))
-            array_thread.append(t)
-            t.start()
-
-            for hilo in array_thread:
-                hilo.join()
+            self.create_document_inmemory(send)
+            # t = threading.Thread(target=self.create_document_inmemory, args=(send,))
+            # array_thread.append(t)
+            # t.start()
+            #
+            # for hilo in array_thread:
+            #     hilo.join()
 
         date_finally_process = datetime.now()
         time_process = date_finally_process - date_start_process
@@ -160,14 +159,15 @@ class hr_voucher_sending(models.Model):
         #Enviar comprobantes en los lotes ejecutados
         i = 1
         for send in payslips_array:
+            self.create_document_inmemory(send)
             #msg = 'Enviando Comprobantes | Parte '+str(i)+' de '+str(len(payslips_array))+' | Total de comprobantes: '+str(len(obj_payslip))
-            t = threading.Thread(target=self.create_document_inmemory, args=(send,))                
-            t.start()
-            array_thread.append(t)
-            i += 1
-
-        for hilo in array_thread:
-            hilo.join()
+        #     t = threading.Thread(target=self.create_document_inmemory, args=(send,))
+        #     t.start()
+        #     array_thread.append(t)
+        #     i += 1
+        #
+        # for hilo in array_thread:
+        #     hilo.join()
 
         date_finally_process = datetime.now()
         time_process = date_finally_process - date_start_process
