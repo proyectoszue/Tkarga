@@ -118,6 +118,23 @@ class Hr_payslip(models.Model):
                 record.z_vacation_period_caused_ids.sudo().unlink()
         return super(Hr_payslip, self).unlink()
 
+    def _add_days_360(self, start_date, days_360_to_add):
+        """
+        Suma días en convención 30/360 (cada mes tiene 30 días, día 31 se trata como 30).
+        Asegura que el cálculo de causación de vacaciones se base en 360 días.
+        """
+        if not start_date or days_360_to_add <= 0:
+            return start_date
+        y, m, d = start_date.year, start_date.month, min(start_date.day, 30)
+        total = (y * 360) + ((m - 1) * 30) + (d - 1) + days_360_to_add
+        new_y, rem = total // 360, total % 360
+        new_m, new_d = (rem // 30) + 1, (rem % 30) + 1
+        try:
+            return datetime(new_y, new_m, new_d).date()
+        except ValueError:
+            new_d = min(new_d, 28 if new_m == 2 else (30 if new_m in [4, 6, 9, 11] else 31))
+            return datetime(new_y, new_m, new_d).date()
+
     #--------------------------------------------------LIQUIDACIÓN DE VACACIONES---------------------------------------------------------#
 
     def _get_payslip_lines_vacation(self,inherit_contrato=0,localdict=None,inherit_nomina=0):
@@ -371,7 +388,7 @@ class Hr_payslip(models.Model):
                                  ('employee_id', '=', self.employee_id.id),
                                  ('leave_type_id.unpaid_absences', '=', True)])])
                             days = ((days_vacations_business+days_vacations_31_business) * 360) / 15
-                            final_accrual_date = initial_accrual_date + timedelta(days=(days+dias_ausencias)-1)
+                            final_accrual_date = self._add_days_360(initial_accrual_date, int(days) + int(dias_ausencias))
                         else:
                             obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee.id)])     
                             if obj_vacation:
@@ -396,7 +413,7 @@ class Hr_payslip(models.Model):
                                  ('employee_id', '=', self.employee_id.id),
                                  ('leave_type_id.unpaid_absences', '=', True)])])
                             days = ((days_vacations_business+days_vacations_31_business) * 360) / 15
-                            final_accrual_date = initial_accrual_date + timedelta(days=(days+dias_ausencias)-1)
+                            final_accrual_date = self._add_days_360(initial_accrual_date, int(days) + int(dias_ausencias))
                             #dias360 = self.dias360(initial_accrual_date,final_accrual_date)
 
                         # create/overwrite the rule in the temporary results
@@ -467,7 +484,7 @@ class Hr_payslip(models.Model):
                                  ('employee_id', '=', self.employee_id.id),
                                  ('leave_type_id.unpaid_absences', '=', True)])])
                             days = (days_vacations * 360) / 15
-                            final_accrual_date = initial_accrual_date + timedelta(days=(days+dias_ausencias)-1)
+                            final_accrual_date = self._add_days_360(initial_accrual_date, int(days) + int(dias_ausencias))
                         else:
                             obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee.id)])     
                             if obj_vacation:
@@ -492,8 +509,7 @@ class Hr_payslip(models.Model):
                                  ('employee_id', '=', self.employee_id.id),
                                  ('leave_type_id.unpaid_absences', '=', True)])])
                             days = (days_vacations * 360) / 15
-                            #for obj_leave in leaves_all_obj:
-                            final_accrual_date = initial_accrual_date + timedelta(days=(days+dias_ausencias)-1)
+                            final_accrual_date = self._add_days_360(initial_accrual_date, int(days) + int(dias_ausencias))
                             #dias360 = self.dias360(initial_accrual_date,final_accrual_date)
 
                         # create/overwrite the rule in the temporary results
