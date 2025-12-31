@@ -176,6 +176,7 @@
                                 <group>
                                     <group>
                                         <field name="weight_contribution_calculations"/>
+                                        <field name="z_enable_ibc_previous_month"/>
                                     </group>
                                     <newline/>
                                     <group string="Salud" name="salud" priority="1">

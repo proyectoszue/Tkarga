@@ -139,22 +139,19 @@ class HrPayslipEmployees(models.TransientModel):
 
         return calendar_is_not_covered
 
-    def compute_sheet_thread(self,item,obj_structure_id,obj_payslip_run,obj_contracts):
-        time.sleep(3)
-        with api.Environment.manage():
-            new_cr = self.pool.cursor()
-            self = self.with_env(self.env(cr=new_cr))
+    def compute_sheet_savepoint(self,item,obj_structure_id,obj_payslip_run,obj_contracts):
+        with self.env.cr.savepoint():
             aditional_info = ''
 
             _logger.info(f'(START) HILO/REGISTRO {str(item)} - Ejecución liquidación de nómina con {len(obj_contracts.ids)} contratos.')
 
-            payslips = self.env['hr.payslip'].with_env(self.env(cr=new_cr))
-            Payslip = self.env['hr.payslip'].with_env(self.env(cr=new_cr))
+            payslips = self.env['hr.payslip']
+            Payslip = self.env['hr.payslip']
             default_values = Payslip.default_get(Payslip.fields_get())
 
-            contracts = self.env['hr.contract'].search([('id', 'in', obj_contracts.ids)]).with_env(self.env(cr=new_cr))
-            structure_id = self.env['hr.payroll.structure'].search([('id', 'in', obj_structure_id.ids)]).with_env(self.env(cr=new_cr))
-            payslip_run = self.env['hr.payslip.run'].search([('id', 'in', obj_payslip_run.ids)]).with_env(self.env(cr=new_cr))
+            contracts = self.env['hr.contract'].search([('id', 'in', obj_contracts.ids)])
+            structure_id = self.env['hr.payroll.structure'].search([('id', 'in', obj_structure_id.ids)])
+            payslip_run = self.env['hr.payslip.run'].search([('id', 'in', obj_payslip_run.ids)])
 
             try:
                 for contract in contracts:
@@ -178,7 +175,7 @@ class HrPayslipEmployees(models.TransientModel):
                     })
                     if structure_id.process == 'prima' and self.prima_run_reverse_id:
                         prima_payslip_reverse_obj = self.env['hr.payslip'].search([('payslip_run_id','=',self.prima_run_reverse_id.id),
-                                                       ('employee_id','=',contract.employee_id.id)],limit=1).with_env(self.env(cr=new_cr))
+                                                       ('employee_id','=',contract.employee_id.id)],limit=1)
                         if len(prima_payslip_reverse_obj) == 1:
                             values = dict(values, **{
                                 'prima_payslip_reverse_id': prima_payslip_reverse_obj.id,
@@ -189,7 +186,7 @@ class HrPayslipEmployees(models.TransientModel):
                             'novelties_payroll_concepts': self.novelties_payroll_concepts,
                         })
 
-                    payslip = self.env['hr.payslip'].new(values).with_env(self.env(cr=new_cr))
+                    payslip = self.env['hr.payslip'].new(values)
                     payslip._onchange_employee()
                     if structure_id.process == 'contrato':
                         payslip.load_dates_liq_contrato()
@@ -205,8 +202,6 @@ class HrPayslipEmployees(models.TransientModel):
                 else:
                     payslip_run.write({'observations':log_msg + '\n' + msg})
                 _logger.info(f'(END/ERROR) HILO/REGISTRO {str(item)} - Ejecución liquidación de nómina con {len(obj_contracts.ids)} contratos.')
-            new_cr.commit()
-            new_cr.close()
 
     def compute_sheet(self):
         self.ensure_one()
@@ -311,21 +306,23 @@ class HrPayslipEmployees(models.TransientModel):
         date_start_process = datetime.now()
         item = 1
         for i_contracts in contracts_array_def:
-            if len(i_contracts) > 0:
-                t = threading.Thread(target=self.compute_sheet_thread, args=(item,self.structure_id,payslip_run,i_contracts,))
-                threads.append(t)
-                t.start()
-            item += 1
-
-        for thread in threads:
-            try:
-                thread.join()
-            except Exception as e:
-                msg = 'ERROR: ' + str(e.args[0])
-                if payslip_run.observations:
-                    payslip_run.write({'observations': payslip_run.observations + '\n' + msg})
-                else:
-                    payslip_run.write({'observations': msg})
+            self.compute_sheet_savepoint(item,self.structure_id,payslip_run,i_contracts)
+        # for i_contracts in contracts_array_def:
+        #     if len(i_contracts) > 0:
+        #         t = threading.Thread(target=self.compute_sheet_thread, args=(item,self.structure_id,payslip_run,i_contracts,))
+        #         threads.append(t)
+        #         t.start()
+        #     item += 1
+        #
+        # for thread in threads:
+        #     try:
+        #         thread.join()
+        #     except Exception as e:
+        #         msg = 'ERROR: ' + str(e.args[0])
+        #         if payslip_run.observations:
+        #             payslip_run.write({'observations': payslip_run.observations + '\n' + msg})
+        #         else:
+        #             payslip_run.write({'observations': msg})
 
         date_finally_process = datetime.now()
         time_process = date_finally_process - date_start_process
@@ -765,9 +762,13 @@ class Hr_payslip(models.Model):
                     '''
                     if leaves.get(leave.work_entry_type_id.code,False):
                         leaves[leave.work_entry_type_id.code+'_TOTAL'] += number_of_days_total
+                        leaves[leave.work_entry_type_id.code + '_PLUS90'] += number_of_days_total if number_of_days_total > 90 else 0
+                        leaves[leave.work_entry_type_id.code + '_MINUS90'] += number_of_days_total if number_of_days_total <= 90 else 0
                         leaves[leave.work_entry_type_id.code] += number_of_days
                     else:
                         leaves[leave.work_entry_type_id.code+'_TOTAL'] = number_of_days_total
+                        leaves[leave.work_entry_type_id.code + '_PLUS90'] = number_of_days_total if number_of_days_total > 90 else 0
+                        leaves[leave.work_entry_type_id.code + '_MINUS90'] = number_of_days_total if number_of_days_total <= 90 else 0
                         leaves[leave.work_entry_type_id.code] = number_of_days
                     #Guardar dias que asume la compañia
                     obj_leave_type = self.env['hr.leave.type'].search([('code', '=', leave.work_entry_type_id.code)],limit=1)
@@ -794,8 +795,12 @@ class Hr_payslip(models.Model):
                             else:
                                 leaves[leave.work_entry_type_id.code + '_COMPANY'] = days_company
                             if leaves.get(leave.work_entry_type_id.code + '_PARTNER', False):
+                                leaves[leave.work_entry_type_id.code + '_PARTNER_PLUS90'] += days_partner if number_of_days_total > 90 else 0
+                                leaves[leave.work_entry_type_id.code + '_PARTNER_MINUS90'] += days_partner if number_of_days_total <= 90 else 0
                                 leaves[leave.work_entry_type_id.code + '_PARTNER'] += days_partner
                             else:
+                                leaves[leave.work_entry_type_id.code + '_PARTNER_PLUS90'] = days_partner if number_of_days_total > 90 else 0
+                                leaves[leave.work_entry_type_id.code + '_PARTNER_MINUS90'] = days_partner if number_of_days_total <= 90 else 0
                                 leaves[leave.work_entry_type_id.code + '_PARTNER'] = days_partner
         
         if localdict == None:

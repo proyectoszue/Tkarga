@@ -543,6 +543,7 @@ class hr_annual_parameters(models.Model):
     hours_monthly = fields.Float('Horas mensuales', required=True, tracking=True)
     # Seguridad Social
     weight_contribution_calculations = fields.Boolean('Cálculos de aportes al peso', tracking=True)
+    z_enable_ibc_previous_month = fields.Boolean('Suspensión o huelga', tracking=True)
     # Salud
     value_porc_health_company = fields.Float('Porcentaje empresa salud', required=True, tracking=True)
     value_porc_health_employee = fields.Float('Porcentaje empleado salud', required=True, tracking=True)

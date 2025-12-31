@@ -48,6 +48,7 @@
                             <group>
                                 <field name="electronic_payroll_id"/>
                                 <field name="prefix"/>
+                                <field name="prefix_adjust" required="1"/>
                             </group>
                             <group string="Observaciones">
                                 <field name="observations" nolabel="1"/>
@@ -90,8 +91,6 @@
                                                 <field name="result_upload_xml" readonly="1"/>
                                                 <field name="status" readonly="1"/>
                                                 <field name="result_status" readonly="1"/>
-                                                <field name="transaction_id" readonly="1"/>
-                                                <field name="cune" readonly="1"/>
                                             </group>
                                             <group string="Procesos">
                                                 <group string="XML" attrs="{'invisible':[('status', '=', 'ACCEPTED')]}">

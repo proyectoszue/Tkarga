@@ -69,28 +69,28 @@ class hr_electronic_payroll_detail(models.Model):
                 xml = xml.decode('utf-8').replace('SchemaLocation=""','SchemaLocation="" xsi:schemaLocation="dian:gov:co:facturaelectronica:NominaIndividual NominaIndividualElectronicaXSD.xsd"')
                 xml = xml.replace('<UBLExtensions> </UBLExtensions>','<ext:UBLExtensions/>')
                 xml = bytes(xml, 'utf-8')
-            # try:
-            #     if isinstance(xml, str):
-            #         xml = xml.encode('utf-8')
-            #     root = etree.fromstring(xml)
-            #     for el in root.iter():
-            #         # Textos
-            #         if el.text:
-            #             el.text = self.electronic_payroll_id._normalize_string(el.text)
-            #         if el.tail:
-            #             el.tail = self.electronic_payroll_id._normalize_string(el.tail)
-            #         # Atributos
-            #         if el.attrib:
-            #             for k in list(el.attrib.keys()):
-            #                 el.attrib[k] = self.electronic_payroll_id._normalize_string(el.attrib[k])
-            #     xml = etree.tostring(
-            #         root,
-            #         encoding='UTF-8',
-            #         xml_declaration=True,
-            #         pretty_print=False
-            #     )
-            # except Exception as _e:
-            #     pass
+            try:
+                if isinstance(xml, str):
+                    xml = xml.encode('utf-8')
+                root = etree.fromstring(xml)
+                for el in root.iter():
+                    # Textos
+                    if el.text:
+                        el.text = self.electronic_payroll_id._normalize_string(el.text)
+                    if el.tail:
+                        el.tail = self.electronic_payroll_id._normalize_string(el.tail)
+                    # Atributos
+                    if el.attrib:
+                        for k in list(el.attrib.keys()):
+                            el.attrib[k] = self.electronic_payroll_id._normalize_string(el.attrib[k])
+                xml = etree.tostring(
+                    root,
+                    encoding='UTF-8',
+                    xml_declaration=True,
+                    pretty_print=False
+                )
+            except Exception as _e:
+                pass
 
             filename = f'NominaElectronica{str(self.electronic_payroll_id.year)}-{self.electronic_payroll_id.month}_{str(self.employee_id.identification_id)}.xml'
             self.write({
@@ -484,13 +484,13 @@ class hr_electronic_payroll(models.Model):
             result.append((record.id, "Nómina Electrónica | Periodo {}-{}".format(record.month,str(record.year))))
         return result
 
-    # def _normalize_string(self, value):
-    #     # Normalizar los caracteres especiales:
-    #     if not value:
-    #         return ''
-    #     normalized = unicodedata.normalize('NFD', value)
-    #     normalized = normalized.encode('ascii', 'ignore').decode('utf-8')
-    #     return normalized
+    def _normalize_string(self, value):
+        # Normalizar los caracteres especiales:
+        if not value:
+            return ''
+        normalized = unicodedata.normalize('NFD', value)
+        normalized = normalized.encode('ascii', 'ignore').decode('utf-8')
+        return normalized
 
     def executing_electronic_payroll(self):
         # Eliminar ejecución
@@ -557,9 +557,9 @@ class hr_electronic_payroll(models.Model):
         inner join hr_electronic_payroll as b on a.electronic_payroll_id = b.id and b.prefix = '%s' and b.id != %s
         union
         Select coalesce(max(a.item),0) as next_item from hr_electronic_adjust_payroll_detail as a 
-        inner join hr_electronic_adjust_payroll as b on a.electronic_adjust_payroll_id = b.id and b.prefix = '%s' 
+        inner join hr_electronic_adjust_payroll as b on a.electronic_adjust_payroll_id = b.id and (b.prefix = '%s' or b.prefix_adjust = '%s') 
         ) as a        
-        ''' % (self.prefix, self.id, self.prefix)
+        ''' % (self.prefix, self.id, self.prefix, self.prefix)
         self.env.cr.execute(query_max_item)
         res_max_item = self.env.cr.fetchone()
         max_item = res_max_item[0] or 0
@@ -568,11 +568,11 @@ class hr_electronic_payroll(models.Model):
         for employee in obj_employee:
             obj_contracts = self.env['hr.contract']
             # Obtener contrato activo
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'open'), ('employee_id', '=', employee.id), ('date_start','<=',date_end)])
+            obj_contracts += self.env['hr.contract'].search([('state', '=', 'open'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id), ('date_start','<=',date_end)])
             # Obtener contratos finalizados en el mes
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id', '=', employee.id), ('retirement_date', '>=', date_start), ('retirement_date', '<=', date_end)])
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'finished'), ('employee_id', '=', employee.id),('date_end', '>=', date_start), ('date_end', '<=', date_end)])
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'close'),('contract_type','=','aprendizaje'), ('employee_id', '=', employee.id), ('date_end', '>=', date_start),('date_end', '<=', date_end)])
+            obj_contracts += self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id), ('retirement_date', '>=', date_start), ('retirement_date', '<=', date_end + relativedelta(months=1))])
+            obj_contracts += self.env['hr.contract'].search([('state', '=', 'finished'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id),('date_end', '>=', date_start), ('date_end', '<=', date_end + relativedelta(months=1))])
+            obj_contracts += self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id.tipo_coti_id.code', '!=', 23), ('contract_type','=','aprendizaje'), ('employee_id', '=', employee.id), ('date_end', '>=', date_start),('date_end', '<=', date_end + relativedelta(months=1))])
 
             for obj_contract in obj_contracts:
                 item += 1

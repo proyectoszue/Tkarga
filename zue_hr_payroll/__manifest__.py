@@ -46,6 +46,7 @@
         'views/actions_hr_report_leave_vs_work_entry.xml',
         'views/actions_hr_electronic_payroll.xml',
         'views/actions_hr_electronic_adjust_payroll.xml',
+        'views/actions_hr_comparative_payroll_batch_report.xml',
         'views/actions_accumulated_reports.xml',
         'views/actions_hr_absence_history.xml',
         'views/actions_hr_consolidated_reports.xml',

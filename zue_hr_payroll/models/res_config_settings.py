@@ -19,6 +19,8 @@ class ResCompany(models.Model):
     payroll_peoplepass_credit_account_id = fields.Many2one('account.account',string='Cuenta contabilización pago valor no incluido crédito')
     # Certificado ingreso y retenciones
     z_validated_certificate = fields.Many2one('documents.tag', string='Certificado validado')
+    # Vacaciones con la base del periodo causado en liquidación de contrato
+    z_holidays_based_period_caused = fields.Boolean(string='Vacaciones con la base del periodo causado en liquidación de contrato')
 
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
@@ -34,6 +36,8 @@ class ResConfigSettings(models.TransientModel):
     prima_salary_take = fields.Boolean('Promediar salario de los últimos 6 meses, si ahí variación en prima')
     # Certificado ingreso y retenciones
     z_validated_certificate = fields.Many2one(related='company_id.z_validated_certificate',string='Certificado validado', readonly=False)
+    # Vacaciones con la base del periodo causado en liquidación de contrato
+    z_holidays_based_period_caused = fields.Boolean(related='company_id.z_holidays_based_period_caused',string='Vacaciones con la base del periodo causado en liquidación de contrato', readonly=False)
     #Nómina electronica
     payroll_electronic_operator = fields.Selection(related='company_id.payroll_electronic_operator',string='Operador NE', readonly=False)
     payroll_electronic_username_ws = fields.Char(related='company_id.payroll_electronic_username_ws',string='Usuario WS', readonly=False)

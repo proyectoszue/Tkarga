@@ -8,7 +8,9 @@
                     <t t-set="o" t-value="o.with_context(lang=o.employee_id.address_home_id.lang or o.env.lang)"/>
                     <div class="page" style="font-style: normal; font-size: 12px;">
                         <t t-set="basic_salary" t-value="o.contract_id.get_wage_in_date(o.date_to) or 0.0"/>
-                        <t t-set="hours_months" t-value="sum([wd.number_of_hours for wd in o.worked_days_line_ids.filtered(lambda w: w.work_entry_type_id.code == 'WORK100')]) or 0.0"/>
+<!--                        <t t-set="hours_months" t-value="sum([wd.number_of_hours for wd in o.worked_days_line_ids.filtered(lambda w: w.work_entry_type_id.code == 'WORK100')]) or 0.0"/>-->
+                        <t t-set="annual_param" t-value="env['hr.annual.parameters'].search([('year','=', o.date_to.year)], limit=1)"/>
+                        <t t-set="hours_months" t-value="annual_param and annual_param.hours_monthly or 0.0"/>
                         <t t-set="standard_hour_value" t-value="basic_salary / (hours_months or 1.0)"/>
                         <h6 style="text-align:center;">
                             <b>DESPRENDIBLE DE NÓMINA</b>

@@ -15,6 +15,20 @@ class HrWorkEntryType(models.Model):
 class HolidaysRequest(models.Model):    
     _inherit = "hr.leave"
 
+    def _add_days_360(self, start_date, days_360_to_add):
+        """Suma días en convención 30/360 (cada mes tiene 30 días, día 31 se trata como 30)."""
+        if not start_date or days_360_to_add <= 0:
+            return start_date
+        y, m, d = start_date.year, start_date.month, min(start_date.day, 30)
+        total = (y * 360) + ((m - 1) * 30) + (d - 1) + days_360_to_add
+        new_y, rem = total // 360, total % 360
+        new_m, new_d = (rem // 30) + 1, (rem % 30) + 1
+        try:
+            return datetime(new_y, new_m, new_d).date()
+        except ValueError:
+            new_d = min(new_d, 28 if new_m == 2 else (30 if new_m in [4, 6, 9, 11] else 31))
+            return datetime(new_y, new_m, new_d).date()
+
     employee_identification = fields.Char('Identificación empleado')
     branch_id = fields.Many2one(related='employee_id.branch_id', string='Sucursal', store=True,tracking=True)
     unpaid_absences = fields.Boolean(related='holiday_status_id.unpaid_absences', string='Ausencia no remunerada',store=True,tracking=True)
@@ -165,7 +179,7 @@ class HolidaysRequest(models.Model):
         for record in self:
             if record.unpaid_absences:
                 days_unpaid_absences = record.number_of_days
-                days_vacation_represent = round((days_unpaid_absences * 15) / 365,0)
+                days_vacation_represent = round((days_unpaid_absences * 15) / 360,0)
                 if days_vacation_represent > 0:
                     # Obtener contrato y ultimo historico de vacaciones
                     obj_contract = self.env['hr.contract'].search([('employee_id','=',record.employee_id.id),('state','=','open')])
@@ -178,7 +192,7 @@ class HolidaysRequest(models.Model):
                                 days=1) if history.final_accrual_date > date_vacation else date_vacation
                     #Fechas de causación
                     initial_accrual_date = date_vacation
-                    final_accrual_date = date_vacation + timedelta(days=days_vacation_represent)
+                    final_accrual_date = self._add_days_360(date_vacation, int(days_vacation_represent))
 
                     info_vacation = {
                         'employee_id': record.employee_id.id,

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.act_window" id="zue_hr_payroll.action_comparative_payroll_batch_report">
+            <field name="name">Informe Comparativo de Liquidaciones</field>
+            <field name="res_model">zue.comparative.payroll.batch.report</field>
+            <field name="target">new</field>
+            <field name="view_mode">form</field>
+        </record>
+
+        <record id="zue_hr_payroll.comparative_payroll_batch_report" model="ir.ui.view">
+            <field name="name">Informe Comparativo de Liquidaciones</field>
+            <field name="model">zue.comparative.payroll.batch.report</field>
+            <field name="arch" type="xml">
+                <form string="Informe Comparativo de Liquidaciones">
+                    <sheet>
+                        <group>
+                            <field name="z_batch_report_type" widget="radio" options="{'horizontal': true}"/>
+                        </group>
+                        <group attrs="{'invisible': [('z_batch_report_type','!=','r1')]}">
+                            <group>
+                                <field name="z_batch_a_id"/>
+                                <field name="z_batch_b_id"/>
+                            </group>
+                        </group>
+                        <group attrs="{'invisible': [('z_batch_report_type','!=','r2')]}">
+                            <group>
+                                <field name="z_payslip_a_id"/>
+                                <field name="z_payslip_b_id"/>
+                            </group>
+                        </group>
+                        <footer>
+                            <button attrs="{'invisible': [('z_batch_report_type','!=','r1')]}" name="generate_comparative_payroll_batch_excel" string="Generar Excel Comparativo por Lotes" type="object" class="oe_highlight"/>
+                            <button attrs="{'invisible': [('z_batch_report_type','!=','r2')]}" name="generate_comparative_payroll_payslip_excel" string="Generar Excel Comparativo por Liquidacioens" type="object" class="oe_highlight"/>
+                        </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

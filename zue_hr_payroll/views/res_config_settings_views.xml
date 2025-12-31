@@ -90,6 +90,14 @@
                             </div>
                         </div>
                     </div>
+                    <div class="col-12 col-lg-6 o_setting_box">
+                        <div class="o_setting_left_pane">
+                            <field name="z_holidays_based_period_caused"/>
+                        </div>
+                        <div class="o_setting_right_pane">
+                            <span class="o_form_label">Vacaciones con la base del periodo causado en liquidación de contrato</span>
+                        </div>
+                    </div>
                 </div>
                 <h2>Cesantías</h2>
                 <div class="row mt16 o_settings_container" id="attributes_cesantias">
