@@ -245,7 +245,7 @@ class hr_payroll_flat_file(models.TransientModel):
                     val_write = 0 if val_write < 0 else val_write
                     valor = str(val_write).split(".") # Eliminar decimales
                     valor_transaccion = right(15*'0'+str(valor[0]),15)
-                    valor_transaccion_decimal = right(2*'0'+str(valor[1]),2)
+                    valor_transaccion_decimal = right(2*'0'+str(valor[1]),2) if len(valor) > 1 else '00'
             fecha_aplicacion_det = fecha_aplicacion
             referencia = 21*filler
             tipo_identificacion = ' ' # Es requerido solo si el pago es para entregar por ventanilla por ende enviamos vacio
@@ -347,7 +347,7 @@ class hr_payroll_flat_file(models.TransientModel):
                     val_write = 0 if val_write < 0 else val_write
                     valor = str(val_write).split(".") # Eliminar decimales
                     valor_transaccion = right(13*'0'+str(valor[0]),13)
-                    valor_transaccion_decimal = right(2*'0'+str(valor[1]),2)         
+                    valor_transaccion_decimal = right(2*'0'+str(valor[1]),2) if len(valor) > 1 else '00'         
             
             numbers = [temp for temp in payslip.number.split("/") if temp.isdigit()]
             documento_autorizado = ''
@@ -370,7 +370,7 @@ class hr_payroll_flat_file(models.TransientModel):
         if len(valor)>1:
             parte_decimal = right(2*'0'+str(valor[1]),2) 
         else:
-            parte_decimal = 2*'0'
+            parte_decimal = '00'
         encab_content_txt = encab_content_txt.replace("ValTotal", parte_entera+''+parte_decimal)
         
         #Totales
@@ -382,7 +382,7 @@ class hr_payroll_flat_file(models.TransientModel):
         if len(valor)>1:
             parte_decimal = right(2*'0'+str(valor[1]),2) 
         else: 
-            parte_decimal = 2*'0'
+            parte_decimal = '00'
         valor_total = parte_entera+''+parte_decimal
         ceros = 172*'0'
 
@@ -465,7 +465,7 @@ class hr_payroll_flat_file(models.TransientModel):
                     val_write = 0 if val_write < 0 else val_write
                     valor = str(val_write).split(".")  # Eliminar decimales
                     valor_transaccion = right(16 * '0' + str(valor[0]), 16)
-                    valor_transaccion_decimal = right(2 * '0' + str(valor[1]), 2)
+                    valor_transaccion_decimal = right(2 * '0' + str(valor[1]), 2) if len(valor) > 1 else '00'
 
             content_line = '''%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s''' % (
             tipo_registro_det, codigo_transaccion, tipo_producto_origen, cuenta_origen, entidad_destino,
@@ -485,7 +485,7 @@ class hr_payroll_flat_file(models.TransientModel):
         if len(valor) > 1:
             parte_decimal = right(2 * '0' + str(valor[1]), 2)
         else:
-            parte_decimal = 2 * '0'
+            parte_decimal = '00'
         valor_total_tra = parte_entera + '' + parte_decimal
         digito_chequeo = 15 * filler
         relleno = 145 * filler
@@ -610,7 +610,7 @@ class hr_payroll_flat_file(models.TransientModel):
                     val_write = line.total - valor_not_include
                     val_write = 0 if val_write < 0 else val_write
                     valor = str(val_write).split(".")  # Eliminar decimales
-                    valor_transacción = right(16 * '0' + str(valor[0]), 16) +''+ right(2 * '0' + str(valor[1]), 2)
+                    valor_transacción = right(16 * '0' + str(valor[0]), 16) +''+ (right(2 * '0' + str(valor[1]), 2) if len(valor) > 1 else '00')
 
             content_line = '''%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s''' % (
             tipo_registro, nit_beneficiario, referencia, cuenta_beneficiario, tipo_transaccion, cod_banco,
@@ -625,7 +625,7 @@ class hr_payroll_flat_file(models.TransientModel):
         # ----------------------------------Generar archivo---------------------------------
         # Reemplazar valores del encabezado
         valor_total = str(total_valor_transaccion).split(".")  # Eliminar decimales
-        encab_content_txt = encab_content_txt.replace("ValorTotalTraslados", right(16 * '0' + str(valor_total[0]), 16) +''+ right(2 * '0' + str(valor_total[1]), 2))
+        encab_content_txt = encab_content_txt.replace("ValorTotalTraslados", right(16 * '0' + str(valor_total[0]), 16) +''+ (right(2 * '0' + str(valor_total[1]), 2) if len(valor_total) > 1 else '00'))
         encab_content_txt = encab_content_txt.replace("NumTraslados", right(6 * '0' + str(cant_detalle), 6))
         # Unir Encabezado y Detalle
         content_txt = encab_content_txt + '\n' + detalle_content
@@ -1096,7 +1096,7 @@ class hr_payroll_flat_file(models.TransientModel):
                     val_write = 0 if val_write < 0 else val_write
                     valor = str(val_write).split(".")  # Eliminar decimales
                     valor_transaccion = right(13 * '0' + str(valor[0]), 13)
-                    valor_transaccion_decimal = right(2 * '0' + str(valor[1]), 2)
+                    valor_transaccion_decimal = right(2 * '0' + str(valor[1]), 2) if len(valor) > 1 else '00'
             fecha_mov = '00000000'
             codigo_oficina_pagadora = '0000'
             nombre_beneficiario = left(payslip.contract_id.employee_id.name + 36 * ' ' , 36)
