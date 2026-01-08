@@ -223,7 +223,7 @@ class Hr_payslip(models.Model):
                     if self.prima_payslip_reverse_id:
                         value_reverse = self.prima_payslip_reverse_id.line_ids.filtered(lambda line: line.code == 'PRIMA').amount
                         amount = round(amount-value_reverse,0)
-                    qty = dias_liquidacion
+                    qty = dias_liquidacion if dias_liquidacion <= 180 else 180
 
                 amount = round(amount,0) if round_payroll == False else round(amount, 2)
                 #check if there is already a rule computed with that code
