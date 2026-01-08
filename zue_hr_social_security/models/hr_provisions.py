@@ -91,12 +91,12 @@ class hr_executing_provisions(models.Model):
                     #Obtener fecha cesantias
                     date_cesantias = contract.date_start
                     if retirement_date == False:
-                        obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<=',date_end),('final_accrual_date','<=',date_end_without_31)])
+                        obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<',date_end),('final_accrual_date','<',date_end_without_31)])
                     else:
                         if retirement_date >= date_end:
-                            obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<=', date_end),('final_accrual_date', '<=', date_end_without_31)])
+                            obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', date_end),('final_accrual_date', '<', date_end_without_31)])
                         else:
-                            obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<=', retirement_date)])
+                            obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date)])
                     if obj_cesantias:
                         for history in sorted(obj_cesantias, key=lambda x: x.final_accrual_date):
                             date_cesantias = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_cesantias else date_cesantias
@@ -104,12 +104,12 @@ class hr_executing_provisions(models.Model):
                     #Obtener fecha prima
                     date_prima = contract.date_start
                     if retirement_date == False:
-                        obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<=',date_end),('final_accrual_date','<=',date_end_without_31)])
+                        obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<',date_end),('final_accrual_date','<',date_end_without_31)])
                     else:
                         if retirement_date >= date_end:
-                            obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<=', date_end),('final_accrual_date', '<=', date_end_without_31)])
+                            obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', date_end),('final_accrual_date', '<', date_end_without_31)])
                         else:
-                            obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<=', retirement_date)])
+                            obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date)])
                     if obj_prima:
                         for history in sorted(obj_prima, key=lambda x: x.final_accrual_date):
                             date_prima = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_prima else date_prima
@@ -132,16 +132,17 @@ class hr_executing_provisions(models.Model):
                                 date_vacation = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_vacation else date_vacation
 
                     if retirement_date == False:
-                        date_to_process = date_end
+                        date_to_process = date_end_without_31
                     else:
-                        if retirement_date >= date_end:
-                            date_to_process = date_end
-                        else:
-                            date_to_process = retirement_date
+                        date_to_process = date_end_without_31 if retirement_date >= date_end_without_31 else retirement_date
+
+                        date_cesantias = date_cesantias if retirement_date >= date_cesantias else retirement_date
+                        date_prima = date_prima if retirement_date >= date_prima else retirement_date
+                        date_vacation = date_vacation if retirement_date >= date_vacation else retirement_date
 
                     #Simular liquidación de contrato
                     obj_liq_contract_exists = self.env['hr.payslip'].search(
-                        [('contract_id', '=', contract.id), ('struct_id.process', '=', 'contrato'),
+                        [('state', '=', 'done'), ('contract_id', '=', contract.id), ('struct_id.process', '=', 'contrato'),
                          ('date_liquidacion', '>=', date_start), ('date_liquidacion', '<=', date_end)], limit=1)
                     if len(obj_liq_contract_exists) == 1:
                         result_finally = {}
@@ -284,11 +285,12 @@ class hr_executing_provisions(models.Model):
                             if value_payments > 0 and current_payable_value < 0 and provision == 'vacaciones':
                                 value_provision = abs(current_payable_value)
                                 current_payable_value = 0
-                            elif value_payments > 0 and current_payable_value >=0 and provision == 'vacaciones':
+                            elif value_payments > 0 and current_payable_value >=0 and provision == 'vacaciones' and not retirement_date:
                                 value_provision = amount - current_payable_value
                                 current_payable_value = amount
-                            elif value_payments == 0 and current_payable_value >= 0 and provision == 'vacaciones':
-                                value_provision = amount - value_balance#amount_ant
+                            elif (retirement_date or (
+                                    value_payments == 0 and current_payable_value >= 0)) and provision == 'vacaciones':
+                                value_provision = amount - value_balance  # amount_ant
                             else:
                                 value_provision = amount - value_balance
 
