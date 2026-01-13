@@ -48,7 +48,7 @@ class hr_executing_provisions(models.Model):
                             ('9', 'Septiembre'),
                             ('10', 'Octubre'),
                             ('11', 'Noviembre'),
-                            ('12', 'Diciembre')        
+                            ('12', 'Diciembre')
                             ], string='Mes', required=True, tracking=True)
     date_end = fields.Date('Fecha', tracking=True)
     #employee_ids = fields.Many2many('hr.employee', string='Empleados', ondelete='restrict', required=True)
@@ -75,7 +75,7 @@ class hr_executing_provisions(models.Model):
         for record in self:
             result.append((record.id, "Periodo {}-{}".format(record.month,str(record.year))))
         return result
-  
+
     def executing_provisions_savepoint(self,date_start,date_end,struct_vacaciones,struct_prima,struct_cesantias,struct_intcesantias,contracts):
         with self.env.cr.savepoint():
             for obj_contract in contracts:
@@ -91,12 +91,12 @@ class hr_executing_provisions(models.Model):
                     #Obtener fecha cesantias
                     date_cesantias = contract.date_start
                     if retirement_date == False:
-                        obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<',date_end),('final_accrual_date','<',date_end_without_31)])
+                        obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('initial_accrual_date', '<', date_end),('initial_accrual_date', '<', date_end_without_31),('final_accrual_date','<',date_end),('final_accrual_date','<',date_end_without_31)])
                     else:
                         if retirement_date >= date_end:
-                            obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', date_end),('final_accrual_date', '<', date_end_without_31)])
+                            obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('initial_accrual_date', '<', date_end),('initial_accrual_date', '<', date_end_without_31),('final_accrual_date', '<', date_end),('final_accrual_date', '<', date_end_without_31)])
                         else:
-                            obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date)])
+                            obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('initial_accrual_date', '<', retirement_date),('final_accrual_date', '<', retirement_date)])
                     if obj_cesantias:
                         for history in sorted(obj_cesantias, key=lambda x: x.final_accrual_date):
                             date_cesantias = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_cesantias else date_cesantias
@@ -104,12 +104,12 @@ class hr_executing_provisions(models.Model):
                     #Obtener fecha prima
                     date_prima = contract.date_start
                     if retirement_date == False:
-                        obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('final_accrual_date','<',date_end),('final_accrual_date','<',date_end_without_31)])
+                        obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id),('contract_id', '=', contract.id),('initial_accrual_date', '<', date_end),('initial_accrual_date', '<', date_end_without_31),('final_accrual_date','<',date_end),('final_accrual_date','<',date_end_without_31)])
                     else:
                         if retirement_date >= date_end:
-                            obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', date_end),('final_accrual_date', '<', date_end_without_31)])
+                            obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('initial_accrual_date', '<', date_end),('initial_accrual_date', '<', date_end_without_31),('final_accrual_date', '<', date_end),('final_accrual_date', '<', date_end_without_31)])
                         else:
-                            obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('final_accrual_date', '<', retirement_date)])
+                            obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('initial_accrual_date', '<', retirement_date),('final_accrual_date', '<', retirement_date)])
                     if obj_prima:
                         for history in sorted(obj_prima, key=lambda x: x.final_accrual_date):
                             date_prima = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_prima else date_prima
@@ -144,7 +144,11 @@ class hr_executing_provisions(models.Model):
                     obj_liq_contract_exists = self.env['hr.payslip'].search(
                         [('state', '=', 'done'), ('contract_id', '=', contract.id), ('struct_id.process', '=', 'contrato'),
                          ('date_liquidacion', '>=', date_start), ('date_liquidacion', '<=', date_end)], limit=1)
-                    if len(obj_liq_contract_exists) == 1:
+                    obj_liq_prima_cesantias_exists = self.env['hr.payslip'].search(
+                        [('state', '=', 'done'), ('contract_id', '=', contract.id),
+                         ('struct_id', 'in', [struct_prima.id,struct_cesantias.id,struct_intcesantias.id]),
+                         ('date_to', '>=', date_start), ('date_to', '<=', date_end)], limit=1)
+                    if len(obj_liq_contract_exists) == 1 and len(obj_liq_prima_cesantias_exists) == 0:
                         result_finally = {}
                         for liq in obj_liq_contract_exists.line_ids:
                             liq_dict = {liq.copy_data()[0]['code']:liq.copy_data()[0]}
@@ -350,15 +354,15 @@ class hr_executing_provisions(models.Model):
         #Obtener fechas del periodo seleccionado
         date_start = '01/'+str(self.month)+'/'+str(self.year)
         try:
-            date_start = datetime.strptime(date_start, '%d/%m/%Y')       
+            date_start = datetime.strptime(date_start, '%d/%m/%Y')
 
             date_end = date_start + relativedelta(months=1)
             date_end = date_end - timedelta(days=1)
-            
+
             date_start = date_start.date()
             date_end = date_end.date()
         except:
-            raise UserError(_('El año digitado es invalido, por favor verificar.'))  
+            raise UserError(_('El año digitado es invalido, por favor verificar.'))
 
 
         #Obtener estructuras
@@ -402,7 +406,7 @@ class hr_executing_provisions(models.Model):
         #Guardo los contratos en lotes de a 20
         limit_employees_per_batch = int(math.ceil(self.employees_per_batch/5)) if self.employees_per_batch > 100 else self.employees_per_batch
         contracts_array, i, j = [], 0 , limit_employees_per_batch
-        while i <= len(obj_contracts):                
+        while i <= len(obj_contracts):
             contracts_array.append(obj_contracts[i:j])
             i = j
             j += limit_employees_per_batch
