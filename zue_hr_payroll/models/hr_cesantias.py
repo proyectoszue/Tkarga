@@ -58,6 +58,48 @@ class Hr_payslip(models.Model):
 
     #--------------------------------------------------LIQUIDACIÓN DE CESANTIAS---------------------------------------------------------#
 
+    def _has_salary_variation_last_3_months(self, contract, reference_date):
+        """
+        Valida si hubo variación salarial en los últimos 3 meses antes de la fecha de referencia.
+        :param contract: Contrato del empleado
+        :param reference_date: Fecha de referencia para calcular los últimos 3 meses
+        :return: True si hay variación salarial, False en caso contrario
+        """
+        # Calcular fecha inicial (3 meses antes de la fecha de referencia)
+        initial_check_date = reference_date - relativedelta(months=3)
+        # Buscar cambios de salario en los últimos 3 meses
+        obj_wage_changes = self.env['hr.contract.change.wage'].search([
+            ('contract_id', '=', contract.id), ('date_start', '>=', initial_check_date),
+            ('date_start', '<=', reference_date)], order='date_start')
+        # Si hay cambios de salario, hay variación
+        return len(obj_wage_changes) > 0
+
+    def _calculate_wage_average_full_year(self, contract, start_date, end_date):
+        """
+        Calcula el promedio de salario del año completo basado en el histórico de cambios de salario.
+        :param contract: Contrato del empleado
+        :param start_date: Fecha inicial del periodo
+        :param end_date: Fecha final del periodo
+        :return: Promedio de salario mensual
+        """
+        wage_average = 0
+        dias_trabajados_average = self.dias360(start_date, end_date)
+        current_date = start_date
+        while current_date <= end_date:
+            if current_date.day != 31:
+                wage_in_date = contract.get_wage_in_date(current_date)
+                if current_date.month == 2 and current_date.day == 28 and (current_date + timedelta(days=1)).day != 29:
+                    wage_average += (wage_in_date / 30) * 3
+                elif current_date.month == 2 and current_date.day == 29:
+                    wage_average += (wage_in_date / 30) * 2
+                else:
+                    wage_average += wage_in_date / 30
+            current_date = current_date + timedelta(days=1)
+        if dias_trabajados_average != 0:
+            return (wage_average / dias_trabajados_average) * 30
+        else:
+            return 0
+
     def _get_payslip_lines_cesantias(self,inherit_contrato=0,localdict=None):
         def _sum_salary_rule_category(localdict, category, amount):
             if category.parent_id:
@@ -168,39 +210,37 @@ class Hr_payslip(models.Model):
                         for change in sorted(obj_wage, key=lambda x: x.date_start): #Obtiene el ultimo salario vigente antes de la fecha de liquidacion
                             wage = change.wage
                         wage = contract.wage if wage == 0 else wage
-                        initial_process_date = (self.date_liquidacion if inherit_contrato != 0 else self.date_to) - relativedelta(months=3)
-                        end_process_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
-                        obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '>', initial_process_date),('date_start', '<=', end_process_date)])
-                        if cesantias_salary_take and len(obj_wage) > 0:
-                            initial_validate_date = self.date_cesantias if inherit_contrato != 0 else self.date_from
-                            end_validate_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
-                            obj_wage_of_year = self.env['hr.payslip.line'].search(
-                                [('slip_id.state', 'in', ['done', 'paid']), ('slip_id.date_from', '>=', initial_validate_date),
-                                 ('slip_id.date_from', '<=', end_validate_date), ('category_id.code', '=', 'BASIC'),
-                                 ('slip_id.contract_id', '=', contract.id)])
-                            total_wage_of_year = sum([i.total for i in obj_wage_of_year])
-                            obj_workdays_of_year = self.env['hr.payslip.worked_days'].search(
-                                [('payslip_id.state', 'in', ['done', 'paid']), ('payslip_id.date_from', '>=', initial_validate_date),
-                                 ('payslip_id.date_from', '<=', end_validate_date), ('work_entry_type_id.code', '=', 'WORK100'),
-                                 ('payslip_id.struct_id.process', '=', 'nomina'),('payslip_id.contract_id', '=', contract.id)])
-                            total_workdays_of_year = sum([i.number_of_days for i in obj_workdays_of_year])
-                            if total_workdays_of_year > 0:
-                                wage = (total_wage_of_year / total_workdays_of_year) * 30
-                            # wage_average = 0
-                            # dias_trabajados_average = self.dias360(initial_process_date, end_process_date)
-                            # while initial_process_date <= end_process_date:
-                            #     if initial_process_date.day != 31:
-                            #         if initial_process_date.month == 2 and initial_process_date.day == 28 and (initial_process_date + timedelta(days=1)).day != 29:
-                            #             wage_average += (contract.get_wage_in_date(initial_process_date) / 30) * 3
-                            #         elif initial_process_date.month == 2 and initial_process_date.day == 29:
-                            #             wage_average += (contract.get_wage_in_date(initial_process_date) / 30) * 2
-                            #         else:
-                            #             wage_average += contract.get_wage_in_date(initial_process_date) / 30
-                            #     initial_process_date = initial_process_date + timedelta(days=1)
-                            # if dias_trabajados_average != 0:
-                            #     wage = contract.wage if wage_average == 0 else (wage_average / dias_trabajados_average) * 30
-                            # else:
-                            #     wage = 0
+
+                        # Si el parámetro cesantias_salary_take está activado, validar variación y calcular promedio si hay variación
+                        if cesantias_salary_take:
+                            # Determinar fechas del periodo completo de liquidación
+                            period_start_date = self.date_cesantias if inherit_contrato != 0 else self.date_from
+                            period_end_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
+                            reference_date = period_end_date  # Fecha de referencia para validar los últimos 3 meses
+
+                            # Validar si hubo variación salarial en los últimos 3 meses
+                            # Si no existe variación, se usa el salario vigente del contrato (ya está en la variable wage)
+                            has_salary_variation = self._has_salary_variation_last_3_months(contract, reference_date)
+
+                            if has_salary_variation:
+                                # Si existe variación, calcular el promedio del histórico del año completo
+                                wage_average_calculated = self._calculate_wage_average_full_year(contract, period_start_date, period_end_date)
+                                if wage_average_calculated > 0:
+                                    wage = wage_average_calculated
+                            # initial_validate_date = self.date_cesantias if inherit_contrato != 0 else self.date_from
+                            # end_validate_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
+                            # obj_wage_of_year = self.env['hr.payslip.line'].search(
+                            #     [('slip_id.state', 'in', ['done', 'paid']), ('slip_id.date_from', '>=', initial_validate_date),
+                            #      ('slip_id.date_from', '<=', end_validate_date), ('category_id.code', '=', 'BASIC'),
+                            #      ('slip_id.contract_id', '=', contract.id)])
+                            # total_wage_of_year = sum([i.total for i in obj_wage_of_year])
+                            # obj_workdays_of_year = self.env['hr.payslip.worked_days'].search(
+                            #     [('payslip_id.state', 'in', ['done', 'paid']), ('payslip_id.date_from', '>=', initial_validate_date),
+                            #      ('payslip_id.date_from', '<=', end_validate_date), ('work_entry_type_id.code', '=', 'WORK100'),
+                            #      ('payslip_id.struct_id.process', '=', 'nomina'),('payslip_id.contract_id', '=', contract.id)])
+                            # total_workdays_of_year = sum([i.number_of_days for i in obj_workdays_of_year])
+                            # if total_workdays_of_year > 0:
+                            #     wage = (total_wage_of_year / total_workdays_of_year) * 30
                         #Auxilio de transporte
                         auxtransporte = annual_parameters.transportation_assistance_monthly
                         auxtransporte_tope = annual_parameters.top_max_transportation_assistance
@@ -221,7 +261,7 @@ class Hr_payslip(models.Model):
                     amount = round(amount_base / 360, 0) if round_payroll == False else amount_base / 360
                     qty = dias_liquidacion
 
-                    if rule.code == 'INTCESANTIAS':
+                    if rule.code == 'INTCESANTIAS' and not self.z_is_advance_severance:
                         # Revisar si tuvo avance y calcular los intereses pendientes
                         date_check = (self.date_cesantias or self.date_from) - timedelta(days=1)
                         obj_check_advance = self.env['hr.history.cesantias'].search(
