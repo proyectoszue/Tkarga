@@ -419,6 +419,22 @@ class hr_electronic_adjust_payroll_detail(models.Model):
                 quantity += abs(line.quantity) if line.salary_rule_id.code in lst_codes else 0
         return quantity
 
+    def get_quantity_salary_rules_exclude_prima(self,lst_codes):
+        quantity = 0
+        for payslip in self.payslip_ids:
+            if payslip.struct_id.process != 'prima':
+                for line in payslip.line_ids:
+                    quantity += abs(line.quantity) if line.salary_rule_id.code in lst_codes else 0
+        return quantity
+
+    def get_days_lines_exclude_prima(self,lst_codes):
+        days = 0
+        for payslip in self.payslip_ids:
+            if payslip.struct_id.process != 'prima':
+                for entries in payslip.worked_days_line_ids:
+                    days += entries.number_of_days if entries.work_entry_type_id.code in lst_codes else 0
+        return int(days)
+
     def get_annual_parameters(self):
         obj = self.env['hr.annual.parameters'].search([('year', '=', self.electronic_adjust_payroll_id.electronic_payroll_id.year)])
         return obj
