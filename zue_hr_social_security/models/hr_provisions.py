@@ -315,6 +315,11 @@ class hr_executing_provisions(models.Model):
                             for last_payslip in sorted(last_lines_payslip,key=lambda x: x.date_to):
                                 analytic_account_id = last_payslip.analytic_account_id
 
+                            # Cierre de provision cuando existe liq de contrato, prima o cesantias (Cierre de año)
+                            if len(obj_liq_prima_cesantias_exists) > 0 and provision != 'vacaciones' and date_end.month in (6,12):
+                                value_provision = value_payments - amount_ant
+                                current_payable_value = 0
+
                             #Guardar valores
                             values_details = {
                                 'executing_provisions_id':self.id,
