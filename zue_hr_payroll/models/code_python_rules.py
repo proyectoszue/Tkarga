@@ -585,6 +585,36 @@ if obj_salary_rule and (worked_days.WORK100 != 0.0 or leaves.VACDISFRUTADAS != 0
             else:
                 amount = (obj_concept.amount / 30) * days_process
                 result = amount if obj_salary_rule.dev_or_ded == 'devengo' else (amount) * -1
+# ------------Auxilio no salarial - por días laborados, vacaciones, incapacidades, licencia de luto y licencia remunerada -----------------------------
+result = 0.0
+obj_salary_rule = payslip.get_salary_rule('AUX002', employee.type_employee.id)
+if obj_salary_rule:
+    obj_concept = payslip.get_concepts(contract.id, obj_salary_rule.id, 0)
+    day_initial_payrroll = payslip.date_from.day
+    day_end_payrroll = 30 if payslip.date_to.month == 2 and payslip.date_to.day in (28, 29) else payslip.date_to.day
+    if obj_concept:
+        aplicar = 0 if obj_concept.aplicar == '30' and inherit_contrato != 0 else int(obj_concept.aplicar)
+        if (aplicar == 0) or (aplicar >= day_initial_payrroll and aplicar <= day_end_payrroll):
+            dias_validos = 0.0
+            if worked_days.WORK100 != 0.0:
+                dias_validos += worked_days.WORK100.number_of_days
+            if leaves.VACDISFRUTADAS != 0.0:
+                dias_validos += leaves.VACDISFRUTADAS
+            if worked_days.EGA != 0.0:
+                dias_validos += worked_days.EGA.number_of_days
+            if worked_days.EGH != 0.0:
+                dias_validos += worked_days.EGH.number_of_days
+            if worked_days.EP != 0.0:
+                dias_validos += worked_days.EP.number_of_days
+            if worked_days.AT != 0.0:
+                dias_validos += worked_days.AT.number_of_days
+            if worked_days.LICENCIA_REMUNERADA != 0.0:
+                dias_validos += worked_days.LICENCIA_REMUNERADA.number_of_days
+            if worked_days.LUTO != 0.0:
+                dias_validos += worked_days.LUTO.number_of_days
+            if dias_validos != 0.0:
+                amount = (obj_concept.amount / 30) * dias_validos
+                result = amount if obj_salary_rule.dev_or_ded == 'devengo' else amount * -1
 #---------------------------------------Embargo salarial 1/5 smmvl--------------------------------------------------------
 result = 0.0
 obj_salary_rule = payslip.get_salary_rule('EMBARGO002',employee.type_employee.id) 

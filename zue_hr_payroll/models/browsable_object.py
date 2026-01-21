@@ -229,9 +229,9 @@ class Payslips(BrowsableObject):
     #Retorna el devengo o deduccion del contrato del empleado dependiendo la regla enviada
     def get_concepts(self, contract_id, input_id, id_contract_concepts=0):
         if id_contract_concepts == 0:
-            res = self.env['hr.contract.concepts'].search([('contract_id', '=', contract_id),('input_id','=',input_id)])
+            res = self.env['hr.contract.concepts'].search([('contract_id', '=', contract_id),('input_id','=',input_id),('state','=','done')])
         else:
-            res = self.env['hr.contract.concepts'].search([('id','=',id_contract_concepts),('contract_id', '=', contract_id),('input_id','=',input_id)])
+            res = self.env['hr.contract.concepts'].search([('id','=',id_contract_concepts),('contract_id', '=', contract_id),('input_id','=',input_id),('state','=','done')])
         return res and res[0] or 0.0
     
     #Retorna el devengo o deduccion del contrato del empleado dependiendo la regla enviada
