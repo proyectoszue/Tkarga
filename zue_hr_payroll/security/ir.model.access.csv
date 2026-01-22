@@ -22,6 +22,8 @@ access_hr_history_cesantias,hr.history.cesantias,model_hr_history_cesantias,,1,1
 access_hr_voucher_sending,hr.voucher.sending,model_hr_voucher_sending,,1,1,1,1
 access_hr_voucher_sending_failed,hr.voucher.sending.failed,model_hr_voucher_sending_failed,,1,1,1,1
 access_hr_history_prima,hr.history.prima,model_hr_history_prima,,1,1,1,1
+access_hr_employee_rtefte_history,hr.employee.rtefte.history,model_hr_employee_rtefte_history,,1,1,1,1
+access_hr_employee_deduction_retention_history,hr.employee.deduction.retention.history,model_hr_employee_deduction_retention_history,,1,1,1,1
 access_hr_electronic_payroll,hr.electronic.payroll,model_hr_electronic_payroll,,1,1,1,1
 access_hr_electronic_payroll_detail,hr.electronic.payroll.detail,model_hr_electronic_payroll_detail,,1,1,1,1
 access_hr_electronic_adjust_payroll,hr.electronic.adjust.payroll,model_hr_electronic_adjust_payroll,,1,1,1,1

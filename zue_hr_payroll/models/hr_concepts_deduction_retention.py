@@ -106,4 +106,84 @@ class hr_employee_rtefte(models.Model):
         for record in self:
             result.append((record.id, "VER DETALLE"))
         return result
-    
+
+class hr_employee_rtefte_history(models.Model):
+    _name = 'hr.employee.rtefte.history'
+    _description = 'Histórico RteFte'
+
+    z_employee_id = fields.Many2one('hr.employee', string='Empleado')
+    z_year = fields.Integer(string='Año')
+    z_month = fields.Integer(string='Mes')
+    z_payslip_id = fields.Many2one('hr.payslip', string='Liquidación origen', ondelete='set null')
+    z_line_ids = fields.One2many('hr.employee.deduction.retention.history', 'z_history_id', string='Retención en la fuente')
+
+class hr_employee_deduction_retention_history(models.Model):
+    _name = 'hr.employee.deduction.retention.history'
+    _description = 'Histórico conceptos deducción retención'
+    _order = 'z_concept_deduction_order asc'
+
+    z_history_id = fields.Many2one('hr.employee.rtefte.history', string='RteFte', ondelete='cascade')
+    z_concept_deduction_id = fields.Many2one('hr.concepts.deduction.retention', string='Regla deducción tributaria')
+    z_concept_deduction_code = fields.Char(related='z_concept_deduction_id.code', string='Código', store=True)
+    z_concept_deduction_order = fields.Integer(related='z_concept_deduction_id.order', string='Orden', store=True)
+    z_result_base = fields.Float(string='Valor Base')
+    z_result_calculation = fields.Float(string='Valor cálculo')
+
+class HrPayslip(models.Model):
+    _inherit = 'hr.payslip'
+
+    # Metodo para guardar histórico de RteFte de la liquidación actual
+    def _create_rtefte_history(self, employee):
+        history = self.env['hr.employee.rtefte.history']
+        history_line = self.env['hr.employee.deduction.retention.history']
+        for record in self:
+            # Crear histórico de liquidación actual si tiene RteFte
+            current_rte = None
+            if record.rtefte_id:
+                current_rte = record.rtefte_id
+            else:
+                # Si no está asignado, buscar registros RteFte del período actual
+                current_rte = self.env['hr.employee.rtefte'].search([
+                    ('employee_id', '=', employee.id), ('year', '=', record.date_to.year),
+                    ('month', '=', record.date_to.month)], limit=1)
+
+            if current_rte:
+                # Usar el período de la liquidación actual (no el del RteFte encontrado)
+                payslip_year = record.date_to.year
+                payslip_month = record.date_to.month
+
+                # Verificar si ya existe histórico para esta liquidación específica
+                # Esto evita duplicados al recalcular la misma liquidación
+                existing_historical_current = history.search([('z_payslip_id', '=', record.id)])
+                if existing_historical_current:
+                    existing_historical_current.unlink()
+
+                # Eliminar históricos huérfanos (sin z_payslip_id) del mismo empleado, año y mes
+                # Esto ocurre cuando se eliminó una liquidación pero quedó su histórico
+                existing_historical_orphan = history.search([
+                    ('z_employee_id', '=', employee.id),
+                    ('z_year', '=', payslip_year),
+                    ('z_month', '=', payslip_month),
+                    ('z_payslip_id', '=', False)
+                ])
+                if existing_historical_orphan:
+                    existing_historical_orphan.unlink()
+
+                # Encabezado
+                history_record_current = history.create({
+                    'z_employee_id': employee.id,
+                    'z_year': payslip_year,
+                    'z_month': payslip_month,
+                    'z_payslip_id': record.id,
+                })
+                # Detalle
+                line_vals_current = []
+                for line in current_rte.deduction_retention:
+                    line_vals_current.append({
+                        'z_history_id': history_record_current.id,
+                        'z_concept_deduction_id': line.concept_deduction_id.id,
+                        'z_result_base': line.result_base,
+                        'z_result_calculation': line.result_calculation,
+                    })
+                if line_vals_current:
+                    history_line.create(line_vals_current)
