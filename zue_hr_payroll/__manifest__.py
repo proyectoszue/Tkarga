@@ -42,6 +42,7 @@
         'views/actions_hr_accumulated_payroll.xml',
         'views/actions_hr_history_cesantias.xml',
         'views/actions_hr_history_prima.xml',
+        'views/actions_hr_history_rtefte.xml',
         'views/actions_hr_work_entry.xml',
         'views/actions_hr_report_leave_vs_work_entry.xml',
         'views/actions_hr_electronic_payroll.xml',

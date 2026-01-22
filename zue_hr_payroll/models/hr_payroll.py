@@ -1240,6 +1240,8 @@ class Hr_payslip(models.Model):
         if obj_rtefte:
             for rtefte in obj_rtefte:
                 self.rtefte_id = rtefte.id
+            # Crear histórico de rtefte la liquidación actual
+            self._create_rtefte_history(employee)
 
         # Agregar reglas no aplicadas
         not_lines = [(0, 0, not_line) for not_line in result_not.values()]
