@@ -39,6 +39,7 @@
         'views/actions_employee_sanctions.xml',
         'views/actions_employee_report_curriculum.xml',
         'views/actions_retirement_severance_pay.xml',
+        'views/actions_contact_employee_review.xml',
         'reports/report_certification.xml',         
         'reports/report_certification_template.xml',
         'reports/report_birthday_list.xml', 
