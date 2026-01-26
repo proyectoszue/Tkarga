@@ -37,3 +37,4 @@ access_zue_economic_activity_level_risk,zue.economic.activity.level.risk,model_z
 access_zue_retirement_severance_pay,zue.retirement.severance.pay,model_zue_retirement_severance_pay,,1,1,1,1
 access_zue_upc_annual_parameters,zue.upc.annual.parameters,model_zue_upc_annual_parameters,,1,1,1,1
 access_zue_fds_annual_parameters,zue.fds.annual.parameters,model_zue_fds_annual_parameters,,1,1,1,1
+access_hr_contact_employee_review_report,access_hr_contact_employee_review_report,model_hr_contact_employee_review_report,,1,1,1,1
