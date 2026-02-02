@@ -283,7 +283,6 @@ class hr_executing_provisions(models.Model):
                                 current_payable_value = value_balance - value_payments
                             else:
                                 current_payable_value = amount - value_payments
-                                current_payable_value = current_payable_value if current_payable_value > 0 else 0
 
                             #Valor provision Mes
                             if value_payments > 0 and current_payable_value < 0 and provision == 'vacaciones':
@@ -299,8 +298,7 @@ class hr_executing_provisions(models.Model):
                                 value_provision = amount - value_balance
 
                             if line['quantity'] <= 0 and provision == 'vacaciones':
-                                line['quantity'] = 0
-                                value_provision, current_payable_value, amount = 0, 0, 0
+                                pass
 
                             #Obtener ultima liquidacion del mes para traer la cuenta analitica utilizada
                             obj_last_payslip = self.env['hr.payslip']
