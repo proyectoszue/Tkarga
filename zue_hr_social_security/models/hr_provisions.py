@@ -300,6 +300,7 @@ class hr_executing_provisions(models.Model):
                             if line['quantity'] <= 0 and provision == 'vacaciones':
                                 pass
 
+
                             #Obtener ultima liquidacion del mes para traer la cuenta analitica utilizada
                             obj_last_payslip = self.env['hr.payslip']
                             last_lines_payslip = self.env['hr.payslip'].search(
