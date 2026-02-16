@@ -69,6 +69,31 @@
                                         <field name="current_payable_value" optional="show"/>
                                         <field name="value_balance" optional="show"/>
                                     </tree>
+                                    <form>
+                                        <header>
+                                            <button class="oe_highlight" name="executing_provisions_employee" string="Recalcular" type="object"/>
+                                        </header>
+                                        <sheet>
+                                            <group>
+                                                <group>
+                                                    <field name="executing_provisions_id"/>
+                                                    <field name="employee_id"/>
+                                                    <field name="analytic_account_id"/>
+                                                    <field name="value_base"/>
+                                                    <field name="value_balance"/>
+                                                    <field name="amount"/>
+                                                </group>
+                                                <group>
+                                                    <field name="provision"/>
+                                                    <field name="contract_id"/>
+                                                    <field name="value_wage"/>
+                                                    <field name="time"/>
+                                                    <field name="value_payments"/>
+                                                    <field name="current_payable_value"/>
+                                                </group>
+                                            </group>
+                                        </sheet>
+                                    </form>
                                 </field>
                             </page>
                             <page string="Advertencias" name="advertencias">
