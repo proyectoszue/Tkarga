@@ -34,5 +34,7 @@
         <menuitem name="Sanciones empleados" id="zue_hr_employee.menu_hr_employee_sanctions" parent="hr.menu_hr_employee_payroll" action="hr_employee_sanctions_action"/>
         <!-- Actividad económica por nivel de riesgo -->
         <menuitem name="Actividad económica por nivel de riesgo" id="zue_hr_employee.menu_zue_economic_activity_level_risk" parent="hr.menu_human_resources_configuration_employee" action="zue_menu_action_zue_economic_activity_level_risk" sequence="4"/>
+        <!-- Revisión de contactos vs empleados -->
+        <menuitem name="Revisión de contactos vs empleados" id="zue_hr_employee.menu_contact_employee_review" parent="hr_payroll.menu_hr_payroll_report" action="zue_hr_employee.action_contact_employee_review" sequence="60"/>
     </data>
 </odoo>

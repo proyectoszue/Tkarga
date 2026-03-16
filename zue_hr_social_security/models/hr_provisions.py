@@ -31,6 +31,17 @@ class hr_executing_provisions_details(models.Model):
     amount = fields.Float('Valor liquidado')
     current_payable_value = fields.Float('Valor a Pagar Actual')
 
+    def executing_provisions_employee(self):
+        self.ensure_one()
+        if self.executing_provisions_id.state != 'accounting':
+            self.executing_provisions_id.executing_provisions(self.employee_id.id)
+            return {
+                'type': 'ir.actions.client',
+                'tag': 'reload',
+            }
+        else:
+            raise ValidationError('No puede recalcular una provisión en estado contabilizado, por favor verificar.')
+
 class hr_executing_provisions(models.Model):
     _name = 'hr.executing.provisions'
     _inherit = ["mail.thread", "mail.activity.mixin"]
@@ -283,7 +294,6 @@ class hr_executing_provisions(models.Model):
                                 current_payable_value = value_balance - value_payments
                             else:
                                 current_payable_value = amount - value_payments
-                                current_payable_value = current_payable_value if current_payable_value > 0 else 0
 
                             #Valor provision Mes
                             if value_payments > 0 and current_payable_value < 0 and provision == 'vacaciones':
@@ -299,8 +309,8 @@ class hr_executing_provisions(models.Model):
                                 value_provision = amount - value_balance
 
                             if line['quantity'] <= 0 and provision == 'vacaciones':
-                                line['quantity'] = 0
-                                value_provision, current_payable_value, amount = 0, 0, 0
+                                pass
+
 
                             #Obtener ultima liquidacion del mes para traer la cuenta analitica utilizada
                             obj_last_payslip = self.env['hr.payslip']
@@ -351,11 +361,13 @@ class hr_executing_provisions(models.Model):
                     else:
                         self.observations = msg
 
-    def executing_provisions(self):
+    def executing_provisions(self, employee_id=0):
         #Eliminar ejecución
-        #self.env['hr.executing.provisions.details'].search([('executing_provisions_id','=',self.id)]).unlink()
-        self.env['hr.errors.provisions'].search([('executing_provisions_id', '=', self.id)]).unlink()
-        #self.env['hr.executing.provisions'].search([('executing_provisions_id', '=', self.id)]).unlink()
+        if employee_id == 0:
+            self.env['hr.errors.provisions'].search([('executing_provisions_id', '=', self.id)]).unlink()
+        else:
+            self.env['hr.errors.provisions'].search([('executing_provisions_id', '=', self.id), ('employee_id', '=', employee_id)]).unlink()
+            self.env['hr.executing.provisions.details'].search([('executing_provisions_id', '=', self.id), ('employee_id', '=', employee_id)]).unlink()
         #Obtener fechas del periodo seleccionado
         date_start = '01/'+str(self.month)+'/'+str(self.year)
         try:
@@ -388,25 +400,41 @@ class hr_executing_provisions(models.Model):
         #     ('company_id', '=', self.env.company.id), ('subcontract_type', '!=', 'obra_integral')])
 
         # Obtener contratos que tuvieron liquidaciones en el mes
-        str_contracts = '(0)'
-        if len(self.details_ids) > 0:
-            str_contracts = str(self.details_ids.contract_id.ids).replace('[', '(').replace(']', ')')
+        if employee_id == 0:
+            str_contracts = '(0)'
+            if len(self.details_ids) > 0:
+                str_contracts = str(self.details_ids.contract_id.ids).replace('[', '(').replace(']', ')')
 
-        query = '''
-            select distinct b.id 
-            from hr_payslip a
-            inner join hr_contract b on a.contract_id = b.id and (b.subcontract_type not in ('obra_integral') or b.subcontract_type is null) and b.id not in %s
-            where a.state = 'done' and a.company_id = %s and ((a.date_from >= '%s' and a.date_from <= '%s') or (a.date_to >= '%s' and a.date_to <= '%s'))
-            Limit %s
-        ''' % (str_contracts,self.env.company.id,date_start,date_end,date_start,date_end,self.employees_per_batch)
+            query = '''
+                select distinct b.id 
+                from hr_payslip a
+                inner join hr_contract b on a.contract_id = b.id and (b.subcontract_type not in ('obra_integral') or b.subcontract_type is null) and b.id not in %s
+                where a.state = 'done' and a.company_id = %s and ((a.date_from >= '%s' and a.date_from <= '%s') or (a.date_to >= '%s' and a.date_to <= '%s'))
+                Limit %s
+            ''' % (str_contracts,self.env.company.id,date_start,date_end,date_start,date_end,self.employees_per_batch)
 
-        self.env.cr.execute(query)
-        result_query = self.env.cr.fetchall()
+            self.env.cr.execute(query)
+            result_query = self.env.cr.fetchall()
 
-        contract_ids = []
-        for result in result_query:
-            contract_ids.append(result)
-        obj_contracts = self.env['hr.contract'].search([('id', 'in', contract_ids)])
+            contract_ids = []
+            for result in result_query:
+                contract_ids.append(result)
+            obj_contracts = self.env['hr.contract'].search([('id', 'in', contract_ids)])
+        else:
+            query = '''
+                select distinct b.id 
+                from hr_payslip a
+                inner join hr_contract b on a.contract_id = b.id and (b.subcontract_type not in ('obra_integral') or b.subcontract_type is null) and b.employee_id = %s
+                where a.state = 'done' and a.company_id = %s and ((a.date_from >= '%s' and a.date_from <= '%s') or (a.date_to >= '%s' and a.date_to <= '%s'))
+            ''' % (employee_id, self.env.company.id, date_start, date_end, date_start, date_end)
+
+            self.env.cr.execute(query)
+            result_query = self.env.cr.fetchall()
+
+            contract_ids = []
+            for result in result_query:
+                contract_ids.append(result)
+            obj_contracts = self.env['hr.contract'].search([('id', 'in', contract_ids)])
 
         #Guardo los contratos en lotes de a 20
         limit_employees_per_batch = int(math.ceil(self.employees_per_batch/5)) if self.employees_per_batch > 100 else self.employees_per_batch
@@ -427,38 +455,40 @@ class hr_executing_provisions(models.Model):
         date_finally_process = datetime.now()
         time_process = date_finally_process - date_start_process
         time_process = time_process.seconds / 60
-        time_process += self.time_process_float
-        self.time_process_float = time_process
-        self.time_process = "El proceso se demoro {:.2f} minutos.".format(time_process)
+        if employee_id == 0:
+            time_process += self.time_process_float
+            self.time_process_float = time_process
+            self.time_process = "El proceso se demoro {:.2f} minutos.".format(time_process)
 
-        query = '''
-                    select distinct b.id 
-                    from hr_payslip a
-                    inner join hr_contract b on a.contract_id = b.id and (b.subcontract_type not in ('obra_integral') or b.subcontract_type is null)
-                    inner join hr_employee c on a.employee_id = c.id
-                    inner join hr_parameterization_of_contributors d on c.tipo_coti_id = d.type_of_contributor and c.subtipo_coti_id = d.contributor_subtype and d.liquidated_provisions = true
-                    where a.state = 'done' and a.company_id = %s and ((a.date_from >= '%s' and a.date_from <= '%s') or (a.date_to >= '%s' and a.date_to <= '%s'))
-                ''' % (self.env.company.id, date_start, date_end, date_start, date_end)
-        self.env.cr.execute(query)
-        result_query = self.env.cr.fetchall()
+        if employee_id == 0:
+            query = '''
+                        select distinct b.id 
+                        from hr_payslip a
+                        inner join hr_contract b on a.contract_id = b.id and (b.subcontract_type not in ('obra_integral') or b.subcontract_type is null)
+                        inner join hr_employee c on a.employee_id = c.id
+                        inner join hr_parameterization_of_contributors d on c.tipo_coti_id = d.type_of_contributor and c.subtipo_coti_id = d.contributor_subtype and d.liquidated_provisions = true
+                        where a.state = 'done' and a.company_id = %s and ((a.date_from >= '%s' and a.date_from <= '%s') or (a.date_to >= '%s' and a.date_to <= '%s'))
+                    ''' % (self.env.company.id, date_start, date_end, date_start, date_end)
+            self.env.cr.execute(query)
+            result_query = self.env.cr.fetchall()
 
-        if len(self.details_ids.contract_id.ids) >= len(result_query):
-            self.date_end = date_end
-            self.state = 'done'
-        else:
-            self.env['hr.errors.provisions'].search([('executing_provisions_id', '=', self.id), ('description', '=', 'EMPLEADO FALTANTE POR EJECUTAR')]).unlink()
-            ids_execute = set(self.details_ids.mapped('contract_id').ids)
-            ids_x_execute = set(int(tupla[0]) for tupla in result_query)
-            ids_diff = list(ids_x_execute - ids_execute)
-            missing_contracts = self.env['hr.contract'].browse(ids_diff)
-            for diff in missing_contracts:
-                result = {
-                    'executing_provisions_id': self.id,
-                    'employee_id': diff.employee_id.id if diff.employee_id else False,
-                    'contract_id': diff.id,
-                    'description': 'EMPLEADO FALTANTE POR EJECUTAR'
-                }
-                self.env['hr.errors.provisions'].create(result)
+            if len(self.details_ids.contract_id.ids) >= len(result_query):
+                self.date_end = date_end
+                self.state = 'done'
+            else:
+                self.env['hr.errors.provisions'].search([('executing_provisions_id', '=', self.id), ('description', '=', 'EMPLEADO FALTANTE POR EJECUTAR')]).unlink()
+                ids_execute = set(self.details_ids.mapped('contract_id').ids)
+                ids_x_execute = set(int(tupla[0]) for tupla in result_query)
+                ids_diff = list(ids_x_execute - ids_execute)
+                missing_contracts = self.env['hr.contract'].browse(ids_diff)
+                for diff in missing_contracts:
+                    result = {
+                        'executing_provisions_id': self.id,
+                        'employee_id': diff.employee_id.id if diff.employee_id else False,
+                        'contract_id': diff.id,
+                        'description': 'EMPLEADO FALTANTE POR EJECUTAR'
+                    }
+                    self.env['hr.errors.provisions'].create(result)
 
     def get_accounting(self):
         line_ids = []

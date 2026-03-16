@@ -118,7 +118,13 @@ class Hr_payslip(models.Model):
         self.struct_id = obj_struct_payroll.id
         localdict, result_ded_bases = self._get_payslip_lines(inherit_contrato_ded_bases=1, localdict=localdict)
 
-        if contract.contract_type != 'aprendizaje':
+        obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
+            [('type_of_contributor', '=', contract.employee_id.tipo_coti_id.id),
+             ('contributor_subtype', '=', contract.employee_id.subtipo_coti_id.id)], limit=1)
+        liquidated_provisions = obj_parameterization_contributors.liquidated_provisions if len(obj_parameterization_contributors) > 0 else False
+        apply_prestaciones = (contract.contract_type != 'aprendizaje'or (contract.contract_type == 'aprendizaje' and liquidated_provisions))
+
+        if apply_prestaciones:
             # 4.Vacaciones
             _logger.info(f'LIQ CONTRATO Vacaciones {self.display_name}.')
             obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','vacaciones')])
@@ -126,13 +132,15 @@ class Hr_payslip(models.Model):
             localdict, result_vac = self._get_payslip_lines_vacation(inherit_contrato=1,localdict=localdict)
 
             if contract.modality_salary != 'integral':
-                # 5.Cesantias e intereses
+                # 5.Cesantias
                 _logger.info(f'LIQ CONTRATO Cesantias {self.display_name}.')
                 obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','cesantias')])
                 self.struct_id = obj_struct_payroll.id
                 localdict, result_cesantias = self._get_payslip_lines_cesantias(inherit_contrato=1,localdict=localdict)
+
+                # 5.Intereses de cesantias
                 _logger.info(f'LIQ CONTRATO Intereses Cesantias {self.display_name}.')
-                obj_struct_payroll = self.env['hr.payroll.structure'].search([('process', '=', 'intereses_cesantias')])
+                obj_struct_payroll = self.env['hr.payroll.structure'].search([('process','=','intereses_cesantias')])
                 self.struct_id = obj_struct_payroll.id
                 localdict, result_intcesantias = self._get_payslip_lines_cesantias(inherit_contrato=1, localdict=localdict)
 

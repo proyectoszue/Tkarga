@@ -267,6 +267,8 @@ class Hr_payslip(models.Model):
         if obj_rtefte:
             for rtefte in obj_rtefte:
                 self.rtefte_id = rtefte.id
+            # Crear histórico de rtefte la liquidación actual
+            self._create_rtefte_history(employee)
 
         # Ejecutar reglas salariales de la nómina de pago regular
         if inherit_contrato == 0:

@@ -154,6 +154,9 @@ class hr_vacation_book(models.TransientModel):
             employee_id,identification_id = 0,0
             days_labor,days_unpaid_absences,days_paid,days_paid_money,days_enjoy = 0,0,0,0,0
             value_business_days,money_value = 0,0
+            contract_id = 0
+            date_vacaciones = None
+            date_liquidacion = date_end
             for row in query.values():
                 width = len(str(row)) + 10
                 # La columna 0 es Id Empleado por ende se guarda su valor en la variable employee_id
@@ -162,6 +165,18 @@ class hr_vacation_book(models.TransientModel):
                 # La columna 8 y 9 es Fecha Ingreso y Retiro por ende se guarda su valor en la variable date_start y date_end
                 date_start = row if aument_columns == 8 else date_start
                 date_end_employee = row if aument_columns == 9 and str(type(row)).find('date') > -1 else date_end_employee
+                # Obtener contrato del empleado
+                if employee_id and aument_columns == 0:
+                    obj_contract = self.env['hr.contract'].search([
+                        ('employee_id', '=', employee_id),
+                        ('active', '=', True),
+                        ('date_start', '<=', date_end),
+                        '|', '|',
+                        ('state', '=', 'open'),
+                        '&', ('retirement_date', '>=', date_initial), ('retirement_date', '<=', date_end),
+                        ('retirement_date', '>=', date_end)
+                    ], limit=1)
+                    contract_id = obj_contract.id if obj_contract else 0
                 obj_hr_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee_id), ('departure_date', '<=', date_end_employee), ('contract_id.state', '=', 'open')])
                 # Obtener fecha final de causación más reciente
                 latest_final_accrual_date = max(obj_hr_vacation.mapped('final_accrual_date')) + timedelta(days=1) if len(obj_hr_vacation) > 0 else date_start
@@ -199,9 +214,68 @@ class hr_vacation_book(models.TransientModel):
                                                                                    ('departure_date', '<=', date_end_employee),
                                                                                    ('contract_id.state', '=', 'open')])])
                         sheet.write(aument_rows, aument_columns,money_value)
-                    elif aument_columns == 16: # Días de Vacaciones Adeudados
-                        #sheet.write(aument_rows, aument_columns,(days_labor-days_paid))
-                        sheet.write(aument_rows, aument_columns, (days_labor_final_accrual_date))
+                    elif aument_columns == 16: # Días laborados que se adeudan - Replicar cálculo de time de provisiones
+                        # Obtener date_vacaciones igual que en provisiones
+                        if employee_id and contract_id:
+                            obj_contract = self.env['hr.contract'].browse(contract_id)
+                            date_vacaciones = obj_contract.date_start
+                            retirement_date = obj_contract.retirement_date
+                            # Buscar vacaciones igual que en provisiones
+                            if retirement_date == False:
+                                obj_vacation = self.env['hr.vacation'].search([
+                                    ('employee_id', '=', employee_id),
+                                    ('contract_id', '=', contract_id),
+                                    ('departure_date', '<=', date_end)
+                                ])
+                            else:
+                                if retirement_date >= date_end:
+                                    obj_vacation = self.env['hr.vacation'].search([
+                                        ('employee_id', '=', employee_id),
+                                        ('contract_id', '=', contract_id),
+                                        ('departure_date', '<=', date_end)
+                                    ])
+                                else:
+                                    obj_vacation = self.env['hr.vacation'].search([
+                                        ('employee_id', '=', employee_id),
+                                        ('contract_id', '=', contract_id),
+                                        ('departure_date', '<=', retirement_date)
+                                    ])
+                            if obj_vacation:
+                                for history in sorted(obj_vacation, key=lambda x: x.final_accrual_date):
+                                    if history.leave_id:
+                                        if history.leave_id.holiday_status_id.unpaid_absences == False:
+                                            date_vacaciones = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_vacaciones else date_vacaciones
+                                    else:
+                                        date_vacaciones = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_vacaciones else date_vacaciones
+
+                            # Ajustar date_vacaciones y date_liquidacion igual que en provisiones
+                            date_end_without_31 = date_end - timedelta(days=1) if date_end.day == 31 else date_end
+                            if retirement_date == False:
+                                date_liquidacion = date_end_without_31
+                            else:
+                                date_liquidacion = date_end_without_31 if retirement_date >= date_end_without_31 else retirement_date
+                                date_vacaciones = date_vacaciones if retirement_date >= date_vacaciones else retirement_date
+
+                            # Calcular dias_trabajados y dias_ausencias igual que en provisiones
+                            dias_trabajados = obj_contract.dias360(date_vacaciones, date_liquidacion)
+                            dias_ausencias = sum([i.number_of_days for i in self.env['hr.leave'].search([
+                                ('date_from', '>=', date_vacaciones),
+                                ('date_to', '<=', date_liquidacion),
+                                ('state', '=', 'validate'),
+                                ('employee_id', '=', employee_id),
+                                ('unpaid_absences', '=', True)
+                            ])])
+                            dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([
+                                ('star_date', '>=', date_vacaciones),
+                                ('end_date', '<=', date_liquidacion),
+                                ('employee_id', '=', employee_id),
+                                ('leave_type_id.unpaid_absences', '=', True)
+                            ])])
+                            # Calcular dias_liquidacion (que es el campo time en provisiones)
+                            dias_liquidacion = dias_trabajados - dias_ausencias
+                            sheet.write(aument_rows, aument_columns, dias_liquidacion)
+                        else:
+                            sheet.write(aument_rows, aument_columns, days_labor_final_accrual_date)
                     elif aument_columns == 17: # Dias de vacaciones pendientes
                         #sheet.write(aument_rows, aument_columns,(((days_labor-days_paid)*15)/360))
                         sheet.write(aument_rows, aument_columns, (((days_labor_final_accrual_date) * 15) / 360))

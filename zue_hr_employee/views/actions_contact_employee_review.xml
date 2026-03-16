@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.act_window" id="zue_hr_employee.action_contact_employee_review">
+            <field name="name">Revisión de contactos vs empleados</field>
+            <field name="res_model">hr.contact.employee.review.report</field>
+            <field name="target">new</field>
+            <field name="view_mode">form</field>
+        </record>
+
+        <record id="zue_hr_employee.contact_employee_review_form" model="ir.ui.view">
+            <field name="name">Revisión de contactos vs empleados</field>
+            <field name="model">hr.contact.employee.review.report</field>
+            <field name="arch" type="xml">
+                <form string="Revisión de contactos vs empleados">
+                    <sheet>
+                        <div class="oe_button_box" name="button_box"/>
+                        <div class="alert" role="alert">
+                            <p style="margin-bottom: 10px;"><strong>Descripción del reporte:</strong></p>
+                            <p style="margin-bottom: 10px;">Este reporte genera un archivo Excel con la información de contactos y empleados relacionados, permitiendo identificar discrepancias entre los datos.</p>
+                            <p style="margin-bottom: 10px;"><strong>El archivo incluirá las siguientes columnas:</strong></p>
+                            <ul style="margin-left: 20px; margin-bottom: 10px;">
+                                <li>Número de documento del contacto</li>
+                                <li>Nombre completo del contacto</li>
+                                <li>Número de documento del empleado</li>
+                                <li>Nombre completo del empleado</li>
+                            </ul>
+                            <p style="margin-top: 15px; margin-bottom: 10px;"><strong>Indicadores de diferencias en el Excel:</strong></p>
+                            <ul style="margin-left: 20px; margin-bottom: 10px;">
+                                <li><span style="background-color: #FFC7CE; padding: 2px 5px; border-radius: 3px;">Rojo</span>:
+                                    Indica diferencia entre el número de documento del contacto y el número de documento del empleado.</li>
+                                <li><span style="background-color: #FFEB9C; padding: 2px 5px; border-radius: 3px;">Amarillo</span>:
+                                    Indica diferencia entre el nombre completo del contacto y el nombre completo del empleado.</li>
+                            </ul>
+                            <p style="margin-top: 10px; margin-bottom: 0;"><strong>Nota:</strong> Si una fila presenta ambos tipos de diferencias,
+                                se resaltará con el color rojo (diferencia en documentos tiene prioridad).</p>
+                        </div>
+                    </sheet>
+                    <footer>
+                        <button name="generate_excel" string="Generar Excel" type="object" class="oe_highlight btn-primary"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>
+
