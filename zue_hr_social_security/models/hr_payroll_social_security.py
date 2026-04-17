@@ -85,24 +85,31 @@ class hr_payroll_social_security(models.Model):
                 return math.ceil(amount)
 
             #Obtener parametros anuales
-            annual_parameters = self.env['hr.annual.parameters'].search([('year', '=', date_start.year)])
+            annual_parameters = self.env['hr.annual.parameters'].search([('year', '=', date_start.year)], limit=1)
+            if not annual_parameters:
+                raise ValidationError(_('No existen parámetros anuales para el año %s. Por favor verifique.') % date_start.year)
             enable_ibc_previous_month = annual_parameters.z_enable_ibc_previous_month
 
             #Recorre empleados y realizar la respectiva lógica
             for o_employee in obj_employee:
                 employee = self.env['hr.employee'].search([('id','=',o_employee.id)])
                 try:
+                    if not employee.branch_id:
+                        raise ValidationError(_('El empleado no tiene una sucursal asignada. Por favor verifique.'))
                     #Obtener contratos
                     obj_contracts = self.env['hr.contract'].search([('state','=','close'),('employee_id','=',employee.id),('retirement_date','>=',date_start),('retirement_date','<=',date_end+relativedelta(months=1))], limit = 1)
                     obj_contracts += self.env['hr.contract'].search([('state','=','open'), ('employee_id', '=', employee.id), ('date_start', '<=', date_end)])
                     obj_contracts += self.env['hr.contract'].search([('state', '=', 'finished'), ('employee_id', '=', employee.id),('date_end', '>=', date_start),('date_end', '<=', date_end + relativedelta(months=1))], limit=1)
+                    if not obj_contracts:
+                        raise ValidationError(_('El empleado no tiene contratos aplicables al periodo. Por favor verifique.'))
 
                     for obj_contract in obj_contracts:
                         #Obtener nóminas en ese rango de fechas
                         obj_payslip = self.env['hr.payslip'].search([('state','=','done'),('employee_id','=',employee.id),('contract_id','=',obj_contract.id)])
                         obj_payslip_month_ant = obj_payslip.filtered(lambda p: (p.date_from >= date_start - relativedelta(months=1) and p.date_from <= date_start - timedelta(days=1)) or (p.date_to >= date_start - relativedelta(months=1) and p.date_to <= date_start - timedelta(days=1)))
                         obj_payslip = obj_payslip.filtered(lambda p: (p.date_from >= date_start and p.date_from <= date_end) or (p.date_to >= date_start and p.date_to <= date_end))
-
+                        if obj_payslip and not obj_contract.risk_id:
+                            raise ValidationError(_('El contrato no tiene ARL configurada. Por favor verifique.'))
                         #Primero, encontró una entrada de trabajo que no excedió el intervalo.
                         datetime_start = datetime.combine(date_start, datetime.min.time())
                         datetime_end = datetime.combine(date_end, datetime.max.time())
@@ -135,6 +142,8 @@ class hr_payroll_social_security(models.Model):
                                 ('date_stop', '>', datetime_end),
                             ]
                         )
+                        if work_entries.filtered(lambda w: w.leave_id and not w.leave_id.holiday_status_id):
+                            raise ValidationError(_('Hay ausencias sin tipo de ausencia (holiday status). Por favor verifique.'))
 
                         # Obtener parametrización de cotizantes
                         # Obtener tipo y subtipo de cotizante de acuerdo a la fecha
@@ -156,9 +165,13 @@ class hr_payroll_social_security(models.Model):
 
                         obj_tipo_coti = employee.tipo_coti_id if len(obj_tipo_coti) == 0 else obj_tipo_coti
                         obj_subtipo_coti = employee.subtipo_coti_id if len(obj_subtipo_coti) == 0 else obj_subtipo_coti
+                        if not obj_tipo_coti or not obj_subtipo_coti:
+                            raise ValidationError(_('El empleado no tiene tipo o subtipo de cotizante. Por favor verifique.'))
                         obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
                             [('type_of_contributor', '=', obj_tipo_coti.id),
                              ('contributor_subtype', '=', obj_subtipo_coti.id)], limit=1)
+                        if not obj_parameterization_contributors:
+                            raise ValidationError(_('No hay parametrización de cotizantes para el tipo y subtipo configurados. Por favor verifique.'))
                         #Variables
                         bEsAprendiz = True if obj_contract.contract_type == 'aprendizaje' else False
                         nDiasLiquidados = 0
