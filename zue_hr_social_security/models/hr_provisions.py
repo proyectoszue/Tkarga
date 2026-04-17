@@ -92,6 +92,10 @@ class hr_executing_provisions(models.Model):
             for obj_contract in contracts:
                 contract = self.env['hr.contract'].search([('id', '=', obj_contract.id)])
                 try:
+                    if not contract.employee_id:
+                        raise ValidationError(_('El contrato no tiene empleado asociado. Por favor verifique.'))
+                    if not contract.employee_id.branch_id:
+                        raise ValidationError(_('El empleado no tiene sucursal. Por favor verifique.'))
                     result_cesantias = {}
                     result_intcesantias = {}
                     result_prima = {}
@@ -109,6 +113,8 @@ class hr_executing_provisions(models.Model):
                         else:
                             obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('initial_accrual_date', '<', retirement_date),('final_accrual_date', '<', retirement_date)])
                     if obj_cesantias:
+                        if any(not r.final_accrual_date for r in obj_cesantias):
+                            raise ValidationError(_('Existen históricos de cesantías sin fecha de causación final. Por favor verifique.'))
                         for history in sorted(obj_cesantias, key=lambda x: x.final_accrual_date):
                             date_cesantias = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_cesantias else date_cesantias
 
@@ -122,6 +128,8 @@ class hr_executing_provisions(models.Model):
                         else:
                             obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('initial_accrual_date', '<', retirement_date),('final_accrual_date', '<', retirement_date)])
                     if obj_prima:
+                        if any(not r.final_accrual_date for r in obj_prima):
+                            raise ValidationError(_('Existen históricos de prima sin fecha de causación final. Por favor verifique.'))
                         for history in sorted(obj_prima, key=lambda x: x.final_accrual_date):
                             date_prima = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_prima else date_prima
 
@@ -135,8 +143,12 @@ class hr_executing_provisions(models.Model):
                         else:
                             obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),('departure_date', '<=', retirement_date)])
                     if obj_vacation:
+                        if any(not r.final_accrual_date for r in obj_vacation):
+                            raise ValidationError(_('Existen históricos de vacaciones sin fecha de causación final. Por favor verifique.'))
                         for history in sorted(obj_vacation, key=lambda x: x.final_accrual_date):
                             if history.leave_id:
+                                if not history.leave_id.holiday_status_id:
+                                    raise ValidationError(_('Hay ausencias sin tipo de ausencia. Por favor verifique.'))
                                 if history.leave_id.holiday_status_id.unpaid_absences == False:
                                     date_vacation = history.final_accrual_date + timedelta(days=1) if history.final_accrual_date > date_vacation else date_vacation
                             else:
@@ -204,9 +216,15 @@ class hr_executing_provisions(models.Model):
 
                         obj_tipo_coti = contract.employee_id.tipo_coti_id if len(obj_tipo_coti) == 0 else obj_tipo_coti
                         obj_subtipo_coti = contract.employee_id.subtipo_coti_id if len(obj_subtipo_coti) == 0 else obj_subtipo_coti
+                        if not obj_tipo_coti or not obj_subtipo_coti:
+                            raise ValidationError(_('El empleado no tiene tipo o subtipo de cotizante. Por favor verifique.'))
                         obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
                             [('type_of_contributor', '=', obj_tipo_coti.id),
                              ('contributor_subtype', '=', obj_subtipo_coti.id)], limit=1)
+                        if not obj_parameterization_contributors:
+                            raise ValidationError(_('No hay parametrización de cotizantes para el tipo y subtipo configurados. Por favor verifique.'))
+                        if not obj_parameterization_contributors.liquidated_provisions:
+                            raise ValidationError(_('La parametrización de cotizantes no permite liquidar provisiones. Por favor verifique.'))
 
                         if len(obj_parameterization_contributors) > 0 and obj_parameterization_contributors.liquidated_provisions:
                             if contract.modality_salary != 'integral':
@@ -352,7 +370,7 @@ class hr_executing_provisions(models.Model):
                     result = {
                         'executing_provisions_id': self.id,
                         'employee_id': contract.employee_id.id,
-                        'branch_id': False,
+                        #'branch_id': False,
                         'description': str(e.args[0])
                     }
                     self.env['hr.errors.provisions'].create(result)
@@ -383,10 +401,12 @@ class hr_executing_provisions(models.Model):
 
 
         #Obtener estructuras
-        struct_cesantias = self.env['hr.payroll.structure'].search([('process', '=', 'cesantias')])
-        struct_intcesantias = self.env['hr.payroll.structure'].search([('process', '=', 'intereses_cesantias')])
-        struct_prima = self.env['hr.payroll.structure'].search([('process', '=', 'prima')])
-        struct_vacaciones = self.env['hr.payroll.structure'].search([('process', '=', 'vacaciones')])
+        struct_cesantias = self.env['hr.payroll.structure'].search([('process', '=', 'cesantias')], limit=1)
+        struct_intcesantias = self.env['hr.payroll.structure'].search([('process', '=', 'intereses_cesantias')], limit=1)
+        struct_prima = self.env['hr.payroll.structure'].search([('process', '=', 'prima')], limit=1)
+        struct_vacaciones = self.env['hr.payroll.structure'].search([('process', '=', 'vacaciones')], limit=1)
+        if not struct_cesantias or not struct_intcesantias or not struct_prima or not struct_vacaciones:
+            raise ValidationError(_('Faltan estructuras de nómina de provisiones (cesantías, intereses, prima o vacaciones). Por favor verifique.'))
 
         #Obtener contratos activos o desactivados en el mes de ejecución
         #obj_contracts = self.env['hr.contract'].search(
@@ -435,6 +455,9 @@ class hr_executing_provisions(models.Model):
             for result in result_query:
                 contract_ids.append(result)
             obj_contracts = self.env['hr.contract'].search([('id', 'in', contract_ids)])
+
+        if not obj_contracts:
+            raise ValidationError(_('No hay contratos con liquidaciones en el periodo para provisionar. Por favor verifique.'))
 
         #Guardo los contratos en lotes de a 20
         limit_employees_per_batch = int(math.ceil(self.employees_per_batch/5)) if self.employees_per_batch > 100 else self.employees_per_batch
