@@ -38,11 +38,11 @@ class account_journal(models.Model):
 class ProductTemplate(models.Model):
     _inherit = "product.template"
 
-    # z_income_return_account = fields.Many2one('account.account',string='Cuenta devolución de ingresos') # DEJAR ESTE CAMPO SI NO ES MULTICOMPAÑIA ERRORES JSONB
-    z_income_return_account = fields.Many2one('account.account', string='Cuenta devolución de ingresos', company_dependent=True, copy=False, check_company=True)
+    z_income_return_account = fields.Many2one('account.account',string='Cuenta devolución de ingresos') # DEJAR ESTE CAMPO SI NO ES MULTICOMPAÑIA ERRORES JSONB
+    #z_income_return_account = fields.Many2one('account.account', string='Cuenta devolución de ingresos', company_dependent=True, copy=False, check_company=True)
 
-    # z_account_analytic_id = fields.Many2one('account.analytic.account', string='Cuenta analitica', tracking=True,) # DEJAR ESTE CAMPO SI NO ES MULTICOMPAÑIA ERRORES JSONB
-    z_account_analytic_id = fields.Many2one('account.analytic.account', string='Cuenta analitica', company_dependent=True, tracking=True,)
+    z_account_analytic_id = fields.Many2one('account.analytic.account', string='Cuenta analitica', tracking=True,) # DEJAR ESTE CAMPO SI NO ES MULTICOMPAÑIA ERRORES JSONB
+    #z_account_analytic_id = fields.Many2one('account.analytic.account', string='Cuenta analitica', company_dependent=True, tracking=True,)
 
     @api.constrains('z_account_analytic_id', 'company_id')
     def _check_z_account_analytic_company(self):
