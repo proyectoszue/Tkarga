@@ -1,10 +1,23 @@
 #-*- coding:utf-8 -*-
 # Part of Odoo. See LICENSE file for full copyright and licensing details.
-
+from datetime import date, datetime, time, timedelta
 from dateutil.relativedelta import relativedelta
-from odoo import fields
-from datetime import datetime, timedelta
+from odoo import fields, models
+from json import JSONEncoder
 import math
+
+BROWSABLE_OBJECT_SAFE_CLASSES = (models.BaseModel, set, datetime, date, time)
+
+class ValueChecker(JSONEncoder):
+    def default(self, value):
+        if isinstance(value, BROWSABLE_OBJECT_SAFE_CLASSES):
+            return repr(value)
+        return super().default(value)
+
+    def check(self, value):
+        self.encode(value)
+
+valueChecker = ValueChecker()
 
 class BrowsableObject(object):
     def __init__(self, employee_id, dict, env):
@@ -13,7 +26,25 @@ class BrowsableObject(object):
         self.env = env
 
     def __getattr__(self, attr):
-        return attr in self.dict and self.dict.__getitem__(attr) or 0.0
+        value = None
+        if attr in self.dict:
+            value = self.dict.__getitem__(attr)
+            valueChecker.check(value)
+        return value or 0.0
+
+    def __getitem__(self, key):
+        return self.dict[key] or 0.0
+
+class ResultRules(BrowsableObject):
+    def __getattr__(self, attr):
+        value = None
+        if attr in self.dict:
+            value = self.dict.__getitem__(attr)
+        valueChecker.check(value)
+        return value or {'total': 0, 'amount': 0, 'quantity': 0}
+
+    def __getitem__(self, key):
+        return self.dict[key] if key in self.dict else {'total': 0, 'amount': 0, 'quantity': 0}
 
 class InputLine(BrowsableObject):
     """a class that will be used into the python code, mainly for usability purposes"""
@@ -23,22 +54,23 @@ class InputLine(BrowsableObject):
         self.env.cr.execute("""
             SELECT sum(amount) as sum
             FROM hr_payslip as hp, hr_payslip_input as pi
-            WHERE hp.employee_id = %s AND hp.state = 'done'
+            WHERE hp.employee_id = %s AND hp.state in ('validated', 'paid')
             AND hp.date_from >= %s AND hp.date_to <= %s AND hp.id = pi.payslip_id AND pi.code = %s""",
             (self.employee_id, from_date, to_date, code))
         return self.env.cr.fetchone()[0] or 0.0
 
 class WorkedDays(BrowsableObject):
     """a class that will be used into the python code, mainly for usability purposes"""
+
     def _sum(self, code, from_date, to_date=None):
         if to_date is None:
             to_date = fields.Date.today()
         self.env.cr.execute("""
             SELECT sum(number_of_days) as number_of_days, sum(number_of_hours) as number_of_hours
             FROM hr_payslip as hp, hr_payslip_worked_days as pi
-            WHERE hp.employee_id = %s AND hp.state = 'done'
-            AND hp.date_from >= %s AND hp.date_to <= %s AND hp.id = pi.payslip_id AND pi.code = %s""",
-            (self.employee_id, from_date, to_date, code))
+            WHERE hp.employee_id = %s AND hp.state in ('validated', 'paid')
+            AND hp.date_from >= %s AND hp.date_to <= %s AND hp.id = pi.payslip_id AND pi.work_entry_type_id IN (SELECT id FROM hr_work_entry_type WHERE code = %s)""",
+                            (self.employee_id, from_date, to_date, code))
         return self.env.cr.fetchone()
 
     def sum(self, code, from_date, to_date=None):
@@ -67,11 +99,15 @@ class Payslips(BrowsableObject):
     def sum(self, code, from_date, to_date=None):
         if to_date is None:
             to_date = fields.Date.today()
-        self.env.cr.execute("""SELECT sum(case when hp.credit_note IS NOT TRUE then (pl.total) else (-pl.total) end)
-                    FROM hr_payslip as hp, hr_payslip_line as pl
-                    WHERE hp.employee_id = %s AND hp.state = 'done'
-                    AND hp.date_from >= %s AND hp.date_to <= %s AND hp.id = pl.slip_id AND pl.code = %s""",
-                    (self.employee_id, from_date, to_date, code))
+        self.env.cr.execute("""
+            SELECT sum(pl.total)
+            FROM hr_payslip as hp, hr_payslip_line as pl
+            WHERE hp.employee_id = %s
+            AND hp.state in ('validated', 'paid')
+            AND hp.date_from >= %s
+            AND hp.date_to <= %s
+            AND hp.id = pl.slip_id
+            AND pl.code = %s""", (self.employee_id, from_date, to_date, code))
         res = self.env.cr.fetchone()
         return res and res[0] or 0.0
 
@@ -82,19 +118,46 @@ class Payslips(BrowsableObject):
         if to_date is None:
             to_date = fields.Date.today()
 
-        self.env['hr.payslip'].flush(['credit_note', 'employee_id', 'state', 'date_from', 'date_to'])
-        self.env['hr.payslip.line'].flush(['total', 'slip_id', 'category_id'])
-        self.env['hr.salary.rule.category'].flush(['code'])
+        self.env['hr.payslip'].flush_model(['employee_id', 'state', 'date_from', 'date_to'])
+        self.env['hr.payslip.line'].flush_model(['total', 'slip_id', 'category_id'])
+        self.env['hr.salary.rule.category'].flush_model(['code'])
 
-        self.env.cr.execute("""SELECT sum(case when hp.credit_note is not True then (pl.total) else (-pl.total) end)
-                    FROM hr_payslip as hp, hr_payslip_line as pl, hr_salary_rule_category as rc
-                    WHERE hp.employee_id = %s AND hp.state = 'done'
-                    AND hp.date_from >= %s AND hp.date_to <= %s AND hp.id = pl.slip_id
-                    AND rc.id = pl.category_id AND rc.code = %s""",
-                    (self.employee_id, from_date, to_date, code))
+        self.env.cr.execute("""
+            SELECT sum(pl.total)
+            FROM hr_payslip as hp, hr_payslip_line as pl, hr_salary_rule_category as rc
+            WHERE hp.employee_id = %s
+            AND hp.state in ('validated', 'paid')
+            AND hp.date_from >= %s
+            AND hp.date_to <= %s
+            AND hp.id = pl.slip_id
+            AND rc.id = pl.category_id
+            AND rc.code = %s""", (self.employee_id, from_date, to_date, code))
         res = self.env.cr.fetchone()
         return res and res[0] or 0.0
-    
+
+    def sum_worked_days(self, code, from_date, to_date=None):
+        if to_date is None:
+            to_date = fields.Date.today()
+
+        query = """
+            SELECT sum(hwd.amount)
+            FROM hr_payslip hp, hr_payslip_worked_days hwd, hr_work_entry_type hwet
+            WHERE hp.state in ('validated', 'paid')
+            AND hp.id = hwd.payslip_id
+            AND hwet.id = hwd.work_entry_type_id
+            AND hp.employee_id = %(employee)s
+            AND hp.date_to <= %(stop)s
+            AND hwet.code = %(code)s
+            AND hp.date_from >= %(start)s"""
+
+        self.env.cr.execute(query, {
+            'employee': self.employee_id,
+            'code': code,
+            'start': from_date,
+            'stop': to_date})
+        res = self.env.cr.fetchone()
+        return res[0] if res else 0.0
+
     #-----------------------------------------INICIO Código Localización colombiana ZUE------------------------------------------------------
 
     #Retorna la cantidad de dias de diferencia entre dos fecha con la funcion dias360
@@ -119,9 +182,9 @@ class Payslips(BrowsableObject):
                             Inner Join hr_payslip_line as pl on  hp.id = pl.slip_id 
                             Inner Join hr_salary_rule_category hc on pl.category_id = hc.id 
                             Left Join hr_salary_rule_category hc_parent on hc.parent_id = hc_parent.id 
-                            WHERE hp.state = 'done' and hp.contract_id = %s AND hp.date_from >= '%s-%s-01' AND hp.date_from < '%s-%s-01'
+                            WHERE hp.state = 'validated' and hp.version_id = %s AND hp.date_from >= '%s-%s-01' AND hp.date_from < '%s-%s-01'
                             AND (hc.code = %s OR hc_parent.code = %s)""",
-                    (self.contract_id.id, from_year, from_month, to_year, to_month, code, code))
+                    (self.version_id.id, from_year, from_month, to_year, to_month, code, code))
         res = self.env.cr.fetchone()
 
         return res and res[0] or 0.0
@@ -137,15 +200,15 @@ class Payslips(BrowsableObject):
         self.env.cr.execute("""Select COALESCE(sum(pl.total),0) as suma FROM hr_payslip as hp 
                             Inner Join hr_payslip_line as pl on  hp.id = pl.slip_id 
                             Inner Join hr_salary_rule hc on pl.salary_rule_id = hc.id 
-                            WHERE hp.state = 'done' and hp.contract_id = %s AND hp.date_from >= '%s-%s-01' AND hp.date_from < '%s-%s-01'  
+                            WHERE hp.state = 'validated' and hp.version_id = %s AND hp.date_from >= '%s-%s-01' AND hp.date_from < '%s-%s-01'  
                             AND hc.code = %s""",
-                    (self.contract_id.id, from_year, from_month, to_year, to_month, code))
+                    (self.version_id.id, from_year, from_month, to_year, to_month, code))
         res = self.env.cr.fetchone()
 
         return res and res[0] or 0.0
 
     #Retorna la suma por categoria valor mensual mes anterior
-    def sum_mount_before(self, code, from_date):
+    def sum_mount_before(self, code, from_date, check_ss_salud=False):
         date_start = from_date
         mes = date_start.month -1
         ano = date_start.year
@@ -160,13 +223,20 @@ class Payslips(BrowsableObject):
         from_date = str(ano)+'-'+str(mes)+'-01'
         to_date = str(ano)+'-'+str(mes)+'-'+str(dia)
 
-        self.env.cr.execute("""Select COALESCE(sum(pl.total),0) as suma FROM hr_payslip as hp 
-                            Inner Join hr_payslip_line as pl on  hp.id = pl.slip_id 
-                            Inner Join hr_salary_rule_category hc on pl.category_id = hc.id 
-                            Inner Join hr_salary_rule_category hc_parent on hc.parent_id = hc_parent.id 
-                            WHERE hp.state = 'done' and hp.contract_id = %s AND hp.date_from >= %s AND hp.date_to <= %s
-                            AND (hc.code = %s OR hc_parent.code = %s)""",
-                    (self.contract_id.id, from_date, to_date, code, code))
+        if check_ss_salud:
+            self.env.cr.execute("""Select COALESCE(sum(pl."nValorBaseSalud"),0) as suma FROM hr_payroll_social_security as hp 
+                                            Inner Join hr_executing_social_security as pl on hp.id = pl.executing_social_security_id 
+                                            WHERE hp.state != 'draft' and pl.version_id = %s AND hp.year = %s AND hp.month = '%s'""",
+                                (self.version_id.id, ano, mes))
+        else:
+            self.env.cr.execute("""Select COALESCE(sum(pl.total),0) as suma FROM hr_payslip as hp 
+                                Inner Join hr_payslip_line as pl on  hp.id = pl.slip_id 
+                                Inner Join hr_salary_rule_category hc on pl.category_id = hc.id 
+                                Left Join hr_salary_rule_category hc_parent on hc.parent_id = hc_parent.id 
+                                WHERE hp.state = 'validated' and hp.version_id = %s AND hp.date_from >= %s AND hp.date_to <= %s
+                                AND (hc.code = %s OR hc_parent.code = %s)""",
+                        (self.version_id.id, from_date, to_date, code, code))
+
         res = self.env.cr.fetchone()
 
         return res and res[0] or 0.0
@@ -179,12 +249,12 @@ class Payslips(BrowsableObject):
         to_month = to_date.month + 1 if to_date.month != 12 else 1
         to_year = to_date.year + 1 if to_date.month == 12 else to_date.year
         
-        self.env.cr.execute("""Select coalesce(number_of_days,0) as dias from hr_payslip_worked_days hd
-                                    Inner Join hr_payslip as hp on hp.id = hd.payslip_id and hp.state = 'done'
+        self.env.cr.execute("""Select coalesce(sum(number_of_days),0) as dias from hr_payslip_worked_days hd
+                                    Inner Join hr_payslip as hp on hp.id = hd.payslip_id and hp.state = 'validated'
                                     Inner Join hr_work_entry_type as wt on hd.work_entry_type_id = wt.id
-                                    Where wt.code = %s AND hp.contract_id = %s
+                                    Where wt.code = %s AND hp.version_id = %s
                                     AND hp.date_from >= '%s-%s-01' AND hp.date_to < '%s-%s-01'""",
-                    (code_work_entry_type,self.contract_id.id, from_year, from_month, to_year, to_month))
+                    (code_work_entry_type,self.version_id.id, from_year, from_month, to_year, to_month))
         res = self.env.cr.fetchone()
 
         return res and res[0] or 0.0
@@ -198,11 +268,11 @@ class Payslips(BrowsableObject):
         to_year = to_date.year + 1 if to_date.month == 12 else to_date.year
 
         self.env.cr.execute("""Select coalesce(sum(number_of_days),0) as dias from hr_payslip_worked_days hd
-                                    Inner Join hr_payslip as hp on hp.id = hd.payslip_id and hp.state = 'done'
+                                    Inner Join hr_payslip as hp on hp.id = hd.payslip_id and hp.state = 'validated'
                                     Inner Join hr_work_entry_type as wt on hd.work_entry_type_id = wt.id
-                                    Where (wt.not_contribution_base = False or wt.not_contribution_base is null) AND hp.contract_id = %s
+                                    Where (wt.not_contribution_base = False or wt.not_contribution_base is null) AND hp.version_id = %s
                                     AND hp.date_from >= '%s-%s-01' AND hp.date_to < '%s-%s-01'""",
-                            (self.contract_id.id, from_year, from_month, to_year, to_month))
+                            (self.version_id.id, from_year, from_month, to_year, to_month))
         res = self.env.cr.fetchone()
 
         return res and res[0] or 0.0
@@ -227,16 +297,16 @@ class Payslips(BrowsableObject):
         return value_contributor or 0.0
 
     #Retorna el devengo o deduccion del contrato del empleado dependiendo la regla enviada
-    def get_concepts(self, contract_id, input_id, id_contract_concepts=0):
-        if id_contract_concepts == 0:
-            res = self.env['hr.contract.concepts'].search([('contract_id', '=', contract_id),('input_id','=',input_id),('state','=','done')])
+    def get_concepts(self, version_id, input_id, id_version_concepts=0):
+        if id_version_concepts == 0:
+            res = self.env['hr.contract.concepts'].search([('version_id', '=', version_id),('input_id','=',input_id), ('state','=','done')])
         else:
-            res = self.env['hr.contract.concepts'].search([('id','=',id_contract_concepts),('contract_id', '=', contract_id),('input_id','=',input_id),('state','=','done')])
+            res = self.env['hr.contract.concepts'].search([('id','=',id_version_concepts),('version_id', '=', version_id),('input_id','=',input_id), ('state','=','done')])
         return res and res[0] or 0.0
     
     #Retorna el devengo o deduccion del contrato del empleado dependiendo la regla enviada
-    def get_deductions_rtf(self, contract_id, input_id):
-        res = self.env['hr.contract.deductions.rtf'].search([('contract_id', '=', contract_id),('input_id','=',input_id)])
+    def get_deductions_rtf(self, version_id, input_id):
+        res = self.env['hr.contract.deductions.rtf'].search([('version_id', '=', version_id),('input_id','=',input_id)])
         return res and res[0] or 0.0
 
     #Retorna el tipo de de hora extra
@@ -245,14 +315,12 @@ class Payslips(BrowsableObject):
         return res and res[0] or 0.0
 
     #Retorna las horas extra & los dias efectivamente laborados del empleado
-    def get_overtime(self, employee_id, from_date, to_date, inherit_contrato = 0, aplicar = 0):
+    def get_overtime(self, employee_id, from_date, to_date, inherit_contrato=0, aplicar=0):
         if inherit_contrato == 0 and aplicar != 0:
-            from_month = from_date.month
-            from_year = from_date.year
-            date = str(from_year)+'-'+str(from_month)+'-01'
+            date = from_date.replace(day=1)  # Primer día del mes
         else:
             date = from_date
-        if self.contract_id.not_pay_overtime:
+        if self.version_id.not_pay_overtime:
             res = self.env['hr.overtime']
         else:
             res = self.env['hr.overtime'].search([('employee_id', '=', employee_id),('date','>=',date),('date_end','<=',to_date)])
@@ -264,9 +332,9 @@ class Payslips(BrowsableObject):
         return res and res[0] or 0.0
 
     #Retorna reglas tributarias del empleado asignadas en el contrato
-    def get_contract_deductions_rtf(self, contract_id,to_date,code):
+    def get_contract_deductions_rtf(self, version_id,to_date,code):
         #,('date_start', '>=', to_date),('date_end', '<=', to_date)
-        res = self.env['hr.contract.deductions.rtf'].search([('contract_id', '=', contract_id),('input_id.code','=',code)])
+        res = self.env['hr.contract.deductions.rtf'].search([('version_id', '=', version_id),('input_id.code','=',code)])
         return res and res[0] or 0.0
 
     #Retorna el objeto para el calculo de la retención en la fuente
@@ -328,7 +396,7 @@ class Payslips(BrowsableObject):
             date_start = date_start_process
         else:
             date_start = departure_date - relativedelta(years=1)
-        date_start = self.contract_id.date_start if date_start <= self.contract_id.date_start else date_start
+        date_start = self.version_id.date_start if date_start <= self.version_id.date_start else date_start
         date_end = departure_date
 
         #formatear fechas
@@ -343,7 +411,7 @@ class Payslips(BrowsableObject):
                                         Inner Join hr_payslip_line as pl on  hp.id = pl.slip_id 
                                         Inner Join hr_salary_rule hc on pl.salary_rule_id = hc.id and hc.base_vacaciones = true
                                         Inner Join hr_salary_rule_category hsc on hc.category_id = hsc.id and (hsc.code != 'BASIC' or hc.code='BASICTURNOS')
-                                        WHERE hp.state = 'done' and hp.contract_id = %s
+                                        WHERE hp.state = 'validated' and hp.version_id = %s
                                         AND (hp.date_from between %s and %s
                                             or
                                             hp.date_to between %s and %s )
@@ -354,7 +422,7 @@ class Payslips(BrowsableObject):
                                         Inner Join hr_salary_rule_category hsc on hc.category_id = hsc.id and (hsc.code != 'BASIC' or hc.code='BASICTURNOS')
                                         WHERE pl.employee_id = %s and pl.date between %s and %s
                                 ) As A""",
-                    (self.contract_id.id, date_start, date_end, date_start, date_end, self.employee_id, date_start, date_end))
+                    (self.version_id.id, date_start, date_end, date_start, date_end, self.employee_id, date_start, date_end))
         res = self.env.cr.fetchone()
 
         return res and res[0] or 0.0
@@ -364,7 +432,7 @@ class Payslips(BrowsableObject):
             date_start = date_start_process
         else:
             date_start = departure_date - relativedelta(years=1)
-        date_start = self.contract_id.date_start if date_start <= self.contract_id.date_start else (date_start + timedelta(days=1))
+        date_start = self.version_id.date_start if date_start <= self.version_id.date_start else date_start
         date_end = departure_date
 
         #formatear fechas
@@ -379,7 +447,7 @@ class Payslips(BrowsableObject):
                                         Inner Join hr_payslip_line as pl on  hp.id = pl.slip_id 
                                         Inner Join hr_salary_rule hc on pl.salary_rule_id = hc.id and hc.base_vacaciones_dinero = true
                                         Inner Join hr_salary_rule_category hsc on hc.category_id = hsc.id and (hsc.code != 'BASIC' or hc.code='BASICTURNOS')
-                                        WHERE hp.state = 'done' and hp.contract_id = %s
+                                        WHERE hp.state = 'validated' and hp.version_id = %s
                                         AND (hp.date_from between %s and %s
                                             or
                                             hp.date_to between %s and %s )
@@ -390,7 +458,7 @@ class Payslips(BrowsableObject):
                                         Inner Join hr_salary_rule_category hsc on hc.category_id = hsc.id and (hsc.code != 'BASIC' or hc.code='BASICTURNOS')
                                         WHERE pl.employee_id = %s and pl.date between %s and %s
                                 ) As A""",
-                    (self.contract_id.id, date_start, date_end, date_start, date_end, self.employee_id, date_start, date_end))
+                    (self.version_id.id, date_start, date_end, date_start, date_end, self.employee_id, date_start, date_end))
         res = self.env.cr.fetchone()
 
         return res and res[0] or 0.0
@@ -398,7 +466,7 @@ class Payslips(BrowsableObject):
     #--------CESANTIAS & INTERESES DE CESANTIAS
 
     def get_accumulated_cesantias(self, date_start, date_end, base_auxtransporte_tope=0):
-        date_start = self.contract_id.date_start if date_start <= self.contract_id.date_start else date_start
+        date_start = self.version_id.date_start if date_start <= self.version_id.date_start else date_start
         #formatear fechas
         date_start = str(date_start.year)+'-'+str(date_start.month)+'-'+str(date_start.day)
         date_end = str(date_end.year)+'-'+str(date_end.month)+'-'+str(date_end.day)        
@@ -415,7 +483,7 @@ class Payslips(BrowsableObject):
                                         Inner Join hr_payslip_line as pl on  hp.id = pl.slip_id 
                                         Inner Join hr_salary_rule hc on pl.salary_rule_id = hc.id """+str_base_auxtransporte_tope+"""
                                         Inner Join hr_salary_rule_category hsc on hc.category_id = hsc.id and (hsc.code != 'BASIC' or hc.code='BASICTURNOS')
-                                        WHERE hp.state = 'done' and hp.contract_id = %s
+                                        WHERE hp.state = 'validated' and hp.version_id = %s
                                         AND (hp.date_from between %s and %s
                                             or
                                             hp.date_to between %s and %s )
@@ -426,7 +494,7 @@ class Payslips(BrowsableObject):
                                         Inner Join hr_salary_rule_category hsc on hc.category_id = hsc.id and (hsc.code != 'BASIC' or hc.code='BASICTURNOS')
                                         WHERE pl.employee_id = %s and pl.date between %s and %s
                                 ) As A""",
-                    (self.contract_id.id, date_start, date_end, date_start, date_end, self.employee_id, date_start, date_end))
+                    (self.version_id.id, date_start, date_end, date_start, date_end, self.employee_id, date_start, date_end))
         res = self.env.cr.fetchone()
 
         return res and res[0] or 0.0
@@ -434,7 +502,7 @@ class Payslips(BrowsableObject):
     #--------PRIMA
     
     def get_accumulated_prima(self, date_start, date_end, base_auxtransporte_tope=0):
-        date_start = self.contract_id.date_start if date_start <= self.contract_id.date_start else date_start
+        date_start = self.version_id.date_start if date_start <= self.version_id.date_start else date_start
         #formatear fechas
         date_start = str(date_start.year)+'-'+str(date_start.month)+'-'+str(date_start.day)
         date_end = str(date_end.year)+'-'+str(date_end.month)+'-'+str(date_end.day)        
@@ -451,7 +519,7 @@ class Payslips(BrowsableObject):
                                         Inner Join hr_payslip_line as pl on  hp.id = pl.slip_id 
                                         Inner Join hr_salary_rule hc on pl.salary_rule_id = hc.id """+str_base_auxtransporte_tope+"""
                                         Inner Join hr_salary_rule_category hsc on hc.category_id = hsc.id and (hsc.code != 'BASIC' or hc.code='BASICTURNOS')
-                                        WHERE hp.state = 'done' and hp.contract_id = %s
+                                        WHERE hp.state = 'validated' and hp.version_id = %s
                                         AND (hp.date_from between %s and %s
                                             or
                                             hp.date_to between %s and %s )
@@ -462,7 +530,7 @@ class Payslips(BrowsableObject):
                                         Inner Join hr_salary_rule_category hsc on hc.category_id = hsc.id and (hsc.code != 'BASIC' or hc.code='BASICTURNOS')
                                         WHERE pl.employee_id = %s and pl.date between %s and %s
                                 ) As A""",
-                    (self.contract_id.id, date_start, date_end, date_start, date_end, self.employee_id, date_start, date_end))
+                    (self.version_id.id, date_start, date_end, date_start, date_end, self.employee_id, date_start, date_end))
         res = self.env.cr.fetchone()
 
         return res and res[0] or 0.0
@@ -471,8 +539,9 @@ class Payslips(BrowsableObject):
 
     def get_accumulated_compensation(self, date_start, date_end, values_base_compensation):
         date_start = date_end-relativedelta(years=1)
-        date_start = self.contract_id.date_start if date_start <= self.contract_id.date_start else date_start
-        dias_trabajados = self.days_between(date_start, date_end)
+        date_start = self.version_id.date_start if date_start <= self.version_id.date_start else date_start
+        #dias_trabajados = self.days_between(date_start, date_end)
+        dias_trabajados = 360 if self.days_between(date_start, date_end) > 360 else self.days_between(date_start,date_end)
         # formatear fechas
         date_start = str(date_start.year) + '-' + str(date_start.month) + '-' + str(date_start.day)
         date_end = str(date_end.year) + '-' + str(date_end.month) + '-' + str(date_end.day)
@@ -485,7 +554,7 @@ class Payslips(BrowsableObject):
                                         Inner Join hr_payslip_line as pl on  hp.id = pl.slip_id 
                                         Inner Join hr_salary_rule hc on pl.salary_rule_id = hc.id and hc.z_base_compensation = true
                                         Inner Join hr_salary_rule_category hsc on hc.category_id = hsc.id and (hsc.code != 'BASIC' or hc.code='BASICTURNOS')
-                                        WHERE hp.state = 'done' and hp.contract_id = %s
+                                        WHERE hp.state = 'validated' and hp.version_id = %s
                                         AND (hp.date_from between %s and %s
                                             or
                                             hp.date_to between %s and %s )
@@ -496,7 +565,7 @@ class Payslips(BrowsableObject):
                                         Inner Join hr_salary_rule_category hsc on hc.category_id = hsc.id and (hsc.code != 'BASIC' or hc.code='BASICTURNOS')
                                         WHERE pl.employee_id = %s and pl.date between %s and %s
                                 ) As A""",
-                            (self.contract_id.id, date_start, date_end, date_start, date_end, self.employee_id,
+                            (self.version_id.id, date_start, date_end, date_start, date_end, self.employee_id,
                              date_start, date_end))
         res = self.env.cr.fetchone()
         if res and res[0]:
@@ -507,17 +576,17 @@ class Payslips(BrowsableObject):
     # -------AÑOS EN LA EMPRESA Y LA FECHA CUANDO CUMPLIO EL AÑO
     def years_in_company(self,date_process):
         lst_date_years = []
-        date_start = self.contract_id.date_start
+        date_start = self.version_id.date_start
         while date_start <= date_process:
             date_start_o = date_start
             date_start = date_start+relativedelta(years=1)
             dias_ausencias = sum([i.number_of_days for i in self.env['hr.leave'].search(
                 [('date_from', '>=', date_start_o), ('date_to', '<=', date_start),
-                 ('state', '=', 'validate'), ('employee_id', '=', self.contract_id.employee_id.id),
+                 ('state', '=', 'validate'), ('employee_id', '=', self.version_id.employee_id.id),
                  ('unpaid_absences', '=', True)])])
             dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search(
                 [('star_date', '>=', date_start_o), ('end_date', '<=', date_start),
-                 ('employee_id', '=', self.contract_id.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
+                 ('employee_id', '=', self.version_id.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
             date_start = date_start + timedelta(days=dias_ausencias)
             if (date_start-date_start_o).days >= 365 and date_start <= date_process:
                 lst_date_years.append(date_start)
@@ -527,3 +596,7 @@ class Payslips(BrowsableObject):
     @property
     def paid_amount(self):
         return self.dict._get_paid_amount()
+
+    @property
+    def is_outside_contract(self):
+        return self.dict._is_outside_contract_dates()

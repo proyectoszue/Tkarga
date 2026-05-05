@@ -5,6 +5,7 @@
             <body t-att-style="'background-color:'+str(portal_design.z_background_color)+';font-family:'+str(portal_design.z_font)+';'">
             <t t-call="web.basic_layout">
                 <link rel="stylesheet" href="/zue_payroll_self_management_portal/static/src/css/main.css"/>
+                <script src="https://code.jquery.com/jquery-3.6.0.min.js"/>
                 <script type="text/javascript" src="/zue_payroll_self_management_portal/static/src/js/employee_documents.js"/>
                 <div t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
                     <br/>
@@ -31,16 +32,16 @@
                             </div>
                         </div>
                         <div class="col-md-9 d-flex justify-content-center align-items-end flex-column">
-                            <button class="fa fa-th-large" type="button" data-toggle="collapse"
+                            <button class="fa fa-th-large" type="button" data-bs-toggle="collapse"
                                     t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_primary_color)+';color:'+str(portal_design.z_secondary_color)+';'"
-                                    data-target="#Kanban" aria-expanded="false"
+                                    data-bs-target="#Kanban" aria-expanded="false"
                                     aria-controls="Kanban">
                             </button>
                         </div>
                         <div class="col-md-1 d-flex justify-content-center align-items-start flex-column">
-                            <button class="fa fa-th-list" type="button" data-toggle="collapse"
+                            <button class="fa fa-th-list" type="button" data-bs-toggle="collapse"
                                     t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_primary_color)+';color:'+str(portal_design.z_secondary_color)+';'"
-                                    data-target="#List" aria-expanded="false"
+                                    data-bs-target="#List" aria-expanded="false"
                                     aria-controls="List">
                             </button>
                         </div>
@@ -49,7 +50,7 @@
                     <div class="row">
                         <div class="full_iframe_div accordion" id="accordionViews" style="padding:1%">
                             <!--                            Vista Kanban-->
-                            <div class="collapse multi-collapse show" id="Kanban" data-parent="#accordionViews">
+                            <div class="collapse multi-collapse show" id="Kanban" data-bs-parent="#accordionViews">
                                 <div class="card-columns" id="div_view_kanban">
                                     <t t-foreach="documents" t-as="dc">
                                         <div t-att-class="'card mb-3' + (' text-white bg-secondary' if dc.get('document_request',False) else '')"
@@ -172,7 +173,7 @@
                                 </div>
                             </div>
                             <!--                            Vista lista-->
-                            <div class="collapse multi-collapse" id="List" data-parent="#accordionViews">
+                            <div class="collapse multi-collapse" id="List" data-bs-parent="#accordionViews">
                                 <table class="table table-responsive-md"
                                        t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
                                     <thead t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">

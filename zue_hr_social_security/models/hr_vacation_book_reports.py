@@ -18,7 +18,7 @@ class hr_vacation_book(models.TransientModel):
     final_year = fields.Integer(related='z_provisions_id.year', string='Año', store=True)
     final_month = fields.Selection(related='z_provisions_id.month', string='Mes', store=True)
     employee = fields.Many2many('hr.employee', string='Empleado')
-    contract = fields.Many2many('hr.contract', string='Contrato')
+    version = fields.Many2many('hr.version', string='Contrato')
     branch = fields.Many2many('zue.res.branch', string='Sucursal',
                               domain=lambda self: [('id', 'in', self.env.user.branch_ids.ids)])
     analytic_account = fields.Many2many('account.analytic.account', string='Cuenta Analítica')
@@ -45,11 +45,11 @@ class hr_vacation_book(models.TransientModel):
         if str_ids_employee != '':
             query_where = query_where + f"and a.id in ({str_ids_employee}) "
         # Filtro Contratos
-        str_ids_contract = ''
-        for i in self.contract:
-            str_ids_contract = str(i.id) if str_ids_contract == '' else str_ids_contract + ',' + str(i.id)
-        if str_ids_contract != '':
-            query_where = query_where + f"and hc.id in ({str_ids_contract}) "
+        str_ids_version = ''
+        for i in self.version:
+            str_ids_version = str(i.id) if str_ids_version == '' else str_ids_version + ',' + str(i.id)
+        if str_ids_version != '':
+            query_where = query_where + f"and hc.id in ({str_ids_version}) "
         # Filtro Sucursal
         str_ids_branch = ''
         for i in self.branch:
@@ -67,9 +67,9 @@ class hr_vacation_book(models.TransientModel):
             query_where = query_where + f"and f.id in ({str_ids_analytic}) "
     # ----------------------------------Ejecutar consulta
         query_report = f'''
-                        select distinct a.identification_id as cedula,a."name" as empleado,b."name" as compania, 
-                                coalesce(c."name",'') as ubicacion_laboral,coalesce(d."name",'') as sucursal, coalesce(e."name",'') as departamento,
-                                coalesce(f."name",'') as cuenta_analitica, coalesce(p.value_wage,hc.wage) as salario,hc.date_start as fecha_ingreso,
+                        select distinct hc.identification_id as cedula,a."name" as empleado,b."name" as compania, 
+                                coalesce(c."name",'') as ubicacion_laboral,coalesce(d."name",'') as sucursal, coalesce(e."name"->>'en_US','') as departamento,
+              	                coalesce(f."name"->>'en_US','') as cuenta_analitica, coalesce(p.value_wage,hc.wage) as salario,hc.contract_date_start as fecha_ingreso,
                                 hc.retirement_date as fecha_retiro,
                                 0 as dias_laborados,
                                 -- Se toman los días de la provision para restarlos con el calculo del reporte
@@ -79,15 +79,15 @@ class hr_vacation_book(models.TransientModel):
                                 0 as dias_adeudados, 0 dias_vac_pendientes, coalesce(p.current_payable_value,0) as valor_a_pagar                             
                         from hr_employee as a 
                         inner join res_company as b on a.company_id = b.id
-                        inner join hr_contract as hc on a.id = hc.employee_id and hc.active = true and hc.date_start <= '{date_to}'
-                                                and (hc.state = 'open' or ((hc.retirement_date >= '{date_from}' and hc.retirement_date <= '{date_to}') or (hc.retirement_date >= '{date_to}')))
-                        left join res_partner as c on a.address_id = c.id
+                        inner join hr_version as hc on a.id = hc.employee_id and hc.active = true and hc.contract_date_start <= '{date_to}'
+                                                and (hc.contract_date_end is null or ((hc.retirement_date >= '{date_from}' and hc.retirement_date <= '{date_to}') or (hc.retirement_date >= '{date_to}')))
+                        left join res_partner as c on hc.address_id = c.id
                         left join zue_res_branch as d on a.branch_id = d.id
-                        left join hr_department as e on a.department_id = e.id 
-                        left join account_analytic_account as f on hc.analytic_account_id = f.id   
+                        left join hr_department as e on hc.department_id = e.id 
+                        left join account_analytic_account as f on hc.analytic_distribution = to_jsonb(json_build_object(f.id, 100))
                         --Provision
                         left join ( 
-                                    select c.employee_id,c.contract_id,c.value_wage,c.value_base,c."time",c.value_balance,c.value_payments,c.amount,c.current_payable_value 
+                                    select c.employee_id,c.version_id,c.value_wage,c.value_base,c."time",c.value_balance,c.value_payments,c.amount,c.current_payable_value 
                                     from 
                                     (
                                         select max(date_end) as max_date_provision,company_id
@@ -96,13 +96,13 @@ class hr_vacation_book(models.TransientModel):
                                     ) as a
                                     inner join hr_executing_provisions as b on a.max_date_provision = b.date_end and a.company_id = b.company_id
                                     inner join hr_executing_provisions_details as c on b.id = c.executing_provisions_id and c.provision = 'vacaciones'
-                        ) as p on a.id = p.employee_id and hc.id = p.contract_id
+                        ) as p on a.id = p.employee_id and hc.id = p.version_id
                         {query_where}
                         order by a."name",b."name"
                     '''
 
-        self._cr.execute(query_report)
-        result_query = self._cr.dictfetchall()
+        self.env.cr.execute(query_report)
+        result_query = self.env.cr.dictfetchall()
         # Generar EXCEL
         filename = 'Reporte libro de vacaciones'
         stream = io.BytesIO()
@@ -154,7 +154,7 @@ class hr_vacation_book(models.TransientModel):
             employee_id,identification_id = 0,0
             days_labor,days_unpaid_absences,days_paid,days_paid_money,days_enjoy = 0,0,0,0,0
             value_business_days,money_value = 0,0
-            contract_id = 0
+            version_id = 0
             date_vacaciones = None
             date_liquidacion = date_end
             for row in query.values():
@@ -167,17 +167,17 @@ class hr_vacation_book(models.TransientModel):
                 date_end_employee = row if aument_columns == 9 and str(type(row)).find('date') > -1 else date_end_employee
                 # Obtener contrato del empleado
                 if employee_id and aument_columns == 0:
-                    obj_contract = self.env['hr.contract'].search([
+                    obj_version = self.env['hr.version'].search([
                         ('employee_id', '=', employee_id),
                         ('active', '=', True),
                         ('date_start', '<=', date_end),
                         '|', '|',
-                        ('state', '=', 'open'),
+                        ('retirement_date', '=' ,False),
                         '&', ('retirement_date', '>=', date_initial), ('retirement_date', '<=', date_end),
                         ('retirement_date', '>=', date_end)
                     ], limit=1)
-                    contract_id = obj_contract.id if obj_contract else 0
-                obj_hr_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee_id), ('departure_date', '<=', date_end_employee), ('contract_id.state', '=', 'open')])
+                    version_id = obj_version.id if obj_version else 0
+                obj_hr_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee_id), ('departure_date', '<=', date_end_employee), ('version_id.contract_date_end', '=', False)])
                 # Obtener fecha final de causación más reciente
                 latest_final_accrual_date = max(obj_hr_vacation.mapped('final_accrual_date')) + timedelta(days=1) if len(obj_hr_vacation) > 0 else date_start
                 try:
@@ -205,39 +205,37 @@ class hr_vacation_book(models.TransientModel):
                     elif aument_columns == 14: # Valor Dias disfrutados
                         value_business_days = sum([i.value_business_days for i in
                                                self.env['hr.vacation'].search([('employee_id', '=', employee_id),
-                                                                               ('departure_date', '<=', date_end_employee),
-                                                                               ('contract_id.state', '=', 'open')])])
+                                                                               ('departure_date', '<=', date_end_employee)])])
                         sheet.write(aument_rows, aument_columns,value_business_days)
                     elif aument_columns == 15: # Valor Dias remunerados
                         money_value = sum([i.money_value for i in
                                                    self.env['hr.vacation'].search([('employee_id', '=', employee_id),
-                                                                                   ('departure_date', '<=', date_end_employee),
-                                                                                   ('contract_id.state', '=', 'open')])])
+                                                                                   ('departure_date', '<=', date_end_employee)])])
                         sheet.write(aument_rows, aument_columns,money_value)
                     elif aument_columns == 16: # Días laborados que se adeudan - Replicar cálculo de time de provisiones
                         # Obtener date_vacaciones igual que en provisiones
-                        if employee_id and contract_id:
-                            obj_contract = self.env['hr.contract'].browse(contract_id)
-                            date_vacaciones = obj_contract.date_start
-                            retirement_date = obj_contract.retirement_date
+                        if employee_id and version_id:
+                            obj_version = self.env['hr.version'].browse(version_id)
+                            date_vacaciones = obj_version.date_start
+                            retirement_date = obj_version.retirement_date
                             # Buscar vacaciones igual que en provisiones
                             if retirement_date == False:
                                 obj_vacation = self.env['hr.vacation'].search([
                                     ('employee_id', '=', employee_id),
-                                    ('contract_id', '=', contract_id),
+                                    ('version_id', '=', version_id),
                                     ('departure_date', '<=', date_end)
                                 ])
                             else:
                                 if retirement_date >= date_end:
                                     obj_vacation = self.env['hr.vacation'].search([
                                         ('employee_id', '=', employee_id),
-                                        ('contract_id', '=', contract_id),
+                                        ('version_id', '=', version_id),
                                         ('departure_date', '<=', date_end)
                                     ])
                                 else:
                                     obj_vacation = self.env['hr.vacation'].search([
                                         ('employee_id', '=', employee_id),
-                                        ('contract_id', '=', contract_id),
+                                        ('version_id', '=', version_id),
                                         ('departure_date', '<=', retirement_date)
                                     ])
                             if obj_vacation:
@@ -257,7 +255,7 @@ class hr_vacation_book(models.TransientModel):
                                 date_vacaciones = date_vacaciones if retirement_date >= date_vacaciones else retirement_date
 
                             # Calcular dias_trabajados y dias_ausencias igual que en provisiones
-                            dias_trabajados = obj_contract.dias360(date_vacaciones, date_liquidacion)
+                            dias_trabajados = obj_version.dias360(date_vacaciones, date_liquidacion)
                             dias_ausencias = sum([i.number_of_days for i in self.env['hr.leave'].search([
                                 ('date_from', '>=', date_vacaciones),
                                 ('date_to', '<=', date_liquidacion),
@@ -297,7 +295,7 @@ class hr_vacation_book(models.TransientModel):
 
         #----------------------------------Hoja 2 - Detalle del libro de vacaciones
         query_report = f'''
-                        select distinct a.identification_id as cedula,a."name" as empleado,b."name" as compania, 
+                        select distinct hc.identification_id as cedula,a."name" as empleado,b."name" as compania, 
                             hv.initial_accrual_date as causacion_inicial,hv.final_accrual_date as causacion_final,
                             hv.departure_date as fecha_salida,hv.return_date as fecha_regreso,
                             sum(coalesce(hv.business_units,0)) as dias_habiles,sum(coalesce(hv.value_business_days,0)) as valor_dias_habiles,
@@ -305,20 +303,20 @@ class hr_vacation_book(models.TransientModel):
                             sum(coalesce(hv.units_of_money,0)) as dias_dinero,sum(coalesce(hv.money_value,0)) as valor_dias_dinero
                         from hr_employee as a 
                         inner join res_company as b on a.company_id = b.id
-                        inner join hr_contract as hc on a.id = hc.employee_id and hc.active = true and hc.date_start <= '{date_to}'
-                                                and (hc.state = 'open' or ((hc.retirement_date >= '{date_from}' and hc.retirement_date <= '{date_to}') or (hc.retirement_date >= '{date_to}')))
-                        inner join hr_vacation as hv on a.id = hv.employee_id and hc.id = hv.contract_id and hv.departure_date <= '{date_to}' 
-                        left join res_partner as c on a.address_id = c.id
+                        inner join hr_version as hc on a.id = hc.employee_id and hc.active = true and hc.contract_date_start <= '{date_to}'
+                                                and (hc.contract_date_end is null or ((hc.retirement_date >= '{date_from}' and hc.retirement_date <= '{date_to}') or (hc.retirement_date >= '{date_to}')))
+                        inner join hr_vacation as hv on a.id = hv.employee_id and hc.id = hv.version_id and hv.departure_date <= '{date_to}' 
+                        left join res_partner as c on hc.address_id = c.id
                         left join zue_res_branch as d on a.branch_id = d.id
-                        left join hr_department as e on a.department_id = e.id 
-                        left join account_analytic_account as f on hc.analytic_account_id = f.id
+                        left join hr_department as e on hc.department_id = e.id 
+                        left join account_analytic_account as f on hc.analytic_distribution = to_jsonb(json_build_object(f.id, 100))
                         {query_where} 
-                        group by a.identification_id,a."name",b."name",hv.initial_accrual_date,
+                        group by hc.identification_id,a."name",b."name",hv.initial_accrual_date,
                         hv.final_accrual_date,hv.departure_date,hv.return_date
                         order by a."name",b."name"
                     '''
-        self._cr.execute(query_report)
-        result_query = self._cr.dictfetchall()
+        self.env.cr.execute(query_report)
+        result_query = self.env.cr.dictfetchall()
         # Columnas
         columns = ['Cédula', 'Nombres y Apellidos', 'Compañía',
                    'Causación Inicial', 'Causación Final', 'Fecha Salida', 'Fecha Regreso', 'Días hábiles', 'Valor días hábiles',

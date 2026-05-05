@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
         <record id="labor_certification" model="report.paperformat">
-            <field name="name">Amtur</field>
+            <field name="name">Certificacion laboral</field>
             <field name="default" eval="True" />
             <field name="format">A4</field>
             <field name="page_height">0</field>

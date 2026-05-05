@@ -1,13 +1,15 @@
 import html
 import io
 import base64
-import math
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError,UserError
 from datetime import datetime, timedelta
 from dateutil.relativedelta import relativedelta
 from pytz import timezone
-from PyPDF2 import  PdfFileReader, PdfFileWriter
+try:
+    from pypdf import PdfReader, PdfWriter
+except ImportError:
+    from PyPDF2 import PdfReader, PdfWriter
 #---------------------------Certificado ingreso y retenciones-------------------------------#
 
 class hr_withholding_and_income_certificate(models.TransientModel):
@@ -53,10 +55,10 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                     raise UserError('El año digitado es invalido, por favor verificar.')
 
                 obj_payslip = self.env['hr.payslip'].search(
-                    [('state', '=', 'done'), ('employee_id', '=', employee.id),
+                    [('state', '=', 'validated'), ('employee_id', '=', employee.id),
                      ('date_from', '>=', date_start), ('date_from', '<=', date_end)])
                 obj_payslip += self.env['hr.payslip'].search(
-                    [('state', '=', 'done'), ('employee_id', '=', employee.id),
+                    [('state', '=', 'validated'), ('employee_id', '=', employee.id),
                      ('id', 'not in', obj_payslip.ids),
                      ('struct_id.process', 'in', ['cesantias', 'intereses_cesantias', 'prima']),
                      ('date_to', '>=', date_start), ('date_to', '<=', date_end)])
@@ -66,10 +68,10 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                                                                                      ('date', '<=', date_end)])
 
                 obj_payslip_ant = self.env['hr.payslip'].search(
-                    [('state', '=', 'done'), ('employee_id', '=', employee.id),
+                    [('state', '=', 'validated'), ('employee_id', '=', employee.id),
                      ('date_from', '>=', date_start_ant), ('date_from', '<=', date_end_ant)])
                 obj_payslip_ant += self.env['hr.payslip'].search(
-                    [('state', '=', 'done'), ('employee_id', '=', employee.id),
+                    [('state', '=', 'validated'), ('employee_id', '=', employee.id),
                      ('id', 'not in', obj_payslip_ant.ids),
                      ('struct_id.process', 'in', ['cesantias', 'intereses_cesantias', 'prima']),
                      ('date_to', '>=', date_start_ant), ('date_to', '<=', date_end_ant)])
@@ -99,19 +101,19 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                                     code_python = 'value = employee.' + str(conf.information_fields_id.name)
                                 exec(code_python, ldict)
                                 value = ldict.get('value')
-                            elif conf.information_fields_id.model_id.model == 'hr.contract':
+                            elif conf.information_fields_id.model_id.model == 'hr.version':
                                 raise UserError('No se puede traer información del empleado de un campo de la tabla contratos, EN DESARROLLO.')
                             elif conf.information_fields_id.model_id.model == 'res.partner':
                                 if conf.information_fields_id.ttype == 'many2one':
-                                    code_python = 'value = employee.address_home_id.'+str(conf.information_fields_id.name) + '.' + str(conf.related_field_id.name)
+                                    code_python = 'value = employee.work_contact_id.'+str(conf.information_fields_id.name) + '.' + str(conf.related_field_id.name)
                                 else:
-                                    code_python = 'value = employee.address_home_id.' + str(conf.information_fields_id.name)
+                                    code_python = 'value = employee.work_contact_id.' + str(conf.information_fields_id.name)
                                 exec(code_python, ldict)
                                 value = ldict.get('value')
                         if conf.type_partner == 'company':
                             if conf.information_fields_id.model_id.model == 'hr.employee':
                                 raise UserError('No se puede traer información de la compañía de un campo de la tabla empleados, por favor verificar.')
-                            elif conf.information_fields_id.model_id.model == 'hr.contract':
+                            elif conf.information_fields_id.model_id.model == 'hr.version':
                                 raise UserError('No se puede traer información de la compañía de un campo de la tabla contratos, por favor verificar.')
                             elif conf.information_fields_id.model_id.model == 'res.partner':
                                 if conf.information_fields_id.ttype == 'many2one':
@@ -128,46 +130,36 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                                 # Nóminas
                                 for payslip_ant in obj_payslip_ant:
                                     if conf.origin_severance_pay == 'employee':
-                                        amount += (sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
+                                        amount += abs(sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
                                     else:
-                                        amount += (sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == False)]))
+                                        amount += abs(sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == False)]))
                                 if conf.origin_severance_pay != 'employee':
                                     # Acumulados
-                                    amount += (sum([i.amount for i in obj_payslip_accumulated_ant.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
-                                # Revisar años anteriores si existe anticipo o liquidacion de contrato
-                                if conf.origin_severance_pay == 'employee':
-                                    if employee.contract_id.retirement_date:
-                                        if employee.contract_id.retirement_date <= date_end:
-                                            for payslip in obj_payslip:
-                                                amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
-
-                                    for payslip in obj_payslip:
-                                        if payslip.struct_id.process == 'cesantias' and payslip.date_to < (date_end - timedelta(days=1)):
-                                            amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
+                                    amount += abs(sum([i.amount for i in obj_payslip_accumulated_ant.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
                             else:
                                 # Nóminas
                                 for payslip_ant in obj_payslip_ant:
-                                    amount += (sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                                    amount += abs(sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
                                 # Acumulados
-                                amount += (sum([i.amount for i in obj_payslip_accumulated_ant.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                                amount += abs(sum([i.amount for i in obj_payslip_accumulated_ant.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
                         else:
                             if conf.origin_severance_pay:
                                 # Nóminas
                                 for payslip in obj_payslip:
                                     if conf.origin_severance_pay == 'employee':
-                                        amount += (sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
+                                        amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
                                     else:
-                                        amount += (sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == False)]))
+                                        amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == False)]))
                                 if conf.origin_severance_pay != 'employee':
                                     # Acumulados
-                                    amount += (sum([i.amount for i in obj_payslip_accumulated.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                                    amount += abs(sum([i.amount for i in obj_payslip_accumulated.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
                             else:
                                 #Nóminas
                                 for payslip in obj_payslip:
-                                    amount += (sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                                    amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
                                 #Acumulados
-                                amount += (sum([i.amount for i in obj_payslip_accumulated.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
-                        value = abs(amount)
+                                amount += abs(sum([i.amount for i in obj_payslip_accumulated.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                        value = amount
                     # Tipo de Calculo ---------------------- SUMATORIA SECUENCIAS ANTERIORES
                     elif conf.calculation == 'sum_sequence':
                         if conf.sequence_list_sum:
@@ -175,37 +167,16 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                             sequence_list_sum = conf.sequence_list_sum.split(',')
                             for item in lst_items:
                                 amount += float(item[1]) if str(item[0]) in sequence_list_sum else 0
-                            value = abs(amount)
-                    # Tipo de Calculo ---------------------- INGRESO LABORAL PROMEDIO DE LOS ÚLTIMOS SEIS MESES ANTERIORES
-                    elif conf.calculation == 'amount_last_six_months':
-                        if employee.contract_id.retirement_date:
-                            end_validate_date = employee.contract_id.retirement_date if employee.contract_id.retirement_date <= date_end != 0 else date_end
-                        else:
-                            end_validate_date = date_end
-                        initial_validate_date = (end_validate_date + relativedelta(months=-6)) + timedelta(days=1)
-                        initial_validate_date = initial_validate_date if initial_validate_date >= date_start else date_start
-                        initial_validate_date = initial_validate_date if initial_validate_date >= employee.contract_id.date_start else employee.contract_id.date_start
-                        obj_payslips = self.env['hr.payslip.line'].search(
-                            [('slip_id.state', 'in', ['done', 'paid']),
-                             ('salary_rule_id.id', 'in', conf.salary_rule_id.ids),
-                             ('slip_id.contract_id', '=', employee.contract_id.id),
-                             '|','&',('slip_id.date_from', '>=', initial_validate_date),
-                             ('slip_id.date_from', '<=', end_validate_date),'&',('slip_id.date_to', '>=', initial_validate_date),
-                             ('slip_id.date_to', '<=', end_validate_date)])
-                        value = (sum([i.total for i in obj_payslips])/((end_validate_date.month - initial_validate_date.month) + 1))#(self.dias360(initial_validate_date, end_validate_date)))*30
+                            value = amount
                     # Tipo de Calculo ---------------------- FECHA EXPEDICIÓN
                     elif conf.calculation == 'date_issue':
                         value = str(datetime.now(timezone(self.env.user.tz)).strftime("%Y-%m-%d"))
                     # Tipo de Calculo ---------------------- FECHA CERTIFICACIÓN INICIAL
                     elif conf.calculation == 'start_date_year':
                         value = str(year_process)+'-01-01'
-                        if employee.contract_id.date_start:
-                            value = employee.contract_id.date_start if employee.contract_id.date_start >= date_start != 0 else value
                     # Tipo de Calculo ---------------------- FECHA CERTIFICACIÓN FINAL
                     elif conf.calculation == 'end_date_year':
                         value = str(year_process)+'-12-31'
-                        if employee.contract_id.retirement_date:
-                            value = employee.contract_id.retirement_date if employee.contract_id.retirement_date <= date_end != 0 else value
                     # Tipo de Calculo ---------------------- DEPENDIENTES - TIPO DOCUMENTO
                     elif conf.calculation == 'dependents_type_vat':
                         value = dependents_type_vat
@@ -239,7 +210,7 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                         struct_report_income_and_withholdings_finally = struct_report_income_and_withholdings_finally.replace('$_val' + str(sequence_val) + '.' + str(sequence_val_internal) + '_$', '')
 
                 if self.z_save_documents:
-                    pdf_writer = PdfFileWriter()
+                    pdf_writer = PdfWriter()
                     obj_report = self.env['hr.withholding.and.income.certificate'].create(
                         {
                             'year': self.year,
@@ -247,11 +218,11 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                             'struct_report_income_and_withholdings':str(struct_report_income_and_withholdings_finally).replace("ZUE_BREAK_LINE", "<br>"),
                         }
                     )
-                    report = self.env.ref('zue_hr_payroll.hr_report_income_and_withholdings_action', False)
-                    pdf_content, _ = report._render_qweb_pdf(obj_report.id)
-                    reader = PdfFileReader(io.BytesIO(pdf_content), strict=False, overwriteWarnings=False)
-                    for page in range(reader.getNumPages()):
-                        pdf_writer.addPage(reader.getPage(page))
+                    # report = self.env.ref('zue_hr_payroll.hr_report_income_and_withholdings_action', False)
+                    pdf_content, _ = self.env['ir.actions.report'].sudo()._render_qweb_pdf('zue_hr_payroll.hr_report_income_and_withholdings_action', [obj_report.id])
+                    reader = PdfReader(io.BytesIO(pdf_content), strict=False)
+                    for page in reader.pages:
+                        pdf_writer.add_page(page)
                     _buffer = io.BytesIO()
                     pdf_writer.write(_buffer)
                     merged_pdf = _buffer.getvalue()
@@ -265,20 +236,26 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                         'res_name': name,
                         'type': 'binary',
                         'res_model': 'res.partner',
-                        'res_id': employee.address_home_id.id,
+                        'res_id': employee.work_contact_id.id,
                         'datas': base64.b64encode(merged_pdf),
                     })
                     # Asociar adjunto a documento de Odoo
-                    doc_vals = {
-                        'name': name,
-                        'owner_id': self.env.user.id,
-                        'partner_id': employee.address_home_id.id,
-                        'folder_id': self.env.user.company_id.documents_hr_folder.id,
-                        'tag_ids': self.env.user.company_id.z_validated_certificate.ids,
-                        'type': 'binary',
-                        'attachment_id': obj_attachment.id
-                    }
-                    self.env['documents.document'].sudo().create(doc_vals)
+                    company = self.env.user.company_id
+                    folder = getattr(company, 'documents_hr_folder', None)
+                    folder_id = folder.id if folder else False
+                    z_validated = getattr(company, 'z_validated_certificate', None)
+                    tag_ids = z_validated.ids if z_validated else []
+                    if folder_id and self.env.get('documents.document'):
+                        doc_vals = {
+                            'name': name,
+                            'owner_id': self.env.user.id,
+                            'partner_id': employee.work_contact_id.id,
+                            'folder_id': folder_id,
+                            'tag_ids': tag_ids,
+                            'type': 'binary',
+                            'attachment_id': obj_attachment.id
+                        }
+                        self.env['documents.document'].sudo().create(doc_vals)
 
         #Retonar PDF
         self.struct_report_income_and_withholdings = str(struct_report_income_and_withholdings_finally).replace("ZUE_BREAK_LINE", "<br>")

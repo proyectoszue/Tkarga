@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <t t-name="zue_documents.PdfManagerGlobalButtons" t-inherit="documents.component.PdfManager.GlobalButtons" t-inherit-mode="extension">
+        <xpath expr="//button[@t-on-click.stop='onClickSplit']" position="replace">
+            <button class="btn btn-primary o_pdf_manager_button"
+                t-att-class="{'dropdown-item': isMobile, 'm-0': isMobile, 'h-auto': isMobile}"
+                t-att-title="props.documents.length > 1 ? 'Fusionar todos los PDFs en un documento' : 'Aplicar cambios de division'"
+                t-att-disabled="state.uploadingLock || state.viewedPage"
+                t-on-click.stop="onClickSplit"
+                data-hotkey="s">
+                <t t-if="props.documents.length > 1">Fusionar</t>
+                <t t-else="">Aplicar</t>
+                <span t-if="state.uploadingLock" class="fa fa-circle-o-notch fa-spin"/>
+            </button>
+        </xpath>
+    </t>
+
+    <t t-name="zue_documents.ExitSplitToolsDialog" t-inherit="documents.ExitToolsDialog" t-inherit-mode="extension">
+        <xpath expr="//t[@t-else='']" position="replace">
+            <t t-else="">
+                Desea salir sin guardar o fusionar las paginas en un documento?
+            </t>
+        </xpath>
+        <xpath expr="//button[@t-on-click='gatherRemainingPages']" position="replace">
+            <button class="btn btn-primary" t-on-click="gatherRemainingPages">Fusionar en un documento</button>
+        </xpath>
+    </t>
+</templates>

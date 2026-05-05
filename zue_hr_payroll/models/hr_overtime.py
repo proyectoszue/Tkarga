@@ -33,7 +33,7 @@ class hr_type_overtime(models.Model):
     sat = fields.Boolean(default=False, string='Sáb')
     sun = fields.Boolean(default=False, string='Dom')
 
-    _sql_constraints = [('change_type_uniq', 'unique(type_overtime)', 'Ya existe este tipo de hora extra, por favor verficar.')]
+    _change_type_uniq = models.Constraint('unique(type_overtime)', 'Ya existe este tipo de hora extra, por favor verficar.')
 
 class hr_overtime(models.Model):
     _name = 'hr.overtime'
@@ -44,8 +44,8 @@ class hr_overtime(models.Model):
     date_end = fields.Date('Fecha Final Novedad', required=True)
     employee_id = fields.Many2one('hr.employee', string="Empleado", index=True)
     employee_identification = fields.Char('Identificación empleado')
-    department_id = fields.Many2one('hr.department', related="employee_id.department_id", readonly=True,string="Departamento")
-    job_id = fields.Many2one('hr.job', related="employee_id.job_id", readonly=True,string="Servicio")
+    department_id = fields.Many2one('hr.department', related="employee_id.department_id",string="Departamento")
+    job_id = fields.Many2one('hr.job', related="employee_id.job_id",string="Servicio")
     overtime_rn = fields.Float('RN', help='Horas recargo nocturno (35%)') # EXTRA_RECARGO
     overtime_ext_d = fields.Float('EXT-D', help='Horas extra diurnas (125%)') # EXTRA_DIURNA
     overtime_ext_n = fields.Float('EXT-N', help='Horas extra nocturna (175%)') # EXTRA_NOCTURNA
@@ -62,17 +62,18 @@ class hr_overtime(models.Model):
     payslip_run_id = fields.Many2one('hr.payslip','Ref. Liquidación')
     shift_hours = fields.Float('Horas del Turno')
 
-    @api.model
-    def create(self, vals):
-        total = vals.get('shift_hours',0) + vals.get('days_snack',0) + vals.get('days_actually_worked',0) + vals.get('overtime_rn',0) + vals.get('overtime_ext_d',0) + vals.get('overtime_ext_n',0) + vals.get('overtime_eddf',0) + vals.get('overtime_endf',0) + vals.get('overtime_dof',0) + vals.get('overtime_rndf',0) + vals.get('overtime_rdf',0) + vals.get('overtime_rnf',0)
-        if total > 0:            
-            if vals.get('employee_identification'):
-                obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('identification_id', '=', vals.get('employee_identification'))],limit=1)
-                vals['employee_id'] = obj_employee.id
-            if vals.get('employee_id'):
-                obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('id', '=', vals.get('employee_id'))],limit=1)
-                vals['employee_identification'] = obj_employee.identification_id
-            registrar_novedad = super(hr_overtime, self).create(vals)
-            return registrar_novedad
-        else:
-            raise UserError(_('Valores en 0 detectados | No se ha detectado la cantidad de horas / dias de la novedad ingresada!'))       
+    @api.model_create_multi
+    def create(self, values_list):
+        for vals in values_list:
+            total = vals.get('shift_hours',0) + vals.get('days_snack',0) + vals.get('days_actually_worked',0) + vals.get('overtime_rn',0) + vals.get('overtime_ext_d',0) + vals.get('overtime_ext_n',0) + vals.get('overtime_eddf',0) + vals.get('overtime_endf',0) + vals.get('overtime_dof',0) + vals.get('overtime_rndf',0) + vals.get('overtime_rdf',0) + vals.get('overtime_rnf',0)
+            if total > 0:
+                if vals.get('employee_identification'):
+                    obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('identification_id', '=', vals.get('employee_identification'))],limit=1)
+                    vals['employee_id'] = obj_employee.id
+                if vals.get('employee_id'):
+                    obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('id', '=', vals.get('employee_id'))],limit=1)
+                    vals['employee_identification'] = obj_employee.identification_id
+            else:
+                raise UserError(_('Valores en 0 detectados | No se ha detectado la cantidad de horas / dias de la novedad ingresada!'))
+        registrar_novedad = super(hr_overtime, self).create(values_list)
+        return registrar_novedad

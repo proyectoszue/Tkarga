@@ -3,7 +3,7 @@
         <record model="ir.actions.act_window" id="hr_history_rtefte_action">
             <field name="name">Histórico de RteFte</field>
             <field name="res_model">hr.employee.rtefte.history</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
             <field name="context">{'create': True}</field>
         </record>
 
@@ -20,12 +20,12 @@
             <field name="name">hr.employee.rtefte.history.tree</field>
             <field name="model">hr.employee.rtefte.history</field>
             <field name="arch" type="xml">
-                <tree string="Histórico de RteFte">
+                <list string="Histórico de RteFte">
                     <field name="z_employee_id"/>
                     <field name="z_payslip_id"/>
                     <field name="z_year"/>
                     <field name="z_month"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -46,13 +46,13 @@
                             </group>
                         </group>
                         <field name="z_line_ids" readonly="1">
-                            <tree string="Reglas deducción tributaria">
+                            <list string="Reglas deducción tributaria">
                                 <field name="z_concept_deduction_id"/>
                                 <field name="z_concept_deduction_code"/>
                                 <field name="z_concept_deduction_order"/>
                                 <field name="z_result_base"/>
                                 <field name="z_result_calculation"/>
-                            </tree>
+                            </list>
                         </field>
                     </sheet>
                 </form>

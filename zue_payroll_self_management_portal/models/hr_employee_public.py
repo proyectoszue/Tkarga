@@ -10,21 +10,21 @@ class hr_employee(models.Model):
     z_has_to_expired_documents = fields.Boolean(string='Tiene documentos por expirar',compute='_compute_has_expired_documents', store=True)
     z_has_request_documents = fields.Boolean(string='Tiene documentos solicitados',compute='_compute_has_expired_documents', store=True)
 
-    @api.depends('address_home_id')
+    @api.depends('private_street')
     def _compute_has_expired_documents(self):
         for record in self:
             lst_documents = []
             qty_expired, qty_to_expire, qty_request = 0, 0, 0
             datetime_today = datetime.now()
-            obj_documents = self.env['documents.document'].search([('partner_id', '=', record.address_home_id.id)])
+            obj_documents = self.env['documents.document'].search([('partner_id', '=', record.private_street)])
             for document in obj_documents:
                 # Verificar documentos expirados
                 expired, to_expire = False, False
-                if document.expiration_date and document.type != 'empty':
+                if document.expiration_date and document.type == 'binary':
                     equivalent_documents = self.env['documents.document']
                     for tag in document.tag_ids:
                         equivalent_documents += self.env['documents.document'].search(
-                            [('partner_id', '=', record.address_home_id.id),
+                            [('partner_id', '=', record.private_street),
                              ('tag_ids', 'in', tag.id),
                              '|', ('expiration_date', '=', False),
                              ('expiration_date', '>', document.expiration_date)])
@@ -35,7 +35,7 @@ class hr_employee(models.Model):
                             to_expire = True
                     qty_expired += 1 if expired else 0
                     qty_to_expire += 1 if to_expire else 0
-                if document.type == 'empty':
+                if not document.type:
                     qty_request += 1
             record.z_has_expired_documents = True if qty_expired > 0 else False
             record.z_has_to_expired_documents = True if qty_to_expire > 0 else False
@@ -47,7 +47,6 @@ class hr_employee(models.Model):
             dict_curriculum = {'id':curriculum.id,
                         'name':curriculum.name,
                         'type':curriculum.line_type_id.name if curriculum.line_type_id else 'Otro',
-                        'display_type':curriculum.display_type,
                         'description': curriculum.description,
                         'date_start':curriculum.date_start,
                         'date_end':curriculum.date_end}
@@ -92,69 +91,72 @@ class hr_employee(models.Model):
         lst_documents = []
         qty_expired,qty_to_expire = 0,0
         datetime_today = datetime.now(timezone(self.env.user.tz))
-        obj_documents = self.env['documents.document'].search([('partner_id','=',self.address_home_id.id)])
+        obj_documents = self.env['documents.document'].search([('partner_id','=',self.private_street)])
         for document in obj_documents:
-            is_visible = False
-            if len(document.folder_id.read_group_ids) == 0:
-                is_visible = True
-            else:
-                for permissions in document.folder_id.read_group_ids:
-                    if user_id in permissions.users.ids:
-                        is_visible = True
+            is_visible = True
+            # if len(document.folder_id.read_group_ids) == 0:
+            #     is_visible = True
+            # else:
+            #     for permissions in document.folder_id.read_group_ids:
+            #         if user_id in permissions.users.ids:
+            #             is_visible = True
 
-            if is_visible == True:
-                #Verificar documentos expirados
-                expired,to_expire = False,False
-                if document.expiration_date:
-                    equivalent_documents = self.env['documents.document']
-                    for tag in document.tag_ids:
-                        equivalent_documents += self.env['documents.document'].search([('partner_id', '=', self.address_home_id.id),
-                                                                                        ('tag_ids', 'in', tag.id),
-                                                                                         '|', ('expiration_date', '=', False),
-                                                                                                ('expiration_date', '>', document.expiration_date)])
-                    if document.expiration_date < datetime_today.date() and len(equivalent_documents) == 0:
-                        expired = True
-                    else:
-                        if (document.expiration_date - datetime_today.date()).days <= 14 and len(equivalent_documents) == 0:
-                            to_expire = True
-                #Verificar si es solicitud de documento
-                document_link = ''
-                if document.type == 'empty':
-                    obj_share = self.env['documents.share'].search([('document_ids','in',document.id)],limit=1)
-                    if len(obj_share) == 0:
-                        share_vals = {
-                            'name': document.name,
-                            'type': 'ids',
-                            'folder_id': document.folder_id.id,
-                            'partner_id': self.address_home_id.id if self.address_home_id else False,
-                            'owner_id': user_id,
-                            'document_ids': [document.id],
-                        }
-                        share = self.env['documents.share'].with_user(document.create_uid.id).create(share_vals)
-                    else:
-                        share = obj_share
-                    base_url = False
-                    if self.env.user.company_id.website_id:
-                        base_url = self.env.user.company_id.website_id.domain
-                    if not base_url:
-                        base_url = self.env['ir.config_parameter'].get_param('web.base.url')
-                    document_link = base_url + '/document/share/' + str(share.id) + '/' + str(share.access_token)
-                # Objeto a retornar
-                dict_document = {'id': document.id,
-                              'name': document.name,
-                              'folder': document.folder_id.name,
-                              'categories': document.tag_ids,
-                              'create_date': document.create_date.date(),
-                              'expiration_date': document.expiration_date,
-                              'expired': expired,
-                              'to_expire': to_expire,
-                              'attachment':document.attachment_id.datas,
-                              'mimetype':document.mimetype,
-                              'document_request': True if document.type == 'empty' else False,
-                              'document_link': document_link if document.type == 'empty' else False}
-                lst_documents.append(dict_document)
-                qty_expired += 1 if expired else 0
-                qty_to_expire += 1 if to_expire else 0
+            if is_visible:
+                try:
+                    #Verificar documentos expirados
+                    expired,to_expire = False,False
+                    if document.expiration_date:
+                        equivalent_documents = self.env['documents.document']
+                        for tag in document.tag_ids:
+                            equivalent_documents += self.env['documents.document'].search([('partner_id', '=', self.private_street),
+                                                                                            ('tag_ids', 'in', tag.id),
+                                                                                             '|', ('expiration_date', '=', False),
+                                                                                                    ('expiration_date', '>', document.expiration_date)])
+                        if document.expiration_date < datetime_today.date() and len(equivalent_documents) == 0:
+                            expired = True
+                        else:
+                            if (document.expiration_date - datetime_today.date()).days <= 14 and len(equivalent_documents) == 0:
+                                to_expire = True
+                    #Verificar si es solicitud de documento
+                    document_link = ''
+                    if not document.type:
+                        obj_share = self.env['documents.share'].search([('document_ids','in',document.id)],limit=1)
+                        if len(obj_share) == 0:
+                            share_vals = {
+                                'name': document.name,
+                                'type': 'ids',
+                                'folder_id': document.folder_id.id,
+                                'partner_id': self.private_street if self.private_street else False,
+                                'owner_id': user_id,
+                                'document_ids': [document.id],
+                            }
+                            share = self.env['documents.share'].with_user(document.create_uid.id).create(share_vals)
+                        else:
+                            share = obj_share
+                        base_url = False
+                        if self.env.user.company_id.website_id:
+                            base_url = self.env.user.company_id.website_id.domain
+                        if not base_url:
+                            base_url = self.env['ir.config_parameter'].get_param('web.base.url')
+                        document_link = base_url + '/document/share/' + str(share.id) + '/' + str(share.access_token)
+                    # Objeto a retornar
+                    dict_document = {'id': document.id,
+                                  'name': document.name,
+                                  'folder': document.folder_id.name,
+                                  'categories': document.tag_ids,
+                                  'create_date': document.create_date.date(),
+                                  'expiration_date': document.expiration_date,
+                                  'expired': expired,
+                                  'to_expire': to_expire,
+                                  'attachment':document.attachment_id.datas,
+                                  'mimetype':document.mimetype,
+                                  'document_request': True if not document.type else False,
+                                  'document_link': document_link if not document.type else False}
+                    lst_documents.append(dict_document)
+                    qty_expired += 1 if expired else 0
+                    qty_to_expire += 1 if to_expire else 0
+                except Exception as e:
+                    pass
         if cant_expirados == 0:
             return lst_documents
         else:
@@ -184,12 +186,12 @@ class HrEmployeePublic(models.Model):
     _inherit = "hr.employee.public"
 
     identification_id = fields.Char(readonly=True)
-    address_home_id = fields.Many2one('res.partner',readonly=True)
+    #work_contact_id = fields.Many2one('res.partner',readonly=True)
     personal_mobile = fields.Char(readonly=True)
     birthday = fields.Date(readonly=True)
     type_employee = fields.Many2one('hr.types.employee',readonly=True)
     personal_email = fields.Char(readonly=True)
-    gender = fields.Char(string='Genero')
+    #gender = fields.Char(string='Genero')
     branch_id = fields.Many2one('zue.res.branch',string='Sucursal')
     mobile_phone = fields.Char(readonly=True)
     work_phone = fields.Char(readonly=True)
@@ -213,7 +215,7 @@ class HrEmployeePublic(models.Model):
     study_field = fields.Char(readonly=True)
     study_school = fields.Char(readonly=True)
     marital = fields.Char(readonly=True)
-    contract_id = fields.Many2one('hr.contract.public',string='Contrato')
+    #version_id = fields.Many2one('hr.version.public',string='Contrato')
     #Campos Zue
     partner_encab_id = fields.Many2one('res.partner',readonly=True)
     type_employee = fields.Many2one('hr.types.employee',readonly=True)
@@ -250,7 +252,7 @@ class HrEmployeePublic(models.Model):
     z_religion = fields.Char(readonly=True)
     z_victim_armed_conflict = fields.Char(readonly=True)
     z_academic_data = fields.Char(readonly=True)
-    z_city_birth_id = fields.Many2one('zue.city',readonly=True)
+    #z_city_birth_id = fields.Many2one('res.city',readonly=True)
     z_department_birth_id = fields.Many2one('res.country.state',readonly=True)
     z_military_passbook = fields.Boolean(readonly=True)
     branch_social_security_id = fields.Many2one('hr.social.security.branches',readonly=True)
@@ -293,4 +295,4 @@ class HrEmployeeUpdateTmp(models.TransientModel):
 
     def update_personal_data(self,values_employee,values_partner):
         self.sudo().env['hr.employee'].search([('id', '=', self.employee_id.id)], limit=1).write(values_employee)
-        self.sudo().env['res.partner'].search([('id', '=', self.employee_id.address_home_id.id)], limit=1).write(values_partner)
+        self.sudo().env['res.partner'].search([('id', '=', self.employee_id.private_street)], limit=1).write(values_partner)

@@ -31,18 +31,17 @@ class HrLoans(models.Model):
         self.prestamo_pending_amount = pend_total
         self.prestamo_pending_count = pend_count
 
-    name = fields.Char(string="Prestamo", default="/", readonly=True)
-    date = fields.Date(string="Fecha de Desembolso", default=fields.Date.today(), readonly=False)
+    name = fields.Char(string="Prestamo", default="/")
+    date = fields.Date(string="Fecha de Desembolso", default=fields.Date.today())
     employee_id = fields.Many2one('hr.employee', string="Empleado", required=True)
-    department_id = fields.Many2one('hr.department', related="employee_id.department_id", readonly=True,
-                                    string="Departamento")
-    contract_id = fields.Many2one('hr.contract', string="Contrato", required=True, domain="[('employee_id','=', employee_id)]")
-    company_id = fields.Many2one(related='contract_id.company_id', string='Compañía')
+    department_id = fields.Many2one('hr.department', related="employee_id.department_id",string="Departamento")
+    version_id = fields.Many2one('hr.version', string="Contrato", required=True, domain="[('employee_id','=', employee_id)]")
+    company_id = fields.Many2one(related='version_id.company_id', string='Compañía')
     entity_id = fields.Many2one('hr.employee.entities', string="Entidad", required=True)
     type_installment = fields.Selection([('period', 'N° de Periodos'),
                                         ('counts', 'N° de Cuotas (Personalizadas)')], 'Calcular en base a', required=True, default='period')
     installment = fields.Integer(string="N° de Periodos", default=1)
-    final_settlement_contract = fields.Boolean(string='¿En la liquidación final del contrato se decuenta el saldo?')
+    final_settlement_version = fields.Boolean(string='¿En la liquidación final del contrato se decuenta el saldo?')
     installment_count = fields.Integer(string="N° de Cuotas (Personalizadas)", default=0)
     payment_date = fields.Date(string="Fecha de Primera Cuota", required=True, default=fields.Date.today())
     apply_charge = fields.Selection([('15','Primera quincena'),
@@ -53,14 +52,15 @@ class HrLoans(models.Model):
     currency_id = fields.Many2one('res.currency', string='Moneda', required=True)
     prestamo_original_amount = fields.Float(string="Valor Original del Préstamo", required=True, default=0)
     prestamo_amount = fields.Float(string="Valor Préstamo", required=True)
-    total_amount = fields.Float(string="Importe Total", readonly=True, compute='_compute_prestamo_amount')    
+    total_amount = fields.Float(string="Importe Total", compute='_compute_prestamo_amount')
     total_paid_amount = fields.Float(string="Importe Total Pagado", compute='_compute_prestamo_amount')
     balance_amount = fields.Float(string="Saldo", compute='_compute_prestamo_amount')
     
     prestamo_pending_amount = fields.Float(string="Monto Cuotas Pendientes", compute='_compute_pending_amount')
     prestamo_pending_count = fields.Integer(string="N° Cuotas x Pagar", compute='_compute_pending_amount')
-    payment_date_end = fields.Date(string="Fecha de Ultima Cuota", readonly=True)
+    payment_date_end = fields.Date(string="Fecha de Ultima Cuota")
     description = fields.Text(string='Descripción')
+    rel_contract_date_start = fields.Date(string='Rel fecha de inicio', store=True)
 
     state = fields.Selection([
         ('draft', 'Borrador'),
@@ -70,10 +70,11 @@ class HrLoans(models.Model):
         ('cancel', 'Cancelado'),
     ], string="Estado", default='draft', tracking=True, copy=False)
 
-    @api.model
-    def create(self, values):        
-        values['name'] = self.env['ir.sequence'].get('hr.loans.seq') or ' '
-        res = super(HrLoans, self).create(values)
+    @api.model_create_multi
+    def create(self, values_list):
+        for values in values_list:
+            values['name'] = self.env['ir.sequence'].next_by_code('hr.loans.seq') or ' '
+        res = super(HrLoans, self).create(values_list)
         return res
 
     def unlink(self):
@@ -83,12 +84,12 @@ class HrLoans(models.Model):
 
     @api.onchange('employee_id')    
     def onchange_employee(self):
-        obj_contratc = self.env['hr.contract'].search([('employee_id', '=', self.employee_id.id),('state','=','open')])
-        if obj_contratc:
-            for contract in obj_contratc:
-                self.contract_id = contract.id        
+        obj_version = self.env['hr.version'].search([('employee_id', '=', self.employee_id.id),('retirement_date','=',False)])
+        if obj_version:
+            for version in obj_version:
+                self.version_id = version.id
         else:
-            self.contract_id = False
+            self.version_id = False
             
     @api.onchange('apply_charge')    
     def apply_charge_function(self):
@@ -139,7 +140,7 @@ class HrLoans(models.Model):
     
     def action_cancel(self):
         for record in self:
-            obj_concept = self.env['hr.contract.concepts'].search([('contract_id','=',record.contract_id.id),('loan_id','=',record.id)])
+            obj_concept = self.env['hr.contract.concepts'].search([('version_id','=',record.version_id.id),('loan_id','=',record.id)])
             obj_concept.write({'state': 'cancel'})
             record.write({'state': 'cancel'})
 
@@ -161,7 +162,7 @@ class HrLoans(models.Model):
                         'amount': amount,
                         'aplicar': data.apply_charge,
                         'partner_id': data.entity_id.id,
-                        'contract_id': data.contract_id.id,
+                        'version_id': data.version_id.id,
                         'loan_id': data.id,
                         'state':'done'}
 
@@ -275,7 +276,7 @@ class HrLoansLine(models.Model):
 class hr_contract_concepts(models.Model):
     _inherit = 'hr.contract.concepts'
     
-    loan_id = fields.Many2one('hr.loans', 'Prestamo', readonly=True)
+    loan_id = fields.Many2one('hr.loans', 'Prestamo')
 
     def change_state_cancel(self):
         super(hr_contract_concepts, self).change_state_cancel()
@@ -283,4 +284,4 @@ class hr_contract_concepts(models.Model):
             obj_loan = self.env['hr.loans'].search([('id', '=', self.loan_id.id)])
             obj_loan.write({'state': 'cancel'})
 
-    _sql_constraints = [('change_contract_uniq', 'unique(input_id, contract_id, loan_id)', 'Ya existe esta regla para este contrato, por favor verficar.')]
+    _change_contract_uniq = models.Constraint('unique(input_id, version_id, loan_id)', 'Ya existe esta regla para este contrato, por favor verficar.')

@@ -11,7 +11,6 @@ import base64
 import io
 import uuid
 import time
-import unicodedata
 
 class hr_electronic_payroll_detail(models.Model):
     _name = 'hr.electronic.payroll.detail'
@@ -19,7 +18,7 @@ class hr_electronic_payroll_detail(models.Model):
 
     electronic_payroll_id = fields.Many2one('hr.electronic.payroll',string='Nómina electrónica', ondelete='cascade')
     employee_id = fields.Many2one('hr.employee',string='Empleado')
-    contract_id = fields.Many2one('hr.contract', string='Contrato')
+    version_id = fields.Many2one('hr.version', string='Contrato')
     item = fields.Integer(string='Item')
     sequence = fields.Char(string='Prefijo+Consecutivo')
     nonce = fields.Char(string='Nonce')
@@ -30,9 +29,10 @@ class hr_electronic_payroll_detail(models.Model):
     # XML
     xml_file = fields.Binary('XML')
     xml_file_name = fields.Char('XML name')
-    result_upload_xml = fields.Text(string='Respuesta envio XML', readonly=True)
+    result_upload_xml = fields.Text(string='Respuesta envio XML')
     status = fields.Char(string='Estado')
-    result_status = fields.Text(string='Descripción estado', readonly=True)
+    result_status = fields.Text(string='Descripción estado')
+    rel_contract_date_start = fields.Date(string='Rel fecha de inicio', store=True)
 
     resource_type_document = fields.Selection([
         ('ORIGINAL_DOCUMENT', 'Documento original'),
@@ -69,28 +69,6 @@ class hr_electronic_payroll_detail(models.Model):
                 xml = xml.decode('utf-8').replace('SchemaLocation=""','SchemaLocation="" xsi:schemaLocation="dian:gov:co:facturaelectronica:NominaIndividual NominaIndividualElectronicaXSD.xsd"')
                 xml = xml.replace('<UBLExtensions> </UBLExtensions>','<ext:UBLExtensions/>')
                 xml = bytes(xml, 'utf-8')
-            try:
-                if isinstance(xml, str):
-                    xml = xml.encode('utf-8')
-                root = etree.fromstring(xml)
-                for el in root.iter():
-                    # Textos
-                    if el.text:
-                        el.text = self.electronic_payroll_id._normalize_string(el.text)
-                    if el.tail:
-                        el.tail = self.electronic_payroll_id._normalize_string(el.tail)
-                    # Atributos
-                    if el.attrib:
-                        for k in list(el.attrib.keys()):
-                            el.attrib[k] = self.electronic_payroll_id._normalize_string(el.attrib[k])
-                xml = etree.tostring(
-                    root,
-                    encoding='UTF-8',
-                    xml_declaration=True,
-                    pretty_print=False
-                )
-            except Exception as _e:
-                pass
 
             filename = f'NominaElectronica{str(self.electronic_payroll_id.year)}-{self.electronic_payroll_id.month}_{str(self.employee_id.identification_id)}.xml'
             self.write({
@@ -305,8 +283,8 @@ class hr_electronic_payroll_detail(models.Model):
         except Exception as e:
             print('Empleado %s Error: %s' % (self.employee_id.name, str(e)))
 
-    def get_type_contract(self):
-        type = self.contract_id.contract_type
+    def get_type_version(self):
+        type = self.version_id.contract_type
         if type == 'fijo':
             type = '1' # Contrato de Trabajo a Término Fijo
         elif type == 'indefinido':
@@ -346,13 +324,13 @@ class hr_electronic_payroll_detail(models.Model):
             raise UserError(_('El año digitado es invalido, por favor verificar.'))
 
     def get_time_working(self):
-        date_start = self.contract_id.date_start
-        date_end = datetime.strptime(self.get_dates_process(end=1), '%Y-%m-%d').date() if not self.contract_id.retirement_date else self.contract_id.retirement_date
+        date_start = self.version_id.contract_date_start
+        date_end = datetime.strptime(self.get_dates_process(end=1), '%Y-%m-%d').date() if not self.version_id.retirement_date else self.version_id.retirement_date
         dias = self.dias360(date_start,date_end)
         return dias
 
     def get_bank_information(self,r_bank=0,r_type=0,r_account=0):
-        for bank in self.employee_id.address_home_id.bank_ids:
+        for bank in self.employee_id.partner_encab_id.bank_ids:
             if bank.is_main:
                 if r_bank != 0:
                     return bank.bank_id.name
@@ -420,6 +398,24 @@ class hr_electronic_payroll_detail(models.Model):
                     days += entries.number_of_days if entries.work_entry_type_id.code in lst_codes else 0
         return int(days)
 
+    # Se crea para SVG pero no se utiliza
+    def get_quantity_salary_rules_exclude_prima_nr(self,lst_codes):
+        quantity = 0
+        for payslip in self.payslip_ids:
+            if payslip.struct_id.process != 'prima':
+                for line in payslip.line_ids:
+                    quantity += abs(line.quantity) if line.salary_rule_id.code in lst_codes else 0
+        return quantity if quantity > 0 else None
+
+    # Se crea para SVG pero no se utiliza
+    def get_days_lines_exclude_prima_nr(self,lst_codes):
+        days = 0
+        for payslip in self.payslip_ids:
+            if payslip.struct_id.process != 'prima':
+                for entries in payslip.worked_days_line_ids:
+                    days += entries.number_of_days if entries.work_entry_type_id.code in lst_codes else 0
+        return int(days) if days > 0 else None
+
     def get_annual_parameters(self):
         obj = self.env['hr.annual.parameters'].search([('year', '=', self.electronic_payroll_id.year)])
         return obj
@@ -458,7 +454,6 @@ class hr_electronic_payroll_detail(models.Model):
 
 class hr_electronic_payroll(models.Model):
     _name = 'hr.electronic.payroll'
-    _inherit = ["mail.thread", "mail.activity.mixin"]
     _description = 'Nómina electrónica'
 
     year = fields.Integer('Año', required=True, copy=False, default=fields.Date.today().year, tracking=True)
@@ -489,24 +484,15 @@ class hr_electronic_payroll(models.Model):
     executing_electronic_payroll_ids = fields.One2many('hr.electronic.payroll.detail', 'electronic_payroll_id', string='Ejecución', tracking=True)
     time_process = fields.Char(string='Tiempo ejecución', copy=False, tracking=True)
     
-    company_id = fields.Many2one('res.company', string='Compañía', readonly=True, required=True,
+    company_id = fields.Many2one('res.company', string='Compañía', required=True,
         default=lambda self: self.env.company, tracking=True)
 
-    _sql_constraints = [('electronic_payroll_period_uniq', 'unique(company_id,year,month)', 'El periodo seleccionado ya esta registrado para esta compañía, por favor verificar.')]
+    _electronic_payroll_period_uniq = models.Constraint('unique(company_id,year,month)', 'El periodo seleccionado ya esta registrado para esta compañía, por favor verificar.')
 
-    def name_get(self):
-        result = []
+    @api.depends('month', 'year')
+    def _compute_display_name(self):
         for record in self:
-            result.append((record.id, "Nómina Electrónica | Periodo {}-{}".format(record.month,str(record.year))))
-        return result
-
-    def _normalize_string(self, value):
-        # Normalizar los caracteres especiales:
-        if not value:
-            return ''
-        normalized = unicodedata.normalize('NFD', value)
-        normalized = normalized.encode('ascii', 'ignore').decode('utf-8')
-        return normalized
+            record.display_name = "Nómina Electrónica | Periodo {}-{}".format(record.month,str(record.year))
 
     def executing_electronic_payroll(self):
         # Eliminar ejecución
@@ -555,7 +541,7 @@ class hr_electronic_payroll(models.Model):
             select distinct b.id 
             from hr_payslip a 
             inner join hr_employee b on a.employee_id = b.id 
-            where a.state = 'done' and a.date_from >= '%s' and a.date_from <= '%s' and a.company_id = %s                    
+            where a.state = 'validated' and a.date_from >= '%s' and a.date_from <= '%s' and a.company_id = %s                    
         ''' % (date_start, date_end, self.company_id.id)
 
         self.env.cr.execute(query)
@@ -582,29 +568,29 @@ class hr_electronic_payroll(models.Model):
 
         item = 0
         for employee in obj_employee:
-            obj_contracts = self.env['hr.contract']
+            # Crear objeto para evitar contratos duplicados
+            obj_versions = self.env['hr.version']
             # Obtener contrato activo
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'open'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id), ('date_start','<=',date_end)])
+            obj_versions += self.env['hr.version'].search([('employee_id', '=', employee.id), ('contract_date_start','<=',date_end), ('retirement_date', '=', False)])
             # Obtener contratos finalizados en el mes
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id), ('retirement_date', '>=', date_start), ('retirement_date', '<=', date_end + relativedelta(months=1))])
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'finished'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id),('date_end', '>=', date_start), ('date_end', '<=', date_end + relativedelta(months=1))])
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id.tipo_coti_id.code', '!=', 23), ('contract_type','=','aprendizaje'), ('employee_id', '=', employee.id), ('date_end', '>=', date_start),('date_end', '<=', date_end + relativedelta(months=1))])
+            obj_versions += self.env['hr.version'].search([('employee_id', '=', employee.id), ('retirement_date', '>=', date_start), ('retirement_date', '<=', date_end + relativedelta(months=1))])
+            obj_versions += self.env['hr.version'].search([('contract_type','=','aprendizaje'), ('employee_id', '=', employee.id), ('contract_date_end', '>=', date_start),('contract_date_end', '<=', date_end + relativedelta(months=1))])
 
-            for obj_contract in obj_contracts:
+            for obj_version in obj_versions:
                 item += 1
                 # Obtener nóminas en ese rango de fechas
                 obj_payslip = self.env['hr.payslip'].search(
-                    [('state', '=', 'done'), ('employee_id', '=', employee.id), ('contract_id', '=', obj_contract.id),
+                    [('state', '=', 'validated'), ('employee_id', '=', employee.id), ('version_id', '=', obj_version.id),
                      ('date_from', '>=', date_start), ('date_from', '<=', date_end)])
                 obj_payslip += self.env['hr.payslip'].search(
-                    [('state', '=', 'done'), ('employee_id', '=', employee.id), ('contract_id', '=', obj_contract.id),
+                    [('state', '=', 'validated'), ('employee_id', '=', employee.id), ('version_id', '=', obj_version.id),
                      ('id', 'not in', obj_payslip.ids),('struct_id.process', 'in', ['cesantias', 'intereses_cesantias', 'prima']),
                      ('date_to', '>=', date_start), ('date_to', '<=', date_end)])
 
                 value_detail = {
                     'electronic_payroll_id':self.id,
                     'employee_id':employee.id,
-                    'contract_id':obj_contract.id,
+                    'version_id':obj_version.id,
                     'item':item+max_item,
                     'sequence': self.prefix+''+str(item+max_item),
                     'nonce': 'ZUE_NOMINAELECTRONICA_'+self.prefix+''+str(item+max_item),

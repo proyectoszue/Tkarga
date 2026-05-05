@@ -5,7 +5,7 @@
         <record id="action_hr_payslip_reports_template" model="ir.actions.act_window">
             <field name="name">Configuración plantillas reportes de liquidación</field>
             <field name="res_model">hr.payslip.reports.template</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
             <field name="domain">[]</field>
             <field name="help" type="html">
                 <p class="oe_view_nocontent_create">Crear Configuración plantillas reportes de liquidación
@@ -17,11 +17,11 @@
             <field name="name">list hr payslip reports template</field>
             <field name="model">hr.payslip.reports.template</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="company_id"/>
                     <field name="type_report"/>
                     <field name="type_header_footer"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -38,7 +38,7 @@
                                 para las firmas (Elaboró,Revisó y Aprobó) en el reporte de liquidación.</p>
                             <field name="type_header_footer" widget="radio"/>
                         </group>
-                        <group attrs="{'invisible':[('type_header_footer', '!=', 'custom')]}">
+                        <group invisible="type_header_footer != 'custom'">
                             <field name="header_custom" widget="html" options="{'style-inline': true, 'codeview': true }"/>
                             <field name="footer_custom" widget="html" options="{'style-inline': true, 'codeview': true }"/>
                         </group>
@@ -51,21 +51,38 @@
                         <group string="Firmas a solicitar">
                             <group>
                                 <field name="signature_prepared"/>
+                                <field name="z_signature_done"/>
                                 <field name="signature_reviewed"/>
                                 <field name="signature_approved"/>
                                 <field name="signature_employee"/>
                             </group>
                             <group>
-                                <field name="txt_signature_prepared" attrs="{'invisible':[('signature_prepared', '!=', True)]}"/>
-                                <field name="txt_signature_reviewed" attrs="{'invisible':[('signature_reviewed', '!=', True)]}"/>
-                                <field name="txt_signature_approved" attrs="{'invisible':[('signature_approved', '!=', True)]}"/>
-                                <field name="txt_signature_employee" attrs="{'invisible':[('signature_employee', '!=', True)]}"/>
+                                <!-- Elaboró -->
+                                <field name="z_txt_signature_prepared_contact" invisible="not signature_prepared"/>
+                                <!-- Estado Hecho -->
+                                <field name="z_txt_post_prepared" invisible="not z_signature_done"/>
+
+                                <field name="txt_signature_reviewed" invisible="not signature_reviewed"/>
+                                <field name="txt_signature_approved" invisible="not signature_approved"/>
+                                <field name="txt_signature_employee" invisible="not signature_employee"/>
                             </group>
                         </group>
                     </sheet>
                 </form>
             </field>
         </record>
+
+        <record id="view_zue_branch_form_res_users" model="ir.ui.view">
+			<field name="name">zue_hr_payroll.form_res_users_inherit</field>
+			<field name="model">res.users</field>
+			<field name="inherit_id" ref="base.view_users_form"/>
+            <field name="priority" eval="50"/>
+			<field name="arch" type="xml">
+                  <xpath expr="//field[@name='tz']" position="after">
+                    <field name="branch_id"/>
+                </xpath>
+			</field>
+		</record>
 
     </data>
 </odoo>

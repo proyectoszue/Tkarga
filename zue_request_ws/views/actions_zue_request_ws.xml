@@ -5,7 +5,7 @@
         <record id="action_request_ws" model="ir.actions.act_window">
             <field name="name">Solicitud WS</field>
             <field name="res_model">zue.request.ws</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
             <field name="help" type="html">
                 <p class="oe_view_nocontent_create">Crear Solicitud WS
                 </p>
@@ -16,12 +16,12 @@
             <field name="name">zue list request ws</field>
             <field name="model">zue.request.ws</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="name"/>
                     <field name="server_url"/>
                     <field name="parameters_id"/>
                     <field name="active"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -36,30 +36,51 @@
                             <field name="server_url"/>
                             <field name="method"/>
                             <field name="active"/>
+                            <field name="use_certificate"/>
                         </group>
-                        <group string="Headers">
-                            <group>
-                                <field name="content_type"/>
-                            </group>
-                            <group string="Basic - Authorization">
-                                <field name="username"/>
-                                <field name="password" password="True"/>
-                            </group>
-                            <group string="Parámetros">
-                                <field name="postman_token" password="True"/>
-                                <field name="authorization" password="True"/>
-                            </group>
+                        <notebook>
+                            <page string="Configuración básica">
+                                <group>
+                                    <group string="Headers">
+                                        <field name="content_type"/>
+                                        <field name="postman_token" password="True"/>
+                                        <field name="authorization" password="True"/>
+                                    </group>
+                                    <group string="Basic - Authorization">
+                                        <field name="username"/>
+                                        <field name="password" password="True"/>
+                                    </group>
+                                        <field name="headers_ids" nolabel="1">
+                                            <list editable="bottom">
+                                                <field name="key"/>
+                                                <field name="value"/>
+                                            </list>
+                                        </field>
+                                </group>
+                            </page>
+                            <page string="Configuración certificado" invisible="use_certificate == False">
+                                <group>
+                                    <group string="Ruta certificado">
+                                        <field name="cert_path"/>
+                                        <field name="key_path"/>
+                                    </group>
+                                    <group string="Autorización">
+                                        <field name="username_auth_cert"/>
+                                        <field name="password_auth_cert" password="True"/>
+                                    </group>
+                                </group>
+                            </page>
+                        </notebook>
+                        <group string="Body" colspan="2">
+                            <field name="body" nolabel="1" colspan="2"/>
                         </group>
-                        <group string="Body">
-                            <field name="body" nolabel="1"/>
-                        </group>
-                        <group>
-                            <field name="parameters_id" nolabel="1">
-                                <tree editable="bottom">
+                        <group colspan="2">
+                            <field name="parameters_id" nolabel="1" colspan="2">
+                                <list editable="bottom">
                                     <field name="parameter_name"/>
                                     <field name="parameter_value"/>
                                     <field name="without_name"/>
-                                </tree>
+                                </list>
                             </field>
                         </group>
                     </sheet>

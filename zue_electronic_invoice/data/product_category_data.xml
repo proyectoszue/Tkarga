@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+       <record id="fixed_assets_id" model="product.category">
+            <field name="name">Activos Fijos</field>
+            <field name="property_cost_method">standard</field>
+        </record>
+
+        <record id="imported_auto_parts_id" model="product.category">
+            <field name="name">Autopartes Importadas</field>
+            <field name="property_cost_method">average</field>
+        </record>
+
+        <record id="national_auto_parts_id" model="product.category">
+            <field name="name">Autopartes Nacionales</field>
+            <field name="property_cost_method">standard</field>
+        </record>
+
+        <record id="indirect_import_costs_id" model="product.category">
+            <field name="name">Costos Indirectos de Importación</field>
+            <field name="property_cost_method">standard</field>
+        </record>
+
+        <record id="portfolio_notes_id" model="product.category">
+            <field name="name">Notas de Cartera</field>
+            <field name="property_cost_method">standard</field>
+        </record>
+
+        <record id="marketing_packages_id" model="product.category">
+            <field name="name">Paquetes Mercadotecnia</field>
+            <field name="property_cost_method">standard</field>
+        </record>
+
+        <record id="travel_service_id" model="product.category">
+            <field name="name">Servicio de Viáticos</field>
+            <field name="property_cost_method">standard</field>
+        </record>
+
+        <record id="administrative_services_id" model="product.category">
+            <field name="name">Servicios Administrativos</field>
+            <field name="property_cost_method">standard</field>
+        </record>
+
+        <record id="basic_services_id" model="product.category">
+            <field name="name">Servicios Básicos</field>
+            <field name="property_cost_method">standard</field>
+        </record>
+
+        <record id="operation_services_id" model="product.category">
+            <field name="name">Servicios de Operación</field>
+            <field name="property_cost_method">standard</field>
+        </record>
+
+        <record id="subscriptions_id" model="product.category">
+            <field name="name">Suscripciones</field>
+            <field name="property_cost_method">standard</field>
+        </record>
+
+    </data>
+</odoo>

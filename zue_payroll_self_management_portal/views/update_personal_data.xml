@@ -62,7 +62,7 @@
                                     <div class="form-group col-md-3">
                                         <div class="form-floating mb-3">
                                             <input type="text" id="street" name="street" placeholder="Dirección"
-                                                   t-att-value="obj.address_home_id.street" class="form-control"/>
+                                                   t-att-value="obj.work_contact_id.street" class="form-control"/>
                                             <label for="street">Dirección</label>
                                         </div>
                                     </div>
@@ -235,22 +235,22 @@
                                                     <label for="country_id">Nacionalidad</label>
                                                 </div>
                                             </div>
-                                            <div class="form-group col-md-6">
-                                                <div class="form-floating">
-                                                    <select class="form-select" id="gender" name="gender">
-                                                        <option value="male" t-att-selected="obj.gender == 'male'">
-                                                            Hombre
-                                                        </option>
-                                                        <option value="female" t-att-selected="obj.gender == 'female'">
-                                                            Mujer
-                                                        </option>
-                                                        <option value="other" t-att-selected="obj.gender == 'other'">
-                                                            Otro
-                                                        </option>
-                                                    </select>
-                                                    <label for="gender">Sexo</label>
-                                                </div>
-                                            </div>
+<!--                                            <div class="form-group col-md-6">-->
+<!--                                                <div class="form-floating">-->
+<!--                                                    <select class="form-select" id="gender" name="gender">-->
+<!--                                                        <option value="male" t-att-selected="obj.gender == 'male'">-->
+<!--                                                            Hombre-->
+<!--                                                        </option>-->
+<!--                                                        <option value="female" t-att-selected="obj.gender == 'female'">-->
+<!--                                                            Mujer-->
+<!--                                                        </option>-->
+<!--                                                        <option value="other" t-att-selected="obj.gender == 'other'">-->
+<!--                                                            Otro-->
+<!--                                                        </option>-->
+<!--                                                    </select>-->
+<!--                                                    <label for="gender">Sexo</label>-->
+<!--                                                </div>-->
+<!--                                            </div>-->
                                         </div>
                                         <div class="form-row">
                                             <div class="form-group col-md-4">

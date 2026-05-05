@@ -60,6 +60,8 @@ class hr_payroll_social_security(models.Model):
         sheet.merge_range('A2:BO2', text_generate, cell_format_text_generate)
         # Formato para fechas
         date_format = book.add_format({'num_format': 'dd/mm/yyyy'})
+        # Formato para colorear celdas
+        highlight_format = book.add_format({'bg_color': '#FAF68F'})
 
         # Agregar columnas
         aument_columns = 0
@@ -68,13 +70,27 @@ class hr_payroll_social_security(models.Model):
             sheet.set_column(aument_columns, aument_columns, len(str(column)) + 10)
             aument_columns = aument_columns + 1
 
+        # Determinar/buscar mes y año anterior
+        prev_month = int(self.month) - 1
+        prev_year = int(self.year)
+        if prev_month == 0:
+            prev_month = 12
+            prev_year -= 1
+        prev_record = self.env['hr.payroll.social.security'].search([('month', '=', str(prev_month)),('year', '=', prev_year)], limit=1)
+        prev_bases = {}
+        # Diccionario con base de salud acumulada por empleado
+        if prev_record:
+            for line in prev_record.executing_social_security_ids:
+                employee_id = line.employee_id.id
+                prev_bases[employee_id] = prev_bases.get(employee_id, 0) + (line.nValorBaseSalud or 0)
+
         # Agregar valores
         aument_rows = 3
         for item in self.executing_social_security_ids:
             sheet.write(aument_rows, 0, item.employee_id.identification_id)
             sheet.write(aument_rows, 1, item.employee_id.name)
             sheet.write(aument_rows, 2, item.employee_id.branch_social_security_id.name)
-            sheet.write(aument_rows, 3, item.contract_id.name)
+            sheet.write(aument_rows, 3, item.version_id.name)
             sheet.write(aument_rows, 4, item.nDiasLiquidados)
             sheet.write(aument_rows, 5, item.nDiasIncapacidadEPS)
             sheet.write(aument_rows, 6, item.nDiasLicencia)
@@ -86,7 +102,19 @@ class hr_payroll_social_security(models.Model):
             sheet.write(aument_rows, 12, item.nRetiro)
             sheet.write(aument_rows, 13, item.nSueldo)
             sheet.write(aument_rows, 14, item.TerceroEPS.name if item.TerceroEPS else '')
-            sheet.write(aument_rows, 15, item.nValorBaseSalud)
+            #sheet.write(aument_rows, 15, item.nValorBaseSalud)
+            # Calcular base acumulada del empleado en el mes actual
+            current_bases = {}
+            employee_id = item.employee_id.id
+            current_bases[employee_id] = current_bases.get(employee_id, 0) + (item.nValorBaseSalud or 0)
+            # Obtener valor anterior
+            prev_value = prev_bases.get(employee_id, 0)
+            current_value = current_bases[employee_id]
+            # Resaltar diferencias
+            if current_value != prev_value:
+                sheet.write(aument_rows, 15, item.nValorBaseSalud, highlight_format)
+            else:
+                sheet.write(aument_rows, 15, item.nValorBaseSalud)
             sheet.write(aument_rows, 16, item.nPorcAporteSaludEmpleado)
             sheet.write(aument_rows, 17, item.nValorSaludEmpleado)
             sheet.write(aument_rows, 18, item.nValorSaludEmpleadoNomina)

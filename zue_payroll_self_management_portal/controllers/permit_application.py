@@ -51,7 +51,6 @@ class ZuePermitApplicationPortal(Controller):
 
         dict_leave = {
             'holiday_status_id': int(post['holiday_status_id']) if post.get('holiday_status_id','0') != '0' else False,
-            'employee_ids': [obj_employee.id],
             'employee_id' : obj_employee.id,
             'request_date_from':  date_start.date(),
             'request_date_to': date_end.date(),
@@ -59,7 +58,6 @@ class ZuePermitApplicationPortal(Controller):
             'date_to': date_end,
             'number_of_days': int(post['number_of_days']),
             'name': post['observation'],
-            'holiday_type': 'employee',
             'state': 'confirm'
         }
 

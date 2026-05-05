@@ -48,8 +48,8 @@
                         </group>
                         <br/>
                         <button name="generate_excel" string="Generar Excel" type="object" class="oe_highlight" style="margin:5px;"/>
-                        <button name="generate_pdf" string="Generar PDF" type="object" class="oe_highlight" style="margin:5px;"/>
-                        <p>Al descargar en formato PDF, unicamente se visualizaran las columnas (Item, Identificación, Empleado, Días, Total.Dev, Total.Ded, Neto a Pagar)</p>
+<!--                        <button name="generate_pdf" string="Generar PDF" type="object" class="oe_highlight" style="margin:5px;"/>-->
+<!--                        <p>Al descargar en formato PDF, unicamente se visualizaran las columnas (Item, Identificación, Empleado, Días, Total.Dev, Total.Ded, Neto a Pagar)</p>-->
                     </sheet>
                     <footer/>
                 </form>

@@ -69,8 +69,8 @@ class zue_comparative_payroll_batch_report(models.Model):
         order by empleado, concepto
         """
 
-        self._cr.execute(query)
-        results = self._cr.dictfetchall()
+        self.env.cr.execute(query)
+        results = self.env.cr.dictfetchall()
 
         # Generar Excel
         filename = f"Comparativo Lotes Nómina - {self.z_batch_a_id.name} vs {self.z_batch_b_id.name}.xlsx"
@@ -149,8 +149,8 @@ class zue_comparative_payroll_batch_report(models.Model):
 
         ps_a_id = self.z_payslip_a_id.id
         ps_b_id = self.z_payslip_b_id.id
-        ps_a_label = self.z_payslip_a_id.number or self.z_payslip_a_id.name or str(ps_a_id)
-        ps_b_label = self.z_payslip_b_id.number or self.z_payslip_b_id.name or str(ps_b_id)
+        ps_a_label = self.z_payslip_a_id.name or str(ps_a_id)
+        ps_b_label = self.z_payslip_b_id.name or str(ps_b_id)
 
         query = f"""
             select
@@ -174,8 +174,8 @@ class zue_comparative_payroll_batch_report(models.Model):
             order by concepto
         """
 
-        self._cr.execute(query)
-        results = self._cr.dictfetchall()
+        self.env.cr.execute(query)
+        results = self.env.cr.dictfetchall()
 
         if not results:
             raise ValidationError(_("No se encontraron líneas de nómina para las liquidaciones seleccionadas."))

@@ -22,7 +22,7 @@
                             </group>
                             <group string="Filtros">
                                 <field name="employee" widget="many2many_tags"/>
-                                <field name="contract" widget="many2many_tags"/>
+                                <field name="version" widget="many2many_tags"/>
                                 <field name="branch" widget="many2many_tags"/>
                                 <field name="analytic_account" widget="many2many_tags"/>
                             </group>

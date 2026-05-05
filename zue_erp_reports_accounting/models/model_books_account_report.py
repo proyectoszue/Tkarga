@@ -50,12 +50,11 @@ class libro_diario_report(models.TransientModel):
     num_page_initial = fields.Integer(string='Último consecutivo paginación')
     pdf_file = fields.Binary('PDF file')
     pdf_file_name = fields.Char('PDF name')
-    
-    def name_get(self):
-        result = []
-        for record in self:            
-            result.append((record.id, "LD {}-{} {} ".format(record.ano_filter,record.month_filter,record.company_id.name)))
-        return result
+
+    @api.depends('ano_filter', 'month_filter', 'company_id')
+    def _compute_display_name(self):
+        for record in self:
+            record.display_name = "LD {}-{} {} ".format(record.ano_filter,record.month_filter,record.company_id.name)
     
     #Retonar columnas
     def get_columns(self):
@@ -66,8 +65,8 @@ class libro_diario_report(models.TransientModel):
     #Ejecutar consulta SQL
     def run_sql(self):
         
-        x_ano = self.ano_filter
-        x_month = self.month_filter
+        x_ano = int(self.ano_filter)
+        x_month = int(self.month_filter)
         
         date_filter = str(x_ano)+'-'+str(x_month)+'-01'    
             
@@ -83,7 +82,7 @@ class libro_diario_report(models.TransientModel):
             SELECT code_cuenta,'' as Code_Documento,name_cuenta,Sum(initial_balance) as initial_balance,Sum(debit) as debit,Sum(credit) as credit,Sum(new_balance) as new_balance 
             From (
             Select
-                A.code,LevelAccount.LevelOne as Code_Cuenta,
+                A.code_store->>'%s' as  code,LevelAccount.LevelOne as Code_Cuenta,
                 Case when LevelAccount.LevelOne = '1' then 'ACTIVO'
                      when LevelAccount.LevelOne = '2' then 'PASIVO'
                      when LevelAccount.LevelOne = '3' then 'PATRIMONIO'
@@ -102,9 +101,9 @@ class libro_diario_report(models.TransientModel):
                         select distinct substring(A.code_prefix_start for 1) as LevelOne
                         From account_group A
                         left join account_group b on a.id = b.parent_id
-                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix_start is not null    
+                        where a.parent_id is null and a.code_prefix_start is not null    
                 ) as LevelAccount
-                INNER JOIN account_account A on A.code like LevelAccount.LevelOne || '%s' 
+                INNER JOIN account_account A on A.code_store->>'%s' like LevelAccount.LevelOne || '%s' 
                 INNER JOIN account_move_line B on A.id = B.account_id 
                 INNER JOIN account_move C on B.move_id = C.id and C.company_id = %s
                 LEFT JOIN (
@@ -114,28 +113,28 @@ class libro_diario_report(models.TransientModel):
                             WHERE "date" < '%s' and parent_state = 'posted' group by account_id
                       ) as D on B.account_id = D.account_id
                 WHERE  B.parent_state = 'posted' and B."date" < '%s' 
-                GROUP by A.code,LevelAccount.LevelOne,D.saldo_ant
+                GROUP by A.code_store,LevelAccount.LevelOne,D.saldo_ant
                 ) as a
             Group by code_cuenta,name_cuenta
-        ''' % (date_filter,date_filter,date_filter,date_filter,'%',self.company_id.id,date_filter,date_filter_next)
+        ''' % (self.company_id.id,date_filter,date_filter,date_filter,date_filter,self.company_id.id,'%',self.company_id.id,date_filter,date_filter_next)
         
         query_account_leveltwo = '''
             SELECT code_cuenta,'' as Code_Documento,name_cuenta,Sum(initial_balance) as initial_balance,Sum(debit) as debit,Sum(credit) as credit,Sum(new_balance) as new_balance 
             From (
             Select
-                A.code,LevelAccount.LevelTwo as Code_Cuenta,LevelAccount.LevelTwoName as Name_Cuenta,
+                A.code_store->>'%s' as  code,LevelAccount.LevelTwo as Code_Cuenta,LevelAccount.LevelTwoName as Name_Cuenta,
                 COALESCE(D.saldo_ant,0) as initial_balance,
                 SUM(case when B."date" >= '%s' then B.debit else 0 end) as debit,
                 SUM(case when B."date" >= '%s' then B.credit else 0 end) as credit,
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
                         select distinct 
-                                A.code_prefix_start as LevelTwo,A."name" as LevelTwoName					
+                                A.code_prefix_start as LevelTwo,A."name"->>'en_US' as LevelTwoName					
                         From account_group A
                         left join account_group b on a.id = b.parent_id
-                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix_start is not null    
+                        where a.parent_id is null and a.code_prefix_start is not null    
                 ) as LevelAccount
-                INNER JOIN account_account A on A.code like LevelAccount.LevelTwo || '%s' 
+                INNER JOIN account_account A on A.code_store->>'%s' like LevelAccount.LevelTwo || '%s' 
                 INNER JOIN account_move_line B on A.id = B.account_id 
                 INNER JOIN account_move C on B.move_id = C.id and C.company_id = %s
                 LEFT JOIN (
@@ -145,28 +144,28 @@ class libro_diario_report(models.TransientModel):
                             WHERE "date" < '%s' and parent_state = 'posted' group by account_id
                       ) as D on B.account_id = D.account_id
                 WHERE  B.parent_state = 'posted' and B."date" < '%s' 
-                GROUP by A.code,LevelAccount.LevelTwo,LevelAccount.LevelTwoName,D.saldo_ant
+                GROUP by A.code_store,LevelAccount.LevelTwo,LevelAccount.LevelTwoName,D.saldo_ant
                 ) as a
             Group by code_cuenta,name_cuenta
-        ''' % (date_filter,date_filter,date_filter,date_filter,'%',self.company_id.id,date_filter,date_filter_next)
+        ''' % (self.company_id.id,date_filter,date_filter,date_filter,date_filter,self.company_id.id,'%',self.company_id.id,date_filter,date_filter_next)
         
         query_account_levelthree = '''
             SELECT code_cuenta,'' as Code_Documento,name_cuenta,Sum(initial_balance) as initial_balance,Sum(debit) as debit,Sum(credit) as credit,Sum(new_balance) as new_balance 
             From (
             Select
-                A.code,LevelAccount.LevelThree as Code_Cuenta,LevelAccount.LevelThreeName as Name_Cuenta,
+                A.code_store->>'%s' as  code,LevelAccount.LevelThree as Code_Cuenta,LevelAccount.LevelThreeName as Name_Cuenta,
                 COALESCE(D.saldo_ant,0) as initial_balance,
                 SUM(case when B."date" >= '%s' then B.debit else 0 end) as debit,
                 SUM(case when B."date" >= '%s' then B.credit else 0 end) as credit,
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
                         select distinct 
-                                coalesce(B.code_prefix_start,'') as LevelThree,coalesce(B."name",'') as LevelThreeName
+                                coalesce(B.code_prefix_start,'') as LevelThree,coalesce(B."name"->>'en_US','') as LevelThreeName
                         From account_group A
                         left join account_group b on a.id = b.parent_id
-                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix_start is not null    
+                        where a.parent_id is null and a.code_prefix_start is not null    
                 ) as LevelAccount
-                INNER JOIN account_account A on A.code like LevelAccount.LevelThree || '%s' 
+                INNER JOIN account_account A on A.code_store->>'%s' like LevelAccount.LevelThree || '%s' 
                 INNER JOIN account_move_line B on A.id = B.account_id 
                 INNER JOIN account_move C on B.move_id = C.id and C.company_id = %s
                 LEFT JOIN (
@@ -176,29 +175,30 @@ class libro_diario_report(models.TransientModel):
                             WHERE "date" < '%s' and parent_state = 'posted' group by account_id
                       ) as D on B.account_id = D.account_id
                 WHERE  B.parent_state = 'posted' and B."date" < '%s' 
-                GROUP by A.code,LevelAccount.LevelThree,LevelAccount.LevelThreeName,D.saldo_ant
+                GROUP by A.code_store,LevelAccount.LevelThree,LevelAccount.LevelThreeName,D.saldo_ant
                 ) as a
             Where code_cuenta != ''
             Group by code_cuenta,name_cuenta
-        ''' % (date_filter,date_filter,date_filter,date_filter,'%',self.company_id.id,date_filter,date_filter_next)
+        ''' % (self.company_id.id,date_filter,date_filter,date_filter,date_filter,self.company_id.id,'%',self.company_id.id,date_filter,date_filter_next)
         
         query_account_levelfour = '''
             SELECT code_cuenta,'' as Code_Documento,name_cuenta,Sum(initial_balance) as initial_balance,Sum(debit) as debit,Sum(credit) as credit,Sum(new_balance) as new_balance 
             From (
             Select
-                A.code,LevelAccount.LevelFour as Code_Cuenta,LevelAccount.LevelFourName as Name_Cuenta,
+                A.code_store->>'%s' as  code,LevelAccount.LevelFour as Code_Cuenta,LevelAccount.LevelFourName as Name_Cuenta,
                 COALESCE(D.saldo_ant,0) as initial_balance,
                 SUM(case when B."date" >= '%s' then B.debit else 0 end) as debit,
                 SUM(case when B."date" >= '%s' then B.credit else 0 end) as credit,
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
                         select distinct 
-                                coalesce(B.code_prefix_start,'') as LevelFour,coalesce(B."name",'') as LevelFourName
+                                coalesce(c.code_prefix_start,'') as LevelFour,coalesce(c."name"->>'en_US','') as LevelFourName
                         From account_group A
                         left join account_group b on a.id = b.parent_id
-                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 2)  = 1 and a.code_prefix_start is not null    
+                        left join account_group c on b.id = c.parent_id
+                        where b.parent_id is null and b.code_prefix_start is not null    
                 ) as LevelAccount
-                INNER JOIN account_account A on A.code like LevelAccount.LevelFour || '%s' 
+                INNER JOIN account_account A on A.code_store->>'%s' like LevelAccount.LevelFour || '%s' 
                 INNER JOIN account_move_line B on A.id = B.account_id 
                 INNER JOIN account_move C on B.move_id = C.id and C.company_id = %s
                 LEFT JOIN (
@@ -208,15 +208,15 @@ class libro_diario_report(models.TransientModel):
                             WHERE "date" < '%s' and parent_state = 'posted' group by account_id
                       ) as D on B.account_id = D.account_id
                 WHERE  B.parent_state = 'posted' and B."date" < '%s' 
-                GROUP by A.code,LevelAccount.LevelFour,LevelAccount.LevelFourName,D.saldo_ant
+                GROUP by A.code_store,LevelAccount.LevelFour,LevelAccount.LevelFourName,D.saldo_ant
                 ) as a
             Where code_cuenta != ''
             Group by code_cuenta,name_cuenta
-        ''' % (date_filter,date_filter,date_filter,date_filter,'%',self.company_id.id,date_filter,date_filter_next)
+        ''' % (self.company_id.id,date_filter,date_filter,date_filter,date_filter,self.company_id.id,'%',self.company_id.id,date_filter,date_filter_next)
         
         query_account = '''
             SELECT
-            D.code as Code_Cuenta,'' as Code_Documento,D."name" as Name_Cuenta,
+            D.code_store->>'%s' as Code_Cuenta,'' as Code_Documento,D."name"->>'en_US' as Name_Cuenta,
             COALESCE(E.saldo_ant,0) as initial_balance,
             SUM(case when B."date" >= '%s' then B.debit else 0 end) as debit,
             SUM(case when B."date" >= '%s' then B.credit else 0 end) as credit,
@@ -231,13 +231,13 @@ class libro_diario_report(models.TransientModel):
                         WHERE "date" < '%s' and parent_state = 'posted' group by account_id
                   ) as E on b.account_id = E.account_id  
             WHERE  B.parent_state = 'posted' and a.company_id = %s and B."date" < '%s'
-            GROUP by D.code,D."name",E.saldo_ant
-        ''' % (date_filter,date_filter,date_filter,date_filter,date_filter,self.company_id.id,date_filter_next)
+            GROUP by D.code_store,D."name",E.saldo_ant
+        ''' % (self.company_id.id,date_filter,date_filter,date_filter,date_filter,date_filter,self.company_id.id,date_filter_next)
         
         query_journal = '''
             SELECT
-            D.code as Code_Cuenta,--D."name" as Name_Cuenta,
-            C.code as Code_Documento,C."name" as Name_Documento,
+            D.code_store->>'%s' as Code_Cuenta,
+            C.code as Code_Documento,C."name"->>'en_US' as Name_Documento,
             COALESCE(E.saldo_ant,0) as initial_balance,
             SUM(case when B."date" >= '%s' then B.debit else 0 end) as debit,
             SUM(case when B."date" >= '%s' then B.credit else 0 end) as credit,
@@ -253,8 +253,8 @@ class libro_diario_report(models.TransientModel):
                         WHERE "date" < '%s' and parent_state = 'posted' group by journal_id,account_id
                   ) as E on b.journal_id = E.journal_id and b.account_id = E.account_id      
             WHERE  B.parent_state = 'posted' and a.company_id = %s and B."date" < '%s'
-            GROUP by D.code,D."name",C.code,C."name",E.saldo_ant            
-        ''' % (date_filter,date_filter,date_filter,date_filter,date_filter,self.company_id.id,date_filter_next)
+            GROUP by D.code_store,C.code,C."name",E.saldo_ant            
+        ''' % (self.company_id.id,date_filter,date_filter,date_filter,date_filter,date_filter,self.company_id.id,date_filter_next)
         
          #Consulta final
         query = '''
@@ -276,8 +276,8 @@ class libro_diario_report(models.TransientModel):
         
         #raise ValidationError(_(query))       
         
-        self._cr.execute(query)
-        _res = self._cr.dictfetchall()
+        self.env.cr.execute(query)
+        _res = self.env.cr.dictfetchall()
         return _res
 
     def get_pdf(self):        
@@ -351,7 +351,7 @@ class libro_diario_report(models.TransientModel):
                     file.append('')
                 else:
                     if num_row > 3:
-                        format_num = '{:,.2f}'.format(row)
+                        format_num = '{:,.2f}'.format(row) if row else '0'
                         file.append(format_num)                    
                     else:    
                         file.append(row)                    
@@ -419,12 +419,11 @@ class libro_mayor_report(models.TransientModel):
     num_page_initial = fields.Integer(string='Último consecutivo paginación')
     pdf_file = fields.Binary('PDF file')
     pdf_file_name = fields.Char('PDF name')
-    
-    def name_get(self):
-        result = []
-        for record in self:            
-            result.append((record.id, "LM {}-{} {} ".format(record.ano_filter,record.month_filter,record.company_id.name)))
-        return result
+
+    @api.depends('ano_filter', 'month_filter', 'company_id')
+    def _compute_display_name(self):
+        for record in self:
+            record.display_name = "LM {}-{} {} ".format(record.ano_filter,record.month_filter,record.company_id.name)
     
     #Retonar columnas
     def get_columns(self):
@@ -435,8 +434,8 @@ class libro_mayor_report(models.TransientModel):
     #Ejecutar consulta SQL
     def run_sql(self):
         
-        x_ano = self.ano_filter
-        x_month = self.month_filter
+        x_ano = int(self.ano_filter)
+        x_month = int(self.month_filter)
         
         date_filter = str(x_ano)+'-'+str(x_month)+'-01'    
             
@@ -452,19 +451,19 @@ class libro_mayor_report(models.TransientModel):
             SELECT code_cuenta,name_cuenta,Sum(initial_balance) as initial_balance,Sum(debit) as debit,Sum(credit) as credit,Sum(new_balance) as new_balance 
             From (
             Select
-                A.code,LevelAccount.LevelOne as Code_Cuenta,LevelAccount.LevelOneName as Name_Cuenta,
+                A.code_store->>'%s' as  code,LevelAccount.LevelOne as Code_Cuenta,LevelAccount.LevelOneName as Name_Cuenta,
                 COALESCE(D.saldo_ant,0) as initial_balance,
                 SUM(case when B."date" >= '%s' then B.debit else 0 end) as debit,
                 SUM(case when B."date" >= '%s' then B.credit else 0 end) as credit,
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
                         select distinct 
-                                A.code_prefix_start as LevelOne,A."name" as LevelOneName					
+                                A.code_prefix_start as LevelOne,A."name"->>'en_US' as LevelOneName					
                         From account_group A
                         left join account_group b on a.id = b.parent_id
-                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix_start is not null    
+                        where a.parent_id is null and a.code_prefix_start is not null    
                 ) as LevelAccount
-                INNER JOIN account_account A on A.code like LevelAccount.LevelOne || '%s' 
+                INNER JOIN account_account A on A.code_store->>'%s' like LevelAccount.LevelOne || '%s' 
                 INNER JOIN account_move_line B on A.id = B.account_id 
                 INNER JOIN account_move C on B.move_id = C.id and C.company_id = %s
                 LEFT JOIN (
@@ -474,28 +473,28 @@ class libro_mayor_report(models.TransientModel):
                             WHERE "date" < '%s' and parent_state = 'posted' group by account_id
                       ) as D on B.account_id = D.account_id
                 WHERE  B.parent_state = 'posted' and B."date" < '%s' 
-                GROUP by A.code,LevelAccount.LevelOne,LevelAccount.LevelOneName,D.saldo_ant
+                GROUP by A.code_store,LevelAccount.LevelOne,LevelAccount.LevelOneName,D.saldo_ant
                 ) as a
             Group by code_cuenta,name_cuenta
-        ''' % (date_filter,date_filter,date_filter,date_filter,'%',self.company_id.id,date_filter,date_filter_next)
+        ''' % (self.company_id.id,date_filter,date_filter,date_filter,date_filter,self.company_id.id,'%',self.company_id.id,date_filter,date_filter_next)
         
         query_account_leveltwo = '''
             SELECT code_cuenta,name_cuenta,Sum(initial_balance) as initial_balance,Sum(debit) as debit,Sum(credit) as credit,Sum(new_balance) as new_balance 
             From (
             Select
-                A.code,LevelAccount.LevelTwo as Code_Cuenta,LevelAccount.LevelTwoName as Name_Cuenta,
+                A.code_store->>'%s' as  code,LevelAccount.LevelTwo as Code_Cuenta,LevelAccount.LevelTwoName as Name_Cuenta,
                 COALESCE(D.saldo_ant,0) as initial_balance,
                 SUM(case when B."date" >= '%s' then B.debit else 0 end) as debit,
                 SUM(case when B."date" >= '%s' then B.credit else 0 end) as credit,
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
                         select distinct 
-                                coalesce(B.code_prefix_start,'') as LevelTwo,coalesce(B."name",'') as LevelTwoName
+                                coalesce(B.code_prefix_start,'') as LevelTwo,coalesce(B."name"->>'en_US','') as LevelTwoName
                         From account_group A
                         left join account_group b on a.id = b.parent_id
-                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix_start is not null    
+                        where a.parent_id is null and a.code_prefix_start is not null    
                 ) as LevelAccount
-                INNER JOIN account_account A on A.code like LevelAccount.LevelTwo || '%s' 
+                INNER JOIN account_account A on A.code_store->>'%s' like LevelAccount.LevelTwo || '%s' 
                 INNER JOIN account_move_line B on A.id = B.account_id 
                 INNER JOIN account_move C on B.move_id = C.id and C.company_id = %s
                 LEFT JOIN (
@@ -505,30 +504,30 @@ class libro_mayor_report(models.TransientModel):
                             WHERE "date" < '%s' and parent_state = 'posted' group by account_id
                       ) as D on B.account_id = D.account_id
                 WHERE  B.parent_state = 'posted' and B."date" < '%s' 
-                GROUP by A.code,LevelAccount.LevelTwo,LevelAccount.LevelTwoName,D.saldo_ant
+                GROUP by A.code_store,LevelAccount.LevelTwo,LevelAccount.LevelTwoName,D.saldo_ant
                 ) as a
             Where code_cuenta != ''
             Group by code_cuenta,name_cuenta
-        ''' % (date_filter,date_filter,date_filter,date_filter,'%',self.company_id.id,date_filter,date_filter_next)
+        ''' % (self.company_id.id,date_filter,date_filter,date_filter,date_filter,self.company_id.id,'%',self.company_id.id,date_filter,date_filter_next)
         
         query_account_levelthree = '''
             SELECT code_cuenta,name_cuenta,Sum(initial_balance) as initial_balance,Sum(debit) as debit,Sum(credit) as credit,Sum(new_balance) as new_balance 
             From (
             Select
-                A.code,LevelAccount.LevelThree as Code_Cuenta,LevelAccount.LevelThreeName as Name_Cuenta,
+                A.code_store->>'%s' as  code,LevelAccount.LevelThree as Code_Cuenta,LevelAccount.LevelThreeName as Name_Cuenta,
                 COALESCE(D.saldo_ant,0) as initial_balance,
                 SUM(case when B."date" >= '%s' then B.debit else 0 end) as debit,
                 SUM(case when B."date" >= '%s' then B.credit else 0 end) as credit,
                 COALESCE(D.saldo_ant,0)+SUM((case when B."date" >= '%s' then B.debit else 0 end - case when B."date" >= '%s' then B.credit else 0 end)) as new_balance
                 FROM (
                         select distinct 
-                                coalesce(c.code_prefix_start,'') as LevelThree,coalesce(c."name",'') as LevelThreeName
+                                coalesce(c.code_prefix_start,'') as LevelThree,coalesce(c."name"->>'en_US','') as LevelThreeName
                         From account_group A
                         left join account_group b on a.id = b.parent_id
                         left join account_group c on b.id = c.parent_id
-                        where (array_length(string_to_array(a.parent_path, '/'), 1) - 1)  = 1 and a.code_prefix_start is not null    
+                        where a.parent_id is null and a.code_prefix_start is not null    
                 ) as LevelAccount
-                INNER JOIN account_account A on A.code like LevelAccount.LevelThree || '%s' 
+                INNER JOIN account_account A on A.code_store->>'%s' like LevelAccount.LevelThree || '%s' 
                 INNER JOIN account_move_line B on A.id = B.account_id 
                 INNER JOIN account_move C on B.move_id = C.id and C.company_id = %s
                 LEFT JOIN (
@@ -538,11 +537,11 @@ class libro_mayor_report(models.TransientModel):
                             WHERE "date" < '%s' and parent_state = 'posted' group by account_id
                       ) as D on B.account_id = D.account_id
                 WHERE  B.parent_state = 'posted' and B."date" < '%s' 
-                GROUP by A.code,LevelAccount.LevelThree,LevelAccount.LevelThreeName,D.saldo_ant
+                GROUP by A.code_store,LevelAccount.LevelThree,LevelAccount.LevelThreeName,D.saldo_ant
                 ) as a
             Where code_cuenta != ''
             Group by code_cuenta,name_cuenta
-        ''' % (date_filter,date_filter,date_filter,date_filter,'%',self.company_id.id,date_filter,date_filter_next)
+        ''' % (self.company_id.id,date_filter,date_filter,date_filter,date_filter,self.company_id.id,'%',self.company_id.id,date_filter,date_filter_next)
         
          #Consulta final
         if self.show_level == 'n2':
@@ -601,8 +600,8 @@ class libro_mayor_report(models.TransientModel):
         else:
             raise ValidationError(_('Debe seleccionar un nivel de presentación, por favor verificar.'))
         
-        self._cr.execute(query)
-        _res = self._cr.dictfetchall()
+        self.env.cr.execute(query)
+        _res = self.env.cr.dictfetchall()
         return _res
 
     def get_pdf(self):        
@@ -676,7 +675,7 @@ class libro_mayor_report(models.TransientModel):
                 #if num_row == 1 and account_code != row[0:2]:
                     #line_blank.append('')
                 if num_row > 2:
-                    format_num = '{:,.2f}'.format(row)
+                    format_num = '{:,.2f}'.format(row) if row else '0'
                     file.append(format_num)                    
                 else:    
                     if num_row == 1 and len(row) == 1:

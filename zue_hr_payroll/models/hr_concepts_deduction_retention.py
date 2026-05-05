@@ -10,7 +10,7 @@ class hr_type_tax_retention(models.Model):
     code = fields.Char('Identificador', required=True)
     name = fields.Char('Descripción', required=True)
 
-    _sql_constraints = [('change_code_uniq', 'unique(code)', 'Ya existe este tipo de impuesto, por favor verficar.')]
+    _change_code_uniq = models.Constraint('unique(code)', 'Ya existe este tipo de impuesto, por favor verficar.')
 
 class hr_concepts_deduction_retention(models.Model):
     _name = 'hr.concepts.deduction.retention'
@@ -26,27 +26,27 @@ class hr_concepts_deduction_retention(models.Model):
     calculation = fields.Text('Cálculo')
     #validation = fields.Text('Validación')
     
-    _sql_constraints = [('change_type_tax_code_uniq', 'unique(type_tax,code)', 'Ya existe este concepto de deducción retención para este tipo de impuesto, por favor verficar.')]
+    _change_type_tax_code_uniq = models.Constraint('unique(type_tax,code)', 'Ya existe este concepto de deducción retención para este tipo de impuesto, por favor verficar.')
 
 
     def _exec_python_code_base(self, localdict):
         try:
-            safe_eval(self.base, localdict, mode='exec', nocopy=True)
+            safe_eval(self.base or 0.0, localdict, mode='exec')
             return localdict.get('result', 0.0)
-        except:
-            raise UserError(_('Error al ejecutar el código python del campo Base para el concepto de deducción %s (%s).') % (self.name, self.code))
+        except Exception as e:
+            raise UserError(_('Error al ejecutar el código python del campo Base para el concepto de deducción %s (%s). \n Error: %s') % (self.name, self.code, str(e)))
 
     def _exec_python_code_calculation(self, localdict):
         try:
-            safe_eval(self.calculation, localdict, mode='exec', nocopy=True)
+            safe_eval(self.calculation or 0.0, localdict, mode='exec')
             return localdict.get('result', 0.0)
-        except:
-            raise UserError(_('Error al ejecutar el código python del campo Cálculo para el concepto de deducción %s (%s).') % (self.name, self.code))
+        except Exception as e:
+            raise UserError(_('Error al ejecutar el código python del campo Cálculo para el concepto de deducción %s (%s). \n Error: %s') % (self.name, self.code,str(e)))
 
     def _loop_python_code(self,localdict,encab_id):
         payslip = localdict['payslip']
         employee = localdict['employee']
-        contract = localdict['contract'] 
+        version = localdict['version']
 
         #Detalle
         for rule in self:            
@@ -56,7 +56,7 @@ class hr_concepts_deduction_retention(models.Model):
             data = {
                     'encab_id': encab_id,
                     'employee_id': employee.id,
-                    'contract_id': contract.id,
+                    'version_id': version.id,
                     'concept_deduction_id': rule.id,
                     'year': payslip.date_to.year,
                     'month': payslip.date_to.month,
@@ -81,31 +81,30 @@ class hr_employee_deduction_retention(models.Model):
 
     encab_id = fields.Many2one('hr.employee.rtefte',string='RteFte', required=True)
     employee_id = fields.Many2one('hr.employee',string='Empleado', required=True)
-    contract_id = fields.Many2one('hr.contract',string='Contrato', required=True)
+    version_id = fields.Many2one('hr.version',string='Contrato', required=True)
     concept_deduction_id = fields.Many2one('hr.concepts.deduction.retention',string='Regla deducción tributaria', required=True)
-    concept_deduction_code = fields.Char(related='concept_deduction_id.code', string='Código',store=True, readonly=True)
-    concept_deduction_order = fields.Integer(related='concept_deduction_id.order', string='Orden',store=True, readonly=True)
+    concept_deduction_code = fields.Char(related='concept_deduction_id.code', string='Código',store=True)
+    concept_deduction_order = fields.Integer(related='concept_deduction_id.order', string='Orden',store=True)
     year = fields.Integer('Año',required=True)
     month = fields.Integer('Mes',required=True)
     result_base = fields.Float('Valor Base')
     result_calculation = fields.Float('Valor cálculo')
     #result_validation = fields.Float('Valor validación')
+    rel_contract_date_start = fields.Date(string='Rel fecha de inicio', store=True)
 
 class hr_employee_rtefte(models.Model):
     _name = 'hr.employee.rtefte'
     _description = 'RteFte Cálculada Empleado'
 
-    employee_id = fields.Many2one('hr.employee',string='Empleado', required=True, readonly=True)
-    year = fields.Integer('Año',required=True, readonly=True)
-    month = fields.Integer('Mes',required=True, readonly=True)
-    type_tax = fields.Many2one('hr.type.tax.retention','Tipo de retención', readonly=True)
-    deduction_retention = fields.One2many('hr.employee.deduction.retention', 'encab_id' , 'RteFte', readonly=True)
+    employee_id = fields.Many2one('hr.employee',string='Empleado', required=True)
+    year = fields.Integer('Año',required=True)
+    month = fields.Integer('Mes',required=True)
+    type_tax = fields.Many2one('hr.type.tax.retention','Tipo de retención')
+    deduction_retention = fields.One2many('hr.employee.deduction.retention', 'encab_id' , 'RteFte')
 
-    def name_get(self):
-        result = []
+    def _compute_display_name(self):
         for record in self:
-            result.append((record.id, "VER DETALLE"))
-        return result
+            record.display_name = "VER DETALLE"
 
 class hr_employee_rtefte_history(models.Model):
     _name = 'hr.employee.rtefte.history'

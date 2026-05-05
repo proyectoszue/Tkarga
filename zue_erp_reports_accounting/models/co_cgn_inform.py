@@ -385,7 +385,7 @@ class zue_co_cgn_inform(models.TransientModel):
                     worksheet.set_column(position_initial, position_initial, size + 10, format_align)
                 position_initial += 1
             # Guardar excel
-            writer.save()
+            writer.close()
 
             self.write({
                 'excel_file': base64.encodebytes(stream.getvalue()),

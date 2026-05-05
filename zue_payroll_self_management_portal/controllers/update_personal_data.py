@@ -35,7 +35,7 @@ class ZuePayrollUpdatePersonalDataPortal(Controller):
                             'personal_mobile': post['phone'],
                             'birthday': post['date_birthday'],
                             'personal_email': post['email'],
-                            'gender': post['gender'],
+                            # 'gender': post['gender'],
                             'mobile_phone': post['mobile_phone'],
                             'work_phone': post['work_phone'],
                             'licencia_rh': post['licencia_rh'],

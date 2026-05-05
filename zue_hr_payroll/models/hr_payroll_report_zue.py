@@ -34,11 +34,9 @@ class HrPayrollReportZueFilter(models.TransientModel):
     excel_file_name = fields.Char('Excel name')
     pdf_report_payroll = fields.Html('Reporte en PDF')
 
-    def name_get(self):
-        result = []
-        for record in self:            
-            result.append((record.id, "Informe de nómina"))
-        return result
+    def _compute_display_name(self):
+        for record in self:
+            record.display_name = "Informe de nómina"
 
     def show_all_fields(self):
         self.show_date_of_entry = True
@@ -144,85 +142,89 @@ class HrPayrollReportZueFilter(models.TransientModel):
         max_date = max_date.strftime('%Y-%m-%d')
 
         query_novedades = '''
-            Select c.identification_id as "Identificación", c.name as "Empleado", COALESCE(a.private_name,b.name) as "Novedad",
-                    Case When row_number() over(partition by c.identification_id) = max_item Then 1 else 0 end as "EsUltimo"
+            Select d.identification_id as "Identificación", c.name as "Empleado", COALESCE(a.private_name,COALESCE(COALESCE(b."name"->>'es_ES',b."name"->>'en_US'),'')) as "Novedad",
+                    Case When row_number() over(partition by d.identification_id) = max_item Then 1 else 0 end as "EsUltimo"
             From hr_leave as a
             Inner Join hr_leave_type as b on a.holiday_status_id = b.id
             Inner Join hr_employee as c on a.employee_id = c.id
+            Inner join hr_version as d on a.id = a.employee_id
             Inner Join (Select max(item) as max_item,identification_id
                         From (
-                            Select row_number() over(partition by c.identification_id) as item,
-                                c.identification_id, COALESCE(a.private_name,b.name) as novedad
+                            Select row_number() over(partition by d.identification_id) as item,
+                                d.identification_id, COALESCE(a.private_name,COALESCE(COALESCE(b."name"->>'es_ES',b."name"->>'en_US'),'')) as novedad
                             From hr_leave as a
                             Inner Join hr_leave_type as b on a.holiday_status_id = b.id
                             Inner Join hr_employee as c on a.employee_id = c.id
+                            Inner join hr_version as d on a.id = a.employee_id
                             Where a.state='validate' 
                                     and ((a.request_date_from >= '%s' and a.request_date_from <= '%s') or (a.request_date_to >= '%s' and a.request_date_to <= '%s'))
                         )as A
                         group by identification_id
-                    ) as max_nov on c.identification_id = max_nov.identification_id
+                    ) as max_nov on d.identification_id = max_nov.identification_id
             Where a.state='validate' 
                   and ((a.request_date_from >= '%s' and a.request_date_from <= '%s') or (a.request_date_to >= '%s' and a.request_date_to <= '%s'))
         ''' % (min_date,max_date,min_date,max_date,min_date,max_date,min_date,max_date)
 
         query_days = '''
                     Select  c.item as "Item",
-                    COALESCE(c.identification_id,'') as "Identificación",COALESCE(c.name,'') as "Empleado",COALESCE(d.date_start,'1900-01-01') as "Fecha Ingreso",
-                    COALESCE(e.name,'') as "Seccional",COALESCE(f.name,'') as "Cuenta Analítica",
-                    COALESCE(g.name,'') as "Cargo",COALESCE(rb.name,'') as "Banco",COALESCE(bank.acc_number,'') as "Cuenta Bancaria",COALESCE(ajb.name,'') as "Cuenta Dispersora",
-                    COALESCE(d.code_sena,'') as "Código SENA",COALESCE(rp.name,'') as "Ubicación Laboral",COALESCE(dt.name,'') as "Departamento",
+                    COALESCE(d.identification_id,'') as "Identificación",COALESCE(c.name,'') as "Empleado",COALESCE(d.contract_date_start,'1900-01-01') as "Fecha Ingreso",
+                    COALESCE(e.name,'') as "Seccional",COALESCE(COALESCE(f."name"->>'es_ES',f."name"->>'en_US'),'') as "Cuenta Analítica",
+                    COALESCE(COALESCE(g."name"->>'es_ES',g."name"->>'en_US'),'') as "Cargo",COALESCE(rb.name,'') as "Banco",COALESCE(bank.acc_number,'') as "Cuenta Bancaria",COALESCE(COALESCE(ajb."name"->>'es_ES',ajb."name"->>'en_US'),'') as "Cuenta Dispersora",
+                    COALESCE(d.code_sena,'') as "Código SENA",COALESCE(rp.name,'') as "Ubicación Laboral",COALESCE(COALESCE(dt."name"->>'es_ES',dt."name"->>'en_US'),'') as "Departamento",
                     COALESCE(d.wage,0) as "Salario Base",'' as "Novedades",
-                    COALESCE(wt.short_name,COALESCE(wt.name,'')) as "Regla Salarial",COALESCE(wt.short_name,COALESCE(wt.name,'')) as "Reglas Salariales + Entidad",
+                    COALESCE(COALESCE(wt."name"->>'es_ES',wt."name"->>'en_US'),'') as "Regla Salarial",COALESCE(COALESCE(wt."name"->>'es_ES',wt."name"->>'en_US'),'') as "Reglas Salariales + Entidad",
                     'Días' as "Categoría",0 as "Secuencia",COALESCE(Sum(b.number_of_days),0) as "Monto"
             From hr_payslip as a 
             --Info Empleado
             Inner Join (Select distinct row_number() over(order by a.name) as item,
-                        a.id,identification_id,a.name,a.branch_id,a.job_id,
-                        address_id,address_home_id,a.department_id
+                        a.id,d.identification_id,a.name,a.branch_id,p.job_id,
+                        address_id,work_contact_id,p.department_id
                         From hr_employee as a
                         inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)
-                        group by a.id,identification_id,a.name,a.branch_id,a.job_id,address_id,address_home_id,a.department_id) as c on a.employee_id = c.id
-            Inner Join hr_contract as d on a.contract_id = d.id
+                        inner join hr_version as d on p.version_id = d.id
+                        group by a.id,d.identification_id,a.name,a.branch_id,p.job_id,address_id,work_contact_id,p.department_id) as c on a.employee_id = c.id
+            Inner Join hr_version as d on a.version_id = d.id
             Inner Join hr_payslip_worked_days as b on a.id = b.payslip_id
             inner join hr_work_entry_type as wt on b.work_entry_type_id = wt.id
             Left join zue_res_branch as e on c.branch_id = e.id
-            Left join account_analytic_account as f on d.analytic_account_id = f.id
+            Left join account_analytic_account as f on d.analytic_distribution = to_jsonb(json_build_object(f.id, 100))
             Left join hr_job g on c.job_id = g.id
             Left Join hr_department dt on c.department_id = dt.id
             Left Join res_partner rp on c.address_id = rp.id
             --Info Bancaria
-            Left join res_partner_bank bank on c.address_home_id = bank.partner_id and bank.company_id = a.company_id and bank.is_main = True
+            Left join res_partner_bank bank on c.work_contact_id = bank.partner_id and bank.is_main = true and (bank.company_id = a.company_id or bank.company_id is null)
             Left join res_bank rb on bank.bank_id = rb.id 
             Left join account_journal ajb on bank.payroll_dispersion_account = ajb.id 
             Where a.id in (%s)     
-            Group By c.item,c.identification_id,c.name,d.date_start,e.name,
+            Group By c.item,d.identification_id,c.name,d.contract_date_start,e.name,
                         f.name,g.name,rb.name,bank.acc_number,ajb.name,
                         d.code_sena,rp.name,dt.name,d.wage,wt.name,wt.short_name
         ''' % (str_ids,str_ids)
 
         query_amount_rules ='''
             Select  c.item as "Item",
-                    COALESCE(c.identification_id,'') as "Identificación",COALESCE(c.name,'') as "Empleado",COALESCE(d.date_start,'1900-01-01') as "Fecha Ingreso",
-                    COALESCE(e.name,'') as "Seccional",COALESCE(f.name,'') as "Cuenta Analítica",
-                    COALESCE(g.name,'') as "Cargo",COALESCE(rb.name,'') as "Banco",COALESCE(bank.acc_number,'') as "Cuenta Bancaria",COALESCE(ajb.name,'') as "Cuenta Dispersora",
-                    COALESCE(d.code_sena,'') as "Código SENA",COALESCE(rp.name,'') as "Ubicación Laboral",COALESCE(dt.name,'') as "Departamento",
+                    COALESCE(c.identification_id,'') as "Identificación",COALESCE(c.name,'') as "Empleado",COALESCE(d.contract_date_start,'1900-01-01') as "Fecha Ingreso",
+                    COALESCE(e.name,'') as "Seccional",COALESCE(COALESCE(f."name"->>'es_ES',f."name"->>'en_US'),'') as "Cuenta Analítica",
+                    COALESCE(COALESCE(g."name"->>'es_ES',g."name"->>'en_US'),'') as "Cargo",COALESCE(rb.name,'') as "Banco",COALESCE(bank.acc_number,'') as "Cuenta Bancaria",COALESCE(COALESCE(ajb."name"->>'es_ES',ajb."name"->>'en_US'),'') as "Cuenta Dispersora",
+                    COALESCE(d.code_sena,'') as "Código SENA",COALESCE(rp.name,'') as "Ubicación Laboral",COALESCE(COALESCE(dt."name"->>'es_ES',dt."name"->>'en_US'),'') as "Departamento",
                     COALESCE(d.wage,0) as "Salario Base",'' as "Novedades",
-                    COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Regla Salarial",COALESCE(hr.short_name,COALESCE(hr.name,'')) ||' '|| case when hc.code = 'SSOCIAL' then '' else COALESCE(COALESCE(rp_et.x_business_name,rp_et.name),'') end as "Reglas Salariales + Entidad",
-                    COALESCE(hc.name,'') as "Categoría",COALESCE(b.sequence,0) as "Secuencia",COALESCE(Sum(b.total),0) as "Monto"
+                    COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'') as "Regla Salarial",COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'') ||' '|| case when hc.code = 'SSOCIAL' then '' else COALESCE(COALESCE(rp_et.x_business_name,rp_et.name),'') end as "Reglas Salariales + Entidad",
+                    COALESCE(COALESCE(hc."name"->>'es_ES',hc."name"->>'en_US'),'') as "Categoría",COALESCE(b.sequence,0) as "Secuencia",COALESCE(Sum(b.total),0) as "Monto"
             From hr_payslip as a 
             --Info Empleado
             Inner Join (Select distinct row_number() over(order by a.name) as item,
-                        a.id,identification_id,a.name,a.branch_id,a.job_id,
-                        address_id,address_home_id,a.department_id
+                        a.id,identification_id,a.name,a.branch_id,p.job_id,
+                        address_id,work_contact_id,d.department_id
                         From hr_employee as a
                         inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)
-                        group by a.id,identification_id,a.name,a.branch_id,a.job_id,address_id,address_home_id,a.department_id) as c on a.employee_id = c.id
-            Inner Join hr_contract as d on a.contract_id = d.id
+                        inner join hr_version as d on p.version_id = d.id
+                        group by a.id,identification_id,a.name,a.branch_id,p.job_id,address_id,work_contact_id,d.department_id) as c on a.employee_id = c.id
+            Inner Join hr_version as d on a.version_id = d.id
             Left Join hr_payslip_line as b on a.id = b.slip_id
             Left Join hr_salary_rule as hr on b.salary_rule_id = hr.id
             Left Join hr_salary_rule_category as hc on b.category_id = hc.id
             Left join zue_res_branch as e on c.branch_id = e.id
-            Left join account_analytic_account as f on d.analytic_account_id = f.id
+            Left join account_analytic_account as f on d.analytic_distribution = to_jsonb(json_build_object(f.id, 100))
             Left join hr_job g on c.job_id = g.id
             Left Join hr_department dt on c.department_id = dt.id
             Left Join res_partner rp on c.address_id = rp.id
@@ -230,11 +232,11 @@ class HrPayrollReportZueFilter(models.TransientModel):
             Left Join hr_employee_entities et on b.entity_id = et.id
             Left Join res_partner rp_et on et.partner_id = rp_et.id
             --Info Bancaria
-            Left join res_partner_bank bank on c.address_home_id = bank.partner_id and bank.company_id = a.company_id and bank.is_main = True
+            Left join res_partner_bank bank on c.work_contact_id = bank.partner_id and bank.is_main = true and (bank.company_id = a.company_id or bank.company_id is null)
             Left join res_bank rb on bank.bank_id = rb.id 
             Left join account_journal ajb on bank.payroll_dispersion_account = ajb.id             
             Where a.id in (%s)     
-            Group By c.item,c.identification_id,c.name,d.date_start,e.name,
+            Group By c.item,c.identification_id,c.name,d.contract_date_start,e.name,
                         f.name,g.name,rb.name,bank.acc_number,ajb.name,
                         d.code_sena,rp.name,dt.name,d.wage,hr.short_name,hr.name,hc.code,
                         rp_et.x_business_name,rp_et.name,hc.name,b.sequence
@@ -242,27 +244,28 @@ class HrPayrollReportZueFilter(models.TransientModel):
 
         query_quantity_bases_days = '''
             Select c.item as "Item",
-                COALESCE(c.identification_id,'') as "Identificación",COALESCE(c.name,'') as "Empleado",COALESCE(d.date_start,'1900-01-01') as "Fecha Ingreso",
-                COALESCE(e.name,'') as "Seccional",COALESCE(f.name,'') as "Cuenta Analítica",
-                COALESCE(g.name,'') as "Cargo",COALESCE(rb.name,'') as "Banco",COALESCE(bank.acc_number,'') as "Cuenta Bancaria",COALESCE(ajb.name,'') as "Cuenta Dispersora",
-                COALESCE(d.code_sena,'') as "Código SENA",COALESCE(rp.name,'') as "Ubicación Laboral",COALESCE(dt.name,'') as "Departamento",
+                COALESCE(c.identification_id,'') as "Identificación",COALESCE(c.name,'') as "Empleado",COALESCE(d.contract_date_start,'1900-01-01') as "Fecha Ingreso",
+                COALESCE(e.name,'') as "Seccional",COALESCE(COALESCE(f."name"->>'es_ES',f."name"->>'en_US'),'') as "Cuenta Analítica",
+                COALESCE(COALESCE(g."name"->>'es_ES',g."name"->>'en_US'),'') as "Cargo",COALESCE(rb.name,'') as "Banco",COALESCE(bank.acc_number,'') as "Cuenta Bancaria",COALESCE(COALESCE(ajb."name"->>'es_ES',ajb."name"->>'en_US'),'') as "Cuenta Dispersora",
+                COALESCE(d.code_sena,'') as "Código SENA",COALESCE(rp.name,'') as "Ubicación Laboral",COALESCE(COALESCE(dt."name"->>'es_ES',dt."name"->>'en_US'),'') as "Departamento",
                 COALESCE(d.wage,0) as "Salario Base",'' as "Novedades",
-                COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Regla Salarial",REPLACE_TITULO,
-                hc.name as "Categoría",b.sequence as "Secuencia",REPLACE_VALUE
+                COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'') as "Regla Salarial",REPLACE_TITULO,
+                COALESCE(COALESCE(hc."name"->>'es_ES',hc."name"->>'en_US'),'') as "Categoría",b.sequence as "Secuencia",REPLACE_VALUE
             From hr_payslip as a 
             Inner Join hr_payslip_line as b on a.id = b.slip_id   
             Inner Join hr_salary_rule as hr on b.salary_rule_id = hr.id             
             Inner Join hr_salary_rule_category as hc on b.category_id = hc.id REPLACE_FILTER_RULE_CATEGORY
             --Info Empleado
             Inner Join (Select distinct row_number() over(order by a.name) as item,
-                        a.id,identification_id,a.name,a.branch_id,a.job_id,
-                        address_id,address_home_id,a.department_id
+                        a.id,identification_id,a.name,a.branch_id,p.job_id,
+                        address_id,work_contact_id,p.department_id
                         From hr_employee as a
                         inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)
-                        group by a.id,identification_id,a.name,a.branch_id,a.job_id,address_id,address_home_id,a.department_id) as c on a.employee_id = c.id
-            Inner Join hr_contract as d on a.contract_id = d.id
+                        inner join hr_version as d on p.version_id = d.id
+                        group by a.id,identification_id,a.name,a.branch_id,p.job_id,address_id,work_contact_id,p.department_id) as c on a.employee_id = c.id
+            Inner Join hr_version as d on a.version_id = d.id
             Left join zue_res_branch as e on c.branch_id = e.id
-            Left join account_analytic_account as f on d.analytic_account_id = f.id
+            Left join account_analytic_account as f on d.analytic_distribution = to_jsonb(json_build_object(f.id, 100))
             Left join hr_job g on c.job_id = g.id
             Left Join hr_department dt on c.department_id = dt.id
             Left Join res_partner rp on c.address_id = rp.id
@@ -270,11 +273,11 @@ class HrPayrollReportZueFilter(models.TransientModel):
             Left Join hr_employee_entities et on b.entity_id = et.id
             Left Join res_partner rp_et on et.partner_id = rp_et.id
             --Info Bancaria
-            Left join res_partner_bank bank on c.address_home_id = bank.partner_id and bank.company_id = a.company_id and bank.is_main = True
+            Left join res_partner_bank bank on c.work_contact_id = bank.partner_id and bank.is_main = true and (bank.company_id = a.company_id or bank.company_id is null)
             Left join res_bank rb on bank.bank_id = rb.id 
             Left join account_journal ajb on bank.payroll_dispersion_account = ajb.id             
             Where a.id in (%s)
-            Group By c.item,c.identification_id,c.name,d.date_start,e.name,
+            Group By c.item,c.identification_id,c.name,d.contract_date_start,e.name,
                         f.name,g.name,rb.name,bank.acc_number,ajb.name,
                         d.code_sena,rp.name,dt.name,d.wage,hr.short_name,hr.name,hc.code,
                         rp_et.x_business_name,rp_et.name,hc.name,b.sequence
@@ -290,16 +293,16 @@ class HrPayrollReportZueFilter(models.TransientModel):
                         {query_amount_rules}
                         Union 
                         -- CANTIDAD SOLO PARA HORAS EXTRAS Y PRESTACIONES SOCIALES (CESANTIAS & PRIMA)
-                        {query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Cantidad de ' || COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.quantity),0) as "Cantidad"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and hc.code in ('HEYREC','PRESTACIONES_SOCIALES') ''')}
+                        {query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Cantidad de ' || COALESCE(hr.short_name,COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'')) as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.quantity),0) as "Cantidad"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and hc.code in ('HEYREC','PRESTACIONES_SOCIALES') ''')}
         				Union 
         				-- BASE SOLO PARA PRESTACIONES SOCIALES (CESANTIAS & PRIMA)
-        				{query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Base de ' || COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.amount_base),0) as "Base"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and hc.code in ('PRESTACIONES_SOCIALES') ''')}
+        				{query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Base de ' || COALESCE(hr.short_name,COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'')) as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.amount_base),0) as "Base"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and hc.code in ('PRESTACIONES_SOCIALES') ''')}
         				Union
         				-- DIAS AUSENCIAS NO REMUNERADOS		
-        				{query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Días Ausencias no remuneradas de ' || COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.days_unpaid_absences),0) as "Dias Ausencias no remuneradas"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and b.days_unpaid_absences > 0 ''')}
+        				{query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Días Ausencias no remuneradas de ' || COALESCE(hr.short_name,COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'')) as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.days_unpaid_absences),0) as "Dias Ausencias no remuneradas"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and b.days_unpaid_absences > 0 ''')}
                     ) as a 
                 """
-        
+
         query_totales = '''
             Select 500000 as "Item",'' as "Identificación", '' as "Empleado", '1900-01-01' as "Fecha Ingreso",
                     '' as "Seccional", '' as "Cuenta Analítica",'' as "Cargo",'' as "Banco",'' as "Cuenta Bancaria",'' as "Cuenta Dispersora",
@@ -307,41 +310,41 @@ class HrPayrollReportZueFilter(models.TransientModel):
                     0 as "Salario Base",'' as "Novedades",
                     "Regla Salarial","Reglas Salariales + Entidad","Categoría","Secuencia",Sum("Monto") as "Monto"
             From(
-                Select  c.name,COALESCE(wt.short_name,COALESCE(wt.name,'')) as "Regla Salarial",COALESCE(wt.short_name,COALESCE(wt.name,'')) as "Reglas Salariales + Entidad",
-                        'Días' as "Categoría",0 as "Secuencia",COALESCE(Sum(b.number_of_days),0) as "Monto"
+                Select  c.name,COALESCE(COALESCE(wt."name"->>'es_ES',wt."name"->>'en_US'),'') as "Regla Salarial",COALESCE(COALESCE(wt."name"->>'es_ES',wt."name"->>'en_US'),'') as "Reglas Salariales + Entidad",
+                        json_build_object('es_ES', 'Días')->>'es_ES' as "Categoría",0 as "Secuencia",COALESCE(Sum(b.number_of_days),0) as "Monto"
                 From hr_payslip as a 
                 Inner Join hr_payslip_worked_days as b on a.id = b.payslip_id 
                 Inner Join hr_work_entry_type as wt on b.work_entry_type_id = wt.id
                 --Info Empleado
                 Inner Join hr_employee  as c on a.employee_id = c.id                
-                Inner Join hr_contract as d on a.contract_id = d.id
+                Inner Join hr_version as d on a.version_id = d.id
                 Where a.id in (%s)
                 Group By c.name,wt.name,wt.short_name
                 Union
-                Select  c.name,COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Regla Salarial",COALESCE(hr.short_name,COALESCE(hr.name,'')) ||' '|| case when hc.code = 'SSOCIAL' then '' else COALESCE(COALESCE(rp_et.x_business_name,rp_et.name),'') end as "Reglas Salariales + Entidad",
-                        hc.name as "Categoría",b.sequence as "Secuencia",COALESCE(Sum(b.total),0) as "Monto"
+                Select  c.name,COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'') as "Regla Salarial",COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'') ||' '|| case when hc.code = 'SSOCIAL' then '' else COALESCE(COALESCE(rp_et.x_business_name,rp_et.name),'') end as "Reglas Salariales + Entidad",
+                        COALESCE(COALESCE(hc."name"->>'es_ES',hc."name"->>'en_US'),'') as "Categoría",b.sequence as "Secuencia",COALESCE(Sum(b.total),0) as "Monto"
                 From hr_payslip as a 
                 Inner Join hr_payslip_line as b on a.id = b.slip_id
                 Inner Join hr_salary_rule as hr on b.salary_rule_id = hr.id
                 Inner Join hr_salary_rule_category as hc on b.category_id = hc.id
                 --Info Empleado
                 Inner Join hr_employee  as c on a.employee_id = c.id                
-                Inner Join hr_contract as d on a.contract_id = d.id
+                Inner Join hr_version as d on a.version_id = d.id
                 --Entidad
                 Left Join hr_employee_entities et on b.entity_id = et.id
                 Left Join res_partner rp_et on et.partner_id = rp_et.id
                 Where a.id in (%s)
                 Group By c.name,hr.short_name,hr.name,hc.code,rp_et.x_business_name,rp_et.name,hc.name,b.sequence
                 Union
-                Select c.name,COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Regla Salarial",'Cantidad de ' || COALESCE(hr.short_name,COALESCE(hr.name,'')) as "Reglas Salariales + Entidad",
-                       hc.name as "Categoría",b.sequence as "Secuencia",COALESCE(Sum(b.quantity),0) as "Cantidad"
+                Select c.name,COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'') as "Regla Salarial",'Cantidad de ' || COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'') as "Reglas Salariales + Entidad",
+                       COALESCE(COALESCE(hc."name"->>'es_ES',hc."name"->>'en_US'),'') as "Categoría",b.sequence as "Secuencia",COALESCE(Sum(b.quantity),0) as "Cantidad"
                 From hr_payslip as a 
                 Inner Join hr_payslip_line as b on a.id = b.slip_id         
                 Inner Join hr_salary_rule as hr on b.salary_rule_id = hr.id       
                 Inner Join hr_salary_rule_category as hc on b.category_id = hc.id and hc.code = 'HEYREC'
                 --Info Empleado
                 Inner Join hr_employee  as c on a.employee_id = c.id
-                Inner Join hr_contract as d on c.id = d.employee_id and d.state = 'open'
+                Inner Join hr_version as d on c.id = d.employee_id and d.contract_date_end is null
                 --Entidad
                 Left Join hr_employee_entities et on b.entity_id = et.id
                 Left Join res_partner rp_et on et.partner_id = rp_et.id 
@@ -364,7 +367,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
         result_query = self.env.cr.dictfetchall()
 
         df_report = pd.DataFrame(result_query)
-        
+
         if len(df_report) == 0:
             raise ValidationError(_('No se ha encontrado información con el lote seleccionado, por favor verificar.'))
 
@@ -377,13 +380,14 @@ class HrPayrollReportZueFilter(models.TransientModel):
         novedades = ''
         for i,j in df_novedades.iterrows():
             if identification == df_novedades.loc[i,'Identificación']:
-                novedades = novedades +' -\r\n '+ df_novedades.loc[i,'Novedad']                
-            else:                
+                novedades = novedades +' -\r\n '+ df_novedades.loc[i,'Novedad']
+            else:
                 identification = df_novedades.loc[i,'Identificación']
                 novedades = df_novedades.loc[i,'Novedad']
 
             if df_novedades.loc[i,'EsUltimo'] == 1:
                 df_report.loc[df_report['Identificación'] == identification, 'Novedades'] = novedades
+
 
         columns_index = ['Item', 'Identificación', 'Empleado']
         if self.show_date_of_entry == True:
@@ -428,7 +432,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
 
         pivot_report = pd.pivot_table(df_report, values='Monto', index=columns_index,
                                       columns=columns_pivot_final, aggfunc=np.sum)
-        
+
         #Obtener titulo y fechas de liquidación
         text_title = 'Informe de Liquidación'
         text_dates = 'Fechas Liquidación: %s a %s' % (min_date,max_date)
@@ -491,7 +495,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
         cell_format_novedades.set_font_size(11)
         worksheet.conditional_format(3,len(columns_index)-1,cant_filas-1,len(columns_index)-1,
                                         {'type': 'no_errors',
-                                        'format': cell_format_novedades})  
+                                        'format': cell_format_novedades})
         #Titulo totales
         cell_format_total = writer.book.add_format({'bold': True,'align':'right','border':1})
         cell_format_total.set_font_name('Calibri')
@@ -506,8 +510,8 @@ class HrPayrollReportZueFilter(models.TransientModel):
         if len(obj_signature) == 1:
             if obj_signature.signature_prepared:
                 worksheet.merge_range(cant_filas + 5, 1, cant_filas + 5, 2, 'ELABORO', cell_format_firma)
-                if obj_signature.txt_signature_prepared:
-                    worksheet.merge_range(cant_filas + 6, 1, cant_filas + 6, 2, obj_signature.txt_signature_prepared, cell_format_txt_firma)
+                if obj_signature.z_txt_signature_prepared_contact:
+                    worksheet.merge_range(cant_filas + 6, 1, cant_filas + 6, 2, obj_signature.z_txt_signature_prepared_contact, cell_format_txt_firma)
             if obj_signature.signature_reviewed:
                 worksheet.merge_range(cant_filas + 5, 4, cant_filas + 5, 5, 'REVISO', cell_format_firma)
                 if obj_signature.txt_signature_reviewed:
@@ -521,13 +525,13 @@ class HrPayrollReportZueFilter(models.TransientModel):
             worksheet.merge_range(cant_filas + 5, 4, cant_filas + 5, 5, 'REVISO', cell_format_firma)
             worksheet.merge_range(cant_filas + 5, 7, cant_filas + 5, 8, 'APROBO', cell_format_firma)
         # Guardar excel
-        writer.save()
+        writer.close()
 
         self.write({
             'excel_file': base64.encodebytes(stream.getvalue()),
             'excel_file_name': filename,
         })
-        
+
         action = {
                     'name': filename,
                     'type': 'ir.actions.act_url',
@@ -592,12 +596,12 @@ class HrPayrollReportZueFilter(models.TransientModel):
                     From hr_payslip as a 
                     --Info Empleado
                     Inner Join (Select distinct row_number() over(order by a.name) as item,
-                                a.id,identification_id,a.name,a.branch_id,a.job_id,
+                                a.id,identification_id,a.name,a.branch_id,p.job_id,
                                 address_id,a.department_id
                                 From hr_employee as a
                                 inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)
-                                group by a.id,identification_id,a.name,a.branch_id,a.job_id,address_id,a.department_id) as c on a.employee_id = c.id
-                    Inner Join hr_contract as d on a.contract_id = d.id
+                                group by a.id,identification_id,a.name,a.branch_id,p.job_id,address_id,a.department_id) as c on a.employee_id = c.id
+                    Inner Join hr_version as d on a.version_id = d.id
                     Inner Join hr_payslip_worked_days as b on a.id = b.payslip_id
                     inner join hr_work_entry_type as wt on b.work_entry_type_id = wt.id
                     Left join zue_res_branch as e on c.branch_id = e.id
@@ -618,12 +622,12 @@ class HrPayrollReportZueFilter(models.TransientModel):
                     From hr_payslip as a 
                     --Info Empleado
                     Inner Join (Select distinct row_number() over(order by a.name) as item,
-                                a.id,identification_id,a.name,a.branch_id,a.job_id,
+                                a.id,identification_id,a.name,a.branch_id,p.job_id,
                                 address_id,a.department_id
                                 From hr_employee as a
                                 inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)
-                                group by a.id,identification_id,a.name,a.branch_id,a.job_id,address_id,a.department_id) as c on a.employee_id = c.id
-                    Inner Join hr_contract as d on a.contract_id = d.id
+                                group by a.id,identification_id,a.name,a.branch_id,p.job_id,address_id,a.department_id) as c on a.employee_id = c.id
+                    Inner Join hr_version as d on a.version_id = d.id
                     Left Join hr_payslip_line as b on a.id = b.slip_id
                     Left Join hr_salary_rule as hr on b.salary_rule_id = hr.id and hr.code in ('TOTALDEV','TOTALDED','NET')
                     Left Join hr_salary_rule_category as hc on b.category_id = hc.id
@@ -663,7 +667,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
                         Inner Join hr_work_entry_type as wt on b.work_entry_type_id = wt.id
                         --Info Empleado
                         Inner Join hr_employee  as c on a.employee_id = c.id                
-                        Inner Join hr_contract as d on a.contract_id = d.id
+                        Inner Join hr_version as d on a.version_id = d.id
                         Where a.id in (%s)
                         Group By c.name,wt.name,wt.short_name
                         Union
@@ -675,7 +679,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
                         Inner Join hr_salary_rule_category as hc on b.category_id = hc.id
                         --Info Empleados
                         Inner Join hr_employee  as c on a.employee_id = c.id                
-                        Inner Join hr_contract as d on a.contract_id = d.id
+                        Inner Join hr_version as d on a.version_id = d.id
                         --Entidad
                         Left Join hr_employee_entities et on b.entity_id = et.id
                         Left Join res_partner rp_et on et.partner_id = rp_et.id
@@ -783,11 +787,11 @@ class HrPayrollReportZueFilter(models.TransientModel):
             if obj_signature.signature_prepared:
                 if signatures != '':
                     signatures += '<td style="width: 5%;background-color:white;border:none;"/>'
-                txt_signature_prepared = obj_signature.txt_signature_prepared if obj_signature.txt_signature_prepared else ''
+                z_txt_signature_prepared_contact = obj_signature.z_txt_signature_prepared_contact if obj_signature.z_txt_signature_prepared_contact else ''
                 signatures += '''
                     <td style="width: 30%;font-size: x-small;">
                         ELABORÓ <br/>
-                        '''+txt_signature_prepared+'''
+                        '''+z_txt_signature_prepared_contact+'''
                     </td>
                 '''
             else:
