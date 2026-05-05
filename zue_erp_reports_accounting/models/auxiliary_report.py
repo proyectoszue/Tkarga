@@ -235,36 +235,20 @@ class account_auxiliary_report_filters(models.TransientModel):
                         inner join account_account as c on a.account_id = c.id
                         left join res_partner as d on a.partner_id = d.id  
                         left join account_analytic_account as e on a.analytic_distribution = to_jsonb(json_build_object(e.id, 100))
-                        left join lateral (
-                            select g.id, g.parent_id, g.code_prefix_start, g."name"
-                            from account_group as g
-                            where g.company_id = {self.company_id.id}
-                                and g.code_prefix_start <= left(c.code_store->>'{self.company_id.id}', char_length(g.code_prefix_start))
-                                and g.code_prefix_end >= left(c.code_store->>'{self.company_id.id}', char_length(g.code_prefix_end))
-                            order by char_length(g.code_prefix_start) desc
-                            limit 1
-                        ) as c0 on true
+                        left join account_group as c0 on c0.code_prefix_start <= LEFT(c.code_store->>'{self.company_id.id}', char_length(c0.code_prefix_start)) AND c0.code_prefix_end >= LEFT(c.code_store->>'{self.company_id.id}', char_length(c0.code_prefix_end)) AND c0.company_id = {self.company_id.id}
                         {query_from_levels_group}
                         left join account_analytic_plan as e0 on e.plan_id = e0.id      
                         {query_from_levels_group_analytic}  
                         {query_where}
                 '''
         self.env.cr.execute(query)
-        chunk_size = 10000
-        lst_chunks = []
-        while True:
-            chunk = self.env.cr.fetchmany(chunk_size)
-            if not chunk:
-                break
-            lst_chunks.append(pd.DataFrame.from_records(chunk, columns=df_name_columns))
+        lst_info = self.env.cr.fetchall()
         # ----------------------------------------DATAFRAMES PANDAS--------------------------------------------------
         lst_levels_group, lst_levels_group_analytic = lst_levels_group_str, lst_levels_group_analytic_str
-        if len(lst_chunks) == 0:
+        if len(lst_info) == 0:
             raise ValidationError(_('No se encontro información con los filtros seleccionados, por favor verificar.'))
-        if len(lst_chunks) == 1:
-            df_report_original = lst_chunks[0]
-        else:
-            df_report_original = pd.concat(lst_chunks, ignore_index=True)
+        df_report_original = pd.DataFrame.from_dict(lst_info)
+        df_report_original = df_report_original.set_axis(df_name_columns, axis=1)
         lst_levels_group = sorted(lst_levels_group,reverse=True)
         lst_cols_values = df_report_original.select_dtypes(include='number').columns.tolist()
         lst_levels_group_analytic = sorted(lst_levels_group_analytic, reverse=True)

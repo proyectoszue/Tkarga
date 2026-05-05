@@ -4,7 +4,7 @@ from datetime import timedelta
 
 from collections import defaultdict
 
-# INVESTIGAR SI ES NECESARIO EN V18
+# INVESTIGAR SI ES NECESARIO EN V19 - Modelo "account.partner.ledger" ya no existe se debe reemplazar por "account.partner.ledger.report.handler"
 
 class ReportPartnerLedger(models.AbstractModel):
     _inherit = "account.partner.ledger"
