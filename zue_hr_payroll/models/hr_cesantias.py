@@ -11,7 +11,7 @@ import math
 class hr_history_cesantias(models.Model):
     _name = 'hr.history.cesantias'
     _description = 'Historico de cesantias'
-    
+
     employee_id = fields.Many2one('hr.employee', 'Empleado')
     employee_identification = fields.Char('Identificación empleado')
     type_history = fields.Selection(
@@ -26,7 +26,8 @@ class hr_history_cesantias(models.Model):
     payslip = fields.Many2one('hr.payslip', 'Liquidación')
     contract_id = fields.Many2one('hr.contract', 'Contrato')
     base_value = fields.Float('Valor base')
-    
+    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
+
     def name_get(self):
         result = []
         for record in self:
@@ -41,8 +42,8 @@ class hr_history_cesantias(models.Model):
             vals['employee_id'] = obj_employee.id
         if vals.get('employee_id'):
             obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('id', '=', vals.get('employee_id'))])
-            vals['employee_identification'] = obj_employee.identification_id            
-        
+            vals['employee_identification'] = obj_employee.identification_id
+
         res = super(hr_history_cesantias, self).create(vals)
         return res
 
@@ -152,7 +153,7 @@ class Hr_payslip(models.Model):
 
         year = self.date_from.year
         annual_parameters = self.env['hr.annual.parameters'].search([('year', '=', year)])
-        
+
         if localdict == None:
             localdict = {
                 **self._get_base_local_dict(),
@@ -162,13 +163,13 @@ class Hr_payslip(models.Model):
                     'rules': BrowsableObject(employee.id, rules_dict, self.env),
                     'payslip': Payslips(employee.id, self, self.env),
                     'worked_days': WorkedDays(employee.id, worked_days_dict, self.env),
-                    'inputs': InputLine(employee.id, inputs_dict, self.env),                    
+                    'inputs': InputLine(employee.id, inputs_dict, self.env),
                     'employee': employee,
                     'contract': contract,
                     'annual_parameters': annual_parameters,
                     'inherit_contrato':inherit_contrato,
                     'values_base_cesantias': 0,
-                    'values_base_int_cesantias': 0,                    
+                    'values_base_int_cesantias': 0,
                 }
             }
         else:
@@ -177,11 +178,11 @@ class Hr_payslip(models.Model):
 
         #Ejecutar las reglas salariales y su respectiva lógica
         for rule in sorted(self.struct_id.rule_ids, key=lambda x: x.sequence):
-            localdict.update({                
+            localdict.update({
                 'result': None,
                 'result_qty': 1.0,
                 'result_rate': 100})
-            if rule._satisfy_condition(localdict):                
+            if rule._satisfy_condition(localdict):
                 amount, qty, rate = rule._compute_rule(localdict)
                 dias_ausencias, amount_base = 0, 0
                 #Cuando es cesantias o intereses de cesantias, la regla retorna la base y el calculo se realiza a continuación
@@ -309,10 +310,10 @@ class Hr_payslip(models.Model):
                 localdict[rule.code] = tot_rule
                 rules_dict[rule.code] = rule
                 # sum the amount for its salary category
-                localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount) 
+                localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount)
                 localdict = _sum_salary_rule(localdict, rule, tot_rule)
                 # create/overwrite the rule in the temporary results
-                if amount != 0:                    
+                if amount != 0:
                     result[rule.code] = {
                         'sequence': rule.sequence,
                         'code': rule.code,
@@ -387,8 +388,8 @@ class Hr_payslip(models.Model):
                                 'is_history_reverse': True,
                             }
 
-        
+
         if inherit_contrato == 0:
-            return result.values()  
+            return result.values()
         else:
-            return localdict,result           
+            return localdict,result

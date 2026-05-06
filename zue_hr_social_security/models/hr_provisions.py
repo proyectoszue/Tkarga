@@ -30,6 +30,7 @@ class hr_executing_provisions_details(models.Model):
     value_payments = fields.Float('Pagos realizados')
     amount = fields.Float('Valor liquidado')
     current_payable_value = fields.Float('Valor a Pagar Actual')
+    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
 
     def executing_provisions_employee(self):
         self.ensure_one()

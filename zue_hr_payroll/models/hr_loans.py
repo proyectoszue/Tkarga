@@ -61,6 +61,7 @@ class HrLoans(models.Model):
     prestamo_pending_count = fields.Integer(string="N° Cuotas x Pagar", compute='_compute_pending_amount')
     payment_date_end = fields.Date(string="Fecha de Ultima Cuota", readonly=True)
     description = fields.Text(string='Descripción')
+    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
 
     state = fields.Selection([
         ('draft', 'Borrador'),

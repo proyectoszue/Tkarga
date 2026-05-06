@@ -90,6 +90,7 @@ class hr_employee_deduction_retention(models.Model):
     result_base = fields.Float('Valor Base')
     result_calculation = fields.Float('Valor cálculo')
     #result_validation = fields.Float('Valor validación')
+    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
 
 class hr_employee_rtefte(models.Model):
     _name = 'hr.employee.rtefte'

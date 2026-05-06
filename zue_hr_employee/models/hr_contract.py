@@ -16,6 +16,8 @@ class hr_contract_change_wage(models.Model):
     wage = fields.Float('Salario basico', help='Seguimento de los cambios en el salario basico')
     contract_id = fields.Many2one('hr.contract', 'Contrato', required=True, ondelete='cascade')
     job_id = fields.Many2one('hr.job', string='Cargo')
+    rel_employee_id = fields.Many2one(related='contract_id.employee_id', store=True)
+    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
 
     _sql_constraints = [('change_wage_uniq', 'unique(contract_id, date_start, wage, job_id)', 'Ya existe un cambio de salario igual a este')]
 
@@ -56,6 +58,7 @@ class hr_contract_concepts(models.Model):
     detail = fields.Text('Notas', help='Notas')
     embargo_judged = fields.Char('Juzgado')
     embargo_process = fields.Char('Proceso')
+    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
     
     attached = fields.Binary('Adjunto')
     attached_name = fields.Char('Nombre adjunto')
@@ -82,6 +85,8 @@ class hr_contractual_modifications(models.Model):
     date = fields.Date('Fecha', required=True)
     description = fields.Char('Descripción de modificacion contractual', required=True)
     attached = fields.Many2one('documents.document', string='Adjunto')
+    rel_employee_id = fields.Many2one(related='contract_id.employee_id', store=True)
+    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
 
 #Deducciones para retención en la fuente
 class hr_contract_deductions_rtf(models.Model):
@@ -95,6 +100,8 @@ class hr_contract_deductions_rtf(models.Model):
     value_total = fields.Float('Valor Total')
     value_monthly = fields.Float('Valor Mensualizado')
     contract_id = fields.Many2one('hr.contract', 'Contrato', required=True, ondelete='cascade')
+    rel_employee_id = fields.Many2one(related='contract_id.employee_id', store=True)
+    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
 
     #Validaciones
     @api.onchange('value_total')
@@ -168,6 +175,8 @@ class hr_employee_endowment(models.Model):
     contract_id = fields.Many2one('hr.contract', 'Contrato', required=True, ondelete='cascade')
     date = fields.Date('Fecha de Entrega')
     supplies = fields.Char('Descripción - Periodo de entrega')
+    rel_employee_id = fields.Many2one(related='contract_id.employee_id', store=True)
+    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
     # quantity = fields.Integer('Cantidad')
     # initial_date = fields.Date('Fecha Inicial')
     # final_date = fields.Date('Fecha Final')
@@ -538,6 +547,8 @@ class hr_labor_certificate_history(models.Model):
     z_functions_with = fields.Boolean(string="Con funciones")
     pdf = fields.Binary(string='Certificado')
     pdf_name = fields.Char(string='Filename Certificado')
+    rel_employee_id = fields.Many2one(related='contract_id.employee_id', store=True)
+    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
 
     _sql_constraints = [
         ('labor_certificate_history_uniq', 'unique(contract_id, sequence)', 'Ya existe un certificado con esta secuencia, por favor verificar.')]
@@ -638,6 +649,8 @@ class zue_retirement_severance_pay(models.Model):
     ], string='Tipo de retiro')
     pdf = fields.Binary(string='Carta para retiro de cesantías')
     pdf_name = fields.Char(string='Filename Carta para retiro de cesantías')
+    rel_employee_id = fields.Many2one(related='z_contract_id.employee_id', store=True)
+    rel_contract_date_start = fields.Date(related='z_contract_id.date_start', store=True)
 
     def generate_report_severance_pay(self):
         datas = {

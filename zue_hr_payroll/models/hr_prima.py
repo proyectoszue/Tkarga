@@ -22,6 +22,7 @@ class hr_history_prima(models.Model):
     bonus_value = fields.Float('Valor de prima')
     payslip = fields.Many2one('hr.payslip', 'Liquidación')
     contract_id = fields.Many2one('hr.contract', 'Contrato')
+    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
     
     def name_get(self):
         result = []

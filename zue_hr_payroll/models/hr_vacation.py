@@ -30,6 +30,7 @@ class hr_vacation(models.Model):
     payslip = fields.Many2one('hr.payslip', 'Liquidación')
     leave_id = fields.Many2one('hr.leave', 'Ausencia')
     contract_id = fields.Many2one('hr.contract', 'Contrato')
+    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
 
     def name_get(self):
         result = []

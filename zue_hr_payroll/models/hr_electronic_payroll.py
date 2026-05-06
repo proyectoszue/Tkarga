@@ -33,6 +33,7 @@ class hr_electronic_payroll_detail(models.Model):
     result_upload_xml = fields.Text(string='Respuesta envio XML', readonly=True)
     status = fields.Char(string='Estado')
     result_status = fields.Text(string='Descripción estado', readonly=True)
+    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
 
     resource_type_document = fields.Selection([
         ('ORIGINAL_DOCUMENT', 'Documento original'),
