@@ -1,0 +1,294 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+
+        <!-- Aged Receivable: custom columns -->
+        <record id="aged_receivable_report_supplier_invoice_number" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_receivable_report"/>
+            <field name="name">No. factura proveedor</field>
+            <field name="expression_label">supplier_invoice_number</field>
+            <field name="figure_type">string</field>
+        </record>
+        <record id="aged_receivable_report_due_date" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_receivable_report"/>
+            <field name="name">Fecha vencimiento</field>
+            <field name="expression_label">z_due_date</field>
+            <field name="figure_type">date</field>
+        </record>
+        <record id="aged_receivable_report_amount_currency" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_receivable_report"/>
+            <field name="name">Importe en moneda</field>
+            <field name="expression_label">z_amount_currency</field>
+            <field name="figure_type">monetary</field>
+        </record>
+        <record id="aged_receivable_report_currency" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_receivable_report"/>
+            <field name="name">Moneda</field>
+            <field name="expression_label">z_currency</field>
+            <field name="figure_type">string</field>
+        </record>
+        <record id="aged_receivable_report_move_ref" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_receivable_report"/>
+            <field name="name">Ref. movimiento</field>
+            <field name="expression_label">z_move_ref</field>
+            <field name="figure_type">string</field>
+        </record>
+        <record id="aged_receivable_report_invoice_user_name" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_receivable_report"/>
+            <field name="name">Asesor</field>
+            <field name="expression_label">invoice_user_name</field>
+            <field name="figure_type">string</field>
+        </record>
+        <record id="aged_receivable_report_account_name" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_receivable_report"/>
+            <field name="name">Cuenta</field>
+            <field name="expression_label">z_account_name</field>
+            <field name="figure_type">string</field>
+        </record>
+        <record id="aged_receivable_report_expected_date" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_receivable_report"/>
+            <field name="name">Fecha prevista</field>
+            <field name="expression_label">z_expected_date</field>
+            <field name="figure_type">date</field>
+        </record>
+        <record id="aged_receivable_report_z_partner_name" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_receivable_report"/>
+            <field name="name">Cliente</field>
+            <field name="expression_label">partner_name</field>
+            <field name="figure_type">string</field>
+        </record>
+        <record id="aged_receivable_report_z_user_name" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_receivable_report"/>
+            <field name="name">Asesor cliente</field>
+            <field name="expression_label">partner_user_name</field>
+            <field name="figure_type">string</field>
+        </record>
+
+        <!-- Aged Receivable: custom expressions -->
+        <record id="aged_receivable_line_supplier_invoice_number" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_receivable_line"/>
+            <field name="label">supplier_invoice_number</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_receivable</field>
+            <field name="subformula">supplier_invoice_number</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_receivable_line_due_date" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_receivable_line"/>
+            <field name="label">z_due_date</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_receivable</field>
+            <field name="subformula">z_due_date</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_receivable_line_amount_currency" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_receivable_line"/>
+            <field name="label">z_amount_currency</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_receivable</field>
+            <field name="subformula">z_amount_currency</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_receivable_line_currency" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_receivable_line"/>
+            <field name="label">z_currency</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_receivable</field>
+            <field name="subformula">z_currency</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_receivable_line_move_ref" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_receivable_line"/>
+            <field name="label">z_move_ref</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_receivable</field>
+            <field name="subformula">z_move_ref</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_receivable_line_invoice_user_name" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_receivable_line"/>
+            <field name="label">invoice_user_name</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_receivable</field>
+            <field name="subformula">invoice_user_name</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_receivable_line_account_name" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_receivable_line"/>
+            <field name="label">z_account_name</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_receivable</field>
+            <field name="subformula">z_account_name</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_receivable_line_expected_date" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_receivable_line"/>
+            <field name="label">z_expected_date</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_receivable</field>
+            <field name="subformula">z_expected_date</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_receivable_line_z_partner_name" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_receivable_line"/>
+            <field name="label">partner_name</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_receivable</field>
+            <field name="subformula">partner_name</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_receivable_line_z_user_name" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_receivable_line"/>
+            <field name="label">partner_user_name</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_receivable</field>
+            <field name="subformula">partner_user_name</field>
+            <field name="auditable" eval="False"/>
+        </record>
+
+        <!-- Aged Payable: custom columns -->
+        <record id="aged_payable_report_supplier_invoice_number" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_payable_report"/>
+            <field name="name">No. factura proveedor</field>
+            <field name="expression_label">supplier_invoice_number</field>
+            <field name="figure_type">string</field>
+        </record>
+        <record id="aged_payable_report_due_date" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_payable_report"/>
+            <field name="name">Fecha vencimiento</field>
+            <field name="expression_label">z_due_date</field>
+            <field name="figure_type">date</field>
+        </record>
+        <record id="aged_payable_report_amount_currency" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_payable_report"/>
+            <field name="name">Importe en moneda</field>
+            <field name="expression_label">z_amount_currency</field>
+            <field name="figure_type">monetary</field>
+        </record>
+        <record id="aged_payable_report_currency" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_payable_report"/>
+            <field name="name">Moneda</field>
+            <field name="expression_label">z_currency</field>
+            <field name="figure_type">string</field>
+        </record>
+        <record id="aged_payable_report_move_ref" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_payable_report"/>
+            <field name="name">Ref. movimiento</field>
+            <field name="expression_label">z_move_ref</field>
+            <field name="figure_type">string</field>
+        </record>
+        <record id="aged_payable_report_invoice_user_name" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_payable_report"/>
+            <field name="name">Asesor</field>
+            <field name="expression_label">invoice_user_name</field>
+            <field name="figure_type">string</field>
+        </record>
+        <record id="aged_payable_report_account_name" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_payable_report"/>
+            <field name="name">Cuenta</field>
+            <field name="expression_label">z_account_name</field>
+            <field name="figure_type">string</field>
+        </record>
+        <record id="aged_payable_report_expected_date" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_payable_report"/>
+            <field name="name">Fecha prevista</field>
+            <field name="expression_label">z_expected_date</field>
+            <field name="figure_type">date</field>
+        </record>
+        <record id="aged_payable_report_z_partner_name" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_payable_report"/>
+            <field name="name">Cliente</field>
+            <field name="expression_label">partner_name</field>
+            <field name="figure_type">string</field>
+        </record>
+        <record id="aged_payable_report_z_user_name" model="account.report.column">
+            <field name="report_id" ref="account_reports.aged_payable_report"/>
+            <field name="name">Asesor cliente</field>
+            <field name="expression_label">partner_user_name</field>
+            <field name="figure_type">string</field>
+        </record>
+
+        <!-- Aged Payable: custom expressions -->
+        <record id="aged_payable_line_supplier_invoice_number" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_payable_line"/>
+            <field name="label">supplier_invoice_number</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_payable</field>
+            <field name="subformula">supplier_invoice_number</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_payable_line_due_date" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_payable_line"/>
+            <field name="label">z_due_date</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_payable</field>
+            <field name="subformula">z_due_date</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_payable_line_amount_currency" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_payable_line"/>
+            <field name="label">z_amount_currency</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_payable</field>
+            <field name="subformula">z_amount_currency</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_payable_line_currency" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_payable_line"/>
+            <field name="label">z_currency</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_payable</field>
+            <field name="subformula">z_currency</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_payable_line_move_ref" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_payable_line"/>
+            <field name="label">z_move_ref</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_payable</field>
+            <field name="subformula">z_move_ref</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_payable_line_invoice_user_name" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_payable_line"/>
+            <field name="label">invoice_user_name</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_payable</field>
+            <field name="subformula">invoice_user_name</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_payable_line_account_name" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_payable_line"/>
+            <field name="label">z_account_name</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_payable</field>
+            <field name="subformula">z_account_name</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_payable_line_expected_date" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_payable_line"/>
+            <field name="label">z_expected_date</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_payable</field>
+            <field name="subformula">z_expected_date</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_payable_line_z_partner_name" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_payable_line"/>
+            <field name="label">partner_name</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_payable</field>
+            <field name="subformula">partner_name</field>
+            <field name="auditable" eval="False"/>
+        </record>
+        <record id="aged_payable_line_z_user_name" model="account.report.expression">
+            <field name="report_line_id" ref="account_reports.aged_payable_line"/>
+            <field name="label">partner_user_name</field>
+            <field name="engine">custom</field>
+            <field name="formula">_report_custom_engine_aged_payable</field>
+            <field name="subformula">partner_user_name</field>
+            <field name="auditable" eval="False"/>
+        </record>
+
+    </data>
+</odoo>

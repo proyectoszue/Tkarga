@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="bic_1059" model="res.bank">
+            <field name="name">BANCAMIA</field>
+            <field name="bic">1059</field>
+        </record>
+
+        <record id="bic_1040" model="res.bank">
+            <field name="name">BANCO AGRARIO DE COLOMBIA S.A.</field>
+            <field name="bic">1040</field>
+        </record>
+
+        <record id="bic_1052" model="res.bank">
+            <field name="name">BANCO AV VILLAS</field>
+            <field name="bic">1052</field>
+        </record>
+
+        <record id="bic_1032" model="res.bank">
+            <field name="name">BANCO CAJA SOCIAL - BCSC S.A.SI</field>
+            <field name="bic">1032</field>
+        </record>
+
+        <record id="bic_1067" model="res.bank">
+            <field name="name">BANCO COMPARTIR S.A</field>
+            <field name="bic">1067</field>
+        </record>
+
+        <record id="bic_1066" model="res.bank">
+            <field name="name">BANCO COOPERATIVO COOPCENTRAL</field>
+            <field name="bic">1066</field>
+        </record>
+
+        <record id="bic_1051" model="res.bank">
+            <field name="name">BANCO DAVIVIENDA S.A.</field>
+            <field name="bic">1051</field>
+        </record>
+
+        <record id="bic_1001" model="res.bank">
+            <field name="name">BANCO DE BOGOTÁ</field>
+            <field name="bic">1001</field>
+        </record>
+
+        <record id="bic_1000" model="res.bank">
+            <field name="name">BANCO DE LA REPÚBLICA</field>
+            <field name="bic">1000</field>
+        </record>
+
+        <record id="bic_1023" model="res.bank">
+            <field name="name">BANCO DE OCCIDENTE</field>
+            <field name="bic">1023</field>
+        </record>
+
+        <record id="bic_1063" model="res.bank">
+            <field name="name">BANCO FINANDINA S.A.</field>
+            <field name="bic">1063</field>
+        </record>
+
+        <record id="bic_1064" model="res.bank">
+            <field name="name">BANCO MULTIBANK S.A</field>
+            <field name="bic">1064</field>
+        </record>
+
+        <record id="bic_1060" model="res.bank">
+            <field name="name">BANCO PICHINCHA S.A.</field>
+            <field name="bic">1060</field>
+        </record>
+
+        <record id="bic_1002" model="res.bank">
+            <field name="name">BANCO POPULAR</field>
+            <field name="bic">1002</field>
+        </record>
+
+        <record id="bic_1058" model="res.bank">
+            <field name="name">BANCO PROCREDIT</field>
+            <field name="bic">1058</field>
+        </record>
+
+        <record id="bic_1065" model="res.bank">
+            <field name="name">BANCO SANTANDER DE NEGOCIOS COLOMBIA S.A.</field>
+            <field name="bic">1065</field>
+        </record>
+
+        <record id="bic_1069" model="res.bank">
+            <field name="name">BANCO SERFINANZA S.A</field>
+            <field name="bic">1069</field>
+        </record>
+
+        <record id="bic_1053" model="res.bank">
+            <field name="name">BANCO W S.A.</field>
+            <field name="bic">1053</field>
+        </record>
+
+        <record id="bic_1007" model="res.bank">
+            <field name="name">BANCOLOMBIA S.A.</field>
+            <field name="bic">1007</field>
+        </record>
+
+        <record id="bic_1061" model="res.bank">
+            <field name="name">BANCOOMEVA</field>
+            <field name="bic">1061</field>
+        </record>
+
+        <record id="bic_1013" model="res.bank">
+            <field name="name">BBVA COLOMBIA</field>
+            <field name="bic">1013</field>
+        </record>
+
+        <record id="bic_1009" model="res.bank">
+            <field name="name">CITIBANK COLOMBIA</field>
+            <field name="bic">1009</field>
+        </record>
+
+        <record id="bic_1062" model="res.bank">
+            <field name="name">CMR FALABELLA S.A.</field>
+            <field name="bic">1062</field>
+        </record>
+
+        <record id="bic_1019" model="res.bank">
+            <field name="name">COLPATRIA</field>
+            <field name="bic">1019</field>
+        </record>
+
+        <record id="bic_1012" model="res.bank">
+            <field name="name">GNB SUDAMERIS S.A.</field>
+            <field name="bic">1012</field>
+        </record>
+
+        <record id="bic_1006" model="res.bank">
+            <field name="name">ITAÚ CORPBANCA COLOMBIA S.A.</field>
+            <field name="bic">1006</field>
+        </record>
+
+        <record id="bic_1051" model="res.bank">
+            <field name="name">DAVIPLATA</field>
+            <field name="bic">1051</field>
+        </record>
+
+        <record id="bic_1007" model="res.bank">
+            <field name="name">NEQUI</field>
+            <field name="bic">1007</field>
+        </record>
+
+    </data>
+</odoo>

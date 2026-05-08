@@ -7,16 +7,15 @@ class HrPayslipPublic(models.Model):
     _auto = False
     _log_access = True
 
-    id = fields.Integer(string='id')
     employee_id = fields.Many2one('hr.employee.public',string='Empleado')
     struct_id = fields.Many2one('hr.payroll.structure',string='Tipo Liquidacion')
     state = fields.Char(string='Estado')
     date_from = fields.Date(string='Fecha inicio')
     date_to = fields.Date(string='Fecha fin')
-    contract_id = fields.Many2one('hr.contract.public',string='Contrato')
+    version_id = fields.Many2one('hr.version.public',string='Contrato')
     company_id = fields.Many2one('res.company',string='Compañia')
     observation = fields.Char(string='Observacion')
-    number = fields.Char(string='Referencia')
+    name = fields.Char(string='Referencia')
     # worked_days_line_ids = fields.One2many('hr.payslip.worked_days', 'payslip_id',
     #     string='Payslip Worked Days', copy=True, readonly=True)
 

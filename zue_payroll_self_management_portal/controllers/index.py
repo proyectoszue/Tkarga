@@ -23,33 +23,33 @@ class ZuePayrollSelfManagementPortal(Controller):
         obj_portal_news = request.env['hr.portal.news'].search(
             [('company_id', '=', request.env.user.company_id.id), '|', ('date_end', '=', False),
              ('date_end', '>=', date_today)])
-        obj_portal_parametrization_portal = request.env['zue.parameterization.portal.menus'].search([])
+        obj_portal_parametrization_portal = request.env['zue.parameterization.portal.menus'].search([('z_company_id', '=', request.env.user.company_id.id)])
         obj_portal_design = request.env['zue.hr.employee.portal.design'].search(
             [('z_company_design_id', '=', request.env.user.company_id.id)], limit=1)
         obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)])
         if len(obj_employee) > 0:
             for employee in obj_employee:
-                obj_contract = request.env['hr.contract.public'].search([('employee_id','=',employee.id),('state','=','open')], limit=1)
-                if len(obj_contract) == 0:
+                obj_version = request.env['hr.version.public'].search([('employee_id','=',employee.id),('contract_date_end','=',False)], limit=1)
+                if len(obj_version) == 0:
                     raise ValidationError('El empleado '+str(employee.name)+' no tiene ningún contrato activo, por favor verificar.')
                 photo = employee.image_1920
                 name = employee.name
                 identification = employee.identification_id
-                street = employee.address_home_id.street
+                street = employee.address_id.street
                 phone = employee.personal_mobile
                 date_birthday = employee.birthday
                 type_employee = employee.type_employee.name
                 company = employee.company_id.name
-                type_contract = obj_contract.get_contract_type()
-                accumulated_vacation_days = obj_contract.get_accumulated_vacation_days()
-                enjoyed_vacation_days = sum([i.business_units for i in request.env['hr.vacation'].sudo().search([('contract_id', '=', obj_contract.id)])])
-                money_vacation_days = sum([i.units_of_money for i in request.env['hr.vacation'].sudo().search([('contract_id', '=', obj_contract.id)])])
+                type_contract = obj_version.get_version_type()
+                accumulated_vacation_days = obj_version.get_accumulated_vacation_days()
+                enjoyed_vacation_days = sum([i.business_units for i in request.env['hr.vacation'].sudo().search([('version_id', '=', obj_version.id)])])
+                money_vacation_days = sum([i.units_of_money for i in request.env['hr.vacation'].sudo().search([('version_id', '=', obj_version.id)])])
                 department = employee.department_id.name
                 parent = employee.parent_id.name
                 branch = employee.branch_id.name
                 laboral_address =  employee.address_id.name
                 job = employee.sudo().job_id.name
-                date_start = obj_contract.date_start
+                date_start = obj_version.contract_date_start
                 email = employee.personal_email
                 #Obtener turnos
                 datetime_today = datetime.now(timezone(request.env.user.tz))
@@ -65,7 +65,7 @@ class ZuePayrollSelfManagementPortal(Controller):
                         'start_datetime': start_datetime,
                         'end_datetime': end_datetime,
                         'include_unassigned': False,
-                        'slot_ids': [(6, 0, obj_slot.ids)],
+                        #'slot_ids': [(6, 0, obj_slot.ids)],
                     })
                     planning_url = employee.get_info_planning_get_url(planning)
                     base_url = False
@@ -88,9 +88,9 @@ class ZuePayrollSelfManagementPortal(Controller):
                 obj_work_entry_type = request.env['hr.work.entry.type'].sudo().search([('active','=',True)])
                 for w in obj_work_entry_type:
                     obj_work_entry = request.env['hr.work.entry'].sudo().search([('work_entry_type_id','=',w.id),
-                                                                                 ('contract_id', '=', obj_contract.id),
-                                                                                 ('date_start', '>=', start_datetime_days_statistics),
-                                                                                 ('date_stop', '<=', datetime_today),
+                                                                                 ('version_id', '=', obj_version.id),
+                                                                                 ('date', '>=', start_datetime_days_statistics),
+                                                                                 ('date', '<=', datetime_today),
                                                                                  ('conflict', '=', False)])
                     duration = 0
                     if w.code == 'WORK100':

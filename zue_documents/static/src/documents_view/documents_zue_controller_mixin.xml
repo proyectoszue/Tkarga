@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <t t-name="zue_documents.DocumentsViews.Buttons" t-inherit="documents.DocumentsViews.ControlPanel" t-inherit-mode="extension">
+        <xpath expr="//Dropdown/t[@t-set-slot='content']" position="inside">
+            <DropdownItem tag="'button'" class="'btn btn-link o_documents_kanban_request_template'"
+                t-if="userIsInternal"
+                onSelected.bind="onClickDocumentsRequestTemplate"
+                attrs="{'disabled': !canUploadInFolder(folder) || folder.id === 'COMPANY'}">
+                <i class="fa fa-files-o fa-fw me-1"/>
+                <span>Plantilla de solicitud</span>
+            </DropdownItem>
+            <DropdownItem tag="'button'" class="'btn btn-link o_documents_kanban_merge_pdfs'"
+                t-if="userIsInternal"
+                onSelected.bind="onClickDocumentsMergePDFs">
+                <i class="fa fa-object-group fa-fw me-1"/>
+                <span>Unir PDFs</span>
+            </DropdownItem>
+        </xpath>
+    </t>
+
+    <t t-name="zue_documents.DocumentsDetailsPanel" t-inherit="documents.DocumentsDetailsPanel" t-inherit-mode="extension">
+        <xpath expr="//div[hasclass('o_documents_details_panel_fields')]" position="inside">
+            <t t-if="record.data.type !== 'folder'">
+                <i class="fa fa-calendar mx-1 my-2"/>
+                <div class="o_field_widget o_field_date">
+                    <DateTimeField
+                        name="'expiration_date'"
+                        record="record"
+                        readonly="userPermissionViewOnly"
+                    />
+                </div>
+            </t>
+        </xpath>
+    </t>
+</templates>

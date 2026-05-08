@@ -18,7 +18,7 @@ class hr_electronic_adjust_payroll_detail(models.Model):
 
     electronic_adjust_payroll_id = fields.Many2one('hr.electronic.adjust.payroll',string='Nómina electrónica de ajuste', ondelete='cascade')
     employee_id = fields.Many2one('hr.employee',string='Empleado')
-    contract_id = fields.Many2one('hr.contract', string='Contrato')
+    version_id = fields.Many2one('hr.version', string='Contrato')
     electronic_adjust_payroll_detail_id = fields.Many2one('hr.electronic.payroll.detail',
                                                    string='Nómina electrónica a ajustar', ondelete='cascade')
     item = fields.Integer(string='Item')
@@ -31,10 +31,10 @@ class hr_electronic_adjust_payroll_detail(models.Model):
     # XML
     xml_file = fields.Binary('XML')
     xml_file_name = fields.Char('XML name')
-    result_upload_xml = fields.Text(string='Respuesta envio XML', readonly=True)
+    result_upload_xml = fields.Text(string='Respuesta envio XML')
     status = fields.Char(string='Estado')
-    result_status = fields.Text(string='Descripción estado', readonly=True)
-    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
+    result_status = fields.Text(string='Descripción estado')
+    rel_contract_date_start = fields.Date(string='Rel fecha de inicio', store=True)
 
     resource_type_document = fields.Selection([
         ('ORIGINAL_DOCUMENT', 'Documento original'),
@@ -321,8 +321,8 @@ class hr_electronic_adjust_payroll_detail(models.Model):
         else:
             raise ValidationError(_('Error al obtener el CUNE, intente mas tarde.'))
 
-    def get_type_contract(self):
-        type = self.contract_id.contract_type
+    def get_type_version(self):
+        type = self.version_id.contract_type
         if type == 'fijo':
             type = '1' # Contrato de Trabajo a Término Fijo
         elif type == 'indefinido':
@@ -362,13 +362,13 @@ class hr_electronic_adjust_payroll_detail(models.Model):
             raise UserError(_('El año digitado es invalido, por favor verificar.'))
 
     def get_time_working(self):
-        date_start = self.contract_id.date_start
-        date_end = datetime.strptime(self.get_dates_process(end=1), '%Y-%m-%d').date() if not self.contract_id.retirement_date else self.contract_id.retirement_date
+        date_start = self.version_id.contract_date_start
+        date_end = datetime.strptime(self.get_dates_process(end=1), '%Y-%m-%d').date() if not self.version_id.retirement_date else self.version_id.retirement_date
         dias = self.dias360(date_start,date_end)
         return dias
 
     def get_bank_information(self,r_bank=0,r_type=0,r_account=0):
-        for bank in self.employee_id.address_home_id.bank_ids:
+        for bank in self.employee_id.partner_encab_id.bank_ids:
             if bank.is_main:
                 if r_bank != 0:
                     return bank.bank_id.name
@@ -436,6 +436,24 @@ class hr_electronic_adjust_payroll_detail(models.Model):
                     days += entries.number_of_days if entries.work_entry_type_id.code in lst_codes else 0
         return int(days)
 
+    # Se crea para SVG pero no se utiliza
+    def get_quantity_salary_rules_exclude_prima_nr(self,lst_codes):
+        quantity = 0
+        for payslip in self.payslip_ids:
+            if payslip.struct_id.process != 'prima':
+                for line in payslip.line_ids:
+                    quantity += abs(line.quantity) if line.salary_rule_id.code in lst_codes else 0
+        return quantity if quantity > 0 else None
+
+    # Se crea para SVG pero no se utiliza
+    def get_days_lines_exclude_prima_nr(self,lst_codes):
+        days = 0
+        for payslip in self.payslip_ids:
+            if payslip.struct_id.process != 'prima':
+                for entries in payslip.worked_days_line_ids:
+                    days += entries.number_of_days if entries.work_entry_type_id.code in lst_codes else 0
+        return int(days) if days > 0 else None
+
     def get_annual_parameters(self):
         obj = self.env['hr.annual.parameters'].search([('year', '=', self.electronic_adjust_payroll_id.electronic_payroll_id.year)])
         return obj
@@ -475,10 +493,10 @@ class hr_electronic_adjust_payroll_detail(models.Model):
     def get_wage(self):
         # Salario - Se toma el salario correspondiente a la fecha de liquidación
         wage = 0
-        obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', self.contract_id.id), ('date_start', '<', self.get_dates_process(1))])
+        obj_wage = self.env['hr.contract.change.wage'].search([('version_id', '=', self.version_id.id), ('date_start', '<', self.get_dates_process(1))])
         for change in sorted(obj_wage, key=lambda x: x.date_start):  # Obtiene el ultimo salario vigente antes de la fecha de liquidacion
             wage = change.wage
-        wage = self.contract_id.wage if wage == 0 else wage
+        wage = self.version_id.wage if wage == 0 else wage
         return wage
 
 class hr_electronic_adjust_payroll(models.Model):
@@ -504,11 +522,10 @@ class hr_electronic_adjust_payroll(models.Model):
                                                        string='Ejecución')
     time_process = fields.Char(string='Tiempo ejecución', copy=False)
 
-    def name_get(self):
-        result = []
+    @api.depends('electronic_payroll_id')
+    def _compute_display_name(self):
         for record in self:
-            result.append((record.id, "Nómina Electrónica de Ajuste | Periodo {}-{}".format(record.electronic_payroll_id.month,str(record.electronic_payroll_id.year))))
-        return result
+            record.display_name = "Nómina Electrónica de Ajuste | Periodo {}-{}".format(record.electronic_payroll_id.month,str(record.electronic_payroll_id.year))
 
     def executing_electronic_payroll(self):
         # Eliminar ejecución
@@ -553,47 +570,51 @@ class hr_electronic_adjust_payroll(models.Model):
             raise ValidationError(_(f'Las siguentes reglas salariales no estan asociadas a ningun tag {str(lst_rule_not_include)}.'))
 
         # Obtener empleados que se realizara el ajuste
-        obj_employee = self.env['hr.employee'].search([('id', 'in', self.electronic_payroll_detail_ids.employee_id.ids)])
-        obj_employee += self.env['hr.employee'].search([('active','=',False),('id', 'in', self.electronic_payroll_detail_ids.employee_id.ids)])
+        # obj_employee = self.env['hr.employee'].search([('id', 'in', self.electronic_payroll_detail_ids.employee_id.ids)])
+        # obj_employee += self.env['hr.employee'].search([('active','=',False),('id', 'in', self.electronic_payroll_detail_ids.employee_id.ids)])
 
         query_max_item = '''
         Select max(next_item) as next_item from 
         (
         Select max(a.item) as next_item from hr_electronic_payroll_detail as a 
-        inner join hr_electronic_payroll as b on a.electronic_payroll_id = b.id and b.prefix = '%s'
+        inner join hr_electronic_payroll as b on a.electronic_payroll_id = b.id and b.prefix = %s and b.state = 'close' and b.company_id = %s
         union
         Select coalesce(max(a.item),0) as next_item from hr_electronic_adjust_payroll_detail as a 
-        inner join hr_electronic_adjust_payroll as b on a.electronic_adjust_payroll_id = b.id and (b.prefix = '%s' or b.prefix_adjust = '%s') 
+        inner join hr_electronic_adjust_payroll as b on a.electronic_adjust_payroll_id = b.id and (b.prefix = %s or b.prefix_adjust = %s) and b.state = 'close' and b.id != %s and b.company_id = %s
         ) as a        
-        ''' % (self.prefix_adjust,self.prefix_adjust,self.id)
-        self.env.cr.execute(query_max_item)
+        '''
+        self.env.cr.execute(query_max_item, (self.prefix_adjust, self.company_id.id, self.prefix_adjust, self.prefix_adjust, self.id, self.company_id.id))
         res_max_item = self.env.cr.fetchone()
         max_item = res_max_item[0] or 0
 
         item = 0
-        for employee in obj_employee:
-            obj_contracts = self.env['hr.contract']
-            # Obtener contrato activo
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'open'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id), ('date_start', '<=', date_end + relativedelta(months=1))])
-            # Obtener contratos finalizados en el mes
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id), ('retirement_date', '<=', date_end + relativedelta(months=1))])
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'finished'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id), ('date_end', '<=', date_end + relativedelta(months=1))])
-            for obj_contract in obj_contracts:
+        for ep_detail in self.electronic_payroll_detail_ids:
+            employee = ep_detail.employee_id
+            if not employee:
+                raise ValidationError(_('Una línea en Nóminas reportadas a ajustar no tiene empleado; verifique los datos.'))
+            obj_versions = self.env['hr.version']
+            if ep_detail.version_id:
+                obj_versions = ep_detail.version_id
+            else:
+                obj_versions += self.env['hr.version'].search([('employee_id', '=', employee.id), ('contract_date_start','<=',date_end), '|', ('retirement_date', '=', False), ('retirement_date', '>', date_end)])
+                obj_versions += self.env['hr.version'].search([('employee_id', '=', employee.id), ('retirement_date', '>=', date_start), ('retirement_date', '<=', date_end + relativedelta(months=1))])
+                obj_versions += self.env['hr.version'].search([('contract_type','=','aprendizaje'), ('employee_id', '=', employee.id), ('contract_date_end', '>=', date_start),('contract_date_end', '<=', date_end + relativedelta(months=1))])
+            for obj_version in obj_versions:
                 item += 1
                 # Obtener nóminas en ese rango de fechas
                 obj_payslip = self.env['hr.payslip'].search(
-                    [('state', '=', 'done'), ('employee_id', '=', employee.id), ('contract_id', '=', obj_contract.id),
+                    [('state', '=', 'validated'), ('employee_id', '=', employee.id), ('version_id', '=', obj_version.id),
                      ('date_from', '>=', date_start), ('date_from', '<=', date_end)])
                 obj_payslip += self.env['hr.payslip'].search(
-                    [('state', '=', 'done'), ('employee_id', '=', employee.id), ('contract_id', '=', obj_contract.id),
+                    [('state', '=', 'validated'), ('employee_id', '=', employee.id), ('version_id', '=', obj_version.id),
                      ('id', 'not in', obj_payslip.ids),('struct_id.process', 'in', ['cesantias', 'intereses_cesantias', 'prima']),
                      ('date_to', '>=', date_start), ('date_to', '<=', date_end)])
 
                 value_detail = {
                     'electronic_adjust_payroll_id':self.id,
                     'employee_id':employee.id,
-                    'contract_id':obj_contract.id,
-                    'electronic_adjust_payroll_detail_id':self.electronic_payroll_detail_ids.filtered(lambda x: x.employee_id.id == employee.id).id,
+                    'version_id':obj_version.id,
+                    'electronic_adjust_payroll_detail_id':ep_detail.id,
                     'item':item+max_item,
                     'sequence': self.prefix_adjust+''+str(item+max_item),
                     'nonce': 'ZUE_NOMINAELECTRONICA_AJUSTE_'+self.prefix_adjust+''+str(item+max_item),

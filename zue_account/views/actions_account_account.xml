@@ -8,8 +8,8 @@
 			<field name="arch" type="xml">                
 				<xpath expr="//field[@name='currency_id']" position="after">					
 					<field name="accounting_class"/>	
-                    <field name="required_analytic_account"/>
-                    <field name="required_partner"/>
+<!--                    <field name="required_analytic_account"/>-->
+<!--                    <field name="required_partner" />-->
 					<field name="exclude_balance_test"/>
 					<field name="z_not_disaggregate_partner_balance_test"/>
 					<field name="z_account_value"/>
@@ -26,11 +26,11 @@
 			<field name="arch" type="xml">
                 <xpath expr="//field[@name='country_id']" position="after">
 					<field name="has_minimum_base"/>
-					<field name="minimum_base" attrs="{'invisible':[('has_minimum_base','=',False)]}"/>
+					<field name="minimum_base" invisible="has_minimum_base == False"/>
                 </xpath>
 				<xpath expr="//field[@name='is_base_affected']" position="after">
-					<field name="is_base_affected_only_taxes" attrs="{'invisible': [('is_base_affected','=', False)]}"/>
-					<field name="base_affected_only_taxes_id" attrs="{'invisible': ['|',('is_base_affected','=', False),('is_base_affected_only_taxes','=', True)]}"/>
+					<field name="is_base_affected_only_taxes"/>
+					<field name="base_affected_only_taxes_id"/>
                 </xpath>
 			</field>
 		</record>
@@ -47,5 +47,21 @@
 			</field>
 		</record>
 
+		<record id="view_zue_account_latam_identification_type" model="ir.ui.view">
+			<field name="name">zue_account.l10n_latam_identification_type</field>
+			<field name="model">l10n_latam.identification.type</field>
+			<field name="priority">20</field>
+			<field name="inherit_id" ref="l10n_latam_base.view_l10n_latam_identification_type_tree"/>
+			<field name="arch" type="xml">
+				<xpath expr="//list" position="attributes">
+					<attribute name="editable">bottom</attribute>
+					<attribute name="create">1</attribute>
+    				<attribute name="edit">1</attribute>
+				</xpath>
+				<xpath expr="//field[@name='name']" position="after">
+					<field name="z_code_dian"/>
+				</xpath>
+			</field>
+		</record>
     </data>
 </odoo>

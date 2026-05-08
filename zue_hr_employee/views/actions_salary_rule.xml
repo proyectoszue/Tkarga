@@ -7,23 +7,29 @@
             <field name="priority">20</field>
             <field name="inherit_id" ref="hr_payroll.hr_salary_rule_form"/>
             <field name="arch" type="xml">
+                <xpath expr="//form/sheet" position="after">
+                    <chatter/>
+                </xpath>
                 <xpath expr="//field[@name='code']" position="after">
                     <field name="dev_or_ded" widget="radio"/>
                     <xpath expr="//field[@name='struct_id']" position="move"/>
-                    <field name="deduction_applies_bonus" attrs="{'invisible': [('dev_or_ded', '!=', 'deduccion')]}"/>
+                    <field name="deduction_applies_bonus" invisible="dev_or_ded != 'deduccion'"/>
                 </xpath>
                 <xpath expr="//field[@name='sequence']" position="after">
                     <field name="type_concept"/>
-                    <field name="aplicar_cobro" attrs="{'invisible': [('type_concept', 'not in', ['ley','novedad'])]}"/>
+                    <field name="aplicar_cobro" invisible="type_concept not in ['ley','novedad']"/>
                 </xpath>
                 <xpath expr="//field[@name='appears_on_payslip']" position="after">
                     <field name="types_employee" widget="many2many_tags"/>
                     <field name="modality_value" widget="radio"/>
                     <field name="is_leave"/>
-                    <field name="deduct_deductions" widget="radio" attrs="{'invisible':[('is_leave', '=', False)]}"/>                    
+                    <field name="deduct_deductions" widget="radio" invisible="not is_leave"/>
                 </xpath>
                 <xpath expr="//field[@name='amount_select']" position="after">
-                    <field name="restart_one_month_prima" attrs="{'invisible':[('code', '!=', 'PRIMA')]}"/>
+                    <field name="restart_one_month_prima" invisible="code != 'PRIMA'"/>
+                </xpath>
+                <xpath expr="//page[@name='accounting']" position="attributes">
+                    <attribute name="invisible">1</attribute>
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">
                     <page string="Público" name="conf_public">
@@ -63,16 +69,16 @@
         </record>  
 
         <!-- Contabilización reglas salariales -->
-         <record id="hr_payroll_account.hr_salary_rule_view_form" model="ir.ui.view">
+         <record id="hr_salary_rule_view_form_zue_accounting" model="ir.ui.view">
              <field name="name">hr.salary.rule.form.inherit</field>
              <field name="model">hr.salary.rule</field>
              <field name="priority">16</field>
-             <!-- <field name="inherit_id" ref="hr_payroll_account.hr_salary_rule_view_form"/> -->
+              <field name="inherit_id" ref="hr_payroll_account.hr_salary_rule_view_form"/>
              <field name="arch" type="xml">
-                <xpath expr="//page[@name='description']" position="after">
-                    <page string="Accounting">
+                <xpath expr="//page[@name='accounting']" position="after">
+                    <page string="CO Contabilidad">
                         <field name="salary_rule_accounting" nolabel="1">
-                            <tree string="hr.salary.rule.accounting" editable="bottom">
+                            <list string="hr.salary.rule.accounting" editable="bottom">
                                 <field name="department"/>
                                 <field name="company"/>
                                 <field name="work_location"/>
@@ -80,7 +86,7 @@
                                 <field name="debit_account"/>
                                 <field name="third_credit"/>
                                 <field name="credit_account"/>
-                            </tree>
+                            </list>
                         </field>
                     </page>
                 </xpath>

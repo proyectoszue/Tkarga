@@ -17,16 +17,15 @@ class AccountAuxiliarSchemeFavorite(models.Model):
     account_one = fields.Char(string='Cuenta 1')
     account_two = fields.Char(string='Cuenta 2')
     account_three = fields.Char(string='Cuenta 3')
-    
-    def name_get(self):
-        result = []
-        txt_title = ''
-        for record in self:    
+
+    @api.depends('name_favorite')
+    def _compute_display_name(self):
+        for record in self:
             txt_title = record.name_favorite        
             if not txt_title:
                 txt_title = 'Id:'+str(record.id)+'- sin nombre asignado'            
-            result.append((record.id, "{}".format(txt_title)))
-        return result
+            record.display_name = "{}".format(txt_title)
+
 
 class AccountAuxiliarFilter(models.TransientModel):
     _name = "account.auxiliar.filter"
@@ -44,11 +43,11 @@ class AccountAuxiliarFilter(models.TransientModel):
     save_favorite = fields.Boolean(string='¿Guardar como favorito?')
     name_favorite = fields.Char(string='Nombre de favorito')
     schema_favorite = fields.Many2one('account.auxiliar.schemefavorite', string='Favoritos')
-    
-    def name_get(self):
-        result = []
-        filters = ''
-        for record in self:    
+
+    @api.depends('partner_id', 'account_one', 'account_two', 'account_three', 'date_initial', 'date_finally')
+    def _compute_display_name(self):
+        for record in self:
+            filters = ''
             if record.partner_id:
                 filters = record.partner_id.name
             if record.account_one:
@@ -58,8 +57,7 @@ class AccountAuxiliarFilter(models.TransientModel):
             if record.account_three:
                 filters = filters +', '+ record.account_three
             
-            result.append((record.id, "{} | Fecha Inicial: {} - Fecha Final: {}".format(filters,record.date_initial,record.date_finally)))
-        return result
+            record.display_name = "{} | Fecha Inicial: {} - Fecha Final: {}".format(filters,record.date_initial,record.date_finally)
     
     def upload_favorite(self):
         for favorite in self.schema_favorite:
@@ -180,7 +178,7 @@ class AccountAuxiliarReport(models.Model):
                 D.Cuenta_Nivel_3 as account_level_three,
                 D.Cuenta_Nivel_4 as account_level_four,
                 D.Cuenta_Nivel_5 as account_level_five,                
-                COALESCE(C.vat || ' | ' || C.display_name,'Tercero Vacio') as partner,
+                COALESCE(C.vat || ' | ' || C.name,'Tercero Vacio') as partner,
                 case when B."date"<'%s' then 'AA_SALDO INICIAL' else 'Factura: ' || B.move_name || ' | Fecha: ' || B."date" || ' | Referencia: ' || B."ref" end as move,                   
                 case when B."date"<'%s' then 'AA_SALDO INICIAL' else  B.move_name end as move_name,
                 case when B."date"<'%s' then CAST('%s' AS DATE) - CAST('1 days' AS INTERVAL) else  B."date" end as move_date,
@@ -192,19 +190,19 @@ class AccountAuxiliarReport(models.Model):
         ''' % (date_filter,date_filter,date_filter,date_filter,date_filter,date_filter,date_filter,date_filter,date_filter)
 
     @api.model
-    def _from(self,date_filter):
+    def _from(self,date_filter, company_id):
         return '''
             FROM account_move_line B
             LEFT JOIN res_partner C on B.partner_id = C.id            
             LEFT JOIN (
                             SELECT 
-                            COALESCE(e.code_prefix_start,substring(a.code for 1)) as Cuenta_Nivel_1,
-                            COALESCE(d.code_prefix_start,coalesce(c.code_prefix_start,coalesce(b.code_prefix_start,substring(a.code for 1)))) || ' - ' || coalesce(d."name",coalesce(c."name",coalesce(b."name",'')))  as Cuenta_Nivel_2,
-                            COALESCE(c.code_prefix_start,coalesce(b.code_prefix_start,substring(a.code for 1))) || ' - ' || coalesce(c."name",coalesce(b."name",'')) as Cuenta_Nivel_3,
-                            COALESCE(b.code_prefix_start,substring(a.code for 1)) || ' - ' || COALESCE(b."name",a."name") as Cuenta_Nivel_4,
-                            a.code || ' - ' || a."name" as Cuenta_Nivel_5,a.id 
+                            COALESCE(e.code_prefix_start,substring(a.code_store->>'%s' for 1)) as Cuenta_Nivel_1,
+                            COALESCE(d.code_prefix_start,coalesce(c.code_prefix_start,coalesce(b.code_prefix_start,substring(a.code_store->>'%s' for 1)))) || ' - ' || coalesce(d."name"->>'en_US',coalesce(c."name"->>'en_US',coalesce(b."name"->>'en_US','')))  as Cuenta_Nivel_2,
+                            COALESCE(c.code_prefix_start,coalesce(b.code_prefix_start,substring(a.code_store->>'%s' for 1))) || ' - ' || coalesce(c."name"->>'en_US',coalesce(b."name"->>'en_US','')) as Cuenta_Nivel_3,
+                            COALESCE(b.code_prefix_start,substring(a.code_store->>'%s' for 1)) || ' - ' || COALESCE(b."name"->>'en_US',a."name"->>'en_US') as Cuenta_Nivel_4,
+                            a.code_store->>'%s' || ' - ' || a."name" as Cuenta_Nivel_5,a.id 
                             FROM account_account a
-                            LEFT JOIN account_group b on a.group_id = b.id
+                            LEFT JOIN account_group b on b.code_prefix_start <= LEFT(a.code_store->>'%s', char_length(b.code_prefix_start)) AND b.code_prefix_end >= LEFT(a.code_store->>'%s', char_length(b.code_prefix_end)) AND b.company_id = %s
                             LEFT JOIN account_group c on b.parent_id = c.id
                             LEFT JOIN account_group d on c.parent_id = d.id
                             LEFT JOIN account_group e on d.parent_id = e.id
@@ -216,7 +214,7 @@ class AccountAuxiliarReport(models.Model):
                         FROM account_move_line 
                         WHERE "date" < '%s' and parent_state = 'posted' group by partner_id,account_id,move_id                      
                       ) as E on COALESCE(B.partner_id,0) = COALESCE(E.partner_id,0) and D.id = E.account_id and B.move_id = E.move_id
-        ''' % (date_filter,)
+        ''' % (company_id,company_id,company_id,company_id,company_id,company_id,company_id,company_id, date_filter,)
 
     @api.model
     def _where(self,date_filter,company_id,partner_id,account_one,account_two,account_three):
@@ -271,7 +269,7 @@ class AccountAuxiliarReport(models.Model):
                     D.Cuenta_Nivel_4,
                     D.Cuenta_Nivel_5,
                     C.vat,
-                    C.display_name,
+                    C.name,
                     B.move_name,
                     B."date",
                     B."ref",                    
@@ -316,7 +314,7 @@ class AccountAuxiliarReport(models.Model):
                 %s %s %s %s
             )
         ''' % (
-            self._table, self._select(date_initial), self._from(date_initial), self._where(date_finally,company_id,partner_id,account_one,account_two,account_three), self._group_by()
+            self._table, self._select(date_initial), self._from(date_initial, company_id), self._where(date_finally,company_id,partner_id,account_one,account_two,account_three), self._group_by()
         ))
 
     

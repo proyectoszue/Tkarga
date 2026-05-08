@@ -10,7 +10,7 @@
 					<field name="x_support_document_sent" invisible="1"/>
                 </xpath>
                 <xpath expr="//button[@name='button_draft']" position="attributes">
-                    <attribute name="attrs">{"invisible": [["x_support_document_sent","=",True]]}</attribute>
+                    <attribute name="invisible">x_support_document_sent == True</attribute>
                 </xpath>
 			</field>
 		</record>

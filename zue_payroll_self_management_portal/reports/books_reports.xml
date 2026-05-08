@@ -3,20 +3,20 @@
     <data>
         <record id="report_book_vacation_portal_action" model="ir.actions.report">
            <field name="name">Libro de Vacaciones Portal Web</field>
-           <field name="model">hr.contract.public</field>
+           <field name="model">hr.version.public</field>
            <field name="report_type">qweb-pdf</field>
            <field name="report_name">zue_payroll_self_management_portal.report_book_vacation_portal</field>
            <field name="report_file">zue_payroll_self_management_portal.report_book_vacation_portal</field>
-           <field name="binding_model_id" ref="model_hr_contract_public"/>
+           <field name="binding_model_id" ref="model_hr_version_public"/>
         </record>
 
         <record id="report_book_cesantias_portal_action" model="ir.actions.report">
            <field name="name">Libro de Cesantías Portal Web</field>
-           <field name="model">hr.contract.public</field>
+           <field name="model">hr.version.public</field>
            <field name="report_type">qweb-pdf</field>
            <field name="report_name">zue_payroll_self_management_portal.report_book_cesantias_portal</field>
            <field name="report_file">zue_payroll_self_management_portal.report_book_cesantias_portal</field>
-           <field name="binding_model_id" ref="model_hr_contract_public"/>
+           <field name="binding_model_id" ref="model_hr_version_public"/>
         </record>
 
         <!-- <record id="report_book_vacation_portal_action" model="ir.actions.report">

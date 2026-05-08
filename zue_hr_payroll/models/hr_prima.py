@@ -21,25 +21,25 @@ class hr_history_prima(models.Model):
     base_value = fields.Float('Valor base')
     bonus_value = fields.Float('Valor de prima')
     payslip = fields.Many2one('hr.payslip', 'Liquidación')
-    contract_id = fields.Many2one('hr.contract', 'Contrato')
-    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
-    
-    def name_get(self):
-        result = []
-        for record in self:
-            result.append((record.id, "Prima {} del {} al {}".format(record.employee_id.name, str(record.initial_accrual_date),str(record.final_accrual_date))))
-        return result
+    version_id = fields.Many2one('hr.version', 'Contrato')
+    rel_contract_date_start = fields.Date(string='Rel fecha de inicio', store=True)
 
-    @api.model
-    def create(self, vals):
-        if vals.get('employee_identification'):
-            obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('identification_id', '=', vals.get('employee_identification'))])
-            vals['employee_id'] = obj_employee.id
-        if vals.get('employee_id'):
-            obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('id', '=', vals.get('employee_id'))])
-            vals['employee_identification'] = obj_employee.identification_id            
+    @api.depends('employee_id', 'initial_accrual_date', 'final_accrual_date')
+    def _compute_display_name(self):
+        for record in self:
+            record.display_name = "Prima {} del {} al {}".format(record.employee_id.name, str(record.initial_accrual_date),str(record.final_accrual_date))
+
+    @api.model_create_multi
+    def create(self, values_list):
+        for vals in values_list:
+            if vals.get('employee_identification'):
+                obj_employee = self.env['hr.employee'].search([('identification_id', '=', vals.get('employee_identification'))], limit=1)
+                vals['employee_id'] = obj_employee.id
+            if vals.get('employee_id'):
+                obj_employee = self.env['hr.employee'].search([('id', '=', vals.get('employee_id'))], limit=1)
+                vals['employee_identification'] = obj_employee.identification_id
         
-        res = super(hr_history_prima, self).create(vals)
+        res = super(hr_history_prima, self).create(values_list)
         return res
 class Hr_payslip(models.Model):
     _inherit = 'hr.payslip'
@@ -70,8 +70,8 @@ class Hr_payslip(models.Model):
 
         #Validar fecha inicial de causación
         if inherit_contrato==0:
-            date_prima = self.contract_id.date_start     
-            obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', self.employee_id.id),('contract_id', '=', self.contract_id.id)])
+            date_prima = self.version_id.contract_date_start
+            obj_prima = self.env['hr.history.prima'].search([('employee_id', '=', self.employee_id.id),('version_id', '=', self.version_id.id)])
             if obj_prima:
                 for history in sorted(obj_prima, key=lambda x: x.final_accrual_date):
                     if history.payslip != self.prima_payslip_reverse_id:
@@ -87,20 +87,21 @@ class Hr_payslip(models.Model):
         prima_salary_take = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.prima_salary_take')) or False
         
         employee = self.employee_id
-        contract = self.contract_id
+        version = self.version_id
 
         obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
             [('type_of_contributor', '=', employee.tipo_coti_id.id),
              ('contributor_subtype', '=', employee.subtipo_coti_id.id)], limit=1)
 
         # Se eliminan registros actuales para el periodo ejecutado de Retención en la fuente
-        self.env['hr.employee.deduction.retention'].search(
-            [('employee_id', '=', employee.id), ('year', '=', self.date_to.year),
-             ('month', '=', self.date_to.month)]).unlink()
-        self.env['hr.employee.rtefte'].search([('employee_id', '=', employee.id), ('year', '=', self.date_to.year),
-                                               ('month', '=', self.date_to.month)]).unlink()
+        # Se comenta con base a la historia Validar bases de retención cuando la liquidación esta registrada
+        # self.env['hr.employee.deduction.retention'].search(
+        #     [('employee_id', '=', employee.id), ('year', '=', self.date_to.year),
+        #      ('month', '=', self.date_to.month)]).unlink()
+        # self.env['hr.employee.rtefte'].search([('employee_id', '=', employee.id), ('year', '=', self.date_to.year),
+        #                                        ('month', '=', self.date_to.month)]).unlink()
 
-        if len(obj_parameterization_contributors) == 0 or (len(obj_parameterization_contributors) > 0 and not obj_parameterization_contributors.liquidated_provisions) or contract.modality_salary == 'integral' or contract.subcontract_type == 'obra_integral':
+        if len(obj_parameterization_contributors) == 0 or (len(obj_parameterization_contributors) > 0 and not obj_parameterization_contributors.liquidated_provisions) or version.modality_salary == 'integral' or version.subcontract_type == 'obra_integral':
             if inherit_contrato == 0:
                 return result.values()
             else:
@@ -120,7 +121,7 @@ class Hr_payslip(models.Model):
                     'worked_days': WorkedDays(employee.id, worked_days_dict, self.env),
                     'inputs': InputLine(employee.id, inputs_dict, self.env),                    
                     'employee': employee,
-                    'contract': contract,
+                    'version': version,
                     'annual_parameters': annual_parameters,
                     'inherit_contrato':inherit_contrato,   
                     'values_base_prima': 0,                 
@@ -140,7 +141,7 @@ class Hr_payslip(models.Model):
                 amount, qty, rate = rule._compute_rule(localdict)
                 dias_ausencias, amount_base = 0, 0
 
-                if rule.code == 'PRIMA':
+                if rule.code == 'PRIMA' and employee.type_employee.id in rule.types_employee.ids:
                     amount_base = amount
                     dias_trabajados = self.dias360(self.date_from, self.date_to)
                     dias_ausencias =  sum([i.number_of_days for i in self.env['hr.leave'].search([('date_from','>=',self.date_from),('date_to','<=',self.date_to),('state','=','validate'),('employee_id','=',self.employee_id.id),('discounting_bonus_days','=',True)])])
@@ -162,49 +163,30 @@ class Hr_payslip(models.Model):
                     else:
                         acumulados_promedio = 0
                     wage,auxtransporte,auxtransporte_tope = 0,0,0
-                    if contract.subcontract_type not in ('obra_parcial', 'obra_integral'):
+                    if version.subcontract_type not in ('obra_parcial', 'obra_integral'):
                         wage = 0
-                        obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '<', self.date_to)])
+                        obj_wage = self.env['hr.contract.change.wage'].search([('version_id', '=', version.id), ('date_start', '<', self.date_to)])
                         for change in sorted(obj_wage, key=lambda x: x.date_start):  # Obtiene el ultimo salario vigente antes de la fecha de liquidacion
                             wage = change.wage
-                        wage = contract.wage if wage == 0 else wage
-                        initial_process_date = (self.date_liquidacion if inherit_contrato != 0 else self.date_to) - relativedelta(months=3)
+                        wage = version.wage if wage == 0 else wage
+                        initial_process_date = self.date_prima if inherit_contrato != 0 else self.date_from
                         end_process_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
-                        obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '>', initial_process_date), ('date_start', '<=', end_process_date)])
+                        obj_wage = self.env['hr.contract.change.wage'].search([('version_id', '=', version.id), ('date_start', '>=', initial_process_date), ('date_start', '<=', end_process_date)])
                         if prima_salary_take and len(obj_wage) > 0:
-                            initial_validate_date = self.date_prima if inherit_contrato != 0 else self.date_to - timedelta(days=180)
-                            end_validate_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
-                            obj_wage_of_year = self.env['hr.payslip.line'].search(
-                                [('slip_id.state', 'in', ['done', 'paid']),
-                                 ('slip_id.date_from', '>=', initial_validate_date),
-                                 ('slip_id.date_from', '<=', end_validate_date), ('category_id.code', '=', 'BASIC'),
-                                 ('slip_id.contract_id', '=', contract.id)])
-                            total_wage_of_year = sum([i.total for i in obj_wage_of_year])
-                            obj_workdays_of_year = self.env['hr.payslip.worked_days'].search(
-                                [('payslip_id.state', 'in', ['done', 'paid']),
-                                 ('payslip_id.date_from', '>=', initial_validate_date),
-                                 ('payslip_id.date_from', '<=', end_validate_date),
-                                 ('work_entry_type_id.code', '=', 'WORK100'),
-                                 ('payslip_id.struct_id.process', '=', 'nomina'),
-                                 ('payslip_id.contract_id', '=', contract.id)])
-                            total_workdays_of_year = sum([i.number_of_days for i in obj_workdays_of_year])
-                            total_workdays_of_year = total_workdays_of_year if total_workdays_of_year <= 180 else 180
-                            if total_workdays_of_year > 0:
-                                wage = (total_wage_of_year / total_workdays_of_year) * 30
-                            # wage_average = 0
-                            # while initial_process_date <= end_process_date:
-                            #     if initial_process_date.day != 31:
-                            #         if initial_process_date.month == 2 and  initial_process_date.day == 28 and (initial_process_date + timedelta(days=1)).day != 29:
-                            #             wage_average += (contract.get_wage_in_date(initial_process_date) / 30)*3
-                            #         elif initial_process_date.month == 2 and initial_process_date.day == 29:
-                            #             wage_average += (contract.get_wage_in_date(initial_process_date) / 30)*2
-                            #         else:
-                            #             wage_average += contract.get_wage_in_date(initial_process_date)/30
-                            #     initial_process_date = initial_process_date + timedelta(days=1)
-                            # if dias_trabajados != 0:
-                            #     wage = contract.wage if wage_average == 0 else (wage_average/dias_trabajados)*30
-                            # else:
-                            #     wage = 0
+                            wage_average = 0
+                            while initial_process_date <= end_process_date:
+                                if initial_process_date.day != 31:
+                                    if initial_process_date.month == 2 and  initial_process_date.day == 28 and (initial_process_date + timedelta(days=1)).day != 29:
+                                        wage_average += (version.get_wage_in_date(initial_process_date) / 30)*3
+                                    elif initial_process_date.month == 2 and initial_process_date.day == 29:
+                                        wage_average += (version.get_wage_in_date(initial_process_date) / 30)*2
+                                    else:
+                                        wage_average += version.get_wage_in_date(initial_process_date)/30
+                                initial_process_date = initial_process_date + timedelta(days=1)
+                            if dias_trabajados != 0:
+                                wage = version.wage if wage_average == 0 else (wage_average/dias_trabajados)*30
+                            else:
+                                wage = 0
                         auxtransporte = annual_parameters.transportation_assistance_monthly
                         auxtransporte_tope = annual_parameters.top_max_transportation_assistance
                     value_rules_base_auxtransporte_tope = localdict['payslip'].get_accumulated_prima(self.date_from,self.date_to,1)
@@ -224,7 +206,7 @@ class Hr_payslip(models.Model):
                     if self.prima_payslip_reverse_id:
                         value_reverse = self.prima_payslip_reverse_id.line_ids.filtered(lambda line: line.code == 'PRIMA').amount
                         amount = round(amount-value_reverse,0)
-                    qty = dias_liquidacion if dias_liquidacion <= 180 else 180
+                    qty = dias_liquidacion
 
                 amount = round(amount,0) if round_payroll == False else round(amount, 2)
                 #check if there is already a rule computed with that code
@@ -251,12 +233,13 @@ class Hr_payslip(models.Model):
                         'name': rule.name,
                         'note': rule.note,
                         'salary_rule_id': rule.id,
-                        'contract_id': contract.id,
+                        'version_id': version.id,
                         'employee_id': employee.id,
                         'amount_base': amount_base,
                         'amount': amount,
                         'quantity': qty,
                         'rate': rate,
+                        'total': self._get_payslip_line_total(amount, qty, rate, rule),
                         'days_unpaid_absences':dias_ausencias,
                         'slip_id': self.id,
                     }

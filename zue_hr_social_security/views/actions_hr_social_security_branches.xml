@@ -4,7 +4,7 @@
 		<record model="ir.actions.act_window"  id="action_hr_social_security_branches">
 				<field name="name">Sucursales seguridad social</field>
 				<field name="res_model">hr.social.security.branches</field>
-				<field name="view_mode">tree</field>
+				<field name="view_mode">list</field>
 		</record>
 
 		<!-- Crear record rule para filtrar las compañias-->
@@ -18,11 +18,11 @@
 			    <field name="name">hr social security branches list</field>
 			    <field name="model">hr.social.security.branches</field>
 			    <field name="arch" type="xml">
-				<tree editable="bottom"> 					           					
+				<list editable="bottom">
                     <field name="code"/>                
 					<field name="name"/>
 					<field name="company_id"/>
-				</tree>
+				</list>
 			</field>
 		</record>
 
@@ -30,7 +30,7 @@
 		<record model="ir.actions.act_window"  id="action_hr_social_security_work_center">
 				<field name="name">Centros de trabajo seguridad social</field>
 				<field name="res_model">hr.social.security.work.center</field>
-				<field name="view_mode">tree</field>
+				<field name="view_mode">list</field>
 		</record>
 
 		<!-- Crear record rule para filtrar las compañias-->
@@ -44,12 +44,12 @@
 			    <field name="name">hr social security work center list</field>
 			    <field name="model">hr.social.security.work.center</field>
 			    <field name="arch" type="xml">
-				<tree editable="bottom"> 					           					
+				<list editable="bottom">
                     <field name="code"/>                
 					<field name="name"/> 	
 					<field name="branch_social_security_id"/>
 					<field name="company_id"/>
-				</tree>
+				</list>
 			</field>
 		</record>
 
@@ -67,7 +67,7 @@
                 <xpath expr="//group[@name='entidad']" position="after">
                     <group name="history_social_security" string="Histórico seguridad social"/>
                     <field name="z_history_social_security_ids" nolabel="1">
-                        <tree create="false" editable="top">
+                        <list create="false" editable="top">
                             <field name="z_date_change"/>
                             <field name="z_tipo_coti_id" readonly="1" force_save="1"/>
                             <field name="z_subtipo_coti_id" readonly="1" force_save="1"/>
@@ -77,7 +77,7 @@
                             <field name="z_residente" readonly="1" force_save="1"/>
                             <field name="z_date_of_residence_abroad" readonly="1" force_save="1"/>
                             <field name="z_indicador_especial_id" readonly="1" force_save="1"/>
-                        </tree>
+                        </list>
                     </field>
                 </xpath>
 

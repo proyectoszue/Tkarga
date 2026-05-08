@@ -17,8 +17,9 @@
 <!--					<field name="dian_max_range_number" type="object"/>-->
 <!--                </xpath>-->
 				<xpath expr="//page[@name='bank_account']/group[1]/group[1]" position="inside">
-					<field name="default_account_id" string="Cuenta predeterminada"
-					   attrs="{'invisible': [('type', '!=', 'general')]}"/>
+					<field name="default_account_id" string="Cuenta predeterminada" invisible="type != 'general'"/>
+<!--					<field name="secure_sequence_id" readonly="0"/> ODOO ELIMINO ESTE CAMPO EN LA V18-->
+                    <field name="z_secure_sequence_id" readonly="0"/>
 				</xpath>
 			</field>
 		</record>
@@ -31,7 +32,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='property_account_income_id']" position="after">
                     <field name="z_income_return_account"/>
-					<field name="z_account_analytic_id"/>
+                    <field name="z_account_analytic_id"/>
                 </xpath>
             </field>
         </record>

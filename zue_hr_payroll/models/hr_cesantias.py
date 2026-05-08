@@ -11,7 +11,7 @@ import math
 class hr_history_cesantias(models.Model):
     _name = 'hr.history.cesantias'
     _description = 'Historico de cesantias'
-
+    
     employee_id = fields.Many2one('hr.employee', 'Empleado')
     employee_identification = fields.Char('Identificación empleado')
     type_history = fields.Selection(
@@ -24,27 +24,27 @@ class hr_history_cesantias(models.Model):
     severance_value = fields.Float('Valor de cesantías')
     severance_interest_value = fields.Float('Valor intereses de cesantías')
     payslip = fields.Many2one('hr.payslip', 'Liquidación')
-    contract_id = fields.Many2one('hr.contract', 'Contrato')
+    version_id = fields.Many2one('hr.version', 'Contrato')
     base_value = fields.Float('Valor base')
-    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
+    rel_contract_date_start = fields.Date(string='Rel fecha de inicio', store=True)
 
-    def name_get(self):
-        result = []
+    @api.depends('type_history', 'employee_id', 'initial_accrual_date', 'final_accrual_date')
+    def _compute_display_name(self):
         for record in self:
             type_text = 'Intereses de cesantías' if record.type_history == 'intcesantias' else 'Cesantías'
-            result.append((record.id, "{} {} del {} al {}".format(type_text,record.employee_id.name, str(record.initial_accrual_date),str(record.final_accrual_date))))
-        return result
+            record.display_name = "{} {} del {} al {}".format(type_text,record.employee_id.name, str(record.initial_accrual_date),str(record.final_accrual_date))
 
-    @api.model
-    def create(self, vals):
-        if vals.get('employee_identification'):
-            obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('identification_id', '=', vals.get('employee_identification'))])
-            vals['employee_id'] = obj_employee.id
-        if vals.get('employee_id'):
-            obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('id', '=', vals.get('employee_id'))])
-            vals['employee_identification'] = obj_employee.identification_id
-
-        res = super(hr_history_cesantias, self).create(vals)
+    @api.model_create_multi
+    def create(self, values_list):
+        for vals in values_list:
+            if vals.get('employee_identification'):
+                obj_employee = self.env['hr.employee'].search([('identification_id', '=', vals.get('employee_identification'))], limit=1)
+                vals['employee_id'] = obj_employee.id
+            if vals.get('employee_id'):
+                obj_employee = self.env['hr.employee'].search([('id', '=', vals.get('employee_id'))], limit=1)
+                vals['employee_identification'] = obj_employee.identification_id
+        
+        res = super(hr_history_cesantias, self).create(values_list)
         return res
 
 class Hr_payslip(models.Model):
@@ -59,10 +59,10 @@ class Hr_payslip(models.Model):
 
     #--------------------------------------------------LIQUIDACIÓN DE CESANTIAS---------------------------------------------------------#
 
-    def _has_salary_variation_last_3_months(self, contract, reference_date):
+    def _has_salary_variation_last_3_months(self, version, reference_date):
         """
         Valida si hubo variación salarial en los últimos 3 meses antes de la fecha de referencia.
-        :param contract: Contrato del empleado
+        :param version: Contrato del empleado
         :param reference_date: Fecha de referencia para calcular los últimos 3 meses
         :return: True si hay variación salarial, False en caso contrario
         """
@@ -70,15 +70,15 @@ class Hr_payslip(models.Model):
         initial_check_date = reference_date - relativedelta(months=3)
         # Buscar cambios de salario en los últimos 3 meses
         obj_wage_changes = self.env['hr.contract.change.wage'].search([
-            ('contract_id', '=', contract.id), ('date_start', '>=', initial_check_date),
+            ('version_id', '=', version.id), ('date_start', '>=', initial_check_date),
             ('date_start', '<=', reference_date)], order='date_start')
         # Si hay cambios de salario, hay variación
         return len(obj_wage_changes) > 0
 
-    def _calculate_wage_average_full_year(self, contract, start_date, end_date):
+    def _calculate_wage_average_full_year(self, version, start_date, end_date):
         """
         Calcula el promedio de salario del año completo basado en el histórico de cambios de salario.
-        :param contract: Contrato del empleado
+        :param version: Contrato del empleado
         :param start_date: Fecha inicial del periodo
         :param end_date: Fecha final del periodo
         :return: Promedio de salario mensual
@@ -88,7 +88,7 @@ class Hr_payslip(models.Model):
         current_date = start_date
         while current_date <= end_date:
             if current_date.day != 31:
-                wage_in_date = contract.get_wage_in_date(current_date)
+                wage_in_date = version.get_wage_in_date(current_date)
                 if current_date.month == 2 and current_date.day == 28 and (current_date + timedelta(days=1)).day != 29:
                     wage_average += (wage_in_date / 30) * 3
                 elif current_date.month == 2 and current_date.day == 29:
@@ -114,12 +114,12 @@ class Hr_payslip(models.Model):
 
         #Validar fecha inicial de causación
         if inherit_contrato==0:
-            date_cesantias = self.contract_id.date_start
-            obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', self.employee_id.id),('contract_id', '=', self.contract_id.id),('type_history','=','all')])
+            date_cesantias = self.version_id.contract_date_start
+            obj_cesantias = self.env['hr.history.cesantias'].search([('employee_id', '=', self.employee_id.id),('version_id', '=', self.version_id.id),('type_history','=','all')])
             if self.struct_id.process == 'cesantias':
-                obj_cesantias += self.env['hr.history.cesantias'].search([('employee_id', '=', self.employee_id.id),('contract_id', '=', self.contract_id.id),('type_history','=','cesantias')])
+                obj_cesantias += self.env['hr.history.cesantias'].search([('employee_id', '=', self.employee_id.id),('version_id', '=', self.version_id.id),('type_history','=','cesantias')])
             if self.struct_id.process == 'intereses_cesantias':
-                obj_cesantias += self.env['hr.history.cesantias'].search([('employee_id', '=', self.employee_id.id), ('contract_id', '=', self.contract_id.id),('type_history','=','intcesantias')])
+                obj_cesantias += self.env['hr.history.cesantias'].search([('employee_id', '=', self.employee_id.id), ('version_id', '=', self.version_id.id),('type_history','=','intcesantias')])
 
             if obj_cesantias:
                 for history in sorted(obj_cesantias, key=lambda x: x.final_accrual_date):
@@ -139,13 +139,13 @@ class Hr_payslip(models.Model):
         cesantias_salary_take = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.cesantias_salary_take')) or False
 
         employee = self.employee_id
-        contract = self.contract_id
+        version = self.version_id
 
         obj_parameterization_contributors = self.env['hr.parameterization.of.contributors'].search(
             [('type_of_contributor', '=', employee.tipo_coti_id.id),
              ('contributor_subtype', '=', employee.subtipo_coti_id.id)], limit=1)
 
-        if len(obj_parameterization_contributors) == 0 or (len(obj_parameterization_contributors) > 0 and not obj_parameterization_contributors.liquidated_provisions) or contract.modality_salary == 'integral' or contract.subcontract_type == 'obra_integral':
+        if len(obj_parameterization_contributors) == 0 or (len(obj_parameterization_contributors) > 0 and not obj_parameterization_contributors.liquidated_provisions) or version.modality_salary == 'integral' or version.subcontract_type == 'obra_integral':
             if inherit_contrato == 0:
                 return result.values()
             else:
@@ -153,7 +153,7 @@ class Hr_payslip(models.Model):
 
         year = self.date_from.year
         annual_parameters = self.env['hr.annual.parameters'].search([('year', '=', year)])
-
+        
         if localdict == None:
             localdict = {
                 **self._get_base_local_dict(),
@@ -163,13 +163,13 @@ class Hr_payslip(models.Model):
                     'rules': BrowsableObject(employee.id, rules_dict, self.env),
                     'payslip': Payslips(employee.id, self, self.env),
                     'worked_days': WorkedDays(employee.id, worked_days_dict, self.env),
-                    'inputs': InputLine(employee.id, inputs_dict, self.env),
+                    'inputs': InputLine(employee.id, inputs_dict, self.env),                    
                     'employee': employee,
-                    'contract': contract,
+                    'version': version,
                     'annual_parameters': annual_parameters,
                     'inherit_contrato':inherit_contrato,
                     'values_base_cesantias': 0,
-                    'values_base_int_cesantias': 0,
+                    'values_base_int_cesantias': 0,                    
                 }
             }
         else:
@@ -178,11 +178,11 @@ class Hr_payslip(models.Model):
 
         #Ejecutar las reglas salariales y su respectiva lógica
         for rule in sorted(self.struct_id.rule_ids, key=lambda x: x.sequence):
-            localdict.update({
+            localdict.update({                
                 'result': None,
                 'result_qty': 1.0,
                 'result_rate': 100})
-            if rule._satisfy_condition(localdict):
+            if rule._satisfy_condition(localdict):                
                 amount, qty, rate = rule._compute_rule(localdict)
                 dias_ausencias, amount_base = 0, 0
                 #Cuando es cesantias o intereses de cesantias, la regla retorna la base y el calculo se realiza a continuación
@@ -205,12 +205,12 @@ class Hr_payslip(models.Model):
                         acumulados_promedio = 0
                     #Salario - Se toma el salario correspondiente a la fecha de liquidación
                     wage,auxtransporte,auxtransporte_tope = 0,0,0
-                    if contract.subcontract_type not in ('obra_parcial','obra_integral'):
+                    if version.subcontract_type not in ('obra_parcial','obra_integral'):
                         wage = 0
-                        obj_wage = self.env['hr.contract.change.wage'].search([('contract_id','=',contract.id),('date_start','<',self.date_to)])
+                        obj_wage = self.env['hr.contract.change.wage'].search([('version_id','=',version.id),('date_start','<',self.date_to)])
                         for change in sorted(obj_wage, key=lambda x: x.date_start): #Obtiene el ultimo salario vigente antes de la fecha de liquidacion
                             wage = change.wage
-                        wage = contract.wage if wage == 0 else wage
+                        wage = version.wage if wage == 0 else wage
 
                         # Si el parámetro cesantias_salary_take está activado, validar variación y calcular promedio si hay variación
                         if cesantias_salary_take:
@@ -221,11 +221,11 @@ class Hr_payslip(models.Model):
 
                             # Validar si hubo variación salarial en los últimos 3 meses
                             # Si no existe variación, se usa el salario vigente del contrato (ya está en la variable wage)
-                            has_salary_variation = self._has_salary_variation_last_3_months(contract, reference_date)
+                            has_salary_variation = self._has_salary_variation_last_3_months(version, reference_date)
 
                             if has_salary_variation:
                                 # Si existe variación, calcular el promedio del histórico del año completo
-                                wage_average_calculated = self._calculate_wage_average_full_year(contract, period_start_date, period_end_date)
+                                wage_average_calculated = self._calculate_wage_average_full_year(version, period_start_date, period_end_date)
                                 if wage_average_calculated > 0:
                                     wage = wage_average_calculated
                             # initial_validate_date = self.date_cesantias if inherit_contrato != 0 else self.date_from
@@ -233,12 +233,12 @@ class Hr_payslip(models.Model):
                             # obj_wage_of_year = self.env['hr.payslip.line'].search(
                             #     [('slip_id.state', 'in', ['done', 'paid']), ('slip_id.date_from', '>=', initial_validate_date),
                             #      ('slip_id.date_from', '<=', end_validate_date), ('category_id.code', '=', 'BASIC'),
-                            #      ('slip_id.contract_id', '=', contract.id)])
+                            #      ('slip_id.version_id', '=', contract.id)])
                             # total_wage_of_year = sum([i.total for i in obj_wage_of_year])
                             # obj_workdays_of_year = self.env['hr.payslip.worked_days'].search(
                             #     [('payslip_id.state', 'in', ['done', 'paid']), ('payslip_id.date_from', '>=', initial_validate_date),
                             #      ('payslip_id.date_from', '<=', end_validate_date), ('work_entry_type_id.code', '=', 'WORK100'),
-                            #      ('payslip_id.struct_id.process', '=', 'nomina'),('payslip_id.contract_id', '=', contract.id)])
+                            #      ('payslip_id.struct_id.process', '=', 'nomina'),('payslip_id.version_id', '=', contract.id)])
                             # total_workdays_of_year = sum([i.number_of_days for i in obj_workdays_of_year])
                             # if total_workdays_of_year > 0:
                             #     wage = (total_wage_of_year / total_workdays_of_year) * 30
@@ -266,7 +266,7 @@ class Hr_payslip(models.Model):
                         # Revisar si tuvo avance y calcular los intereses pendientes
                         date_check = (self.date_cesantias or self.date_from) - timedelta(days=1)
                         obj_check_advance = self.env['hr.history.cesantias'].search(
-                            [('employee_id', '=', self.employee_id.id), ('contract_id', '=', self.contract_id.id),
+                            [('employee_id', '=', self.employee_id.id), ('version_id', '=', self.version_id.id),
                              ('type_history', '=', 'cesantias'), ('settlement_date', '=', date_check),
                              ('payslip.z_is_advance_severance', '=', True)])
                         if len(obj_check_advance) == 1:
@@ -294,8 +294,8 @@ class Hr_payslip(models.Model):
                         equivalent_days = (self.z_value_advance_severance * qty) / (amount * qty * rate / 100.0)
                         amount,amount_base,qty = (self.z_value_advance_severance)/round(equivalent_days,0),0,round(equivalent_days,0)
                         self.date_to = self.date_from + timedelta(days=equivalent_days)
-                        if rule.code == 'INTCESANTIAS':
-                            rate = 12
+                    if rule.code == 'INTCESANTIAS':
+                        rate = 12
                 #check if there is already a rule computed with that code
                 previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
                 #set/overwrite the amount computed for this rule in the localdict
@@ -310,22 +310,23 @@ class Hr_payslip(models.Model):
                 localdict[rule.code] = tot_rule
                 rules_dict[rule.code] = rule
                 # sum the amount for its salary category
-                localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount)
+                localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount) 
                 localdict = _sum_salary_rule(localdict, rule, tot_rule)
                 # create/overwrite the rule in the temporary results
-                if amount != 0:
+                if amount != 0:                    
                     result[rule.code] = {
                         'sequence': rule.sequence,
                         'code': rule.code,
                         'name': rule.name,
                         'note': rule.note,
                         'salary_rule_id': rule.id,
-                        'contract_id': contract.id,
+                        'version_id': version.id,
                         'employee_id': employee.id,
                         'amount_base': amount_base,
                         'amount': amount,
                         'quantity': qty,
                         'rate': rate,
+                        'total': self._get_payslip_line_total(amount, qty, rate, rule),
                         'entity_id':entity_cesantias.id if entity_cesantias != False else entity_cesantias,
                         'days_unpaid_absences':dias_ausencias,
                         'slip_id': self.id,
@@ -350,12 +351,13 @@ class Hr_payslip(models.Model):
                                 'name': rule.name + ' ' + str(payments.final_accrual_date.year),
                                 'note': rule.note,
                                 'salary_rule_id': rule.id,
-                                'contract_id': contract.id,
+                                'version_id': version.id,
                                 'employee_id': employee.id,
                                 'amount_base': payments.base_value,
                                 'amount': payments.severance_value / payments.time,
                                 'quantity': payments.time,
                                 'rate': rate,
+                                'total': self._get_payslip_line_total(payments.severance_value / payments.time, payments.time, rate, rule),
                                 'entity_id': entity_cesantias.id if entity_cesantias != False else entity_cesantias,
                                 'slip_id': self.id,
                                 'is_history_reverse': True,
@@ -377,19 +379,20 @@ class Hr_payslip(models.Model):
                                 'name': rule.name + ' ' + str(payments.final_accrual_date.year),
                                 'note': rule.note,
                                 'salary_rule_id': rule.id,
-                                'contract_id': contract.id,
+                                'version_id': version.id,
                                 'employee_id': employee.id,
                                 'amount_base': payments.base_value if payments.type_history == 'intcesantias' else payments.severance_value,
                                 'amount': payments.severance_interest_value / payments.time / 0.12,
                                 'quantity': payments.time,
                                 'rate': 12,
+                                'total': self._get_payslip_line_total(payments.severance_interest_value / payments.time / 0.12, payments.time, 12, rule),
                                 'entity_id': entity_cesantias.id if entity_cesantias != False else entity_cesantias,
                                 'slip_id': self.id,
                                 'is_history_reverse': True,
                             }
 
-
+        
         if inherit_contrato == 0:
-            return result.values()
+            return result.values()  
         else:
-            return localdict,result
+            return localdict,result           

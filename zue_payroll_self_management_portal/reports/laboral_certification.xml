@@ -26,9 +26,10 @@
                 <br/><br/>
                 <div class="col-md-12">
                     <p style="text-align:justify">
-                    <span t-if="o.employee_id.gender == 'male'">El señor</span> <span t-if="o.employee_id.gender == 'female'">La señora</span> <b><span t-esc="o.employee_id.name"/></b>
+                    <!-- Se comentan campos hasta migrar app zue_payroll_self_management_portal: <span t-if="o.employee_id.gender == 'male'">El señor</span> <span t-if="o.employee_id.gender == 'female'">La señora</span> -->
+                    El señor/a <b><span t-esc="o.employee_id.name"/></b>
                     , identificado con cédula de ciudadanía número <span t-esc="'{:20,.0f}'.format(int(o.employee_id.identification_id))"/>,
-                    labora en nuestra compañía desde el <span t-esc="o.get_date_text(o.date_start)"/>, mediante un <b><span t-esc="o.get_contract_type()"/></b>
+                    labora en nuestra compañía desde el <span t-esc="o.get_date_text(o.contract_date_start)"/>, mediante un <b><span t-esc="o.get_version_type()"/></b>
                     , desempeñando el cargo de <b><span t-esc="o.sudo().job_id.name"/></b>
                     en la seccional <b><span t-esc="o.employee_id.branch_id.name"/></b>
                     , devengando un salario básico mensual de <b><span t-esc="o.get_amount_text(o.wage)"/> M/Cte.</b> (<span t-esc="o.wage" t-esc-options="{&quot;widget&quot;: &quot;monetary&quot;, &quot;display_currency&quot;: &quot;o.company_id.currency_id&quot;}"/>),
@@ -67,7 +68,7 @@
         <template id="report_certificacion_laboral_portal">
             <t t-foreach="docs" t-as="o">
                 <t t-set="inside_foreach_docs" t-value="o"/>
-                <t t-call="zue_payroll_self_management_portal.report_certificacion_laboral_portal_document" t-lang="o.employee_id.address_home_id.lang"/>
+                <t t-call="zue_payroll_self_management_portal.report_certificacion_laboral_portal_document" t-lang="o.employee_id.work_contact_id.lang"/>
             </t>
         </template>
 

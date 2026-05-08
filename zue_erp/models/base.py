@@ -1,5 +1,5 @@
 
-from odoo import models, api, registry, fields, _
+from odoo import models, api, fields, _
 import logging
 
 from datetime import datetime, timedelta

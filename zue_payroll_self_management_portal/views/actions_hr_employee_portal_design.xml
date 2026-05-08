@@ -2,26 +2,26 @@
 <odoo>
     <data>
 
-        <!-- ACTIONS TREE,FORM-->
+        <!-- ACTIONS LIST,FORM-->
         <record model="ir.actions.act_window" id="zue_action_hr_employee_portal_design">
             <field name="name">Diseño del Portal</field>
             <field name="res_model">zue.hr.employee.portal.design</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
-        <!-- VISTA TREE -->
+        <!-- VISTA LIST -->
         <record model="ir.ui.view" id="zue_actions_hr_employee_portal_design_list">
             <field name="name">Diseño del portal</field>
             <field name="model">zue.hr.employee.portal.design</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="z_company_design_id"/>
 <!--                    <field name="z_theme"/>-->
                     <field name="z_primary_color"/>
                     <field name="z_background_color"/>
                     <field name="z_secondary_color"/>
                     <field name="z_font"/>
-                </tree>
+                </list>
             </field>
         </record>
 

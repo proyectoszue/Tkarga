@@ -29,25 +29,25 @@ class hr_vacation(models.Model):
     total = fields.Float('Total')
     payslip = fields.Many2one('hr.payslip', 'Liquidación')
     leave_id = fields.Many2one('hr.leave', 'Ausencia')
-    contract_id = fields.Many2one('hr.contract', 'Contrato')
-    rel_contract_date_start = fields.Date(related='contract_id.date_start', store=True)
+    version_id = fields.Many2one('hr.version', 'Contrato')
+    rel_contract_date_start = fields.Date(string='Rel fecha de inicio', store=True)
 
-    def name_get(self):
-        result = []
+    @api.depends('employee_id', 'departure_date', 'return_date')
+    def _compute_display_name(self):
         for record in self:
-            result.append((record.id, "Vacaciones {} del {} al {}".format(record.employee_id.name, str(record.departure_date),str(record.return_date))))
-        return result
+            record.display_name = "Vacaciones {} del {} al {}".format(record.employee_id.name, str(record.departure_date),str(record.return_date))
 
-    @api.model
-    def create(self, vals):
-        if vals.get('employee_identification'):
-            obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('identification_id', '=', vals.get('employee_identification'))])
-            vals['employee_id'] = obj_employee.id
-        if vals.get('employee_id'):
-            obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('id', '=', vals.get('employee_id'))])
-            vals['employee_identification'] = obj_employee.identification_id            
+    @api.model_create_multi
+    def create(self, values_list):
+        for vals in values_list:
+            if vals.get('employee_identification'):
+                obj_employee = self.env['hr.employee'].search([('identification_id', '=', vals.get('employee_identification'))], limit=1)
+                vals['employee_id'] = obj_employee.id
+            if vals.get('employee_id'):
+                obj_employee = self.env['hr.employee'].search([('id', '=', vals.get('employee_id'))], limit=1)
+                vals['employee_identification'] = obj_employee.identification_id
         
-        res = super(hr_vacation, self).create(vals)
+        res = super(hr_vacation, self).create(values_list)
         return res
 
 class hr_vacation_period_caused(models.Model):
@@ -63,6 +63,7 @@ class hr_vacation_period_caused(models.Model):
     z_daily_variable = fields.Float(string='Variable diario')
     z_base = fields.Float(string='Base')
     z_amount = fields.Float(string='Monto a pagar')
+
 
 class hr_payslip_paid_vacation(models.Model):
     _name = 'hr.payslip.paid.vacation'
@@ -110,6 +111,7 @@ class Hr_payslip(models.Model):
     paid_vacation_ids = fields.One2many('hr.payslip.paid.vacation', 'slip_id', string='Vacaciones remuneradas')
     refund_date = fields.Date(string='Fecha reintegro')
     z_vacation_period_caused_ids = fields.One2many('hr.vacation.period.caused', 'z_slip_id', string='Vacaciones con la base del periodo causado en liquidación de contrato')
+    z_vacation_contract_line_skip = fields.Boolean(string='Línea vacaciones contrato omitida por histórico', default=False, copy=False)
 
     def unlink(self):
         for record in self:
@@ -136,6 +138,7 @@ class Hr_payslip(models.Model):
             new_d = min(new_d, 28 if new_m == 2 else (30 if new_m in [4, 6, 9, 11] else 31))
             return datetime(new_y, new_m, new_d).date()
 
+
     #--------------------------------------------------LIQUIDACIÓN DE VACACIONES---------------------------------------------------------#
 
     def _get_payslip_lines_vacation(self,inherit_contrato=0,localdict=None,inherit_nomina=0):
@@ -150,6 +153,8 @@ class Hr_payslip(models.Model):
             return localdict
 
         self.ensure_one()
+        if inherit_contrato != 0:
+            self.z_vacation_contract_line_skip = False
         result = {}
         result_not = {}
         rules_dict = {}
@@ -159,42 +164,20 @@ class Hr_payslip(models.Model):
         round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
 
         employee = self.employee_id
-        contract = self.contract_id
+        version = self.version_id
         year = self.date_from.year
         annual_parameters = self.env['hr.annual.parameters'].search([('year', '=', year)])
 
         #Se obtienen las entradas de trabajo
         date_from = datetime.combine(self.date_from, datetime.min.time())
         date_to = datetime.combine(self.date_to, datetime.max.time())
-        #Primero, encontró una entrada de trabajo que no excedió el intervalo.
-        work_entries = self.env['hr.work.entry'].search(
-            [
-                ('state', 'in', ['validated', 'draft']),
-                ('date_start', '>=', date_from),
-                ('date_stop', '<=', date_to),
-                ('contract_id', '=', contract.id),
-                ('leave_id','!=',False)
-            ]
-        )
-        #En segundo lugar, encontró entradas de trabajo que exceden el intervalo y calculan la duración correcta. 
-        work_entries += self.env['hr.work.entry'].search(
-            [
-                '&', '&',
-                ('state', 'in', ['validated', 'draft']),
-                ('contract_id', '=', contract.id),
-                '|', '|', '&', '&',
-                ('date_start', '>=', date_from),
-                ('date_start', '<', date_to),
-                ('date_stop', '>', date_to),
-                '&', '&',
-                ('date_start', '<', date_from),
-                ('date_stop', '<=', date_to),
-                ('date_stop', '>', date_from),
-                '&',
-                ('date_start', '<', date_from),
-                ('date_stop', '>', date_to),
-            ]
-        )
+        work_entries = self.env['hr.work.entry'].search([
+            ('state', 'in', ['validated', 'draft']),
+            ('date', '>=', date_from),
+            ('date', '<=', date_to),
+            ('version_id', '=', version.id),
+            ('leave_id', '!=', False)
+        ])
         
         initial_accrual_date = False
         final_accrual_date = False
@@ -205,7 +188,7 @@ class Hr_payslip(models.Model):
         leaves_money = []
         leaves = {}
         leave_time_ids = []
-        for leave in work_entries.sorted(key=lambda w:w.date_start):
+        for leave in work_entries.sorted(key=lambda w:w.date):
             leaves = {}
             if leave.leave_id.holiday_status_id.is_vacation and leave.leave_id.id not in leave_time_ids:
                 leave_holidays = leave.leave_id.holidays
@@ -214,10 +197,8 @@ class Hr_payslip(models.Model):
 
                 leaves['IDLEAVE'] = leave.leave_id.id
                 leaves[leave.work_entry_type_id.code] = leave_number_of_days
-                leaves['HOLIDAYS'+leave.work_entry_type_id.code] = leave_holidays
-                leaves['BUSINESS'+leave.work_entry_type_id.code] = leave_business_days
-                leaves['THIRTYONEHOLIDAYS' + leave.work_entry_type_id.code] = leave.leave_id.days_31_holidays
-                leaves['THIRTYONEBUSINESS' + leave.work_entry_type_id.code] = leave.leave_id.days_31_business
+                leaves['HOLIDAYS'+leave.work_entry_type_id.code] = leave_holidays          
+                leaves['BUSINESS'+leave.work_entry_type_id.code] = leave_business_days     
 
                 #Días pertenecientes a la liquidación de nómina
                 if inherit_nomina != 0:
@@ -254,8 +235,8 @@ class Hr_payslip(models.Model):
                     leaves[leave.work_entry_type_id.code] = vac_days_in_payslip
                     leaves['HOLIDAYS' + leave.work_entry_type_id.code] = holidays
                     leaves['BUSINESS' + leave.work_entry_type_id.code] = business_days
-                    leaves['THIRTYONEHOLIDAYS' + leave.work_entry_type_id.code] = days_31_h
-                    leaves['THIRTYONEBUSINESS' + leave.work_entry_type_id.code] = days_31_b
+                    leaves['31HOLIDAYS' + leave.work_entry_type_id.code] = days_31_h
+                    leaves['31BUSINESS' + leave.work_entry_type_id.code] = days_31_b
 
                 leaves_time.append(leaves)
                 leave_time_ids.append(leave.leave_id.id)
@@ -277,7 +258,7 @@ class Hr_payslip(models.Model):
         '''
 
         #Calcular antiguedad del empleado
-        antiquity_employee = relativedelta(fields.Date.today() , contract.date_start).years
+        antiquity_employee = relativedelta(fields.Date.today() , version.contract_date_start).years
 
         if localdict == None:
             localdict = {
@@ -291,7 +272,7 @@ class Hr_payslip(models.Model):
                     'inputs': InputLine(employee.id, inputs_dict, self.env),
                     'leaves':  BrowsableObject(employee.id, leaves, self.env),
                     'employee': employee,
-                    'contract': contract,
+                    'version': version,
                     'annual_parameters': annual_parameters,
                     'antiquity_employee': antiquity_employee,
                     'inherit_contrato':inherit_contrato,
@@ -306,12 +287,14 @@ class Hr_payslip(models.Model):
         
         #Ejecutar las reglas salariales y su respectiva lógica
         for rule in sorted(self.struct_id.rule_ids, key=lambda x: x.sequence):
+            if inherit_contrato != 0 and rule.code in ('VACDISFRUTADAS', 'VACREMUNERADAS'):
+                continue
             localdict.update({
                 'result': None,
                 'result_qty': 1.0,
                 'result_rate': 100})
             if rule._satisfy_condition(localdict):
-                if rule.code in ['VACDISFRUTADAS','VACAC31'] and (self.get_pay_vacations_in_payroll() == False or inherit_nomina!=0):
+                if rule.code == 'VACDISFRUTADAS' and inherit_contrato == 0 and (self.get_pay_vacations_in_payroll() == False or inherit_nomina!=0):
                     initial_accrual_date = False
                     final_accrual_date = False                    
                     for leaves in leaves_time:
@@ -320,9 +303,9 @@ class Hr_payslip(models.Model):
                             obj_leave = self.env['hr.leave'].search([('id', '=', id_leave)])
                             days_vacations = leaves.get('VACDISFRUTADAS',0)
                             days_vacations_business = leaves.get('BUSINESSVACDISFRUTADAS',0)
-                            days_vacations_31_business = leaves.get('THIRTYONEBUSINESSVACDISFRUTADAS',0)
+                            days_vacations_31_business = leaves.get('31BUSINESSVACDISFRUTADAS',0)
                             days_vacations_holidays = leaves.get('HOLIDAYSVACDISFRUTADAS',0)
-                            days_vacations_31_holidays = leaves.get('THIRTYONEHOLIDAYSVACDISFRUTADAS',0)
+                            days_vacations_31_holidays = leaves.get('31HOLIDAYSVACDISFRUTADAS',0)
                         else:
                             id_leave = leaves.get('IDLEAVE')
                             obj_leave = self.env['hr.leave'].search([('id', '=', id_leave)])
@@ -346,20 +329,6 @@ class Hr_payslip(models.Model):
 
                         localdict.update({'leaves':  BrowsableObject(employee.id, leaves, self.env)})
                         amount, qty, rate = rule._compute_rule(localdict)
-                        # Validar que las vacaciones no fueron ya liquidadas
-                        if pay_vacations_in_payroll == False:
-                            obj_exists_payslip_vacation = self.env['hr.vacation'].search([
-                                ('employee_id', '=', self.employee_id.id),
-                                ('contract_id', '=', self.contract_id.id),
-                                ('payslip', '!=', False),
-                                ('leave_id', '=', obj_leave.id)])
-                            if len(obj_exists_payslip_vacation) > 0 and inherit_contrato==0:
-                                qty_history = 0
-                                for history in obj_exists_payslip_vacation:
-                                    qty_history += (history.business_units + history.holiday_units)
-                                if qty_history >= qty:
-                                    amount = 0
-                                    return result.values()
                         amount = round(amount,0) if round_payroll == False else round(amount, 2)#Se redondean los decimales de todas las reglas
                         #check if there is already a rule computed with that code
                         previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
@@ -398,9 +367,9 @@ class Hr_payslip(models.Model):
                                 self.env.cr.execute(query)
                                 result_query = self.env.cr.fetchone()
                                 accrual_date = result_query[0] + timedelta(days=1)
-                                accrual_date = accrual_date if accrual_date >= contract.date_start else contract.date_start
+                                accrual_date = accrual_date if accrual_date >= version.contract_date_start else version.contract_date_start
                             else:
-                                accrual_date = contract.date_start
+                                accrual_date = version.contract_date_start
 
                             #fecha inicial causación
                             initial_accrual_date = accrual_date
@@ -432,18 +401,19 @@ class Hr_payslip(models.Model):
                                 'holiday_units': days_vacations_holidays,
                                 'holiday_31_units': days_vacations_31_holidays,
                                 'salary_rule_id': rule.id,
-                                'contract_id': contract.id,
+                                'version_id': version.id,
                                 'employee_id': employee.id,                        
                                 'amount': amount,
                                 'quantity': qty,
                                 'rate': rate,
+                                'total': self._get_payslip_line_total(amount, qty, rate, rule),
                                 'slip_id': self.id,
                                 #Info vacaciones
                                 'vacation_departure_date': obj_leave.request_date_from,
                                 'vacation_return_date': obj_leave.request_date_to,
                                 'vacation_leave_id': obj_leave.id,
                             }
-                elif rule.code == 'VACREMUNERADAS':
+                elif rule.code == 'VACREMUNERADAS' and inherit_contrato == 0:
                     initial_accrual_date = False
                     final_accrual_date = False                    
                     for leaves in leaves_money:
@@ -494,9 +464,9 @@ class Hr_payslip(models.Model):
                                 self.env.cr.execute(query)
                                 result_query = self.env.cr.fetchone()
                                 accrual_date = result_query[0] + timedelta(days=1)
-                                accrual_date = accrual_date if accrual_date >= contract.date_start else contract.date_start
+                                accrual_date = accrual_date if accrual_date >= version.contract_date_start else version.contract_date_start
                             else:
-                                accrual_date = contract.date_start
+                                accrual_date = version.contract_date_start
 
                             #fecha inicial causación
                             initial_accrual_date = accrual_date
@@ -524,11 +494,12 @@ class Hr_payslip(models.Model):
                                 'final_accrual_date': final_accrual_date,
                                 'amount_base': amount*30,
                                 'salary_rule_id': rule.id,
-                                'contract_id': contract.id,
+                                'version_id': version.id,
                                 'employee_id': employee.id,                        
                                 'amount': amount,
                                 'quantity': qty,
                                 'rate': rate,
+                                'total': self._get_payslip_line_total(amount, qty, rate, rule),
                                 'slip_id': self.id,
                             }
                 else:
@@ -538,26 +509,36 @@ class Hr_payslip(models.Model):
                     final_accrual_date = False
 
                     if rule.code == 'VACCONTRATO' and inherit_contrato != 0:
+                        # En liquidación de contrato no generar línea si el histórico tiene fecha de causación
+                        # posterior a la fecha de liquidación (vacaciones ya cubiertas en liquidación previa)
+                        if self.date_liquidacion:
+                            last_vacation_history = self.env['hr.vacation'].search(
+                                [('employee_id', '=', version.employee_id.id), ('version_id', '=', version.id),
+                                 ('final_accrual_date', '!=', False)],
+                                order='final_accrual_date desc', limit=1)
+                            if (last_vacation_history.final_accrual_date and last_vacation_history.final_accrual_date > self.date_liquidacion):
+                                self.z_vacation_contract_line_skip = True
+                                continue
                         holidays_based_period_caused = employee.company_id.z_holidays_based_period_caused
                         if holidays_based_period_caused:
-                            self.env['hr.vacation.period.caused'].search([('z_slip_id','=',self.id)]).unlink()
+                            self.env['hr.vacation.period.caused'].search([('z_slip_id', '=', self.id)]).unlink()
                             # 1. Obtener fecha final de causacion de vacaciones y/o fecha inicial de contrato
-                            retirement_date = contract.retirement_date
-                            date_vacation = contract.date_start
+                            retirement_date = version.retirement_date
+                            date_vacation = version.contract_date_start
                             if retirement_date == False:
                                 obj_vacation = self.env['hr.vacation'].search(
-                                    [('employee_id', '=', contract.employee_id.id), ('contract_id', '=', contract.id),
+                                    [('employee_id', '=', version.employee_id.id), ('version_id', '=', version.id),
                                      ('final_accrual_date', '<', self.date_liquidacion), ('departure_date', '<=', self.date_liquidacion)])
                             else:
                                 if retirement_date >= self.date_liquidacion:
                                     obj_vacation = self.env['hr.vacation'].search(
-                                        [('employee_id', '=', contract.employee_id.id),
-                                         ('contract_id', '=', contract.id), ('final_accrual_date', '<', self.date_liquidacion),
+                                        [('employee_id', '=', version.employee_id.id),
+                                         ('version_id', '=', version.id), ('final_accrual_date', '<', self.date_liquidacion),
                                          ('departure_date', '<=', self.date_liquidacion)])
                                 else:
                                     obj_vacation = self.env['hr.vacation'].search(
-                                        [('employee_id', '=', contract.employee_id.id),
-                                         ('contract_id', '=', contract.id),
+                                        [('employee_id', '=', version.employee_id.id),
+                                         ('version_id', '=', version.id),
                                          ('final_accrual_date', '<', retirement_date),
                                          ('departure_date', '<=', retirement_date)])
                             if obj_vacation:
@@ -586,7 +567,7 @@ class Hr_payslip(models.Model):
                             qty = 1
                             dias_ausencias = 0
                             for period_caused in lst_period_caused:
-                                wage_period_caused = contract.get_wage_in_date(period_caused[1])
+                                wage_period_caused = version.get_wage_in_date(period_caused[1])
                                 variable_period_caused = Payslips(employee.id, self, self.env).get_accumulated_vacation_money(period_caused[1], period_caused[0])
                                 days_period_caused = self.dias360(period_caused[0], period_caused[1])
                                 dict_period_caused = {
@@ -614,8 +595,8 @@ class Hr_payslip(models.Model):
                             dias_ausencias += sum([i.days for i in self.env['hr.absence.history'].search([('star_date', '>=', self.date_vacaciones), ('end_date', '<=', self.date_liquidacion),('employee_id', '=', self.employee_id.id), ('leave_type_id.unpaid_absences', '=', True)])])
                             dias_liquidacion = dias_trabajados - dias_ausencias
 
-                            if (self.date_liquidacion - contract.date_start).days <= 365:
-                                dias_contract = self.dias360(contract.date_start, self.date_liquidacion)#int((self.date_liquidacion - contract.date_start).days)-1
+                            if (self.date_liquidacion - version.contract_date_start).days <= 365:
+                                dias_contract = self.dias360(version.contract_date_start, self.date_liquidacion)#int((self.date_liquidacion - contract.date_start).days)-1
                                 if dias_contract > 0:
                                     acumulados_promedio = (amount_base/dias_contract)*30 # dias_liquidacion // HISTORIA: Promedio de la base variable no tome ausentismos
                                 else:
@@ -627,12 +608,12 @@ class Hr_payslip(models.Model):
                             # if contract.subcontract_type not in ('obra_parcial', 'obra_integral'):
                             #     wage = contract.wage
                             wage = 0
-                            obj_wage = self.env['hr.contract.change.wage'].search([('contract_id', '=', contract.id), ('date_start', '<', self.date_to)])
+                            obj_wage = self.env['hr.contract.change.wage'].search([('version_id', '=', version.id), ('date_start', '<', self.date_to)])
                             for change in sorted(obj_wage, key=lambda x: x.date_start):  # Obtiene el ultimo salario vigente antes de la fecha de liquidacion
                                 wage = change.wage
 
-                            if contract.subcontract_type not in ('obra_parcial', 'obra_integral'):
-                                wage = contract.wage if wage == 0 else wage
+                            if version.subcontract_type not in ('obra_parcial', 'obra_integral'):
+                                wage = version.wage if wage == 0 else wage
                             else:
                                 wage = 0
 
@@ -666,7 +647,7 @@ class Hr_payslip(models.Model):
                             'name': rule.name,
                             'note': rule.note,
                             'salary_rule_id': rule.id,
-                            'contract_id': contract.id,
+                            'version_id': version.id,
                             'employee_id': employee.id, 
                             'initial_accrual_date': initial_accrual_date,
                             'final_accrual_date': final_accrual_date,
@@ -674,6 +655,7 @@ class Hr_payslip(models.Model):
                             'amount': amount,
                             'quantity': qty,
                             'rate': rate,
+                            'total': self._get_payslip_line_total(amount, qty, rate, rule),
                             'days_unpaid_absences':dias_ausencias,
                             'slip_id': self.id,
                         }

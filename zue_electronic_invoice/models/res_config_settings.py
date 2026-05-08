@@ -9,12 +9,10 @@ class x_responsibilities_rut(models.Model):
     description = fields.Char(string='Descripción', required=True)
     valid_for_fe = fields.Boolean(string='Valido para facturación electrónica')
 
-    def name_get(self):
-        result = []
+    @api.depends('code', 'description')
+    def _compute_display_name(self):
         for record in self:
-            result.append((record.id, "{} | {}".format(record.code, record.description)))
-        return result
-
+            record.display_name = "{} | {}".format(record.code or "", record.description or "")
 class ResPartner(models.Model):
     _inherit = 'res.partner'
     # INFORMACION TRIBUTARIA
@@ -29,8 +27,13 @@ class ResPartner(models.Model):
 class ResCompany(models.Model):
     _inherit = 'res.company'
 
-    zue_electronic_invoice_operator = fields.Selection([('FacturaTech', 'FacturaTech')],
+    zue_electronic_invoice_operator = fields.Selection([('FacturaTech', 'FacturaTech'),
+                                                        ('Infile', 'Infile')],
                                                        string='Operador', default='FacturaTech')
+    zue_electronic_invoice_format = fields.Selection([('xml', 'XML'),
+                                                      ('json', 'JSON')],
+                                                     string='Formato de Documento', default='xml',
+                                                     help='Seleccione el formato que utiliza el operador tecnológico')
     zue_electronic_invoice_username = fields.Char(string='Usuario Proveedor Tecnológico')
     zue_electronic_invoice_password = fields.Char(string='Contraseña Proveedor')
     zue_electronic_invoice_company_id = fields.Char(string='Company ID')
@@ -43,6 +46,7 @@ class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 
     zue_electronic_invoice_operator = fields.Selection(related='company_id.zue_electronic_invoice_operator', string='Operador',readonly=False)
+    zue_electronic_invoice_format = fields.Selection(related='company_id.zue_electronic_invoice_format', string='Formato de Documento', readonly=False)
     zue_electronic_invoice_username = fields.Char(related='company_id.zue_electronic_invoice_username',string='Usuario Proveedor Tecnológico', readonly=False)
     zue_electronic_invoice_password = fields.Char(related='company_id.zue_electronic_invoice_password',string='Contraseña Proveedor', readonly=False)
     zue_electronic_invoice_company_id = fields.Char(related='company_id.zue_electronic_invoice_company_id',string='Company ID', readonly=False)

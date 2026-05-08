@@ -26,11 +26,11 @@
                                                 <br/><br/>
                                             </t>
                                             <b>
-                                                <t t-esc="emp.address_home_id.x_first_lastname"/>
-                                                <t t-esc="emp.address_home_id.x_second_lastname"/>
+                                                <t t-esc="emp.work_contact_id.x_first_lastname"/>
+                                                <t t-esc="emp.work_contact_id.x_second_lastname"/>
                                                 <br/>
-                                                <t t-esc="emp.address_home_id.x_first_name"/>
-                                                <t t-esc="emp.address_home_id.x_second_name"/>
+                                                <t t-esc="emp.work_contact_id.x_first_name"/>
+                                                <t t-esc="emp.work_contact_id.x_second_name"/>
                                             </b>
                                             <br/>
                                             <t t-esc="str(emp.job_id.name).upper()"/>
@@ -40,7 +40,7 @@
                                             <br/>
                                             RH.
                                             <t t-esc="emp.get_name_rh()"/>&#160;&#160;&#160;&#160;&#160;&#160;
-                                            <t t-esc="emp.contract_id.date_start"/>
+                                            <t t-esc="emp.version_id.date_start"/>
                                             <br/>
                                             <t t-esc="emp.branch_id.name"/>
                                         </div>
@@ -63,14 +63,14 @@
                                                 <br/><br/>
                                             </t>
                                             <b>
-                                                <t t-esc="emp.address_home_id.x_first_name"/>
+                                                <t t-esc="emp.work_contact_id.x_first_name"/>
                                             </b>
                                             <b>
-                                                <t t-esc="emp.address_home_id.x_second_name"/>
+                                                <t t-esc="emp.work_contact_id.x_second_name"/>
                                             </b>
                                             <br/>
-                                            <t t-esc="emp.address_home_id.x_first_lastname"/>
-                                            <t t-esc="emp.address_home_id.x_second_lastname"/>
+                                            <t t-esc="emp.work_contact_id.x_first_lastname"/>
+                                            <t t-esc="emp.work_contact_id.x_second_lastname"/>
                                             <br/>
                                             <t t-esc="emp.get_name_type_document()"/>:
                                             <t t-esc="emp.partner_encab_id.vat"/>

@@ -16,7 +16,8 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'ZuePayroll ManagementPortal',
-    "version": "15.0.1.0.0",
+    "version": "19.0.1.0.0",
+    'icon': '/zue_payroll_self_management_portal/static/description/icon.png',
 
     # any module necessary for this one to work correctly
     'depends': ['base','website','zue_hr_employee','zue_hr_payroll','zue_hr_social_security','zue_documents'],
@@ -26,7 +27,7 @@
         'views/index.xml',
         #'views/res_users.xml',
         'views/payroll_vouchers.xml',
-        'views/update_personal_data.xml',
+        # 'views/update_personal_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
         'views/curriculum_vitae.xml',
         'views/labor_certification.xml',
         'views/application_permit.xml',
@@ -50,7 +51,7 @@
     'assets': {
         'web.assets_frontend': [
             'zue_payroll_self_management_portal/static/src/css/main.css',
-            'zue_payroll_self_management_portal/static/src/js/application_permit.js'
+            # 'zue_payroll_self_management_portal/static/src/js/application_permit.js'
         ]
     },
     'bootstrap': True,

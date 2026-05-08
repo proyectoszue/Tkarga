@@ -12,7 +12,7 @@ class hr_types_employee(models.Model):
     code = fields.Char('Código',required=True)
     name = fields.Char('Nombre',required=True)
 
-    _sql_constraints = [('change_code_uniq', 'unique(code)', 'Ya existe un tipo de empleado con este código, por favor verificar')]
+    _change_code_uniq = models.Constraint('unique(code)', 'Ya existe un tipo de empleado con este código, por favor verificar')
 
 #Tabla de tiesgos profesionales
 class hr_contract_risk(models.Model):
@@ -24,7 +24,7 @@ class hr_contract_risk(models.Model):
     percent = fields.Float('Porcentaje', required=True, help='porcentaje del riesgo profesional')
     date = fields.Date('Fecha vigencia')
 
-    _sql_constraints = [('change_code_uniq', 'unique(code)', 'Ya existe un riesgo con este código, por favor verificar')]         
+    _change_code_uniq = models.Constraint('unique(code)', 'Ya existe un riesgo con este código, por favor verificar')
 
 class zue_economic_activity_level_risk(models.Model):
     _name = 'zue.economic.activity.level.risk'
@@ -35,19 +35,18 @@ class zue_economic_activity_level_risk(models.Model):
     z_code = fields.Char('Código', required=True)
     name = fields.Char('Descripción', required=True)
 
-    _sql_constraints = [('economic_activity_level_risk_uniq', 'unique(z_risk_class_id,z_code_ciiu_id,z_code)', 'Ya existe un riesgo con este código, por favor verificar')]
+    _economic_activity_level_risk_uniq = models.Constraint('unique(z_risk_class_id,z_code_ciiu_id,z_code)', 'Ya existe un riesgo con este código, por favor verificar')
 
-    def name_get(self):
-        result = []
+    @api.depends('z_risk_class_id','z_code_ciiu_id','z_code','name')
+    def _compute_display_name(self):
         for record in self:
-            result.append((record.id, "{}{}{} | {}".format(record.z_risk_class_id.code, record.z_code_ciiu_id.code, record.z_code, record.name)))
-        return result
+            record.display_name = "{}{}{} | {}".format(record.z_risk_class_id.code, record.z_code_ciiu_id.code, record.z_code, record.name)
 
 #Tabla tipos de entidades
 class hr_contrib_register(models.Model):
     _name = 'hr.contribution.register'
     _description = 'Tipo de Entidades'
-    
+
     name = fields.Char('Nombre', required=True)
     type_entities = fields.Selection([('none', 'No aplica'),
                              ('eps', 'Entidad promotora de salud'),
@@ -61,7 +60,7 @@ class hr_contrib_register(models.Model):
                              ('subsistencia', 'Fondo de subsistencia')], 'Tipo', required=True)
     note = fields.Text('Description')
 
-    _sql_constraints = [('change_name_uniq', 'unique(name)', 'Ya existe un tipo de entidad con este nombre, por favor verificar')]         
+    _change_name_uniq = models.Constraint('unique(name)', 'Ya existe un tipo de entidad con este nombre, por favor verificar')
 
 #Tabla de entidades
 class hr_employee_entities(models.Model):
@@ -69,8 +68,8 @@ class hr_employee_entities(models.Model):
     _description = 'Entidades empleados'
 
     partner_id = fields.Many2one('res.partner', 'Entidad', help='Entidad relacionada', required=True)
-    name = fields.Char(related="partner_id.name", readonly=True,string="Nombre")
-    business_name = fields.Char(related="partner_id.x_business_name", readonly=True,string="Nombre de negocio")
+    name = fields.Char(related="partner_id.name",string="Nombre")
+    business_name = fields.Char(string="Nombre de negocio")
     types_entities = fields.Many2many('hr.contribution.register',string='Tipo de entidad')
     code_pila_eps = fields.Char('Código PILA')
     code_pila_ccf = fields.Char('Código PILA para CCF')
@@ -80,29 +79,28 @@ class hr_employee_entities(models.Model):
                              ('nacional', 'Orden Nacional')], 'Orden de la entidad')
     z_pension_transitional_regime = fields.Boolean('Fondo de pensiones régimen de transición')
 
-    _sql_constraints = [('change_partner_uniq', 'unique(partner_id)', 'Ya existe una entidad asociada a este tercero, por favor verificar')]         
+    _change_partner_uniq = models.Constraint('unique(partner_id)', 'Ya existe una entidad asociada a este tercero, por favor verificar')
 
-    def name_get(self):
-        result = []
+    @api.depends('partner_id')
+    def _compute_display_name(self):
         for record in self:
-            if record.partner_id.x_business_name: 
-                result.append((record.id, "{}".format(record.partner_id.x_business_name)))
-            else: 
-                result.append((record.id, "{}".format(record.partner_id.name)))
-        return result
+            if record.business_name:
+                record.display_name = "{}".format(record.business_name)
+            else:
+                record.display_name = "{}".format(record.name)
 
 #Categorias reglas salariales herencia
 
 class hr_categories_salary_rules(models.Model):
     _inherit = 'hr.salary.rule.category'
-    
+
     group_payroll_voucher = fields.Boolean('Agrupar comprobante de nómina')
     sequence = fields.Integer('Secuencia', default=0)
 
 #Contabilización reglas salariales
 class hr_salary_rule_accounting(models.Model):
     _name ='hr.salary.rule.accounting'
-    _description = 'Contabilización reglas salariales'    
+    _description = 'Contabilización reglas salariales'
 
     salary_rule = fields.Many2one('hr.salary.rule', string = 'Regla salarial')
     department = fields.Many2one('hr.department', string = 'Departamento')
@@ -121,6 +119,8 @@ class hr_salary_rule_accounting(models.Model):
 class hr_payroll_structure(models.Model):
     _inherit = 'hr.payroll.structure'
 
+    name = fields.Char(required=False)
+    type_id = fields.Many2one('hr.payroll.structure.type', required=False)
     process = fields.Selection([('nomina', 'Nómina'),
                                 ('vacaciones', 'Vacaciones'),
                                 ('prima', 'Prima'),

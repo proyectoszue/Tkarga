@@ -96,7 +96,7 @@ class zue_work_income_and_pensions(models.TransientModel):
         date_end = date_end.date()
 
         # Obtener empleados
-        ids_employees = self.env['hr.payslip'].search([('state', '=', 'done'),('date_from', '>=', date_start), ('date_from', '<=', date_end)]).employee_id.ids
+        ids_employees = self.env['hr.payslip'].search([('state', '=', 'validated'),('date_from', '>=', date_start), ('date_from', '<=', date_end)]).employee_id.ids
 
         obj_employee = self.env['hr.employee'].search([('id','in',ids_employees)])
 
@@ -108,7 +108,7 @@ class zue_work_income_and_pensions(models.TransientModel):
         for employee in obj_employee:
             sheet.write(aument_rows, 1, 1, cell_content_format) # Entidad Informante
             # Obtener valores del campo selection tipo de documento
-            document_type = dict(employee.partner_encab_id._fields['x_document_type'].selection).get(employee.partner_encab_id.x_document_type)
+            document_type = employee.partner_encab_id.l10n_latam_identification_type_id.z_code_dian
             sheet.write(aument_rows, 2, document_type, cell_content_format) # Tipo de documento del beneficiario
             sheet.write(aument_rows, 3, employee.partner_encab_id.vat if employee.partner_encab_id.vat else '', cell_content_format) # Número de identificación del beneficiario
             sheet.write(aument_rows, 4, employee.partner_encab_id.x_first_lastname if employee.partner_encab_id.x_first_lastname else '', cell_content_format) # Primer Apellido del beneficiario
@@ -117,12 +117,12 @@ class zue_work_income_and_pensions(models.TransientModel):
             sheet.write(aument_rows, 7, employee.partner_encab_id.x_second_name if employee.partner_encab_id.x_second_name else '', cell_content_format) # Otros nombres del beneficiario
             sheet.write(aument_rows, 8, employee.partner_encab_id.street if employee.partner_encab_id.street else '', cell_content_format) # Dirección del beneficiario
             sheet.write(aument_rows, 9, employee.partner_encab_id.state_id.name if employee.partner_encab_id.state_id.name else '', cell_content_format) # Depto del beneficiario
-            sheet.write(aument_rows, 10, employee.partner_encab_id.x_city.name if employee.partner_encab_id.x_city.name else '', cell_content_format) # Municipio beneficiario
+            sheet.write(aument_rows, 10, employee.partner_encab_id.city_id.name if employee.partner_encab_id.city_id.name else '', cell_content_format) # Municipio beneficiario
             sheet.write(aument_rows, 11, employee.partner_encab_id.country_id.name if employee.partner_encab_id.country_id.name else '', cell_content_format) # País del beneficiario
 
             # Obtener nóminas del empleado
             obj_payslip = self.env['hr.payslip'].search(
-                [('state', '=', 'done'), ('employee_id', '=', employee.id),
+                [('state', '=', 'validated'), ('employee_id', '=', employee.id),
                  ('date_from', '>=', date_start), ('date_from', '<=', date_end)])
 
             # Recorrer configuración
