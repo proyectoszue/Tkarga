@@ -18,7 +18,7 @@
 
     'depends': ['base','base_vat', 'base_address_extended','l10n_latam_base', 'l10n_co','contacts','zue_xml_generator','zue_request_ws'],
 
-    # always loaded
+    # always loaded refresh
     'data': [
         'security/ir.model.access.csv',
         # 'data/zue_ciiu_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
