@@ -239,6 +239,7 @@ class ResPartner(models.Model):
                 domain = [
                     ('x_type_thirdparty', 'in', [1, 3]),
                     ('vat', '=', record.vat),
+                    '|', ('company_id', '=', False),
                     ('company_id', '=', company_id),
                     ('id', '!=', record.id),
                 ]
@@ -272,7 +273,8 @@ class ResPartner(models.Model):
             user_create = ''
             if record.vat:
                 company_id = record.company_id.id or self.env.company.id
-                obj = self.search([('is_company', '=', True), ('vat', '=', record.vat), ('company_id', '=', company_id)])
+                company_domain = ['|', ('company_id', '=', False), ('company_id', '=', company_id)]
+                obj = self.search([('is_company', '=', True), ('vat', '=', record.vat)] + company_domain)
                 if obj:
                     for tercer in obj:
                         cant_vat = cant_vat + 1
@@ -280,7 +282,7 @@ class ResPartner(models.Model):
                             name_tercer = tercer.name
                             user_create = tercer.create_uid.name
 
-                objArchivado = self.search([('is_company', '=', True), ('vat', '=', record.vat), ('active', '=', False),('company_id', '=', company_id)])
+                objArchivado = self.search([('is_company', '=', True), ('vat', '=', record.vat), ('active', '=', False)] + company_domain)
                 if objArchivado:
                     for tercer in objArchivado:
                         cant_vat_archivado = cant_vat_archivado + 1
@@ -288,7 +290,7 @@ class ResPartner(models.Model):
                             name_tercer = tercer.name
                             user_create = tercer.create_uid.name
 
-                obj_ind = self.search([('is_company', '=', False), ('vat', '=', record.vat), ('company_id', '=', company_id)])
+                obj_ind = self.search([('is_company', '=', False), ('vat', '=', record.vat)] + company_domain)
                 if obj_ind:
                     for tercer in obj_ind:
                         if tercer.parent_id.vat != record.vat:
@@ -297,7 +299,7 @@ class ResPartner(models.Model):
                                 name_tercer = tercer.name
                                 user_create = tercer.create_uid.name
 
-                objArchivado_ind = self.search([('is_company', '=', False), ('vat', '=', record.vat), ('active', '=', False),('company_id', '=', company_id)])
+                objArchivado_ind = self.search([('is_company', '=', False), ('vat', '=', record.vat), ('active', '=', False)] + company_domain)
                 if objArchivado_ind:
                     for tercer in objArchivado_ind:
                         if tercer.parent_id.vat != record.vat:
