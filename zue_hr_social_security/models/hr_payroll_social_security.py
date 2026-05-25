@@ -197,11 +197,18 @@ class hr_payroll_social_security(models.Model):
 
                         leave_list = []
                         leave_time_ids = []
+                        leave_source_ids = []
+                        retirement_reference_date = obj_version.retirement_date if obj_version.retirement_date and date_start <= obj_version.retirement_date <= date_end else False
                         for leave in work_entries:
                             if leave.leave_id.id not in leave_time_ids:
                                 #Obtener fechas y dias
                                 request_date_from = leave.leave_id.request_date_from if leave.leave_id.request_date_from >= date_start else date_start
                                 request_date_to = leave.leave_id.request_date_to if leave.leave_id.request_date_to <= date_end else date_end
+                                # Si existe retiro dentro del periodo, reportar ausencias hasta el día anterior al retiro
+                                if retirement_reference_date and request_date_to >= retirement_reference_date:
+                                    request_date_to = retirement_reference_date + relativedelta(days=-1)
+                                if request_date_from > request_date_to:
+                                    continue
                                 if request_date_from.month == 2 and request_date_to.month == 2:
                                     number_of_days = (request_date_to-request_date_from).days + 1
                                 else:
@@ -216,8 +223,46 @@ class hr_payroll_social_security(models.Model):
                                             }
                                 leave_list.append(leave_dict)
                                 leave_time_ids.append(leave.leave_id.id)
+                                leave_source_ids.append(leave.leave_id.id)
+
+                        # Si no existen work entries de ausencias para el periodo, completar desde hr.leave
+                        obj_leave = self.env['hr.leave'].search([
+                            ('employee_id', '=', employee.id),
+                            ('state', '=', 'validate'),
+                            ('request_date_from', '<=', date_end),
+                            ('request_date_to', '>=', date_start),
+                        ])
+                        for leave in obj_leave:
+                            if leave.id in leave_source_ids:
+                                continue
+                            request_date_from = leave.request_date_from if leave.request_date_from >= date_start else date_start
+                            request_date_to = leave.request_date_to if leave.request_date_to <= date_end else date_end
+                            # Si existe retiro dentro del periodo, reportar ausencias hasta el día anterior al retiro
+                            if retirement_reference_date and request_date_to >= retirement_reference_date:
+                                request_date_to = retirement_reference_date + relativedelta(days=-1)
+                            if request_date_from > request_date_to:
+                                continue
+                            if self.month == '2' and request_date_from.month == 2 and request_date_to.month == 2:
+                                number_of_days = self.dias360(request_date_from, request_date_to)
+                            elif request_date_from.month == 2 and request_date_to.month == 2:
+                                number_of_days = (request_date_to-request_date_from).days + 1
+                            else:
+                                number_of_days = self.dias360(request_date_from, request_date_to)
+
+                            leave_dict = {'id':leave.id,
+                                            'type':leave.holiday_status_id.code,
+                                            'date_start': request_date_from,
+                                            'date_end': request_date_to,
+                                            'days': number_of_days,
+                                            'days_totals': leave.number_of_days
+                                        }
+                            leave_list.append(leave_dict)
+                            leave_source_ids.append(leave.id)
 
                         cant_payslip = 0
+                        extra_time_code_prefixes = ('HEY', 'HED')
+                        extra_time_found = False
+                        extra_time_reference_date = False
                         for payslip in obj_payslip:
                             #Variables
                             cant_payslip += 1
@@ -245,6 +290,13 @@ class hr_payroll_social_security(models.Model):
                             #        nNumeroHorasLaboradas = round(sum(o.days_actually_worked for o in obj_overtime)*8)#round(sum(o.shift_hours for o in obj_overtime))
                             #Obtener valores
                             for line in payslip.line_ids:
+                                is_extra_time_line = line.code and line.code.startswith(extra_time_code_prefixes) and line.total
+                                if is_extra_time_line:
+                                    extra_time_found = True
+                                    if line.date_from:
+                                        ref_date = line.date_from if line.date_from >= date_start else date_start
+                                        if not extra_time_reference_date or ref_date < extra_time_reference_date:
+                                            extra_time_reference_date = ref_date
                                 #Bases seguridad social
                                 if line.salary_rule_id.base_seguridad_social:
                                     dict_social_security['BaseSeguridadSocial'].dict['TOTAL'] = dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL', 0) + line.total
@@ -358,6 +410,28 @@ class hr_payroll_social_security(models.Model):
                                     if line.salary_rule_id.category_id.code == 'VNS' or line.salary_rule_id.code == 'AUX000':
                                         dict_social_security['BaseSeguridadSocialMesAnterior'].dict['DEV_NO_SALARIAL'] = dict_social_security['BaseSeguridadSocialMesAnterior'].dict.get('DEV_NO_SALARIAL',0) - line.total
                         if cant_payslip > 0 and obj_tipo_coti.code != '51': # Proceso para tipos de cotizante diferente a 51 - Trabajador de Tiempo Parcial
+                            # Vacaciones periodo completo + tiempo extra: crear 1 día laborado para reportar valores adicionales
+                            if extra_time_found and nDiasLiquidados == 0:
+                                vacation_leaves = sorted([l for l in leave_list if l.get('type') == 'VACDISFRUTADAS' and l.get('days', 0) > 0], key=lambda x: x.get('date_start'))
+                                total_vacation_days = sum([l.get('days', 0) for l in vacation_leaves])
+                                if vacation_leaves and total_vacation_days >= 30:
+                                    leave_to_reduce = vacation_leaves[0]
+                                    if extra_time_reference_date:
+                                        matching_leave = next(
+                                            (
+                                                vac_leave for vac_leave in vacation_leaves
+                                                if vac_leave.get('date_start') and vac_leave.get('date_end')
+                                                and vac_leave['date_start'] <= extra_time_reference_date <= vac_leave['date_end']
+                                            ),
+                                            False
+                                        )
+                                        leave_to_reduce = matching_leave or leave_to_reduce
+                                    # Mantener al menos 1 día en el tramo para no invalidar la novedad
+                                    if leave_to_reduce.get('days', 0) >= 2:
+                                        leave_to_reduce['days'] = leave_to_reduce['days'] - 1
+                                        nDiasLiquidados = 1
+                                        nNumeroHorasLaboradas = annual_parameters.hours_daily
+
                             #Validar que la suma de los dias sea igual a 30 y en caso de se superior restar en los dias liquidados la diferencia
                             nDiasTotales = nDiasLiquidados
                             nDiasRetiro = 0 # Historia: Ajuste seguridad social unidades laboradas
