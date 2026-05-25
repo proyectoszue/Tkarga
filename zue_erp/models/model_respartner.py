@@ -279,16 +279,16 @@ class ResPartner(models.Model):
                     for tercer in obj:
                         cant_vat = cant_vat + 1
                         if tercer.id != record.id:
-                            name_tercer = tercer.name
-                            user_create = tercer.create_uid.name
+                            name_tercer = tercer.name or ''
+                            user_create = tercer.create_uid.name or ''
 
                 objArchivado = self.search([('is_company', '=', True), ('vat', '=', record.vat), ('active', '=', False)] + company_domain)
                 if objArchivado:
                     for tercer in objArchivado:
                         cant_vat_archivado = cant_vat_archivado + 1
                         if tercer.id != record.id:
-                            name_tercer = tercer.name
-                            user_create = tercer.create_uid.name
+                            name_tercer = tercer.name or ''
+                            user_create = tercer.create_uid.name or ''
 
                 obj_ind = self.search([('is_company', '=', False), ('vat', '=', record.vat)] + company_domain)
                 if obj_ind:
@@ -296,8 +296,8 @@ class ResPartner(models.Model):
                         if tercer.parent_id.vat != record.vat:
                             cant_vat_ind = cant_vat_ind + 1
                             if tercer.id != record.id:
-                                name_tercer = tercer.name
-                                user_create = tercer.create_uid.name
+                                name_tercer = tercer.name or ''
+                                user_create = tercer.create_uid.name or ''
 
                 objArchivado_ind = self.search([('is_company', '=', False), ('vat', '=', record.vat), ('active', '=', False)] + company_domain)
                 if objArchivado_ind:
@@ -305,8 +305,8 @@ class ResPartner(models.Model):
                         if tercer.parent_id.vat != record.vat:
                             cant_vat_archivado_ind = cant_vat_archivado_ind + 1
                             if tercer.id != record.id:
-                                name_tercer = tercer.name
-                                user_create = tercer.create_uid.name
+                                name_tercer = tercer.name or ''
+                                user_create = tercer.create_uid.name or ''
             if cant_vat > 1:
                 raise ValidationError(_('Ya existe un Cliente ('+name_tercer+') con este número de NIT creado por '+user_create+'.'))                
             if cant_vat_archivado > 1:
