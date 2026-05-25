@@ -8,7 +8,6 @@
 			<field name="arch" type="xml">                
 				<xpath expr="//field[@name='currency_id']" position="after">					
 					<field name="accounting_class"/>	
-<!--                    <field name="required_analytic_account"/>-->
 <!--                    <field name="required_partner" />-->
 					<field name="exclude_balance_test"/>
 					<field name="z_not_disaggregate_partner_balance_test"/>

@@ -36,5 +36,17 @@
                 </xpath>
             </field>
         </record>
+
+        <record id="view_zue_account_product_category" model="ir.ui.view">
+            <field name="name">zue.account.product.category</field>
+            <field name="model">product.category</field>
+            <field name="priority">70</field>
+            <field name="inherit_id" ref="account.view_category_property_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='property_account_income_categ_id']" position="after">
+                    <field name="z_income_return_account"/>
+                </xpath>
+            </field>
+        </record>
     </data>
 </odoo>

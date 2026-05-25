@@ -17,7 +17,6 @@ class account_account(models.Model):
     _inherit = 'account.account'
     #_inherit = ['account.account','mail.thread', 'mail.activity.mixin'] // EN V18 YA LO HEREDA ODOO
 
-    required_analytic_account = fields.Boolean('Obliga cuenta analítica', tracking=True)
     required_partner = fields.Boolean('Obliga tercero', tracking=True)
     accounting_class = fields.Char('Clase', tracking=True)
     exclude_balance_test = fields.Boolean('Permitir filtro de excluir en balance de prueba', tracking=True)

@@ -8,7 +8,6 @@ class account_move_line(models.Model):
     tax_id = fields.Many2many(related='tax_ids', string="Impuestos")
     type_doc_partner = fields.Char(string='NIT Asociado', store=True)
     supplier_invoice_number = fields.Char(related='move_id.supplier_invoice_number',string='No. de factura del proveedor')
-    required_analytic_account = fields.Boolean(related='account_id.required_analytic_account', string="Obliga cuenta analítica")
     required_partner = fields.Boolean(related='account_id.required_partner', string="Obliga tercero")
     accounting_class = fields.Char(string='Clase', store=True, related='account_id.accounting_class')
     account_group_id = fields.Many2one(related='account_id.group_id', string='Grupo Cuenta', store=True)

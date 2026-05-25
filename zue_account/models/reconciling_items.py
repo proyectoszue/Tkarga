@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import inspect
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 from datetime import datetime, timedelta, date
@@ -285,6 +286,20 @@ class SequenceMixin(models.AbstractModel):
     """
 
     _inherit = 'sequence.mixin'
+
+    def _get_last_sequence(self, relaxed=False, with_prefix=None, lock=True):
+        if not isinstance(self.id, int):
+            return False
+        parent = super()._get_last_sequence
+        sig = inspect.signature(parent)
+        kwargs = {}
+        if 'relaxed' in sig.parameters:
+            kwargs['relaxed'] = relaxed
+        if 'with_prefix' in sig.parameters:
+            kwargs['with_prefix'] = with_prefix
+        if 'lock' in sig.parameters:
+            kwargs['lock'] = lock
+        return parent(**kwargs)
 
     def _constrains_date_sequence(self):
         # Make it possible to bypass the constraint to allow edition of already messed up documents.

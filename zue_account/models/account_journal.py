@@ -39,10 +39,10 @@ class ProductTemplate(models.Model):
     _inherit = "product.template"
 
     z_income_return_account = fields.Many2one('account.account',string='Cuenta devolución de ingresos') # DEJAR ESTE CAMPO SI NO ES MULTICOMPAÑIA ERRORES JSONB
-    #z_income_return_account = fields.Many2one('account.account', string='Cuenta devolución de ingresos', company_dependent=True, copy=False, check_company=True)
+    # z_income_return_account = fields.Many2one('account.account', string='Cuenta devolución de ingresos', company_dependent=True, copy=False, check_company=True) DEJAR ESTE CAMPO SI ES MULTICOMPAÑIA
 
     z_account_analytic_id = fields.Many2one('account.analytic.account', string='Cuenta analitica', tracking=True,) # DEJAR ESTE CAMPO SI NO ES MULTICOMPAÑIA ERRORES JSONB
-    #z_account_analytic_id = fields.Many2one('account.analytic.account', string='Cuenta analitica', company_dependent=True, tracking=True,)
+    # z_account_analytic_id = fields.Many2one('account.analytic.account', string='Cuenta analitica', company_dependent=True, tracking=True,)
 
     @api.constrains('z_account_analytic_id', 'company_id')
     def _check_z_account_analytic_company(self):
@@ -116,6 +116,12 @@ class ProductTemplate(models.Model):
         return res
 
 
+class ProductCategory(models.Model):
+    _inherit = "product.category"
+
+    z_income_return_account = fields.Many2one('account.account', string='Cuenta devolución de ingresos', company_dependent=True, copy=False, check_company=True)
+
+
 class ProductProduct(models.Model):
     _inherit = 'product.product'
 
@@ -129,31 +135,45 @@ class ProductProduct(models.Model):
 class account_move(models.Model):
     _inherit = 'account.move'
 
+    def _z_get_income_return_account(self, line):
+        product = line.product_id
+        if not product:
+            return False
+        category_account = product.product_tmpl_id.categ_id.z_income_return_account
+        if category_account:
+            return category_account
+        return product.product_tmpl_id.z_income_return_account
+
+    def _z_apply_income_return_accounts_for_refund(self):
+        """En notas crédito, sustituye cuentas de ingreso por la cuenta de devolución configurada.
+
+        Al cambiar ``account_id``, Odoo puede recrear líneas; se aplica un cambio por vuelta,
+        se invalida ``line_ids`` y se repite hasta que no quede ninguna corrección pendiente.
+        """
+        income_types = ('income', 'income_other')
+        for move in self:
+            if move.move_type not in ('out_refund', 'in_refund'):
+                continue
+            pending = True
+            while pending:
+                pending = False
+                move.invalidate_recordset(['line_ids'])
+                for line in move.line_ids:
+                    if not line.product_id or not line.account_id:
+                        continue
+                    if line.account_id.account_type not in income_types:
+                        continue
+                    return_acc = move._z_get_income_return_account(line)
+                    if return_acc and line.account_id != return_acc:
+                        line.write({'account_id': return_acc.id})
+                        pending = True
+                        break
+
     z_delay_days = fields.Integer(string='Días retraso factura', compute='_z_delay_days')
 
     @api.model_create_multi
     def create(self, values_list):
-        invoice = super(account_move, self).create(values_list)
-
-        for lines in invoice.line_ids:
-            if lines.move_id.move_type in ['out_refund', 'in_refund']:
-
-                if lines.product_id.product_tmpl_id.z_income_return_account and lines.account_id.account_type == 'Income':
-                    lines.account_id = lines.product_id.product_tmpl_id.z_income_return_account.id
-
-        return invoice
-
-
-class AccountMoveReversal(models.TransientModel):
-    _inherit = "account.move.reversal"
-
-    def reverse_moves(self, is_modify=False):
-        obj_reversal = super(AccountMoveReversal, self).reverse_moves(is_modify=is_modify)
-
-        if 'res_id' in obj_reversal:
-            obj_lines = self.env['account.move.line'].search([('move_id', '=', obj_reversal['res_id']), ('product_id', '!=', False), ('product_id.product_tmpl_id.z_income_return_account', '!=', False)])
-
-            for lines in obj_lines:
-                if lines.move_id.move_type in ['out_refund', 'in_refund']:
-                    if lines.product_id.product_tmpl_id.z_income_return_account and lines.account_id.account_type == 'Income':
-                        lines.account_id = lines.product_id.product_tmpl_id.z_income_return_account.id
+        # standard Odoo version "19"
+        invoices = super().create(values_list)
+        invoices.filtered(lambda m: m.move_type in ('out_refund', 'in_refund'))._z_apply_income_return_accounts_for_refund()
+        return invoices

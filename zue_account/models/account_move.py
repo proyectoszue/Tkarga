@@ -67,39 +67,6 @@ class account_move(models.Model):
 
             record.tax_base_amount = tax_base_amount
 
-    @api.constrains('line_ids','invoice_line_ids')
-    def _check_line_ids(self):
-        for record in self:
-            # Permitir generar cierre anual sin distribución analítica.
-            if record.accounting_closing_id:
-                continue
-
-            for lines in record.line_ids:
-                # if lines.required_partner and not lines.partner_id:
-                    # raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga un tercero y este no ha sido digitado. Por favor verifique!'))
-
-                if 'stock_move_id' in self.env['account.move']._fields:
-                    if lines.required_analytic_account and not lines.analytic_distribution and not record.stock_move_id.picking_id:
-                        if lines.price_total > 0:
-                            raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
-                else:
-                    if lines.required_analytic_account and not lines.analytic_distribution:
-                        if lines.price_total > 0:
-                            raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
-
-            # for lines in record.invoice_line_ids:
-            #     if lines.required_partner and not lines.partner_id:
-            #         raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga un tercero y este no ha sido digitado. Por favor verifique!'))
-
-                if 'stock_move_id' in self.env['account.move']._fields:
-                    if lines.required_analytic_account and not lines.analytic_distribution and not record.stock_move_id.picking_id:
-                        if lines.price_total > 0:
-                            raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
-                else:
-                    if lines.required_analytic_account and not lines.analytic_distribution:
-                        if lines.price_total > 0:
-                            raise ValidationError(_(str(lines.ref)+' - La cuenta "' + lines.account_id.name + '" obliga cuenta analítica y esta no ha sido digitada. Por favor verifique!'))
-
     # @api.constrains('supplier_invoice_number')
     # def _check_supplier_invoice(self):
     #     for record in self:

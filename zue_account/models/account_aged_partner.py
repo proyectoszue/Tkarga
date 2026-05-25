@@ -10,7 +10,6 @@ from odoo.tools.misc import format_date
 from dateutil.relativedelta import relativedelta
 from itertools import chain
 
-# SE HEREDA EL CODIGO DE ODOO PARA AGREGAR LOS CAMPOS DE N° FACTURA, DIARIO Y CLIENTE
 class AgedPartnerBalanceCustomHandler(models.AbstractModel):
     _inherit = 'account.aged.partner.balance.report.handler'
 
