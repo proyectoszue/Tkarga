@@ -86,10 +86,10 @@
                         <field name="operacion_reemplazo" invisible="not operacion_retirar"/>
                     </group>
                 </xpath>
-                <xpath expr="//field[@name='visa_no']" position="before">
+                <xpath expr="//field[@name='has_work_permit']" position="before">
                     <field name="sabado"/>
                     <field name="z_military_passbook"/>
-                    <field name='licencia_rh'/>
+                    <field name="licencia_rh"/>
                 </xpath>
                 <xpath expr="//field[@name='birthday']" position="after">
                     <field name="z_employee_age"/>
