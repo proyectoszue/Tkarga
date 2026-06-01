@@ -27,7 +27,7 @@
         'views/index.xml',
         #'views/res_users.xml',
         'views/payroll_vouchers.xml',
-        # 'views/update_personal_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
+        'views/update_personal_data.xml',
         'views/curriculum_vitae.xml',
         'views/labor_certification.xml',
         'views/application_permit.xml',
