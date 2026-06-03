@@ -63,7 +63,7 @@
                                     <b>Salario básico:</b>
                                 </td>
                                 <td style="border:none;">
-                                    <span t-esc="o.employee_id.version_id.wage"
+                                    <span t-esc="o.version_id.get_wage_in_date(o.date_to)"
                                           t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
                                 </td>
                                 <td style="border:none;">
@@ -78,7 +78,7 @@
                                     <b>Cargo:</b>
                                 </td>
                                 <td style="border:none;">
-                                    <span t-field="o.employee_id.job_id"/>
+                                    <span t-esc="o.version_id.get_job_in_date(o.date_to).name"/>
                                 </td>
                                 <td style="border:none;">
                                     <b>Referencia:</b>
