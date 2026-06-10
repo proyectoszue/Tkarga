@@ -33,6 +33,11 @@ class hr_withholding_and_income_certificate(models.TransientModel):
             if len(obj_annual_parameters) > 0:
                 struct_report_income_and_withholdings = obj_annual_parameters.report_income_and_withholdings
                 lst_items = []
+                employee_partner = employee.partner_encab_id or employee.work_contact_id
+                if employee_partner and not employee_partner.x_first_lastname:
+                    alternate_partner = employee.work_contact_id if employee_partner != employee.work_contact_id else employee.partner_encab_id
+                    if alternate_partner and alternate_partner.x_first_lastname:
+                        employee_partner = alternate_partner
                 #Obtener nóminas
                 year_process = obj_annual_parameters.taxable_year
                 year_process_ant = obj_annual_parameters.taxable_year - 1
@@ -104,10 +109,11 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                             elif conf.information_fields_id.model_id.model == 'hr.version':
                                 raise UserError('No se puede traer información del empleado de un campo de la tabla contratos, EN DESARROLLO.')
                             elif conf.information_fields_id.model_id.model == 'res.partner':
+                                ldict['employee_partner'] = employee_partner
                                 if conf.information_fields_id.ttype == 'many2one':
-                                    code_python = 'value = employee.work_contact_id.'+str(conf.information_fields_id.name) + '.' + str(conf.related_field_id.name)
+                                    code_python = 'value = employee_partner.'+str(conf.information_fields_id.name) + '.' + str(conf.related_field_id.name)
                                 else:
-                                    code_python = 'value = employee.work_contact_id.' + str(conf.information_fields_id.name)
+                                    code_python = 'value = employee_partner.' + str(conf.information_fields_id.name)
                                 exec(code_python, ldict)
                                 value = ldict.get('value')
                         if conf.type_partner == 'company':
@@ -236,7 +242,7 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                         'res_name': name,
                         'type': 'binary',
                         'res_model': 'res.partner',
-                        'res_id': employee.work_contact_id.id,
+                        'res_id': employee_partner.id,
                         'datas': base64.b64encode(merged_pdf),
                     })
                     # Asociar adjunto a documento de Odoo
@@ -249,7 +255,7 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                         doc_vals = {
                             'name': name,
                             'owner_id': self.env.user.id,
-                            'partner_id': employee.work_contact_id.id,
+                            'partner_id': employee_partner.id,
                             'folder_id': folder_id,
                             'tag_ids': tag_ids,
                             'type': 'binary',
