@@ -182,7 +182,7 @@
                                         hasta el<span t-esc="o.get_date_text(version_full.retirement_date)"/>,
                                     </t>
                                     <t t-else="">
-                                        labora en nuestra compañía desde el<span t-esc="o.get_date_text(o.contract_date_start)"/>,
+                                        labora en nuestra compañía desde el <span t-esc="o.get_date_text(o.contract_date_start)"/>,
                                     </t>
                                     mediante un&#160;
                                     <b>
@@ -202,7 +202,8 @@
                                     <b>
                                         <span t-esc="o.employee_id.branch_id.name"/>,
                                     </b>
-                                    devengando un salario básico mensual de&#160;
+                                    <t t-if="o.modality_salary == 'integral'">devengando un salario integral mensual de&#160;</t>
+                                    <t t-else="">devengando un salario básico mensual de&#160;</t>
                                     <b>
                                         <span t-esc="o.get_amount_text(o.wage)"/>
                                         M/Cte.
