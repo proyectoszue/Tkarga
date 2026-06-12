@@ -174,8 +174,16 @@ class hr_executing_provisions(models.Model):
                     if len(obj_liq_version_exists) == 1 and len(obj_liq_prima_cesantias_exists) == 0:
                         result_finally = {}
                         for liq in obj_liq_version_exists.line_ids:
-                            liq_dict = {liq.copy_data()[0]['code']:liq.copy_data()[0]}
-                            result_finally = {**result_finally, **liq_dict}
+                            if not liq.code:
+                                continue
+                            # copy_data() omite campos readonly como code (related); leer directo de la línea
+                            result_finally[liq.code] = {
+                                'code': liq.code,
+                                'amount': liq.amount,
+                                'quantity': liq.quantity,
+                                'rate': liq.rate,
+                                'amount_base': liq.amount_base,
+                            }
                     else:
                         Payslip = self.env['hr.payslip']
                         default_values = Payslip.default_get(Payslip.fields_get())
