@@ -138,6 +138,18 @@ class Hr_payslip(models.Model):
             new_d = min(new_d, 28 if new_m == 2 else (30 if new_m in [4, 6, 9, 11] else 31))
             return datetime(new_y, new_m, new_d).date()
 
+    def computeFinalAccrualDate360(self, initial_accrual_date, days_360_to_add):
+        """
+        Fecha final de causación alineada con dias360 (periodo inclusivo entre fechas).
+        Ajusta hacia atrás hasta evitar días adicionales frente al objetivo 30/360.
+        """
+        if not initial_accrual_date or days_360_to_add <= 0:
+            return initial_accrual_date
+        days_360_to_add = int(days_360_to_add)
+        final_accrual_date = self._add_days_360(initial_accrual_date, days_360_to_add)
+        if self.dias360(initial_accrual_date, final_accrual_date) > 360:
+            final_accrual_date = final_accrual_date - timedelta(days=(self.dias360(initial_accrual_date, final_accrual_date) - 360))
+        return final_accrual_date
 
     #--------------------------------------------------LIQUIDACIÓN DE VACACIONES---------------------------------------------------------#
 
@@ -178,7 +190,7 @@ class Hr_payslip(models.Model):
             ('version_id', '=', version.id),
             ('leave_id', '!=', False)
         ])
-        
+
         initial_accrual_date = False
         final_accrual_date = False
         leave_holidays = 0
@@ -197,8 +209,8 @@ class Hr_payslip(models.Model):
 
                 leaves['IDLEAVE'] = leave.leave_id.id
                 leaves[leave.work_entry_type_id.code] = leave_number_of_days
-                leaves['HOLIDAYS'+leave.work_entry_type_id.code] = leave_holidays          
-                leaves['BUSINESS'+leave.work_entry_type_id.code] = leave_business_days     
+                leaves['HOLIDAYS'+leave.work_entry_type_id.code] = leave_holidays
+                leaves['BUSINESS'+leave.work_entry_type_id.code] = leave_business_days
 
                 #Días pertenecientes a la liquidación de nómina
                 if inherit_nomina != 0:
@@ -252,7 +264,7 @@ class Hr_payslip(models.Model):
                 leaves['DATE'] = paid.start_date_paid_vacation
 
                 leaves_money.append(leaves)
-        
+
         '''
         Validar que no queden las deducciones en la nómina si ya estan en vacaciones
         '''
@@ -283,8 +295,8 @@ class Hr_payslip(models.Model):
         else:
             localdict.update({
                 'antiquity_employee': antiquity_employee,
-                'inherit_contrato':inherit_contrato,})        
-        
+                'inherit_contrato':inherit_contrato,})
+
         #Ejecutar las reglas salariales y su respectiva lógica
         for rule in sorted(self.struct_id.rule_ids, key=lambda x: x.sequence):
             if inherit_contrato != 0 and rule.code in ('VACDISFRUTADAS', 'VACREMUNERADAS'):
@@ -296,7 +308,7 @@ class Hr_payslip(models.Model):
             if rule._satisfy_condition(localdict):
                 if rule.code == 'VACDISFRUTADAS' and inherit_contrato == 0 and (self.get_pay_vacations_in_payroll() == False or inherit_nomina!=0):
                     initial_accrual_date = False
-                    final_accrual_date = False                    
+                    final_accrual_date = False
                     for leaves in leaves_time:
                         if inherit_nomina != 0:
                             id_leave = leaves.get('IDLEAVE')
@@ -344,9 +356,9 @@ class Hr_payslip(models.Model):
                         localdict[rule.code] = tot_rule
                         rules_dict[rule.code] = rule
                         # sum the amount for its salary category
-                        localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount) 
+                        localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount)
                         localdict = _sum_salary_rule(localdict, rule, tot_rule)
-                        #Calculo fechas de causacion                        
+                        #Calculo fechas de causacion
                         if initial_accrual_date and final_accrual_date:
                             initial_accrual_date = final_accrual_date + timedelta(days=1)
                             dias_ausencias = sum([i.number_of_days for i in self.env['hr.leave'].search(
@@ -358,9 +370,10 @@ class Hr_payslip(models.Model):
                                  ('employee_id', '=', self.employee_id.id),
                                  ('leave_type_id.unpaid_absences', '=', True)])])
                             days = ((days_vacations_business+days_vacations_31_business) * 360) / 15
-                            final_accrual_date = self._add_days_360(initial_accrual_date, int(days) + int(dias_ausencias))
+                            final_accrual_date = self.computeFinalAccrualDate360(
+                                initial_accrual_date, int(days) + int(dias_ausencias))
                         else:
-                            obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee.id)])     
+                            obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee.id)])
                             if obj_vacation:
                                 query = 'Select Max(final_accrual_date) as final_accrual_date From hr_vacation Where employee_id = '+ str(employee.id)
 
@@ -383,11 +396,11 @@ class Hr_payslip(models.Model):
                                  ('employee_id', '=', self.employee_id.id),
                                  ('leave_type_id.unpaid_absences', '=', True)])])
                             days = ((days_vacations_business+days_vacations_31_business) * 360) / 15
-                            final_accrual_date = self._add_days_360(initial_accrual_date, int(days) + int(dias_ausencias))
-                            #dias360 = self.dias360(initial_accrual_date,final_accrual_date)
+                            final_accrual_date = self.computeFinalAccrualDate360(
+                                initial_accrual_date, int(days) + int(dias_ausencias))
 
                         # create/overwrite the rule in the temporary results
-                        if amount != 0:                    
+                        if amount != 0:
                             result[str(id_leave)+'_'+rule.code] = {
                                 'sequence': rule.sequence,
                                 'code': rule.code,
@@ -402,7 +415,7 @@ class Hr_payslip(models.Model):
                                 'holiday_31_units': days_vacations_31_holidays,
                                 'salary_rule_id': rule.id,
                                 'version_id': version.id,
-                                'employee_id': employee.id,                        
+                                'employee_id': employee.id,
                                 'amount': amount,
                                 'quantity': qty,
                                 'rate': rate,
@@ -415,7 +428,7 @@ class Hr_payslip(models.Model):
                             }
                 elif rule.code == 'VACREMUNERADAS' and inherit_contrato == 0:
                     initial_accrual_date = False
-                    final_accrual_date = False                    
+                    final_accrual_date = False
                     for leaves in leaves_money:
                         id_leave = leaves.get('IDPAID')
                         obj_leave_equals = self.env['hr.leave'].search([('state','=','validate'),('employee_id','=',employee.id),('is_vacation','=',True),('request_date_from', '=', leaves.get('DATE'))])  #('request_date_to', '<=', obj_leave.request_date_to)
@@ -441,9 +454,9 @@ class Hr_payslip(models.Model):
                         localdict[rule.code] = tot_rule
                         rules_dict[rule.code] = rule
                         # sum the amount for its salary category
-                        localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount) 
+                        localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount)
                         localdict = _sum_salary_rule(localdict, rule, tot_rule)
-                        #Calculo fechas de causacion                        
+                        #Calculo fechas de causacion
                         if initial_accrual_date and final_accrual_date:
                             initial_accrual_date = final_accrual_date + timedelta(days=1)
                             dias_ausencias = sum([i.number_of_days for i in self.env['hr.leave'].search(
@@ -455,9 +468,10 @@ class Hr_payslip(models.Model):
                                  ('employee_id', '=', self.employee_id.id),
                                  ('leave_type_id.unpaid_absences', '=', True)])])
                             days = (days_vacations * 360) / 15
-                            final_accrual_date = self._add_days_360(initial_accrual_date, int(days) + int(dias_ausencias))
+                            final_accrual_date = self.computeFinalAccrualDate360(
+                                initial_accrual_date, int(days) + int(dias_ausencias))
                         else:
-                            obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee.id)])     
+                            obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee.id)])
                             if obj_vacation:
                                 query = 'Select Max(final_accrual_date) as final_accrual_date From hr_vacation Where employee_id = '+ str(employee.id)
 
@@ -480,8 +494,8 @@ class Hr_payslip(models.Model):
                                  ('employee_id', '=', self.employee_id.id),
                                  ('leave_type_id.unpaid_absences', '=', True)])])
                             days = (days_vacations * 360) / 15
-                            final_accrual_date = self._add_days_360(initial_accrual_date, int(days) + int(dias_ausencias))
-                            #dias360 = self.dias360(initial_accrual_date,final_accrual_date)
+                            final_accrual_date = self.computeFinalAccrualDate360(
+                                initial_accrual_date, int(days) + int(dias_ausencias))
 
                         # create/overwrite the rule in the temporary results
                         if amount != 0:                    
