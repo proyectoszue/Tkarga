@@ -2,6 +2,8 @@
     <data>
         <!-- Menu Devengos & deducciones por contrato -->
         <menuitem name="Devengos y Deducciones por contrato" id="zue_hr_employee.menu_contract_concepts" parent="hr.hr_menu_hr_reports" action="zue_menu_action_contract_concepts" sequence="60"/>
+        <!-- Menu cambios de salario por contrato -->
+        <menuitem name="Cambios de Salario" id="zue_hr_employee.menu_contract_change_wage" parent="hr_payroll.menu_hr_payroll_employees" action="zue_menu_action_contract_change_wage" sequence="59"/>
         <!-- Menu tipos de empleados -->
         <menuitem name="Tipos de empleado" id="zue_hr_employee.menu_types_employee" parent="hr.menu_config_employee" action="zue_menu_action_types_employee"/>
         <!-- Menu parametrización riesgos profesionales -->

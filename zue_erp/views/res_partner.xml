@@ -85,6 +85,9 @@
                                domain="[['state_id','=',z_department_issuance_id]]"/>
                     </div>
                 </xpath>
+                <xpath expr="//field[@name='category_id']" position="after">
+                    <field name="company_id" string="Compañía" required="1"/>
+                </xpath>
             </field>
         </record>
     </data>

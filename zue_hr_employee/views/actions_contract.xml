@@ -276,5 +276,65 @@
             </field>
         </record>
 
+        <!-- CAMBIOS DE SALARIO VIEWS (v19: version_id reemplaza contract_id de Odoo estándar) -->
+        <record id="zue_menu_action_contract_change_wage" model="ir.actions.act_window">
+            <field name="name">Cambios de Salario</field>
+            <field name="res_model">hr.contract.change.wage</field>
+            <field name="view_mode">list,form</field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_hr_employee.list_contract_change_wage">
+            <field name="name">zue list contract change wage</field>
+            <field name="model">hr.contract.change.wage</field>
+            <field name="priority">1</field>
+            <field name="arch" type="xml">
+                <list string="Cambios de Salario" editable="top">
+                    <field name="version_id"/>
+                    <field name="date_start" required="1"/>
+                    <field name="wage" required="1"/>
+                    <field name="job_id"/>
+                    <field name="rel_employee_id" optional="hide"/>
+                </list>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_hr_employee.form_contract_change_wage">
+            <field name="name">zue form contract change wage</field>
+            <field name="model">hr.contract.change.wage</field>
+            <field name="priority">1</field>
+            <field name="arch" type="xml">
+                <form string="Cambio de Salario">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="version_id"/>
+                                <field name="date_start"/>
+                                <field name="wage"/>
+                                <field name="job_id"/>
+                            </group>
+                            <group>
+                                <field name="rel_employee_id" readonly="1"/>
+                                <field name="rel_contract_date_start" readonly="1"/>
+                            </group>
+                        </group>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="search_contract_change_wage" model="ir.ui.view">
+            <field name="name">zue search contract change wage</field>
+            <field name="model">hr.contract.change.wage</field>
+            <field name="priority">1</field>
+            <field name="arch" type="xml">
+                <search>
+                    <field name="version_id"/>
+                    <field name="rel_employee_id"/>
+                    <field name="date_start"/>
+                    <field name="job_id"/>
+                </search>
+            </field>
+        </record>
+
     </data>
 </odoo>
