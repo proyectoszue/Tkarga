@@ -21,6 +21,73 @@ class hr_withholding_and_income_certificate(models.TransientModel):
     z_save_documents = fields.Boolean(string="Guardar en documentos")
     struct_report_income_and_withholdings = fields.Html('Estructura Certificado ingresos y retenciones')
 
+    def getContractLiquidationPayslips(self, employee, date_start, date_end):
+        return self.env['hr.payslip'].search([
+            ('state', '=', 'validated'),
+            ('employee_id', '=', employee.id),
+            ('struct_process', '=', 'contrato'),
+            ('date_from', '>=', date_start),
+            ('date_from', '<=', date_end),
+        ])
+
+    def computeSumRuleCertificateAmount(self, conf, payslips, accumulated_payrolls, salary_rule_ids=None):
+        amount = 0
+        salary_rule_ids = salary_rule_ids or conf.salary_rule_id.ids
+        if not salary_rule_ids:
+            return amount
+        if conf.origin_severance_pay:
+            for payslip in payslips:
+                if conf.origin_severance_pay == 'employee':
+                    amount += abs(sum([
+                        line.total for line in payslip.line_ids.filtered(
+                            lambda line: line.salary_rule_id.id in salary_rule_ids
+                            and line.slip_id.employee_severance_pay == True
+                        )
+                    ]))
+                else:
+                    amount += abs(sum([
+                        line.total for line in payslip.line_ids.filtered(
+                            lambda line: line.salary_rule_id.id in salary_rule_ids
+                            and line.slip_id.employee_severance_pay == False
+                        )
+                    ]))
+            if conf.origin_severance_pay != 'employee':
+                amount += abs(sum([
+                    accumulated.amount for accumulated in accumulated_payrolls.filtered(
+                        lambda line: line.salary_rule_id.id in salary_rule_ids
+                    )
+                ]))
+        else:
+            for payslip in payslips:
+                amount += abs(sum([
+                    line.total for line in payslip.line_ids.filtered(
+                        lambda line: line.salary_rule_id.id in salary_rule_ids
+                    )
+                ]))
+            amount += abs(sum([
+                accumulated.amount for accumulated in accumulated_payrolls.filtered(
+                    lambda line: line.salary_rule_id.id in salary_rule_ids
+                )
+            ]))
+        return amount
+
+    def shouldAddContractLiquidationToPreviousYear(self, conf):
+        configured_codes = {code for code in conf.salary_rule_id.mapped('code') if code}
+        if configured_codes == {'CESANTIAS'}:
+            return False
+        return bool(configured_codes)
+
+    def getLiquidationSalaryRuleIds(self, conf, contract_payslips):
+        salary_rule_ids = list(conf.salary_rule_id.ids)
+        if 'INTCESANTIAS' not in conf.salary_rule_id.mapped('code'):
+            return salary_rule_ids
+        for payslip in contract_payslips:
+            for line in payslip.line_ids:
+                if line.salary_rule_id.code in ('CESANTIAS', 'INTCESANTIAS'):
+                    if line.salary_rule_id.id not in salary_rule_ids:
+                        salary_rule_ids.append(line.salary_rule_id.id)
+        return salary_rule_ids
+
     def generate_certificate(self):
         struct_report_income_and_withholdings_finally = ''
         if len(self.employee_ids) == 0:
@@ -84,6 +151,8 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                 obj_payslip_accumulated_ant = self.env['hr.accumulated.payroll'].search([('employee_id', '=', employee.id),
                                                                                      ('date', '>=', date_start_ant),
                                                                                      ('date', '<=', date_end_ant)])
+                obj_payslip_contract = self.getContractLiquidationPayslips(employee, date_start, date_end)
+                empty_accumulated_payroll = self.env['hr.accumulated.payroll']
                 #Info dependientes:
                 dependents_type_vat,dependents_vat,dependents_name,dependents_type = '','','',''
                 for dependent in employee.dependents_information.filtered(lambda a: a.z_report_income_and_withholdings == True):
@@ -130,41 +199,13 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                                 value = ldict.get('value')
                     # Tipo de Calculo ---------------------- SUMATORIA REGLAS
                     elif conf.calculation == 'sum_rule':
-                        amount = 0
-                        if conf.accumulated_previous_year == True:
-                            if conf.origin_severance_pay:
-                                # Nóminas
-                                for payslip_ant in obj_payslip_ant:
-                                    if conf.origin_severance_pay == 'employee':
-                                        amount += abs(sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
-                                    else:
-                                        amount += abs(sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == False)]))
-                                if conf.origin_severance_pay != 'employee':
-                                    # Acumulados
-                                    amount += abs(sum([i.amount for i in obj_payslip_accumulated_ant.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
-                            else:
-                                # Nóminas
-                                for payslip_ant in obj_payslip_ant:
-                                    amount += abs(sum([i.total for i in payslip_ant.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
-                                # Acumulados
-                                amount += abs(sum([i.amount for i in obj_payslip_accumulated_ant.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                        if conf.accumulated_previous_year:
+                            amount = self.computeSumRuleCertificateAmount(conf, obj_payslip_ant, obj_payslip_accumulated_ant)
+                            if obj_payslip_contract and self.shouldAddContractLiquidationToPreviousYear(conf):
+                                liquidation_rule_ids = self.getLiquidationSalaryRuleIds(conf, obj_payslip_contract)
+                                amount += self.computeSumRuleCertificateAmount(conf, obj_payslip_contract, empty_accumulated_payroll, liquidation_rule_ids)
                         else:
-                            if conf.origin_severance_pay:
-                                # Nóminas
-                                for payslip in obj_payslip:
-                                    if conf.origin_severance_pay == 'employee':
-                                        amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == True)]))
-                                    else:
-                                        amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids and line.slip_id.employee_severance_pay == False)]))
-                                if conf.origin_severance_pay != 'employee':
-                                    # Acumulados
-                                    amount += abs(sum([i.amount for i in obj_payslip_accumulated.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
-                            else:
-                                #Nóminas
-                                for payslip in obj_payslip:
-                                    amount += abs(sum([i.total for i in payslip.line_ids.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
-                                #Acumulados
-                                amount += abs(sum([i.amount for i in obj_payslip_accumulated.filtered(lambda line: line.salary_rule_id.id in conf.salary_rule_id.ids)]))
+                            amount = self.computeSumRuleCertificateAmount(conf, obj_payslip, obj_payslip_accumulated)
                         value = amount
                     # Tipo de Calculo ---------------------- SUMATORIA SECUENCIAS ANTERIORES
                     elif conf.calculation == 'sum_sequence':
