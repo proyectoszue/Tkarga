@@ -15,7 +15,7 @@ class AccountGroup(models.Model):
 
 class account_account(models.Model):
     _inherit = 'account.account'
-    #_inherit = ['account.account','mail.thread', 'mail.activity.mixin'] // EN V18 YA LO HEREDA ODOO
+    #_inherit = ['account.account','mail.thread', 'mail.activity.mixin'] // EN V18 YA LO HEREDA ODOO REF
 
     required_partner = fields.Boolean('Obliga tercero', tracking=True)
     accounting_class = fields.Char('Clase', tracking=True)
