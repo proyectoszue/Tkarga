@@ -4,6 +4,8 @@ from datetime import timedelta
 
 from collections import defaultdict
 
+# INVESTIGAR SI ES NECESARIO EN V19 - Modelo "account.partner.ledger" ya no existe se debe reemplazar por "account.partner.ledger.report.handler"
+
 class ReportPartnerLedger(models.AbstractModel):
     _inherit = "account.partner.ledger"
 
@@ -85,7 +87,7 @@ class ReportPartnerLedger(models.AbstractModel):
         :param limit:               The limit of the query (used by the load more).
         :return:                    (query, params)
         '''
-        unfold_all = options.get('unfold_all') or (self._context.get('print_mode') and not options['unfolded_lines'])
+        unfold_all = options.get('unfold_all') or (self.env.context.get('print_mode') and not options['unfolded_lines'])
 
         # Get sums for the account move lines.
         # period: [('date' <= options['date_to']), ('date', '>=', options['date_from'])]
@@ -149,14 +151,14 @@ class ReportPartnerLedger(models.AbstractModel):
     @api.model
     def _get_report_line_partner(self, options, partner, initial_balance, debit, credit, balance):
         company_currency = self.env.company.currency_id
-        unfold_all = self._context.get('print_mode') and not options.get('unfolded_lines')
+        unfold_all = self.env.context.get('print_mode') and not options.get('unfolded_lines')
 
         columns = [
             {'name': self.format_value(initial_balance), 'class': 'number'},
             {'name': self.format_value(debit), 'class': 'number'},
             {'name': self.format_value(credit), 'class': 'number'},
         ]
-        if self.user_has_groups('base.group_multi_currency'):
+        if self.env.user.has_group('base.group_multi_currency'):
             columns.append({'name': ''})
         columns.append({'name': self.format_value(balance), 'class': 'number'})
 
@@ -193,7 +195,7 @@ class ReportPartnerLedger(models.AbstractModel):
             {'name': self.format_value(aml['debit'], blank_if_zero=True), 'class': 'number'},
             {'name': self.format_value(aml['credit'], blank_if_zero=True), 'class': 'number'},
         ]
-        if self.user_has_groups('base.group_multi_currency'):
+        if self.env.user.has_group('base.group_multi_currency'):
             if aml['currency_id']:
                 currency = self.env['res.currency'].browse(aml['currency_id'])
                 formatted_amount = self.format_value(aml['amount_currency'], currency=currency, blank_if_zero=True)
@@ -221,7 +223,7 @@ class ReportPartnerLedger(models.AbstractModel):
             'class': 'o_account_reports_load_more text-center',
             'parent_id': 'partner_%s' % (partner.id if partner else 0),
             'name': _('Load more... (%s remaining)', remaining),
-            'colspan': 11 if self.user_has_groups('base.group_multi_currency') else 10,
+            'colspan': 11 if self.env.user.has_group('base.group_multi_currency') else 10,
             'columns': [{}],
         }
 
@@ -232,7 +234,7 @@ class ReportPartnerLedger(models.AbstractModel):
             {'name': self.format_value(debit), 'class': 'number'},
             {'name': self.format_value(credit), 'class': 'number'},
         ]
-        if self.user_has_groups('base.group_multi_currency'):
+        if self.env.user.has_group('base.group_multi_currency'):
             columns.append({'name': ''})
         columns.append({'name': self.format_value(balance), 'class': 'number'})
         return {
@@ -258,7 +260,7 @@ class ReportPartnerLedger(models.AbstractModel):
             {'name': _('Debit'), 'class': 'number'},
             {'name': _('Credit'), 'class': 'number'}]
 
-        if self.user_has_groups('base.group_multi_currency'):
+        if self.env.user.has_group('base.group_multi_currency'):
             columns.append({'name': _('Amount Currency'), 'class': 'number'})
 
         columns.append({'name': _('Balance'), 'class': 'number'})

@@ -7,8 +7,9 @@ from odoo.exceptions import UserError, ValidationError
 class zue_pivot_report_cxc(models.Model):
     _name = "zue.pivot.report.cxc"
     _description = "Reporte CXC - Recaudos"
-    _auto = False
     _order = 'mov_origin,date_mov'
+    _auto = False
+    _table = 'zue_pivot_report_cxc'
 
     period = fields.Char(string='Periodo')
     date_mov = fields.Date(string='Fecha movimiento')
@@ -32,8 +33,8 @@ class zue_pivot_report_cxc(models.Model):
                     -- MOV ORIGINAL
                     select to_char(a."date",'yyyyMM') as period,a."date" as date_mov,
                             d.id as journal_id,a.move_id as mov_sequence, a.move_id as mov_origin,
-                            case when e.x_document_type = '13' then 'Cédula de ciudadania'
-                            else case when e.x_document_type = '31' then 'NIT'
+                            case when g.z_code_dian = '13' then 'Cédula de ciudadania'
+                            else case when g.z_code_dian = '31' then 'NIT'
                             else ''
                             end 
                             end as type_document,e.vat as vat,e.id as partner_id,b.invoice_user_id,
@@ -46,14 +47,14 @@ class zue_pivot_report_cxc(models.Model):
                     inner join account_journal as d on a.journal_id = d.id
                     inner join res_partner as e on a.partner_id = e.id
                     inner join account_account as f on a.account_id = f.id
-                    inner join account_account_type as g on f.user_type_id = g.id and g.type in ('receivable','payable')
-                    where c.id = {self.env.company.id} and b.move_type like 'out_%'
+                    left join l10n_latam_identification_type g on g.id = e.l10n_latam_identification_type_id
+                    where c.id = {self.env.company.id} and b.move_type like 'out_%' and f.account_type in ('asset_receivable', 'liability_payable')
                 Union
                     -- PAGOS
                     select to_char(coalesce(i."date",a."date"),'yyyyMM') as period,coalesce(i."date",a."date") as date_mov,
                             coalesce(l.id,d.id) as journal_id,coalesce(i.move_id,a.move_id) as mov_sequence, a.move_id as mov_origin,
-                            case when coalesce(m.x_document_type,e.x_document_type) = '13' then 'Cédula de ciudadania'
-                            else case when coalesce(m.x_document_type,e.x_document_type) = '31' then 'NIT'
+                            case when coalesce(o.z_code_dian,p.z_code_dian) = '13' then 'Cédula de ciudadania'
+                            else case when coalesce(o.z_code_dian,p.z_code_dian) = '31' then 'NIT'
                             else ''
                             end 
                             end as type_document,coalesce(m.vat,e.vat) as vat,coalesce(m.id,e.id) as partner_id,b.invoice_user_id,
@@ -66,24 +67,26 @@ class zue_pivot_report_cxc(models.Model):
                     inner join account_journal as d on a.journal_id = d.id
                     inner join res_partner as e on a.partner_id = e.id
                     inner join account_account as f on a.account_id = f.id
-                    inner join account_account_type as g on f.user_type_id = g.id and g.type in ('receivable','payable')
                     inner join account_partial_reconcile as h on a.id = h.debit_move_id  
                     inner join account_move_line as i on h.credit_move_id = i.id --or a.id = i.id  
                     inner join account_move as j on i.move_id = j.id and j.state = 'posted'
                     inner join res_company as k on i.company_id = k.id
                     inner join account_journal as l on i.journal_id = l.id
                     inner join res_partner as m on i.partner_id = m.id
-                    inner join account_account as n on i.account_id = n.id 
-                    where c.id = {self.env.company.id} and b.move_type like 'out_%'      
+                    inner join account_account as n on i.account_id = n.id
+                    left join l10n_latam_identification_type o on o.id = m.l10n_latam_identification_type_id
+                    left join l10n_latam_identification_type p on p.id = e.l10n_latam_identification_type_id
+                    where c.id = {self.env.company.id} and b.move_type like 'out_%' and f.account_type in ('asset_receivable', 'liability_payable')
+        			and n.account_type in ('asset_receivable', 'liability_payable')      
                 ) as a
             '''
 
     def init(self):
+        # eliminar primero cualquier vista y luego tabla con el mismo nombre
         tools.drop_view_if_exists(self.env.cr, self._table)
-        self.env.cr.execute('''
+        self.env.cr.execute(f"DROP TABLE IF EXISTS {self._table} CASCADE")
+        self.env.cr.execute("""
             CREATE OR REPLACE VIEW %s AS (
                 %s
             )
-        ''' % (
-            self._table, self._query()
-        ))
+        """ % (self._table, self._query()))

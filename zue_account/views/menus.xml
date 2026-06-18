@@ -3,14 +3,24 @@
         <!-- Menu Archivo de pago proveedores -->
         <menuitem name="Archivo de pago" id="zue_account.zue_payment_file_menu" parent="account.menu_finance_payables" sequence="30" action="zue_account.action_payment_file"/>
         <!-- Menu información exógeno -->
-        <menuitem name="Información exógena" id="zue_account.zue_menu_exogenous_information" parent="account_accountant.menu_accounting"/> 
+        <menuitem name="Información exógena" id="zue_account.zue_menu_exogenous_information" parent="accountant.menu_accounting"/>
             <menuitem name="Código Fiscal" id="zue_account.zue_menu_fiscal_accounting_code" sequence="1" parent="zue_account.zue_menu_exogenous_information" action="action_fiscal_accounting_code"/> 
             <menuitem name="Grupo Fiscal" id="zue_account.zue_menu_fiscal_accounting_group" sequence="2" parent="zue_account.zue_menu_exogenous_information" action="action_fiscal_accounting_group"/>
             <menuitem name="Informe Formatos" id="zue_account.zue_menu_format_encab" sequence="3" parent="zue_account.zue_menu_exogenous_information" action="action_format_encab"/>
             <menuitem name="Generar Medios Magnético" id="zue_account.zue_menu_generate_media_magnetic" sequence="4" parent="zue_account.zue_menu_exogenous_information" action="action_generate_media_magnetic"/>
-            <menuitem name="Cierre contable" id="zue_account.menu_accounting_closing" sequence="30" parent="account.menu_finance_entries_actions" action="action_annual_accounting_closing"/>
-            <menuitem name="Cierre de Partidas Conciliatorias" id="zue_account.menu_reconciling_items" sequence="31" parent="account.menu_finance_entries_actions" action="action_zue_reconciling_items_encab"/>
+            <menuitem name="Cierre contable" id="zue_account.menu_accounting_closing" sequence="30" parent="account.menu_finance_entries" action="action_annual_accounting_closing"/>
+            <menuitem name="Revertir Cierre contable" id="zue_account.menu_accounting_closing_reversal" sequence="31" parent="account.menu_finance_entries" action="action_zue_account_closing_reversal_wizard" groups="account.group_account_manager"/>
+            <menuitem name="Cierre de Partidas Conciliatorias" id="zue_account.menu_reconciling_items" sequence="32" parent="account.menu_finance_entries" action="action_zue_reconciling_items_encab"/>
         <!-- Reporte extracto bancario -->
-        <menuitem name="Extracto bancario" id="zue_account.menu_zue_bank_statements" parent="account.account_banks_menu" action="action_bank_statements_report" sequence="5"/>
+        <menuitem name="Extracto bancario" id="zue_account.menu_zue_bank_statements" parent="account.menu_finance_configuration" action="action_bank_statements_report" sequence="5"/>
+        <!-- Reporte Extracto multicash -->
+        <menuitem name="Extracto multicash" id="zue_account.menu_zue_bank_multicash" parent="account.menu_finance_configuration" action="action_bank_multicash_extracts" sequence="6"/>
+        <!-- tabla de transacciones -->
+        <menuitem name="Tabla de transacciones" id="zue_account.menu_bank_transaction_table" parent="contacts.menu_config_bank_accounts" action="action_bank_transaction_table" sequence="4"/>
+        <!-- tabla de tipos de movimiento -->
+        <menuitem name="Tipos de movimiento" id="zue_account.menu_bank_movement_types" parent="contacts.menu_config_bank_accounts" action="action_bank_movement_types" sequence="5"/>
+        <!-- Menu agrupa cuenta por concepto -->
+        <menuitem name="Agrupa cuentas por Concepto" id="menu_concept_accounts" parent="account.account_account_menu" action="action_zue_concept_account" sequence="31"/>
+
     </data>
 </odoo>

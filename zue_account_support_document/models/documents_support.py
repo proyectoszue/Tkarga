@@ -1,7 +1,7 @@
 from odoo import fields, models, api, _
 from odoo.exceptions import UserError, ValidationError
 import pandas as pd
-import base64
+import base64, re
 from datetime import date
 
 class sending_support_document(models.Model):
@@ -26,11 +26,16 @@ class sending_support_document(models.Model):
     qty_failed = fields.Integer(string='Cantidad Fallidos / Sin Respuesta', default=0, copy=False)
     qty_done = fields.Integer(string='Cantidad Aceptados', default=0, copy=False)
 
-    def name_get(self):
-        result = []
+    def unlink(self):
         for record in self:
-            result.append((record.id, "DS {} a {} - {}".format(str(record.initial_date),str(record.end_date),record.company_id.name)))
-        return result
+            if record.state != 'draft':
+                raise UserError(_('Solo puede eliminar documentos de soporte en estado borrador.'))
+        return super().unlink()
+
+    @api.depends('initial_date','end_date', 'company_id')
+    def _compute_display_name(self):
+        for record in self:
+            record.display_name = "DS {} a {} - {}".format(str(record.initial_date),str(record.end_date),record.company_id.name)
 
     def consecutive_assignment(self):
         #Elimine información del detalle en caso de existir
@@ -47,7 +52,10 @@ class sending_support_document(models.Model):
                                                                 ('account_id.accounting_class','=','RESULTADO')])
         #Obtener diario consecutivo dian
         journal_support_document_co = self.company_id.journal_support_document_co
-        sequence_dian = journal_support_document_co.secure_sequence_id
+        # En v18 el campo original secure_sequence_id fue eliminado
+        sequence_dian = journal_support_document_co.z_secure_sequence_id
+        if not sequence_dian:
+            raise ValidationError(_('No hay una secuencia asociada al diario. Por favor verifique!'))
 
         #Insertar movimientos
         if len(obj_moves_lines) == 0:
@@ -55,6 +63,14 @@ class sending_support_document(models.Model):
 
         lst_moves = []
         for move in obj_moves_lines:
+            if not move.name:
+                raise ValidationError(_(
+                    "No se puede asignar consecutivo porque hay un apunte contable sin concepto (`etiqueta`).\n\n"
+                    "- Apunte contable (account.move.line): %s\n"
+                    "- Asiento contable (account.move): %s\n"
+                    "- Tercero: %s\n\n"
+                    "Por favor diligencie el concepto y vuelva a intentar."
+                ) % (move.id, move.move_id.display_name, move.partner_id.display_name))
             dict_move = {
                 'document_support_id': self.id,
                 'partner_id': move.partner_id.id,
@@ -86,14 +102,17 @@ class sending_support_document(models.Model):
             group_moves_df.loc[i,'first_concept'] = concepts.values[0]
             group_moves_df.loc[i,'line_move_ids'] = ','.join(map(str, line_move_ids_series.values))
             group_moves_df.loc[i, 'prefix_doc_support'] = journal_support_document_co.code
-            group_moves_df.loc[i, 'item_doc_support'] = sequence_number_next+count_sequence
-            group_moves_df.loc[i, 'consecutive_doc_support'] = sequence_dian._next()
+            consecutive = sequence_dian._next()
+            group_moves_df.loc[i, 'item_doc_support'] = int(re.search(r'\d+', consecutive).group())
+            group_moves_df.loc[i, 'consecutive_doc_support'] = consecutive
             count_sequence+=1
         #Salvar proceso
         lst_moves_finally = group_moves_df.to_dict(orient='records')
         for dict_move in lst_moves_finally:
             # Se eliminan las columnas que no se van guardar
             del dict_move['line_move_id']
+            if 'concept' in dict_move:
+                del dict_move['concept']
             #Se obtienen los apuntes contables
             dict_move['line_move_ids'] = list(map(int,dict_move['line_move_ids'].split(',')))
             #Se guarda en la tabla detalle del proceso
@@ -158,8 +177,7 @@ class sending_support_document_datail(models.Model):
         ('finished', 'Finalizado'),
     ], string='Estado doc', default='draft', copy=False)
 
-    def name_get(self):
-        result = []
+    @api.depends('consecutive_doc_support', 'partner_id.name', 'move_id.name')
+    def _compute_display_name(self):
         for record in self:
-            result.append((record.id, "{} - {} - {}".format(record.consecutive_doc_support,record.partner_id.name,record.move_id.name)))
-        return result
+            record.display_name = "{} - {} - {}".format(record.consecutive_doc_support,record.partner_id.name,record.move_id.name)

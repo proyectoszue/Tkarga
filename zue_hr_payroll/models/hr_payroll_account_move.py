@@ -46,7 +46,7 @@ class account_move(models.Model):
                             'date': line.date,
                             'debit': line.credit,
                             'credit': line.debit,
-                            'analytic_account_id': line.analytic_account_id.id,
+                            'analytic_distribution': line.slip_id.version_id.analytic_distribution,
                             'z_hr_salary_rule_id': line.z_hr_salary_rule_id.id,
                         }
                         if line_net.debit == 0 and line_net.credit > 0:
@@ -61,7 +61,7 @@ class account_move(models.Model):
                                 line_update_create = {'credit':line_net.credit + line.credit}
                         else:
                             line_update_create = {'account_id': line.z_hr_salary_rule_id.z_account_id_cxp.id,
-                                                  'debit': (line_net.debit + line.debit) if line.debit > 0 else (line_net.debit - line.credit),
+                                                  'debit': line_net.debit + line.debit,
                                                   'credit': 0}
                         record.write({'line_ids': [(0, 0, line_create),(1, line_net.id, line_update_create)]})
                         #Link de ayuda: https://www.odoo.com/documentation/15.0/es/developer/reference/backend/orm.html?highlight=many2many#odoo.fields.Command
@@ -72,7 +72,7 @@ class Hr_payslip(models.Model):
     # ---------------------------------------CONTABILIZACIÓN DE LA NÓMINA---------------------------------------------#
 
     # Items contabilidad
-    def _prepare_line_values(self, line, account_id, date, debit, credit, analytic_account_id):
+    def _prepare_line_values(self, line, account_id, date, debit, credit):
         addref_work_address_account_moves = self.env['ir.config_parameter'].sudo().get_param(
             'zue_hr_payroll.addref_work_address_account_moves') or False
         if addref_work_address_account_moves and line.slip_id.employee_id.address_id:
@@ -91,11 +91,10 @@ class Hr_payslip(models.Model):
             'date': date,
             'debit': debit,
             'credit': credit,
-            'analytic_account_id': analytic_account_id,
+            'analytic_distribution': line.slip_id.analytic_distribution,
             'z_hr_salary_rule_id': line.salary_rule_id.id,
             'z_hr_struct_id_id': line.slip_id.struct_id.id,
             'tax_base_amount': sum([i.result_calculation for i in line.slip_id.rtefte_id.deduction_retention.filtered(lambda x: x.concept_deduction_code == 'SUBTOTAL_IBR3_O')]) if line.salary_rule_id.code == 'RETFTE001' or line.salary_rule_id.code == 'RETFTE_PRIMA001' else 0,
-            # line.salary_rule_id.analytic_account_id.id or line.slip_id.contract_id.analytic_account_id.id,
         }
 
     # Verificar existencia de items
@@ -105,9 +104,18 @@ class Hr_payslip(models.Model):
             line_id['name'] == line.name
             and line_id['partner_id'] == line.partner_id.id
             and line_id['account_id'] == account_id
-            and line_id['analytic_account_id'] == (
-                        line.salary_rule_id.analytic_account_id.id or line.slip_id.contract_id.analytic_account_id.id)
-            and ((line_id['debit'] > 0 and credit <= 0) or (line_id['credit'] > 0 and debit <= 0)))
+            and ((line_id['debit'] > 0 and credit <= 0) or (line_id['credit'] > 0 and debit <= 0))
+            and (
+                    (
+                            not line_id['analytic_distribution'] and
+                            not line.slip_id.analytic_distribution and
+                            not line.slip_id.version_id.analytic_distribution
+                    )
+                    or line_id['analytic_distribution'] and line.slip_id.analytic_distribution in line_id[
+                        'analytic_distribution']
+
+            )
+        )
         return next(existing_lines, False)
 
     # Contabilización de la liquidación de nómina - se sobreescribe el metodo original
@@ -127,8 +135,8 @@ class Hr_payslip(models.Model):
         #     if run._are_payslips_ready():
         #         payslips_to_post |= run.slip_ids
 
-        # A payslip need to have a done state and not an accounting move.
-        payslips_to_post = payslips_to_post.filtered(lambda slip: slip.state == 'done' and not slip.move_id)
+        # A payslip need to have lines and not an accounting move.
+        payslips_to_post = payslips_to_post.filtered(lambda slip: slip.line_ids and not slip.move_id)
 
         # Check that a journal exists on all the structures
         if any(not payslip.struct_id for payslip in payslips_to_post):
@@ -153,6 +161,7 @@ class Hr_payslip(models.Model):
                     date = slip.date_to  # slip_date
                 move_dict = {
                     'narration': '',
+                    'auto_post': 'no',
                     'ref': date.strftime('%B %Y'),
                     'journal_id': journal_id,
                     'date': date,
@@ -168,12 +177,13 @@ class Hr_payslip(models.Model):
                             # date = slip_date
                             move_dict = {
                                 'narration': '',
+                                'auto_post': 'no',
                                 'ref': slip.display_name,
                                 'journal_id': journal_id,
                                 'date': date,
                             }
 
-                        move_dict['narration'] += slip.number or '' + ' - ' + slip.employee_id.name
+                        move_dict['narration'] += slip.name or '' + ' - ' + slip.employee_id.name
                         move_dict['narration'] += '\n'
                         print(slip.line_ids.filtered(lambda line: line.category_id))
                         for line in slip.line_ids.filtered(lambda line: line.category_id):
@@ -197,7 +207,7 @@ class Hr_payslip(models.Model):
                             # Lógica de ZUE - Obtener cuenta contable de acuerdo a la parametrización de la regla salarial
                             debit_third_id = line.partner_id.id
                             credit_third_id = line.partner_id.id
-                            analytic_account_id = line.slip_id.analytic_account_id.id
+                            analytic_distribution = line.slip_id.analytic_distribution
 
                             for account_rule in line.salary_rule_id.salary_rule_accounting:
                                 # Validar ubicación de trabajo
@@ -219,7 +229,11 @@ class Hr_payslip(models.Model):
 
                                     # Tercero debito
                                     if account_rule.third_debit == 'entidad':
-                                        debit_third_id = line.entity_id.partner_id
+                                        debit_third_id = line.entity_id.partner_id if line.entity_id else False
+                                        if not debit_third_id:
+                                            leave_entity = slip.get_leave_entity_for_salary_rule(line.salary_rule_id, leave_entity_map)
+                                            if leave_entity:
+                                                debit_third_id = leave_entity.partner_id
                                         # Recorrer entidades empleado
                                         for entity in slip.employee_id.social_security_entities:
                                             if entity.contrib_id.type_entities == 'eps' and line.code == 'SSOCIAL001':  # SALUD
@@ -235,7 +249,7 @@ class Hr_payslip(models.Model):
                                     elif account_rule.third_debit == 'compañia':
                                         debit_third_id = slip.employee_id.company_id.partner_id
                                     elif account_rule.third_debit == 'empleado':
-                                        debit_third_id = slip.employee_id.address_home_id
+                                        debit_third_id = slip.employee_id.work_contact_id
 
                                     # Tercero credito
                                     if account_rule.third_credit == 'entidad':
@@ -255,7 +269,7 @@ class Hr_payslip(models.Model):
                                     elif account_rule.third_credit == 'compañia':
                                         credit_third_id = slip.employee_id.company_id.partner_id
                                     elif account_rule.third_credit == 'empleado':
-                                        credit_third_id = slip.employee_id.address_home_id
+                                        credit_third_id = slip.employee_id.work_contact_id
 
                                     # Asignación de Tercero final y Cuenta analitica cuando la cuenta contable inicie por 4,5,6 o 7
                                     if debit_account_id and amount >= 0:
@@ -263,22 +277,11 @@ class Hr_payslip(models.Model):
                                         if len(account_rule.debit_account) == 0:
                                             raise ValidationError(
                                                 _('La regla salarial ' + account_rule.salary_rule.name + ' no esta bien parametrizada de forma contable, por favor verificar.'))
-                                        analytic_account_id = line.slip_id.analytic_account_id.id if account_rule.debit_account.code[
-                                                                                                         0:1] in ['4',
-                                                                                                                  '5',
-                                                                                                                  '6',
-                                                                                                                  '7'] else analytic_account_id
                                     elif (credit_third_id and amount < 0) or (credit_account_id and line.code == 'NET'):
                                         line.partner_id = credit_third_id
                                         if len(account_rule.credit_account) == 0:
                                             raise ValidationError(
                                                 _('La regla salarial ' + account_rule.salary_rule.name + ' no esta bien parametrizada de forma contable, por favor verificar.'))
-                                        analytic_account_id = line.slip_id.analytic_account_id.id if account_rule.credit_account.code[
-                                                                                                         0:1] in ['4',
-                                                                                                                  '5',
-                                                                                                                  '6',
-                                                                                                                  '7'] else analytic_account_id
-
                                         # Fin Lógica ZUE
                             net_account = ''
                             if line.code == 'NET':
@@ -291,8 +294,7 @@ class Hr_payslip(models.Model):
                                 debit_line = False  # self._get_existing_lines(line_ids, line, debit_account_id, debit, credit)
 
                                 if not debit_line:
-                                    debit_line = self._prepare_line_values(line, debit_account_id, date, debit, credit,
-                                                                           analytic_account_id)
+                                    debit_line = self._prepare_line_values(line, debit_account_id, date, debit, credit)
                                     line_ids.append(debit_line)
                                 else:
                                     debit_line['debit'] += debit
@@ -304,8 +306,7 @@ class Hr_payslip(models.Model):
                                 credit_line = False  # self._get_existing_lines(line_ids, line, credit_account_id, debit, credit)
 
                                 if not credit_line:
-                                    credit_line = self._prepare_line_values(line, credit_account_id, date, debit,
-                                                                            credit, analytic_account_id)
+                                    credit_line = self._prepare_line_values(line, credit_account_id, date, debit,credit)
                                     line_ids.append(credit_line)
                                 else:
                                     credit_line['debit'] += debit
@@ -333,7 +334,7 @@ class Hr_payslip(models.Model):
                             adjustment_entry_name = 'Ajuste al peso'
 
                         if float_compare(credit_sum, debit_sum, precision_digits=precision) == -1:
-                            acc_id = slip.journal_id.default_account_id.id
+                            acc_id = slip.sudo().journal_id.default_account_id.id
                             if not acc_id:
                                 raise UserError(
                                     _('The Expense Journal "%s" has not properly configured the Credit Account!') % (
@@ -345,21 +346,21 @@ class Hr_payslip(models.Model):
 
                             if not adjust_credit:
                                 adjust_credit = {
-                                    'name': adjustment_entry_name,#_('Adjustment Entry'),
-                                    'partner_id': slip.employee_id.address_home_id.id,
+                                    'name': adjustment_entry_name+' - Credito '+slip.employee_id.name,#_('Adjustment Entry'),
+                                    'partner_id': slip.employee_id.work_contact_id.id,
                                     'account_id': acc_id,
                                     'journal_id': slip.journal_id.id,
                                     'date': date,
                                     'debit': 0.0,
                                     'credit': debit_sum - credit_sum,
-                                    'analytic_account_id': slip.analytic_account_id.id,
+                                    'analytic_distribution': slip.version_id.analytic_distribution,
                                 }
                                 line_ids.append(adjust_credit)
                             else:
                                 adjust_credit['credit'] = debit_sum - credit_sum
 
                         elif float_compare(debit_sum, credit_sum, precision_digits=precision) == -1:
-                            acc_id = slip.journal_id.default_account_id.id
+                            acc_id = slip.sudo().journal_id.default_account_id.id
                             if not acc_id:
                                 raise UserError(
                                     _('The Expense Journal "%s" has not properly configured the Debit Account!') % (
@@ -371,14 +372,14 @@ class Hr_payslip(models.Model):
 
                             if not adjust_debit:
                                 adjust_debit = {
-                                    'name': adjustment_entry_name,#_('Adjustment Entry'),
-                                    'partner_id': slip.employee_id.address_home_id.id,
+                                    'name': adjustment_entry_name+' - Debito '+slip.employee_id.name,#_('Adjustment Entry'),
+                                    'partner_id': slip.employee_id.work_contact_id.id,
                                     'account_id': acc_id,
                                     'journal_id': slip.journal_id.id,
                                     'date': date,
                                     'debit': credit_sum - debit_sum,
                                     'credit': 0.0,
-                                    'analytic_account_id': slip.analytic_account_id.id,
+                                    'analytic_distribution': slip.version_id.analytic_distribution,
                                 }
                                 line_ids.append(adjust_debit)
                             else:
@@ -392,6 +393,63 @@ class Hr_payslip(models.Model):
                             slip.write({'move_id': move.id, 'date': date})
 
                 if settings_batch_account == '0':
+                    final_credit = sum([x['credit'] for x in line_ids])
+                    final_debit = sum([x['debit'] for x in line_ids])
+                    if float_compare(final_credit, final_debit, precision_digits=precision) == -1:
+                        acc_id = slip.sudo().journal_id.default_account_id.id
+                        if not acc_id:
+                            raise UserError(
+                                _('The Expense Journal "%s" has not properly configured the Credit Account!') % (
+                                    slip.journal_id.name))
+                        existing_adjustment_line = (
+                            line_id for line_id in line_ids if line_id['name'] == adjustment_entry_name
+                        # _('Adjustment Entry')
+                        )
+                        adjust_credit = next(existing_adjustment_line, False)
+
+                        if not adjust_credit:
+                            adjust_credit = {
+                                'name': adjustment_entry_name+' Credito Total',
+                                # _('Adjustment Entry'),
+                                'partner_id': slip.employee_id.work_contact_id.id,
+                                'account_id': acc_id,
+                                'journal_id': slip.journal_id.id,
+                                'date': date,
+                                'debit': 0.0,
+                                'credit': final_debit - final_credit,
+                                'analytic_distribution': slip.version_id.analytic_distribution,
+                            }
+                            line_ids.append(adjust_credit)
+                        else:
+                            adjust_credit['credit'] = final_debit - final_credit
+
+                    elif float_compare(final_debit, final_credit, precision_digits=precision) == -1:
+                        acc_id = slip.sudo().journal_id.default_account_id.id
+                        if not acc_id:
+                            raise UserError(
+                                _('The Expense Journal "%s" has not properly configured the Debit Account!') % (
+                                    slip.journal_id.name))
+                        existing_adjustment_line = (
+                            line_id for line_id in line_ids if line_id['name'] == adjustment_entry_name
+                        # _('Adjustment Entry')
+                        )
+                        adjust_debit = next(existing_adjustment_line, False)
+
+                        if not adjust_debit:
+                            adjust_debit = {
+                                'name': adjustment_entry_name+' Debito Total',
+                                # _('Adjustment Entry'),
+                                'partner_id': slip.employee_id.work_contact_id.id,
+                                'account_id': acc_id,
+                                'journal_id': slip.journal_id.id,
+                                'date': date,
+                                'debit': final_credit - final_debit,
+                                'credit': 0.0,
+                                'analytic_distribution': slip.version_id.analytic_distribution,
+                            }
+                            line_ids.append(adjust_debit)
+                        else:
+                            adjust_debit['debit'] = final_credit - final_debit
                     # Add accounting lines in the move
                     move_dict['line_ids'] = [(0, 0, line_vals) for line_vals in line_ids]
                     move = self.env['account.move'].create(move_dict)

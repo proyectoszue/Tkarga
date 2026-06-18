@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>  
     <template id="report_liquidacion_vacaciones_document">
-        <t t-set="o" t-value="o.with_context(lang=o.employee_id.address_home_id.lang or o.env.lang)"/>
+        <t t-set="o" t-value="o.with_context(lang=o.employee_id.work_contact_id.lang or o.env.lang)"/>
             <div class="row">                                            
                 <div class="col-md-12 text-center"><strong>LIQUIDACION DE VACACIONES</strong></div>
             </div>               
@@ -15,14 +15,14 @@
                                 <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Empleado</b> :  <span t-field="o.employee_id.name"/></p>
                                 <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Nit/Ced</b>  : <span t-field="o.employee_id.identification_id"/></p>
                                 <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Cargo</b>    :     <span t-field="o.employee_id.job_id.name"/> </p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Basico</b>   :     <span t-field="o.contract_id.wage"/> </p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Ingreso</b>  :     <span t-field="o.contract_id.date_start"/> </p>
+                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Basico</b>   :     <span t-field="o.version_id.wage"/> </p>
+                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Ingreso</b>  :     <span t-field="o.version_id.contract_date_start"/> </p>
                             </td>
                             <td>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Centro</b>   :  <span t-field="o.contract_id.analytic_account_id.name"/></p>
+<!--                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Centro</b>   :  <span t-field="o.version_id.analytic_account_id.name"/></p>-->
                                 <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Sucursal</b> :  <span t-field="o.employee_id.branch_id.name"/></p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Cuenta</b>   :  <span t-field="o.employee_id.address_home_id.bank_ids.filtered(lambda bank: bank.is_main == True and bank.company_id == o.employee_id.company_id).acc_number"/></p>
-                                <p style="line-height:15px;margin:10px;font-size: 100%;"><b>Referencia</b> :  <span t-field="o.number"/></p>
+                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Cuenta</b>   :  <span t-field="o.employee_id.work_contact_id.bank_ids.filtered(lambda bank: bank.is_main == True and bank.company_id == o.employee_id.company_id).acc_number"/></p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;"><b>Referencia</b> :  <span t-field="o.name"/></p>
                                 <p style= "line-height:15px;margin:10px;font-size: 100%;" t-if="o.get_pay_vacations_in_payroll() == False"><b>Reintegro</b>:     <span t-field="o.refund_date"/> </p>
                                 <!-- <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Placa</b>    :  <span t-field="o.employee_id.department_id.store_id.placa.name"/></p> -->
                             </td>
@@ -107,7 +107,7 @@
                                         </tr>
                                         <tr>
                                         <td class="text-justify" colspan="2">
-                                                <span t-esc="o.contract_id.get_amount_text(o.line_ids.filtered(lambda line: line.code == 'NET').total).lower().capitalize()"/> pesos
+                                                <span t-esc="o.version_id.get_amount_text(o.line_ids.filtered(lambda line: line.code == 'NET').total).lower().capitalize()"/> pesos
                                         </td>
                                     </tr>
                                     </table>
@@ -123,7 +123,7 @@
   <template id="report_liquidacion_vacaciones">
          <t t-foreach="docs" t-as="o">
             <t t-set="inside_foreach_docs" t-value="o"/>
-            <t t-call="zue_hr_payroll.report_liquidacion_vacaciones_document" t-lang="o.employee_id.address_home_id.lang"/>
+            <t t-call="zue_hr_payroll.report_liquidacion_vacaciones_document" t-lang="o.employee_id.work_contact_id.lang"/>
         </t>
   </template>
 

@@ -5,17 +5,6 @@ import logging
 import datetime
 _logger = logging.getLogger(__name__)
 
-
-# Fechas comemorativas
-class zue_dates_commemorated(models.Model):
-    _name = 'zue.dates.commemorated'
-    _description = 'Fechas conmemorativas'
-
-    name = fields.Char('Descripción', required=True)
-    date = fields.Date('Fecha', required=True)
-
-    _sql_constraints = [('date_commemorated_uniq', 'unique(date)', 'Ya existe un día conmemorativo en esta fecha, por favor verificar.')]
-
 # Dias festivos
 class ZueHolidays(models.Model):
     _name = 'zue.holidays'
@@ -24,7 +13,7 @@ class ZueHolidays(models.Model):
     name = fields.Char('Descripción', required=True)
     date = fields.Date('Fecha', required=True)
 
-    _sql_constraints = [('date_holiday_uniq', 'unique(date)', 'Ya existe un día festivo en esta fecha, por favor verificar.')]
+    _date_uniq = models.Constraint('unique(date)', 'Ya existe un día festivo en esta fecha, por favor verificar.')
 
 #Codigo postal
 class ZueZipCode(models.Model):
@@ -34,7 +23,7 @@ class ZueZipCode(models.Model):
 
     code = fields.Char('Código', required=True)
 
-    _sql_constraints = [('zip_postal_uniq', 'unique(code)', 'Ya existe ese código postal, por favor verificar.')]
+    _zip_postal_uniq = models.Constraint('unique(code)', 'Ya existe ese código postal, por favor verificar.')
 
 # CIIU
 class Ciiu(models.Model):
@@ -48,62 +37,18 @@ class Ciiu(models.Model):
     porcent_ica = fields.Float(string='Porcentaje ICA')
     parent_id = fields.Many2one('zue.ciiu','Parent Tag', ondelete='cascade')
     parent_path = fields.Char(index=True)
-    child_ids = fields.One2many('zue.ciiu', 'parent_id', 'Child Tags')    
-    
-    def name_get(self):
-        result = []
+    child_ids = fields.One2many('zue.ciiu', 'parent_id', 'Child Tags')
+
+    @api.depends('name')
+    def _compute_display_name(self):
         for record in self:
-            result.append((record.id, "{}".format(record.name)))
-        return result
-
-# SECTORES
-class Sectors(models.Model):
-    _name = 'zue.sectors'
-    _description = 'Sectores'
-
-    code = fields.Char(string='Código', required=True)
-    name = fields.Char(string='Nombre', required=True)
-
-    def name_get(self):
-        result = []
-        for record in self:
-            result.append((record.id, "{} | {}".format(record.code, record.name)))
-        return result
-
-# TIPOS DE VINCULACION
-class x_vinculation_types(models.Model):
-    _name = 'zue.vinculation_types'
-    _description = 'Tipos de vinculación'
-
-    code = fields.Char(string='Código', required=True)
-    name = fields.Char(string='Nombre', required=True)
-    active = fields.Boolean(string='Activo')
-    
-    def name_get(self):
-        result = []
-        for record in self:
-            result.append((record.id, "{} | {}".format(record.code, record.name)))
-        return result
-
-# TIPOS DE CONTACTO
-class x_contact_types(models.Model):
-    _name = 'zue.contact_types'
-    _description = 'Tipos de contacto'
-    
-    code = fields.Char(string='Código', required=True)
-    name = fields.Char(string='Nombre', required=True)
-
-    def name_get(self):
-        result = []
-        for record in self:
-            result.append((record.id, "{} | {}".format(record.code, record.name)))
-        return result
+            record.display_name = "{}".format(record.name)
 
 # TIPOS DE TERCERO
 class x_type_thirdparty(models.Model):
     _name = 'zue.type_thirdparty'
     _description = 'Tipos de tercero'
-    
+
     code = fields.Char(string='Código', required=True)
     name = fields.Char(string='Nombre', required=True)
     is_company = fields.Boolean('¿Es un tipo de tercero compañia?')
@@ -115,41 +60,9 @@ class x_type_thirdparty(models.Model):
                               ('5', 'Candidato')], string='Tipo', required=True)
     fields_mandatory = fields.Many2many('ir.model.fields', domain="[('model', '=', 'res.partner'),('ttype', 'not in', ['many2many','one2many'])]", string='Campos obligatorios')
 
-    _sql_constraints = [('type_thirdparty_uniq', 'unique(types)',
-                         'Ya existe un tipo de tercero de este tipo, por favor verificar.')]
+    _type_thirdparty_uniq = models.Constraint('unique(types)', 'Ya existe un tipo de tercero de este tipo, por favor verificar.')
 
-    def name_get(self):
-        result = []
+    @api.depends('name')
+    def _compute_display_name(self):
         for record in self:
-            result.append((record.id, "{}".format(record.name)))
-        return result
-
-# Racngos de activos
-class x_asset_range(models.Model):
-    _name = 'zue.asset_range'
-    _description = 'Rangos de activos'
-    
-    initial_value = fields.Float(string='Valor inicial', required=True)
-    final_value = fields.Float(string='Valor final', required=True)
-    name = fields.Char(string='Nombre', required=True)
-    active = fields.Boolean(string='Activo')
-    
-    def name_get(self):
-        result = []
-        for record in self:
-            result.append((record.id, "{}".format(record.name)))
-        return result
-
-# Grupo Presupuestal
-class x_budget_group(models.Model):
-    _name = 'zue.budget_group'
-    _description = 'Grupos presupuestal'
-
-    code = fields.Char(string='Código', required=True)
-    name = fields.Char(string='Nombre', required=True)
-     
-    def name_get(self):
-        result = []
-        for record in self:
-            result.append((record.id, "{}".format(record.name)))
-        return result
+            record.display_name = "{}".format(record.name)

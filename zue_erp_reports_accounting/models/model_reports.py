@@ -51,9 +51,10 @@ class x_reports_account(models.Model):
     excel_file_name = fields.Char('Excel name')
     z_only_zue_developer = fields.Boolean(string='Desarrollo Zue', default=False)
 
-    @api.model
+    @api.model_create_multi
     def create(self, values):
-        self.exception_words(values['query'])
+        for data in values:
+            self.exception_words(data['query'])
         return super(x_reports_account, self).create(values)
 
     #Retonar columnas
@@ -84,8 +85,8 @@ class x_reports_account(models.Model):
         
         #raise ValidationError(_(query))                
         
-        self._cr.execute(query)
-        _res = self._cr.dictfetchall()
+        self.env.cr.execute(query)
+        _res = self.env.cr.dictfetchall()
         return _res
 
     def exception_words(self, query):

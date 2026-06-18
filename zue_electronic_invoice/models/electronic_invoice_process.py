@@ -2,7 +2,8 @@ from odoo.exceptions import ValidationError, UserError
 from odoo import models, fields, api, _
 import base64
 from datetime import date
-import json
+import math, json
+
 
 class AccountMove(models.Model):
     _inherit = 'account.move'
@@ -11,32 +12,39 @@ class AccountMove(models.Model):
     z_fe_encab_tax = fields.One2many('zue.fe.encab.tax', 'z_move_id', 'FE Encab Impuesto')
     z_fe_detail = fields.One2many('zue.fe.detail', 'z_move_id', 'FE Detalle')
     z_fe_detail_tax = fields.One2many('zue.fe.detail.tax', 'z_move_id', 'FE Detalle Impuesto')
+    z_value_tax_fe = fields.Float(string='Impuesto sin redondeo')
 
     def get_xml_v2(self):
         self.fill_fe_table()
 
         xml = None
-        obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', 'FacElectronica_' + self.env.company.zue_electronic_invoice_operator + 'v2')])
-        if len(obj_xml) == 0:
-            raise ValidationError(_("Error! No ha configurado un XML con el nombre 'FacElectronica_" + self.env.company.zue_electronic_invoice_operator + "v2'"))
+        if self.pos_order_ids:
+            obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', 'POSFacElectronica_' + self.env.company.zue_electronic_invoice_operator + 'v2')])
+        else:
+            obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', 'FacElectronica_' + self.env.company.zue_electronic_invoice_operator + 'v2')])
+        if not obj_xml:
+            raise ValidationError(_("Error! No ha configurado un XML con el nombre '{}'".format(('POSFacElectronica_' if self.pos_order_ids else 'FacElectronica_') + self.env.company.zue_electronic_invoice_operator + "v2")))
 
         xml = obj_xml.xml_generator(self)
-        xml = xml.decode("UTF-8").replace("<ITE/>", "").replace("<TII/>", "")
+        xml = xml.decode("UTF-8").replace("<ITE/>", "").replace("<TII/>", "").replace("<cfc", "<cfc:").replace("</cfc", "</cfc:").replace("<dte", "<dte:").replace("</dte", "</dte:").replace("<cno", "<cno:").replace("</cno", "</cno:").replace("<cex", "<cex:").replace("</cex", "</cex:")
 
-        filename = f'FE_v2_{str(date.today().year)}_{self.name}_{str(self.partner_id.name)}.xml'
+        if self.pos_order_ids:
+            filename = f'POS_FE_v2_{date.today().year}_{self.name}_{self.partner_id.name}.xml'
+        else:
+            filename = f'FE_v2_{date.today().year}_{self.name}_{self.partner_id.name}.xml'
 
-        if self.xml_file_namev2:
+        if self.xml_file_name:
             attachment = self.env['ir.attachment'].search(
-                [('res_model', '=', 'account.move'), ('name', '=', self.xml_file_namev2)])
+                [('res_model', '=', 'account.move'), ('res_id', '=', self.id), ('name', '=', self.xml_file_name)])
             attachment.unlink()
 
         self.write({
-            'xml_filev2': base64.encodestring(bytes(xml, 'UTF-8')),
-            'xml_file_namev2': filename,
+            'xml_file': base64.encodebytes(bytes(xml, 'UTF-8')),
+            'xml_file_name': filename,
         })
 
         data_attach = {'name': filename,
-                       'type': 'binary', 'datas': self.xml_filev2, 'res_name': filename, 'store_fname': filename,
+                       'type': 'binary', 'datas': self.xml_file, 'res_name': filename, 'store_fname': filename,
                        'res_model': 'account.move', 'res_id': self.id}
 
         atts_id = self.env['ir.attachment'].create(data_attach)
@@ -61,56 +69,95 @@ class AccountMove(models.Model):
         line_detail = []
         total_base = 0
         tasa_otra_moneda = 0
+        invoice_base_lines = obj_lines.filtered(
+            lambda line: (
+                line.display_type == 'product'
+                and (
+                    line.account_id.internal_group == 'income'
+                    or (line.account_id.internal_group == 'expense' and line.move_id.move_type in ('out_refund', 'in_refund'))
+                )
+            )
+        )
+        included_invoice_tax_ids = set(
+            invoice_base_lines.mapped('tax_ids').filtered(
+                lambda tax: tax.tax_type and not tax.tax_type.not_iclude
+            ).ids
+        )
 
         for lines in obj_lines:
-            if lines.currency_id.name != 'COP' and not tasa_otra_moneda:
-                tasa_otra_moneda = abs(lines.balance) / abs(lines.price_subtotal)
+            if lines.currency_id != self.company_id.currency_id and not tasa_otra_moneda:
+                line_amount_currency = abs(lines.amount_currency) if abs(lines.amount_currency) else abs(lines.price_subtotal)
+                tasa_otra_moneda = abs(lines.balance) / line_amount_currency if line_amount_currency and abs(lines.balance) else 1
 
-            if lines.tax_base_amount:
+            line_amount = abs(lines.balance) if lines.currency_id == self.company_id.currency_id else abs(lines.amount_currency or lines.price_subtotal)
+            is_rounding_line = lines.display_type == 'rounding'
+            is_tax_line = bool(lines.tax_line_id and (lines.tax_base_amount or lines.display_type == 'tax'))
+
+            if is_rounding_line:
+                affects_invoice_line = (
+                    lines.account_id.internal_group == 'income'
+                    or (lines.account_id.internal_group == 'expense' and lines.move_id.move_type in ('out_refund', 'in_refund'))
+                )
+                affects_included_tax = bool(
+                    lines.tax_line_id
+                    and lines.tax_line_id.id in included_invoice_tax_ids
+                    and lines.tax_line_id.tax_type
+                    and not lines.tax_line_id.tax_type.not_iclude
+                )
+
+                if (affects_invoice_line or affects_included_tax) and (
+                    not lines.tax_line_id
+                    or (lines.tax_line_id.tax_type and not lines.tax_line_id.tax_type.retention)
+                ):
+                    total += line_amount
+                continue
+
+            if is_tax_line:
                 # obj_tax = self.env['account.tax'].search([('name', '=', lines.name), ('tax_type.not_iclude', '=', False)], limit=1)
                 if not lines.tax_line_id.tax_type.not_iclude:
                 # if obj_tax:
                     if lines.tax_line_id.tax_type.is_aiu:
-                        total += abs(lines.balance) if lines.currency_id.name == 'COP' else abs(lines.price_subtotal)
-                        totalret += abs(lines.balance) if lines.currency_id.name == 'COP' else abs(lines.price_subtotal)
-                        base += abs(lines.balance) if lines.currency_id.name == 'COP' else abs(lines.price_subtotal)
+                        total += line_amount
+                        totalret += line_amount
+                        base += line_amount
 
                         line_detail.append({'z_move_id': lines.move_id.id,
                                             'z_move_line_id': lines.id,
                                             'z_quantity': lines.quantity,
-                                            'z_value_base': abs(
-                                                lines.balance) if lines.currency_id.name == 'COP' else abs(
-                                                lines.price_subtotal)})
+                                            'z_value_base': line_amount})
                     else:
-                        totalret += abs(lines.balance) if lines.currency_id.name == 'COP' else abs(lines.price_subtotal)
+                        totalret += line_amount
 
                         if not lines.tax_line_id.tax_type.retention:
-                            total += abs(lines.balance) if lines.currency_id.name == 'COP' else abs(
-                                lines.price_subtotal)
+                            total += line_amount
+
+                        tax_base_amount = abs(lines.tax_base_amount or 0.0)
 
                         tax_line_encab = {
                             'z_move_id': self.id,
                             'z_code': lines.tax_line_id.tax_type.code,
-                            'z_value_tax': abs(lines.balance) if lines.currency_id.name == 'COP' else abs(
-                                lines.price_subtotal),
+                            'z_value_tax': line_amount,
                             'z_percent': abs(lines.tax_line_id.amount),
-                            'z_value_base': abs(lines.tax_base_amount) if lines.currency_id.name == 'COP' else abs(lines.tax_base_amount) / tasa_otra_moneda,
+                            'z_value_base': tax_base_amount if lines.currency_id == self.company_id.currency_id else tax_base_amount / (tasa_otra_moneda or 1),
                             'z_retention': lines.tax_line_id.tax_type.retention
                         }
                         tax_lines_encab.append(tax_line_encab)
             else:
-                if lines.name:
-                    total += abs(lines.balance) if lines.currency_id.name == 'COP' else abs(lines.price_subtotal)
-                    if 'redondeo' not in lines.name:
-                        totalret += abs(lines.balance) if lines.currency_id.name == 'COP' else abs(lines.price_subtotal)
-                        base += abs(lines.balance) if lines.currency_id.name == 'COP' else abs(lines.price_subtotal)
-                if lines.product_id:
-                    total_base += abs(lines.balance) if lines.currency_id.name == 'COP' else abs(lines.price_subtotal)
+                if (lines.display_type == 'product'
+                    and (lines.account_id.internal_group == 'income' or (lines.account_id.internal_group == 'expense' and lines.move_id.move_type in ('out_refund', 'in_refund')))):
+                    if lines.name:
+                        total += line_amount
+                        if 'redondeo' not in lines.name:
+                            totalret += line_amount
+                            base += line_amount
+                    if lines.product_id:
+                        if lines.tax_ids:
+                            total_base += line_amount
 
-                line_detail.append({'z_move_id': lines.move_id.id,
-                                    'z_move_line_id': lines.id,
-                                    'z_quantity': lines.quantity,
-                                    'z_value_base': abs(lines.balance) if lines.currency_id.name == 'COP' else abs(lines.price_subtotal)})
+                    line_detail.append({'z_move_id': lines.move_id.id,
+                                        'z_move_line_id': lines.id,
+                                        'z_quantity': lines.quantity,
+                                        'z_value_base': line_amount})
 
         # total_decimals = ""
         # decimals = 0
@@ -121,92 +168,82 @@ class AccountMove(models.Model):
         #
         #     if decimals <= 50:
 
+        # Se crea un nuevo item para redondear la factura
+        # parte_decimal, parte_entera = math.modf(total)
+        # redondeo_total = 1 - round(parte_decimal, 2)
+        # if redondeo_total < 1:
+        #     line_detail.append({'z_move_id': lines.move_id.id,
+        #                         'z_move_line_id': None,
+        #                         'z_quantity': 1,
+        #                         'z_value_base':  redondeo_total
+        #                         })
+        redondeo_total = 99
 
         encab = self.env['zue.fe.encab'].create({
             'z_move_id': self.id,
-            'z_value_total': total,
-            'z_value_total_with_ret': totalret,
-            'z_value_base': base,
+            'z_value_total': total + (redondeo_total if redondeo_total < 1 else 0),
+            'z_value_total_with_ret': totalret + (redondeo_total if redondeo_total < 1 else 0),
+            'z_value_base': base + (redondeo_total if redondeo_total < 1 else 0),
             'z_currency_id': self.currency_id.id,
             'z_exchange_rate': tasa_otra_moneda
         })
 
         tax_encab = self.env['zue.fe.encab.tax'].create(tax_lines_encab)
-
         detail = self.env['zue.fe.detail'].create(line_detail)
 
-        list_dup = []
-        query = f'''
-                select count(id) as count, price_subtotal, price_total
-                from account_move_line A
-                where move_id = %s
-                group by move_name, "date", "ref", parent_state, journal_id, company_id, company_currency_id, account_id, account_root_id, 
-                         "sequence", quantity, price_unit, discount, debit, credit, balance, amount_currency, price_subtotal, price_total,
-                         date_maturity, currency_id, partner_id, product_id, payment_id, tax_line_id, tax_base_amount, analytic_account_id
-                having count(A.id) > 1
-                ''' % self.id
-
-        self._cr.execute(query)
-        list_dup = self._cr.dictfetchall()
-
         tax_lines_detail = []
+        detail_move_lines = detail.mapped('z_move_line_id').filtered(lambda line: line and not line.tax_line_id)
+        detail_move_line_ids = set(detail_move_lines.ids)
+
+        def filter_tax_values_to_apply(base_line, tax_data):
+            tax = tax_data.get('tax')
+            return bool(
+                tax
+                and tax.tax_type
+                and not tax.tax_type.is_aiu
+                and not tax.tax_type.not_iclude
+            )
+
+        def grouping_key_generator(base_line, tax_data):
+            tax = tax_data['tax']
+            return {
+                'tax_id': tax.id,
+                'code': tax.tax_type.code,
+                'percent': abs(tax.amount),
+                'retention': tax.tax_type.retention,
+            }
+
+        tax_details_result = self._prepare_invoice_aggregated_taxes(
+            filter_invl_to_apply=lambda line: line.id in detail_move_line_ids,
+            filter_tax_values_to_apply=filter_tax_values_to_apply,
+            grouping_key_generator=grouping_key_generator,
+        )
+        tax_details_by_line_id = {
+            record.id: values for record, values in tax_details_result.get('tax_details_per_record', {}).items()
+        }
+        use_invoice_currency = self.currency_id != self.company_id.currency_id
+
         for item in detail:
-            obj_move_lines = self.env['account.move.line'].search(
-                [('move_id', '=', item.z_move_id.id), ('tax_line_id', '!=', False),
-                 ('tax_base_amount', '=', item.z_value_base if lines.currency_id.name == 'COP' else round((item.z_value_base * tasa_otra_moneda), 2)),
-                 ('tax_line_id.tax_type.is_aiu', '=', False), ('tax_line_id.tax_type.not_iclude', '=', False)],
-                order='amount_currency desc')
+            if not item.z_move_line_id or item.z_move_line_id.tax_line_id:
+                continue
 
-            if not obj_move_lines:
-                if list_dup:
-                    for row in list_dup:
-                        if item.z_value_base == row['price_subtotal']:
-                            obj_move_lines = self.env['account.move.line'].search(
-                                [('move_id', '=', item.z_move_id.id), ('tax_line_id', '!=', False),
-                                 ('tax_base_amount', '=', item.z_value_base * row['count'] if lines.currency_id.name == 'COP' else (item.z_value_base * row['count']) * tasa_otra_moneda),
-                                 ('tax_line_id.tax_type.is_aiu', '=', False),
-                                 ('tax_line_id.tax_type.not_iclude', '=', False)])
+            line_tax_details = tax_details_by_line_id.get(item.z_move_line_id.id, {}).get('tax_details', {})
+            for grouping_key, values in line_tax_details.items():
+                value_tax = abs(values['tax_amount_currency']) if use_invoice_currency else abs(values['tax_amount'])
+                value_base = abs(values['base_amount_currency']) if use_invoice_currency else abs(values['base_amount'])
+                if not value_tax and not value_base:
+                    continue
 
-                            for lines in sorted(obj_move_lines, key=lambda x: x.tax_line_id.tax_type.code):
-                                tax_lines_detail.append({'z_detail_id': item.id,
-                                                         'z_move_id': item.z_move_id.id,
-                                                         'z_move_line_id': item.z_move_line_id.id,
-                                                         'z_code': lines.tax_line_id.tax_type.code,
-                                                         'z_value_tax': abs(lines.balance) if lines.currency_id.name == 'COP' else abs(lines.price_subtotal) / row['count'],
-                                                         'z_percent': abs(lines.tax_line_id.amount),
-                                                         'z_value_base': abs(lines.tax_base_amount) / row['count'],
-                                                         'z_retention': lines.tax_line_id.tax_type.retention
-                                                         })
-                else:
-                    if total_base:
-                        obj_move_lines = self.env['account.move.line'].search(
-                            [('move_id', '=', item.z_move_id.id), ('tax_line_id', '!=', False),
-                             ('tax_base_amount', '=', total_base if lines.currency_id.name == 'COP' else total_base * tasa_otra_moneda),
-                             ('tax_line_id.tax_type.is_aiu', '=', False),
-                             ('tax_line_id.tax_type.not_iclude', '=', False)], order='amount_currency desc')
-
-                        for lines in sorted(obj_move_lines, key=lambda x: x.tax_line_id.tax_type.code):
-                            tax_lines_detail.append({'z_detail_id': item.id,
-                                                     'z_move_id': item.z_move_id.id,
-                                                     'z_move_line_id': item.z_move_line_id.id,
-                                                     'z_code': lines.tax_line_id.tax_type.code,
-                                                     'z_value_tax': abs(item.z_move_line_id.price_subtotal) * abs(lines.tax_line_id.amount) / 100,
-                                                     'z_percent': abs(lines.tax_line_id.amount),
-                                                     'z_value_base': abs(item.z_move_line_id.price_subtotal),
-                                                     'z_retention': lines.tax_line_id.tax_type.retention
-                                                     })
-
-            else:
-                for lines in sorted(obj_move_lines, key=lambda x: x.tax_line_id.tax_type.code):
-                    tax_lines_detail.append({'z_detail_id': item.id,
-                                             'z_move_id': item.z_move_id.id,
-                                             'z_move_line_id': item.z_move_line_id.id,
-                                             'z_code': lines.tax_line_id.tax_type.code,
-                                             'z_value_tax': abs(lines.balance) if lines.currency_id.name == 'COP' else abs(lines.price_subtotal),
-                                             'z_percent': abs(lines.tax_line_id.amount),
-                                             'z_value_base': abs(lines.tax_base_amount) if lines.currency_id.name == 'COP' else abs(lines.tax_base_amount) / tasa_otra_moneda,
-                                             'z_retention': lines.tax_line_id.tax_type.retention
-                                             })
+                tax_lines_detail.append({
+                    'z_detail_id': item.id,
+                    'z_move_id': item.z_move_id.id,
+                    'z_move_line_id': item.z_move_line_id.id,
+                    'z_code': grouping_key['code'],
+                    'z_value_tax': value_tax,
+                    'z_percent': grouping_key['percent'],
+                    'z_value_base': value_base,
+                    'z_retention': grouping_key['retention'],
+                })
 
         detail_tax = self.env['zue.fe.detail.tax'].create(tax_lines_detail)
 
@@ -219,7 +256,7 @@ class zue_fe_encab(models.TransientModel):
 
     z_move_id = fields.Many2one('account.move', string='Movimiento contable')
     z_value_total = fields.Float(string='Valor Total')
-    z_value_total_with_ret = fields.Float(string='Valor Total')
+    z_value_total_with_ret = fields.Float(string='Valor Total con Ret')
     z_value_base = fields.Float(string='Valor Base')
     z_currency_id = fields.Many2one('res.currency', string='Moneda')
     z_exchange_rate = fields.Float(string='Tasa de cambio')
@@ -237,6 +274,7 @@ class zue_fe_encab_tax(models.TransientModel):
     z_value_base = fields.Float(string='Valor Base')
     z_retention = fields.Boolean(string='Retención')
 
+
 class zue_fe_detail(models.TransientModel):
     _name = 'zue.fe.detail'
     _description = 'Detalle de facturación electrónica ZUE'
@@ -247,12 +285,13 @@ class zue_fe_detail(models.TransientModel):
     z_value_base = fields.Float(string='Valor Base')
     z_tax_detail_ids = fields.One2many('zue.fe.detail.tax', 'z_detail_id', 'Impuestos Detalle')
 
+
 class zue_fe_detail_tax(models.TransientModel):
     _name = 'zue.fe.detail.tax'
     _description = 'Impuestos del detalle de facturación electrónica ZUE'
     _order = "z_code asc"
 
-    z_detail_id = fields.Many2one('zue.fe.detail', string='Movimiento contable')
+    z_detail_id = fields.Many2one('zue.fe.detail', string='Movimiento contable FE')
     z_move_id = fields.Many2one('account.move', string='Movimiento contable')
     z_move_line_id = fields.Many2one('account.move.line', string='Detalle movimiento contable')
     z_code = fields.Char(string='Codigo')

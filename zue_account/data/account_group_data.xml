@@ -1,0 +1,2974 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="active_id" model="account.group">
+            <field name="code_prefix_start">1</field>
+            <field name="code_prefix_end">1</field>
+            <field name="name">Activo</field>
+        </record>
+
+        <record id="cash_and_cash_equivalents_id" model="account.group">
+            <field name="code_prefix_start">11</field>
+            <field name="code_prefix_end">11</field>
+            <field name="name">Efectivo Y Equivalentes De Efectivo</field>
+        </record>
+
+        <record id="box_id" model="account.group">
+            <field name="code_prefix_start">1105</field>
+            <field name="code_prefix_end">1105</field>
+            <field name="name">Caja</field>
+        </record>
+
+        <record id="general_box_id" model="account.group">
+            <field name="code_prefix_start">110505</field>
+            <field name="code_prefix_end">110505</field>
+            <field name="name">Caja General</field>
+        </record>
+
+        <record id="banks_id" model="account.group">
+            <field name="code_prefix_start">1110</field>
+            <field name="code_prefix_end">1110</field>
+            <field name="name">Bancos</field>
+        </record>
+
+        <record id="national_currency_id" model="account.group">
+            <field name="code_prefix_start">111005</field>
+            <field name="code_prefix_end">111005</field>
+            <field name="name">Moneda Nacional</field>
+        </record>
+
+        <record id="foreign_currency_id" model="account.group">
+            <field name="code_prefix_start">111010</field>
+            <field name="code_prefix_end">111010</field>
+            <field name="name">Moneda Extranjera</field>
+        </record>
+
+        <record id="outstanding_payments_id" model="account.group">
+            <field name="code_prefix_start">111015</field>
+            <field name="code_prefix_end">111015</field>
+            <field name="name">Outstanding Payments</field>
+        </record>
+
+        <record id="outstanding_receipts_id" model="account.group">
+            <field name="code_prefix_start">111020</field>
+            <field name="code_prefix_end">111020</field>
+            <field name="name">Outstanding Receipts</field>
+        </record>
+
+        <record id="bank_suspense_account_id" model="account.group">
+            <field name="code_prefix_start">111025</field>
+            <field name="code_prefix_end">111025</field>
+            <field name="name">Bank Suspense Account</field>
+        </record>
+
+        <record id="shortterm_deposits_id" model="account.group">
+            <field name="code_prefix_start">1115</field>
+            <field name="code_prefix_end">1115</field>
+            <field name="name">Depósitos a Corto Plazo</field>
+        </record>
+
+        <record id="liquidity_transfer_id" model="account.group">
+            <field name="code_prefix_start">111505</field>
+            <field name="code_prefix_end">111505</field>
+            <field name="name">Tranferencia de Liquidez</field>
+        </record>
+
+        <record id="trust_deposits_id" model="account.group">
+            <field name="code_prefix_start">1120</field>
+            <field name="code_prefix_end">1120</field>
+            <field name="name">Depósitos de Fiducia</field>
+        </record>
+
+        <record id="deposits_of_foreign_financial_institutions_id" model="account.group">
+            <field name="code_prefix_start">1125</field>
+            <field name="code_prefix_end">1125</field>
+            <field name="name">Depósitos Entidades Financieras del Exterior</field>
+        </record>
+
+        <record id="deposits_in_financial_institutions_id" model="account.group">
+            <field name="code_prefix_start">1150</field>
+            <field name="code_prefix_end">1150</field>
+            <field name="name">Depósitos en Instituciones Financieras</field>
+        </record>
+
+        <record id="financial_assets_id" model="account.group">
+            <field name="code_prefix_start">12</field>
+            <field name="code_prefix_end">12</field>
+            <field name="name">Activos Financieros</field>
+        </record>
+
+        <record id="investments_in_companies_id" model="account.group">
+            <field name="code_prefix_start">1205</field>
+            <field name="code_prefix_end">1205</field>
+            <field name="name">Inversiones En Sociedades</field>
+        </record>
+
+        <record id="actions_id" model="account.group">
+            <field name="code_prefix_start">1210</field>
+            <field name="code_prefix_end">1210</field>
+            <field name="name">Acciones</field>
+        </record>
+
+        <record id="financial_derivatives_id" model="account.group">
+            <field name="code_prefix_start">1215</field>
+            <field name="code_prefix_end">1215</field>
+            <field name="name">Derivados Financieros</field>
+        </record>
+
+        <record id="other_investments_id" model="account.group">
+            <field name="code_prefix_start">1295</field>
+            <field name="code_prefix_end">1295</field>
+            <field name="name">Otras inversiones</field>
+        </record>
+
+        <record id="trade_receivables_and_other_(c_x_c)_id" model="account.group">
+            <field name="code_prefix_start">13</field>
+            <field name="code_prefix_end">13</field>
+            <field name="name">Cuentas Comerciales Por Cobrar Y Otras (C X C)</field>
+        </record>
+
+        <record id="clients_id" model="account.group">
+            <field name="code_prefix_start">1305</field>
+            <field name="code_prefix_end">1305</field>
+            <field name="name">Clientes</field>
+        </record>
+
+        <record id="national_id" model="account.group">
+            <field name="code_prefix_start">130505</field>
+            <field name="code_prefix_end">130505</field>
+            <field name="name">Nacionales</field>
+        </record>
+
+        <record id="from_the_outside_id" model="account.group">
+            <field name="code_prefix_start">130510</field>
+            <field name="code_prefix_end">130510</field>
+            <field name="name">Del Exterior</field>
+        </record>
+
+        <record id="business_checking_accounts_id" model="account.group">
+            <field name="code_prefix_start">1310</field>
+            <field name="code_prefix_end">1310</field>
+            <field name="name">Cuentas corrientes comerciales</field>
+        </record>
+
+        <record id="related_companies_id" model="account.group">
+            <field name="code_prefix_start">131010</field>
+            <field name="code_prefix_end">131010</field>
+            <field name="name">Compañías Vinculadas</field>
+        </record>
+
+        <record id="accounts_receivable_from_economic_linked_parties_id" model="account.group">
+            <field name="code_prefix_start">1320</field>
+            <field name="code_prefix_end">1320</field>
+            <field name="name">Cuentas por Cobrar a Vinculados Económicos</field>
+        </record>
+
+        <record id="accounts_receivable_from_partners_and_shareholders_id" model="account.group">
+            <field name="code_prefix_start">1325</field>
+            <field name="code_prefix_end">1325</field>
+            <field name="name">Cuentas por cobrar a socios y accionistas</field>
+        </record>
+
+        <record id="to_partners_id" model="account.group">
+            <field name="code_prefix_start">132505</field>
+            <field name="code_prefix_end">132505</field>
+            <field name="name">A socios</field>
+        </record>
+
+        <record id="to_shareholders_id" model="account.group">
+            <field name="code_prefix_start">132510</field>
+            <field name="code_prefix_end">132510</field>
+            <field name="name">a Accionistas</field>
+        </record>
+
+        <record id="advances_and_advances_id" model="account.group">
+            <field name="code_prefix_start">1330</field>
+            <field name="code_prefix_end">1330</field>
+            <field name="name">Anticipos y avances</field>
+        </record>
+
+        <record id="to_suppliers_id" model="account.group">
+            <field name="code_prefix_start">133005</field>
+            <field name="code_prefix_end">133005</field>
+            <field name="name">a Proveedores</field>
+        </record>
+
+        <record id="to_contractors_id" model="account.group">
+            <field name="code_prefix_start">133010</field>
+            <field name="code_prefix_end">133010</field>
+            <field name="name">a Contratistas</field>
+        </record>
+
+        <record id="a_workers_id" model="account.group">
+            <field name="code_prefix_start">133015</field>
+            <field name="code_prefix_end">133015</field>
+            <field name="name">a Trabajadores</field>
+        </record>
+
+        <record id="deposits_id" model="account.group">
+            <field name="code_prefix_start">1335</field>
+            <field name="code_prefix_end">1335</field>
+            <field name="name">Depósitos</field>
+        </record>
+
+        <record id="for_imports_id" model="account.group">
+            <field name="code_prefix_start">133505</field>
+            <field name="code_prefix_end">133505</field>
+            <field name="name">Para Importaciones</field>
+        </record>
+
+        <record id="advance_payment_of_services_not_received_id" model="account.group">
+            <field name="code_prefix_start">1340</field>
+            <field name="code_prefix_end">1340</field>
+            <field name="name">Anticipo De Servicios No Recibidos</field>
+        </record>
+
+        <record id="advance_payment_of_taxes_and_contributions_or_balances_in_favor_id" model="account.group">
+            <field name="code_prefix_start">1355</field>
+            <field name="code_prefix_end">1355</field>
+            <field name="name">Anticipo de impuestos y contribuciones o saldos a favor</field>
+        </record>
+
+        <record id="advance_on_income_and_complementary_taxes_id" model="account.group">
+            <field name="code_prefix_start">135505</field>
+            <field name="code_prefix_end">135505</field>
+            <field name="name">Anticipo de Impuestos de Renta y Complementarios</field>
+        </record>
+
+        <record id="advance_on_industry_and_commerce_taxes_id" model="account.group">
+            <field name="code_prefix_start">135510</field>
+            <field name="code_prefix_end">135510</field>
+            <field name="name">Anticipo de Impuestos de Industria y Comercio</field>
+        </record>
+
+        <record id="withholding_at_source_id" model="account.group">
+            <field name="code_prefix_start">135515</field>
+            <field name="code_prefix_end">135515</field>
+            <field name="name">Retención en la Fuente</field>
+        </record>
+
+        <record id="withheld_sales_tax_id" model="account.group">
+            <field name="code_prefix_start">135517</field>
+            <field name="code_prefix_end">135517</field>
+            <field name="name">Impuesto a Las Ventas Retenido</field>
+        </record>
+
+        <record id="industry_and_commerce_tax_withheld_id" model="account.group">
+            <field name="code_prefix_start">135518</field>
+            <field name="code_prefix_end">135518</field>
+            <field name="name">Impuesto de Industria y Comercio Retenido</field>
+        </record>
+
+        <record id="surpluses_in_private_tax_settlement_id" model="account.group">
+            <field name="code_prefix_start">135520</field>
+            <field name="code_prefix_end">135520</field>
+            <field name="name">Sobrantes en Liquidación Privada de Impuestos</field>
+        </record>
+
+        <record id="claims_id" model="account.group">
+            <field name="code_prefix_start">1360</field>
+            <field name="code_prefix_end">1360</field>
+            <field name="name">Reclamaciones</field>
+        </record>
+
+        <record id="to_insurance_companies_id" model="account.group">
+            <field name="code_prefix_start">136005</field>
+            <field name="code_prefix_end">136005</field>
+            <field name="name">a Compañías Aseguradoras</field>
+        </record>
+
+        <record id="a_transporters_id" model="account.group">
+            <field name="code_prefix_start">136010</field>
+            <field name="code_prefix_end">136010</field>
+            <field name="name">a Transportadores</field>
+        </record>
+
+        <record id="for_air_tickets_id" model="account.group">
+            <field name="code_prefix_start">136015</field>
+            <field name="code_prefix_end">136015</field>
+            <field name="name">Por Tiquetes Aéreos</field>
+        </record>
+
+        <record id="accounts_receivable_from_workers_id" model="account.group">
+            <field name="code_prefix_start">1365</field>
+            <field name="code_prefix_end">1365</field>
+            <field name="name">Cuentas por cobrar a trabajadores</field>
+        </record>
+
+        <record id="education_id" model="account.group">
+            <field name="code_prefix_start">136515</field>
+            <field name="code_prefix_end">136515</field>
+            <field name="name">Educación</field>
+        </record>
+
+        <record id="domestic_calamity_id" model="account.group">
+            <field name="code_prefix_start">136525</field>
+            <field name="code_prefix_end">136525</field>
+            <field name="name">Calamidad Doméstica</field>
+        </record>
+
+        <record id="miscellaneous_debtors_id" model="account.group">
+            <field name="code_prefix_start">1380</field>
+            <field name="code_prefix_end">1380</field>
+            <field name="name">Deudores varios</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">138095</field>
+            <field name="code_prefix_end">138095</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="other_debtors_id" model="account.group">
+            <field name="code_prefix_start">1390</field>
+            <field name="code_prefix_end">1390</field>
+            <field name="name">Otros Deudores</field>
+        </record>
+
+        <record id="debts_that_are_difficult_to_collect_id" model="account.group">
+            <field name="code_prefix_start">139005</field>
+            <field name="code_prefix_end">139005</field>
+            <field name="name">Deudas de Difícil Cobro</field>
+        </record>
+
+        <record id="provisions_id" model="account.group">
+            <field name="code_prefix_start">1399</field>
+            <field name="code_prefix_end">1399</field>
+            <field name="name">Provisiones</field>
+        </record>
+
+        <record id="clients_id" model="account.group">
+            <field name="code_prefix_start">139905</field>
+            <field name="code_prefix_end">139905</field>
+            <field name="name">Clientes</field>
+        </record>
+
+        <record id="inventory_id" model="account.group">
+            <field name="code_prefix_start">14</field>
+            <field name="code_prefix_end">14</field>
+            <field name="name">Inventario</field>
+        </record>
+
+        <record id="finished_products_id" model="account.group">
+            <field name="code_prefix_start">1430</field>
+            <field name="code_prefix_end">1430</field>
+            <field name="name">Productos terminados</field>
+        </record>
+
+        <record id="manufactured_products_id" model="account.group">
+            <field name="code_prefix_start">143005</field>
+            <field name="code_prefix_end">143005</field>
+            <field name="name">Productos Manufacturados</field>
+        </record>
+
+        <record id="unmanufactured_goods_id" model="account.group">
+            <field name="code_prefix_start">1435</field>
+            <field name="code_prefix_end">1435</field>
+            <field name="name">Mercancías No Fabricadas</field>
+        </record>
+
+        <record id="inventory__auto_parts_purchases_id" model="account.group">
+            <field name="code_prefix_start">143505</field>
+            <field name="code_prefix_end">143505</field>
+            <field name="name">Inventario - Compras Autopartes</field>
+        </record>
+
+        <record id="inventory__auto_parts_indirect_costs_id" model="account.group">
+            <field name="code_prefix_start">143510</field>
+            <field name="code_prefix_end">143510</field>
+            <field name="name">Inventario - Costos Indirectos de Autopartes</field>
+        </record>
+
+        <record id="inventory__departures_in_transit_(tr)_id" model="account.group">
+            <field name="code_prefix_start">143515</field>
+            <field name="code_prefix_end">143515</field>
+            <field name="name">Inventario - Salidas en Tránsito (Tr)</field>
+        </record>
+
+        <record id="transitory_purchases_id" model="account.group">
+            <field name="code_prefix_start">143590</field>
+            <field name="code_prefix_end">143590</field>
+            <field name="name">Transitoria de Compras</field>
+        </record>
+
+        <record id="goods_in_transit_id" model="account.group">
+            <field name="code_prefix_start">1465</field>
+            <field name="code_prefix_end">1465</field>
+            <field name="name">Mercancía En Transito</field>
+        </record>
+
+        <record id="inventory__purchases_in_transit_(tr)_id" model="account.group">
+            <field name="code_prefix_start">146505</field>
+            <field name="code_prefix_end">146505</field>
+            <field name="name">Inventario - Compras en Transito (Tr)</field>
+        </record>
+
+        <record id="provisions_id" model="account.group">
+            <field name="code_prefix_start">1499</field>
+            <field name="code_prefix_end">1499</field>
+            <field name="name">Provisiones</field>
+        </record>
+
+        <record id="for_obsolescence_id" model="account.group">
+            <field name="code_prefix_start">149905</field>
+            <field name="code_prefix_end">149905</field>
+            <field name="name">Para Obsolescencia</field>
+        </record>
+
+        <record id="property_plant_equipment_id" model="account.group">
+            <field name="code_prefix_start">15</field>
+            <field name="code_prefix_end">15</field>
+            <field name="name">Propiedades, Planta Y Equipo</field>
+        </record>
+
+        <record id="land_id" model="account.group">
+            <field name="code_prefix_start">1504</field>
+            <field name="code_prefix_end">1504</field>
+            <field name="name">Terrenos</field>
+        </record>
+
+        <record id="urban_id" model="account.group">
+            <field name="code_prefix_start">150405</field>
+            <field name="code_prefix_end">150405</field>
+            <field name="name">Urbanos</field>
+        </record>
+
+        <record id="constructions_and_buildings_id" model="account.group">
+            <field name="code_prefix_start">1505</field>
+            <field name="code_prefix_end">1505</field>
+            <field name="name">Construcciones Y Edificaciones</field>
+        </record>
+
+        <record id="constructions_in_process_id" model="account.group">
+            <field name="code_prefix_start">1508</field>
+            <field name="code_prefix_end">1508</field>
+            <field name="name">Construcciones En Proceso</field>
+        </record>
+
+        <record id="constructions_and_buildings_id" model="account.group">
+            <field name="code_prefix_start">1516</field>
+            <field name="code_prefix_end">1516</field>
+            <field name="name">Construcciones y edificaciones</field>
+        </record>
+
+        <record id="buildings_id" model="account.group">
+            <field name="code_prefix_start">151605</field>
+            <field name="code_prefix_end">151605</field>
+            <field name="name">Edificios</field>
+        </record>
+
+        <record id="machinery_equipment_id" model="account.group">
+            <field name="code_prefix_start">1520</field>
+            <field name="code_prefix_end">1520</field>
+            <field name="name">Maquinaria Y Equipo</field>
+        </record>
+
+        <record id="adjustments_for_inflation_id" model="account.group">
+            <field name="code_prefix_start">152099</field>
+            <field name="code_prefix_end">152099</field>
+            <field name="name">Ajustes Por Inflación</field>
+        </record>
+
+        <record id="office_equipment_id" model="account.group">
+            <field name="code_prefix_start">1524</field>
+            <field name="code_prefix_end">1524</field>
+            <field name="name">Equipo De Oficina</field>
+        </record>
+
+        <record id="furniture_appliances_id" model="account.group">
+            <field name="code_prefix_start">152405</field>
+            <field name="code_prefix_end">152405</field>
+            <field name="name">Muebles y Enseres</field>
+        </record>
+
+        <record id="adjustments_for_inflation_id" model="account.group">
+            <field name="code_prefix_start">152499</field>
+            <field name="code_prefix_end">152499</field>
+            <field name="name">Ajustes Por Inflación</field>
+        </record>
+
+        <record id="computer_equipment_id" model="account.group">
+            <field name="code_prefix_start">1525</field>
+            <field name="code_prefix_end">1525</field>
+            <field name="name">Equipo De Computo</field>
+        </record>
+
+        <record id="computer_and_communication_equipment_id" model="account.group">
+            <field name="code_prefix_start">1528</field>
+            <field name="code_prefix_end">1528</field>
+            <field name="name">Equipo de computación y comunicación</field>
+        </record>
+
+        <record id="data_processing_equipment_id" model="account.group">
+            <field name="code_prefix_start">152805</field>
+            <field name="code_prefix_end">152805</field>
+            <field name="name">Equipos de Procesamiento de Datos</field>
+        </record>
+
+        <record id="adjustments_for_inflation_id" model="account.group">
+            <field name="code_prefix_start">152899</field>
+            <field name="code_prefix_end">152899</field>
+            <field name="name">Ajustes Por Inflación</field>
+        </record>
+
+        <record id="transport_equipment_id" model="account.group">
+            <field name="code_prefix_start">1540</field>
+            <field name="code_prefix_end">1540</field>
+            <field name="name">Equipo De Transporte</field>
+        </record>
+
+        <record id="cars_trucks_campers_id" model="account.group">
+            <field name="code_prefix_start">154005</field>
+            <field name="code_prefix_end">154005</field>
+            <field name="name">Autos, Camionetas y Camperos</field>
+        </record>
+
+        <record id="trucks_dump_trucks_and_vans_id" model="account.group">
+            <field name="code_prefix_start">154008</field>
+            <field name="code_prefix_end">154008</field>
+            <field name="name">Camiones, Volquetas y Furgones</field>
+        </record>
+
+        <record id="freight_elevator_id" model="account.group">
+            <field name="code_prefix_start">154020</field>
+            <field name="code_prefix_end">154020</field>
+            <field name="name">Montacargas</field>
+        </record>
+
+        <record id="pallets_and_carts_id" model="account.group">
+            <field name="code_prefix_start">154040</field>
+            <field name="code_prefix_end">154040</field>
+            <field name="name">Estibas y Carretas</field>
+        </record>
+
+        <record id="adjustments_for_inflation_id" model="account.group">
+            <field name="code_prefix_start">154099</field>
+            <field name="code_prefix_end">154099</field>
+            <field name="name">Ajustes Por Inflación</field>
+        </record>
+
+        <record id="other_property_plant_equipment_id" model="account.group">
+            <field name="code_prefix_start">1590</field>
+            <field name="code_prefix_end">1590</field>
+            <field name="name">Otras Propiedades, Planta Y Equipo</field>
+        </record>
+
+        <record id="accumulated_depreciation_id" model="account.group">
+            <field name="code_prefix_start">1592</field>
+            <field name="code_prefix_end">1592</field>
+            <field name="name">Depreciación acumulada</field>
+        </record>
+
+        <record id="constructions_and_buildings_id" model="account.group">
+            <field name="code_prefix_start">159205</field>
+            <field name="code_prefix_end">159205</field>
+            <field name="name">Construcciones y Edificaciones</field>
+        </record>
+
+        <record id="machinery_equipment_id" model="account.group">
+            <field name="code_prefix_start">159210</field>
+            <field name="code_prefix_end">159210</field>
+            <field name="name">Maquinaria y Equipo</field>
+        </record>
+
+        <record id="office_equipment_id" model="account.group">
+            <field name="code_prefix_start">159215</field>
+            <field name="code_prefix_end">159215</field>
+            <field name="name">Equipo de Oficina</field>
+        </record>
+
+        <record id="computer_and_communication_equipment_id" model="account.group">
+            <field name="code_prefix_start">159220</field>
+            <field name="code_prefix_end">159220</field>
+            <field name="name">Equipo de Computación y Comunicación</field>
+        </record>
+
+        <record id="fleet_transportation_equipment_id" model="account.group">
+            <field name="code_prefix_start">159235</field>
+            <field name="code_prefix_end">159235</field>
+            <field name="name">Flota y Equipo de Transporte</field>
+        </record>
+
+        <record id="intangible_assets_and_capital_gains_(goodwill)_id" model="account.group">
+            <field name="code_prefix_start">16</field>
+            <field name="code_prefix_end">16</field>
+            <field name="name">Activos Intangibles Y Plusvalía (Crédito Mercantil)</field>
+        </record>
+
+        <record id="capital_gains_(goodwill)_id" model="account.group">
+            <field name="code_prefix_start">1605</field>
+            <field name="code_prefix_end">1605</field>
+            <field name="name">Plusvalía (Crédito Mercantil)</field>
+        </record>
+
+        <record id="intangible_assets_other_than_goodwill_id" model="account.group">
+            <field name="code_prefix_start">1610</field>
+            <field name="code_prefix_end">1610</field>
+            <field name="name">Activos Intangibles Distintos De La Plusvalía</field>
+        </record>
+
+        <record id="current_tax_assets_id" model="account.group">
+            <field name="code_prefix_start">17</field>
+            <field name="code_prefix_end">17</field>
+            <field name="name">Activos Por Impuestos Corrientes</field>
+        </record>
+
+        <record id="current_income_tax_assets_id" model="account.group">
+            <field name="code_prefix_start">1705</field>
+            <field name="code_prefix_end">1705</field>
+            <field name="name">Activos Por Impuestos Corrientes De Renta</field>
+        </record>
+
+        <record id="insurance_surety_bonds_id" model="account.group">
+            <field name="code_prefix_start">170520</field>
+            <field name="code_prefix_end">170520</field>
+            <field name="name">Seguros y Fianzas</field>
+        </record>
+
+        <record id="assets_by_tax_corrientes_distinto_imp_rental_id" model="account.group">
+            <field name="code_prefix_start">1710</field>
+            <field name="code_prefix_end">1710</field>
+            <field name="name">Activos Por Imp. Corrientes Distinto Imp. De Renta</field>
+        </record>
+
+        <record id="investment_properties_id" model="account.group">
+            <field name="code_prefix_start">18</field>
+            <field name="code_prefix_end">18</field>
+            <field name="name">Propiedades De Inversión</field>
+        </record>
+
+        <record id="land_id" model="account.group">
+            <field name="code_prefix_start">1805</field>
+            <field name="code_prefix_end">1805</field>
+            <field name="name">Terrenos</field>
+        </record>
+
+        <record id="constructions_id" model="account.group">
+            <field name="code_prefix_start">1810</field>
+            <field name="code_prefix_end">1810</field>
+            <field name="name">Construcciones</field>
+        </record>
+
+        <record id="machinery_equipment_id" model="account.group">
+            <field name="code_prefix_start">1815</field>
+            <field name="code_prefix_end">1815</field>
+            <field name="name">Maquinaria Y Equipo</field>
+        </record>
+
+        <record id="transport_equipment_id" model="account.group">
+            <field name="code_prefix_start">1820</field>
+            <field name="code_prefix_end">1820</field>
+            <field name="name">Equipo De Transporte</field>
+        </record>
+
+        <record id="sundry_id" model="account.group">
+            <field name="code_prefix_start">1895</field>
+            <field name="code_prefix_end">1895</field>
+            <field name="name">Diversos</field>
+        </record>
+
+        <record id="goods_delivered_on_loan_id" model="account.group">
+            <field name="code_prefix_start">189510</field>
+            <field name="code_prefix_end">189510</field>
+            <field name="name">Bienes Entregados en Comodato</field>
+        </record>
+
+        <record id="accumulated_amortization_of_goods_delivered_on_loan_(cr)_id" model="account.group">
+            <field name="code_prefix_start">189515</field>
+            <field name="code_prefix_end">189515</field>
+            <field name="name">Amortización Acumulada de Bienes Entregados en Comodato (cr)</field>
+        </record>
+
+        <record id="other_assets_id" model="account.group">
+            <field name="code_prefix_start">19</field>
+            <field name="code_prefix_end">19</field>
+            <field name="name">Otros Activos</field>
+        </record>
+
+        <record id="investments_id" model="account.group">
+            <field name="code_prefix_start">1905</field>
+            <field name="code_prefix_end">1905</field>
+            <field name="name">De inversiones</field>
+        </record>
+
+        <record id="actions_id" model="account.group">
+            <field name="code_prefix_start">190505</field>
+            <field name="code_prefix_end">190505</field>
+            <field name="name">Acciones</field>
+        </record>
+
+        <record id="deferred_tax_assets_id" model="account.group">
+            <field name="code_prefix_start">1912</field>
+            <field name="code_prefix_end">1912</field>
+            <field name="name">Activos Por Impuestos Diferidos</field>
+        </record>
+
+        <record id="passive_id" model="account.group">
+            <field name="code_prefix_start">2</field>
+            <field name="code_prefix_end">2</field>
+            <field name="name">Pasivo</field>
+        </record>
+
+        <record id="financial_obligations_and_derivative_instruments_id" model="account.group">
+            <field name="code_prefix_start">21</field>
+            <field name="code_prefix_end">21</field>
+            <field name="name">Obligaciones Financieras E Instrumentos Derivados</field>
+        </record>
+
+        <record id="bank_loans_national_currency_id" model="account.group">
+            <field name="code_prefix_start">2105</field>
+            <field name="code_prefix_end">2105</field>
+            <field name="name">Préstamos Bancarios Moneda Nacional</field>
+        </record>
+
+        <record id="financial_derivatives_id" model="account.group">
+            <field name="code_prefix_start">2107</field>
+            <field name="code_prefix_end">2107</field>
+            <field name="name">Derivados Financieros</field>
+        </record>
+
+        <record id="foreign_currency_bank_loans_id" model="account.group">
+            <field name="code_prefix_start">2110</field>
+            <field name="code_prefix_end">2110</field>
+            <field name="name">Préstamos Bancarios Moneda Extranjera</field>
+        </record>
+
+        <record id="financial_leasing_agreements_id" model="account.group">
+            <field name="code_prefix_start">2115</field>
+            <field name="code_prefix_end">2115</field>
+            <field name="name">Contratos De Arrendamiento Financiero</field>
+        </record>
+
+        <record id="financial_derivatives_id" model="account.group">
+            <field name="code_prefix_start">2120</field>
+            <field name="code_prefix_end">2120</field>
+            <field name="name">Derivados Financieros</field>
+        </record>
+
+        <record id="other_loans_id" model="account.group">
+            <field name="code_prefix_start">2125</field>
+            <field name="code_prefix_end">2125</field>
+            <field name="name">Otros Prestamos</field>
+        </record>
+
+        <record id="suppliers_id" model="account.group">
+            <field name="code_prefix_start">22</field>
+            <field name="code_prefix_end">22</field>
+            <field name="name">Proveedores</field>
+        </record>
+
+        <record id="national_id" model="account.group">
+            <field name="code_prefix_start">2205</field>
+            <field name="code_prefix_end">2205</field>
+            <field name="name">Nacionales</field>
+        </record>
+
+        <record id="national_id" model="account.group">
+            <field name="code_prefix_start">220505</field>
+            <field name="code_prefix_end">220505</field>
+            <field name="name">Nacionales</field>
+        </record>
+
+        <record id="from_abroad_id" model="account.group">
+            <field name="code_prefix_start">2210</field>
+            <field name="code_prefix_end">2210</field>
+            <field name="name">Del exterior</field>
+        </record>
+
+        <record id="from_the_outside_id" model="account.group">
+            <field name="code_prefix_start">221005</field>
+            <field name="code_prefix_end">221005</field>
+            <field name="name">Del Exterior</field>
+        </record>
+
+        <record id="trade_accounts_payable_and_other_(_c_x_p_)_id" model="account.group">
+            <field name="code_prefix_start">23</field>
+            <field name="code_prefix_end">23</field>
+            <field name="name">Cuentas Comerciales Por Pagar Y Otras ( C X P )</field>
+        </record>
+
+        <record id="national_suppliers_id" model="account.group">
+            <field name="code_prefix_start">2305</field>
+            <field name="code_prefix_end">2305</field>
+            <field name="name">Proveedores Nacionales</field>
+        </record>
+
+        <record id="from_the_outside_id" model="account.group">
+            <field name="code_prefix_start">2310</field>
+            <field name="code_prefix_end">2310</field>
+            <field name="name">Del Exterior</field>
+        </record>
+
+        <record id="to_related_companies_id" model="account.group">
+            <field name="code_prefix_start">2315</field>
+            <field name="code_prefix_end">2315</field>
+            <field name="name">A compañías vinculadas</field>
+        </record>
+
+        <record id="to_related_companies_id" model="account.group">
+            <field name="code_prefix_start">231505</field>
+            <field name="code_prefix_end">231505</field>
+            <field name="name">a Compañías Vinculadas</field>
+        </record>
+
+        <record id="trade_accounts_payable_id" model="account.group">
+            <field name="code_prefix_start">2335</field>
+            <field name="code_prefix_end">2335</field>
+            <field name="name">Cuentas Comerciales Por Pagar</field>
+        </record>
+
+        <record id="public_services_id" model="account.group">
+            <field name="code_prefix_start">233550</field>
+            <field name="code_prefix_end">233550</field>
+            <field name="name">Servicios Públicos</field>
+        </record>
+
+        <record id="travel_expenses_id" model="account.group">
+            <field name="code_prefix_start">233560</field>
+            <field name="code_prefix_end">233560</field>
+            <field name="name">Gastos de Viaje</field>
+        </record>
+
+        <record id="customs_services_id" model="account.group">
+            <field name="code_prefix_start">233570</field>
+            <field name="code_prefix_end">233570</field>
+            <field name="name">Servicios Aduaneros</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">233595</field>
+            <field name="code_prefix_end">233595</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="debts_with_shareholders_or_partners_id" model="account.group">
+            <field name="code_prefix_start">2355</field>
+            <field name="code_prefix_end">2355</field>
+            <field name="name">Deudas con accionistas o socios</field>
+        </record>
+
+        <record id="partners_id" model="account.group">
+            <field name="code_prefix_start">235510</field>
+            <field name="code_prefix_end">235510</field>
+            <field name="name">Socios</field>
+        </record>
+
+        <record id="dividends_or_shares_payable_id" model="account.group">
+            <field name="code_prefix_start">2360</field>
+            <field name="code_prefix_end">2360</field>
+            <field name="name">Dividendos o participaciones por pagar</field>
+        </record>
+
+        <record id="dividends_id" model="account.group">
+            <field name="code_prefix_start">236005</field>
+            <field name="code_prefix_end">236005</field>
+            <field name="name">Dividendos</field>
+        </record>
+
+        <record id="withholding_tax_id" model="account.group">
+            <field name="code_prefix_start">2365</field>
+            <field name="code_prefix_end">2365</field>
+            <field name="name">Retención en la fuente</field>
+        </record>
+
+        <record id="wages_and_labor_payments_id" model="account.group">
+            <field name="code_prefix_start">236505</field>
+            <field name="code_prefix_end">236505</field>
+            <field name="name">Salarios y Pagos Laborales</field>
+        </record>
+
+        <record id="dividends_andor_shares_id" model="account.group">
+            <field name="code_prefix_start">236510</field>
+            <field name="code_prefix_end">236510</field>
+            <field name="name">Dividendos y/o Participaciones</field>
+        </record>
+
+        <record id="selfretention_id" model="account.group">
+            <field name="code_prefix_start">236575</field>
+            <field name="code_prefix_end">236575</field>
+            <field name="name">Autorretenciones</field>
+        </record>
+
+        <record id="sales_tax_withheld_id" model="account.group">
+            <field name="code_prefix_start">2367</field>
+            <field name="code_prefix_end">2367</field>
+            <field name="name">Impuesto a las ventas retenido</field>
+        </record>
+
+        <record id="withheld_sales_tax_id" model="account.group">
+            <field name="code_prefix_start">236705</field>
+            <field name="code_prefix_end">236705</field>
+            <field name="name">Impuesto a Las Ventas Retenido</field>
+        </record>
+
+        <record id="industry_and_commerce_tax_withheld_id" model="account.group">
+            <field name="code_prefix_start">2368</field>
+            <field name="code_prefix_end">2368</field>
+            <field name="name">Impuesto de industria y comercio retenido</field>
+        </record>
+
+        <record id="industry_and_commerce_tax_withheld_id" model="account.group">
+            <field name="code_prefix_start">236805</field>
+            <field name="code_prefix_end">236805</field>
+            <field name="name">Impuesto de Industria y Comercio Retenido</field>
+        </record>
+
+        <record id="payroll_withholdings_and_contributions_id" model="account.group">
+            <field name="code_prefix_start">2370</field>
+            <field name="code_prefix_end">2370</field>
+            <field name="name">Retenciones y aportes de nómina</field>
+        </record>
+
+        <record id="contributions_to_health_promoting_entities_eps_id" model="account.group">
+            <field name="code_prefix_start">237005</field>
+            <field name="code_prefix_end">237005</field>
+            <field name="name">Aportes a Entidades Promotoras de Salud, Eps</field>
+        </record>
+
+        <record id="contributions_to_professional_risk_managers_arp_id" model="account.group">
+            <field name="code_prefix_start">237006</field>
+            <field name="code_prefix_end">237006</field>
+            <field name="name">Aportes a Administradoras de Riesgos Profesionales, Arp</field>
+        </record>
+
+        <record id="contributions_to_the_icbf_sena_and_compensation_funds_id" model="account.group">
+            <field name="code_prefix_start">237010</field>
+            <field name="code_prefix_end">237010</field>
+            <field name="name">Aportes al Icbf, Sena y Cajas de Compensación</field>
+        </record>
+
+        <record id="judicial_garnishments_id" model="account.group">
+            <field name="code_prefix_start">237025</field>
+            <field name="code_prefix_end">237025</field>
+            <field name="name">Embargos Judiciales</field>
+        </record>
+
+        <record id="libranzas_id" model="account.group">
+            <field name="code_prefix_start">237030</field>
+            <field name="code_prefix_end">237030</field>
+            <field name="name">Libranzas</field>
+        </record>
+
+        <record id="trade_unions_id" model="account.group">
+            <field name="code_prefix_start">237035</field>
+            <field name="code_prefix_end">237035</field>
+            <field name="name">Sindicatos</field>
+        </record>
+
+        <record id="miscellaneous_creditors_id" model="account.group">
+            <field name="code_prefix_start">2380</field>
+            <field name="code_prefix_end">2380</field>
+            <field name="name">Acreedores varios</field>
+        </record>
+
+        <record id="unemployment_andor_pension_funds_id" model="account.group">
+            <field name="code_prefix_start">238030</field>
+            <field name="code_prefix_end">238030</field>
+            <field name="name">Fondos de Cesantías y/o Pensiones</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">238095</field>
+            <field name="code_prefix_end">238095</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="current_tax_liabilities_id" model="account.group">
+            <field name="code_prefix_start">24</field>
+            <field name="code_prefix_end">24</field>
+            <field name="name">Pasivos Por Impuestos Corrientes</field>
+        </record>
+
+        <record id="rent_and_complementary_id" model="account.group">
+            <field name="code_prefix_start">2404</field>
+            <field name="code_prefix_end">2404</field>
+            <field name="name">De renta y complementarios</field>
+        </record>
+
+        <record id="current_fiscal_validity_id" model="account.group">
+            <field name="code_prefix_start">240405</field>
+            <field name="code_prefix_end">240405</field>
+            <field name="name">Vigencia Fiscal Corriente</field>
+        </record>
+
+        <record id="income_tax_and_complementary_tax_id" model="account.group">
+            <field name="code_prefix_start">2405</field>
+            <field name="code_prefix_end">2405</field>
+            <field name="name">Impuesto De Renta Y Complementario</field>
+        </record>
+
+        <record id="sales_tax_payable_id" model="account.group">
+            <field name="code_prefix_start">2408</field>
+            <field name="code_prefix_end">2408</field>
+            <field name="name">Impuesto sobre las ventas por pagar</field>
+        </record>
+
+        <record id="iva_generated_x_pay_id" model="account.group">
+            <field name="code_prefix_start">240805</field>
+            <field name="code_prefix_end">240805</field>
+            <field name="name">iVA Generad  X Pagar</field>
+        </record>
+
+        <record id="discountable_vat_to_simplified_regime_(communproportional)__only_this_dian_interprets_it_usable_id" model="account.group">
+            <field name="code_prefix_start">240820</field>
+            <field name="code_prefix_end">240820</field>
+            <field name="name">Iva Descontable a Regimen Simplificado (Commun/Proporcional) - Solo Esta la DIAN lo Interpreta Utilizable</field>
+        </record>
+
+        <record id="withholding_tax_at_source_as_income_id" model="account.group">
+            <field name="code_prefix_start">2410</field>
+            <field name="code_prefix_end">2410</field>
+            <field name="name">Retención En La Fuente A Título De Renta</field>
+        </record>
+
+        <record id="industry_and_commerce_id" model="account.group">
+            <field name="code_prefix_start">2412</field>
+            <field name="code_prefix_end">2412</field>
+            <field name="name">De industria y comercio</field>
+        </record>
+
+        <record id="current_fiscal_validity_id" model="account.group">
+            <field name="code_prefix_start">241205</field>
+            <field name="code_prefix_end">241205</field>
+            <field name="name">Vigencia Fiscal Corriente</field>
+        </record>
+
+        <record id="value_added_tax_id" model="account.group">
+            <field name="code_prefix_start">2415</field>
+            <field name="code_prefix_end">2415</field>
+            <field name="name">Impuesto Al Valor Agregado</field>
+        </record>
+
+        <record id="withholding_tax_for_vat_id" model="account.group">
+            <field name="code_prefix_start">2420</field>
+            <field name="code_prefix_end">2420</field>
+            <field name="name">Retención En La Fuente A Título De Iva</field>
+        </record>
+
+        <record id="industry_and_commerce_tax_id" model="account.group">
+            <field name="code_prefix_start">2425</field>
+            <field name="code_prefix_end">2425</field>
+            <field name="name">Impuesto De Industria Y Comercio</field>
+        </record>
+
+        <record id="industry_and_commerce_retention_id" model="account.group">
+            <field name="code_prefix_start">2430</field>
+            <field name="code_prefix_end">2430</field>
+            <field name="name">Retención De Industria Y Comercio</field>
+        </record>
+
+        <record id="to_imports_id" model="account.group">
+            <field name="code_prefix_start">2456</field>
+            <field name="code_prefix_end">2456</field>
+            <field name="name">A las importaciones</field>
+        </record>
+
+        <record id="to_imports_id" model="account.group">
+            <field name="code_prefix_start">245605</field>
+            <field name="code_prefix_end">245605</field>
+            <field name="name">a Las Importaciones</field>
+        </record>
+
+        <record id="other_taxes_fees_and_contributions_id" model="account.group">
+            <field name="code_prefix_start">2495</field>
+            <field name="code_prefix_end">2495</field>
+            <field name="name">Otros Impuestos, Tasas Y Contribuciones</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">249505</field>
+            <field name="code_prefix_end">249505</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="labor_and_social_security_obligations_id" model="account.group">
+            <field name="code_prefix_start">25</field>
+            <field name="code_prefix_end">25</field>
+            <field name="name">Obligaciones Laborales Y De Seguridad Social</field>
+        </record>
+
+        <record id="wages_and_social_benefits_id" model="account.group">
+            <field name="code_prefix_start">2505</field>
+            <field name="code_prefix_end">2505</field>
+            <field name="name">Salarios Y Prestaciones Sociales</field>
+        </record>
+
+        <record id="wages_payable_id" model="account.group">
+            <field name="code_prefix_start">250505</field>
+            <field name="code_prefix_end">250505</field>
+            <field name="name">Salarios Por Pagar</field>
+        </record>
+
+        <record id="withholdings_and_payroll_contributions_id" model="account.group">
+            <field name="code_prefix_start">2510</field>
+            <field name="code_prefix_end">2510</field>
+            <field name="name">Retenciones Y Aportes De Nómina</field>
+        </record>
+
+        <record id="law_50_of_1990_and_subsequent_regulations_id" model="account.group">
+            <field name="code_prefix_start">251010</field>
+            <field name="code_prefix_end">251010</field>
+            <field name="name">Ley 50 de 1990 y Normas Posteriores</field>
+        </record>
+
+        <record id="interest_on_severance_pay_id" model="account.group">
+            <field name="code_prefix_start">2515</field>
+            <field name="code_prefix_end">2515</field>
+            <field name="name">Intereses sobre cesantías</field>
+        </record>
+
+        <record id="interest_on_severance_id" model="account.group">
+            <field name="code_prefix_start">251505</field>
+            <field name="code_prefix_end">251505</field>
+            <field name="name">Intereses Sobre Cesantías</field>
+        </record>
+
+        <record id="service_premium_id" model="account.group">
+            <field name="code_prefix_start">2520</field>
+            <field name="code_prefix_end">2520</field>
+            <field name="name">Prima de servicios</field>
+        </record>
+
+        <record id="premium_services_id" model="account.group">
+            <field name="code_prefix_start">252005</field>
+            <field name="code_prefix_end">252005</field>
+            <field name="name">Prima de Servicios</field>
+        </record>
+
+        <record id="consolidated_holidays_id" model="account.group">
+            <field name="code_prefix_start">2525</field>
+            <field name="code_prefix_end">2525</field>
+            <field name="name">Vacaciones consolidadas</field>
+        </record>
+
+        <record id="consolidated_vacations_id" model="account.group">
+            <field name="code_prefix_start">252505</field>
+            <field name="code_prefix_end">252505</field>
+            <field name="name">Vacaciones Consolidadas</field>
+        </record>
+
+        <record id="estimated_liabilities_for_labor_obligations_id" model="account.group">
+            <field name="code_prefix_start">2550</field>
+            <field name="code_prefix_end">2550</field>
+            <field name="name">Pasivo Estimado Para Obligaciones Laborales</field>
+        </record>
+
+        <record id="provisions_id" model="account.group">
+            <field name="code_prefix_start">26</field>
+            <field name="code_prefix_end">26</field>
+            <field name="name">Provisiones</field>
+        </record>
+
+        <record id="legal_process_provisions_id" model="account.group">
+            <field name="code_prefix_start">2610</field>
+            <field name="code_prefix_end">2610</field>
+            <field name="name">Provisiones Por Procesos Legales</field>
+        </record>
+
+        <record id="layoffs_id" model="account.group">
+            <field name="code_prefix_start">261005</field>
+            <field name="code_prefix_end">261005</field>
+            <field name="name">Cesantías</field>
+        </record>
+
+        <record id="interest_on_severance_id" model="account.group">
+            <field name="code_prefix_start">261010</field>
+            <field name="code_prefix_end">261010</field>
+            <field name="name">Intereses Sobre Cesantías</field>
+        </record>
+
+        <record id="vacation_id" model="account.group">
+            <field name="code_prefix_start">261015</field>
+            <field name="code_prefix_end">261015</field>
+            <field name="name">Vacaciones</field>
+        </record>
+
+        <record id="premium_services_id" model="account.group">
+            <field name="code_prefix_start">261020</field>
+            <field name="code_prefix_end">261020</field>
+            <field name="name">Prima de Servicios</field>
+        </record>
+
+        <record id="provisions_x_costs_of_removal_restoration_id" model="account.group">
+            <field name="code_prefix_start">2615</field>
+            <field name="code_prefix_end">2615</field>
+            <field name="name">Provisiones X Costos De Desm/Miento, Restauración</field>
+        </record>
+
+        <record id="income_and_complementary_taxes_id" model="account.group">
+            <field name="code_prefix_start">261505</field>
+            <field name="code_prefix_end">261505</field>
+            <field name="name">de Renta y Complementarios</field>
+        </record>
+
+        <record id="of_industry_and_commerce_id" model="account.group">
+            <field name="code_prefix_start">261510</field>
+            <field name="code_prefix_end">261510</field>
+            <field name="name">de Industria y Comercio</field>
+        </record>
+
+        <record id="provision_for_restructurings_and_contracts_on_id" model="account.group">
+            <field name="code_prefix_start">2620</field>
+            <field name="code_prefix_end">2620</field>
+            <field name="name">Provisión Para Reestructuraciones Y Contratos On.</field>
+        </record>
+
+        <record id="other_provisions_id" model="account.group">
+            <field name="code_prefix_start">2690</field>
+            <field name="code_prefix_end">2690</field>
+            <field name="name">Otras Provisiones</field>
+        </record>
+
+        <record id="deferred_revenue_id" model="account.group">
+            <field name="code_prefix_start">27</field>
+            <field name="code_prefix_end">27</field>
+            <field name="name">Ingresos Diferidos</field>
+        </record>
+
+        <record id="revenue_accrued_from_invoicing_id" model="account.group">
+            <field name="code_prefix_start">2705</field>
+            <field name="code_prefix_end">2705</field>
+            <field name="name">Ingresos Devengados Por Facturar</field>
+        </record>
+
+        <record id="other_liabilities_id" model="account.group">
+            <field name="code_prefix_start">28</field>
+            <field name="code_prefix_end">28</field>
+            <field name="name">Otros pasivos</field>
+        </record>
+
+        <record id="advances_and_advances_received_id" model="account.group">
+            <field name="code_prefix_start">2805</field>
+            <field name="code_prefix_end">2805</field>
+            <field name="name">Anticipos y avances recibidos</field>
+        </record>
+
+        <record id="of_clients_id" model="account.group">
+            <field name="code_prefix_start">280505</field>
+            <field name="code_prefix_end">280505</field>
+            <field name="name">de Clientes</field>
+        </record>
+
+        <record id="about_contracts_id" model="account.group">
+            <field name="code_prefix_start">280510</field>
+            <field name="code_prefix_end">280510</field>
+            <field name="name">Sobre Contratos</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">280595</field>
+            <field name="code_prefix_end">280595</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="other_liabilities_id" model="account.group">
+            <field name="code_prefix_start">29</field>
+            <field name="code_prefix_end">29</field>
+            <field name="name">Otros Pasivos</field>
+        </record>
+
+        <record id="advances_and_advances_received_id" model="account.group">
+            <field name="code_prefix_start">2905</field>
+            <field name="code_prefix_end">2905</field>
+            <field name="name">Anticipos Y Avances Recibidos</field>
+        </record>
+
+        <record id="deferred_tax_liabilities_id" model="account.group">
+            <field name="code_prefix_start">2912</field>
+            <field name="code_prefix_end">2912</field>
+            <field name="name">Pasivos Por Impuestos Diferidos</field>
+        </record>
+
+        <record id="collections_in_favor_of_third_parties_id" model="account.group">
+            <field name="code_prefix_start">2915</field>
+            <field name="code_prefix_end">2915</field>
+            <field name="name">Recaudos A Favor De Terceros</field>
+        </record>
+
+        <record id="government_grants_id" model="account.group">
+            <field name="code_prefix_start">2920</field>
+            <field name="code_prefix_end">2920</field>
+            <field name="name">Subvenciones Del Gobierno</field>
+        </record>
+
+        <record id="heritage_id" model="account.group">
+            <field name="code_prefix_start">3</field>
+            <field name="code_prefix_end">3</field>
+            <field name="name">Patrimonio</field>
+        </record>
+
+        <record id="share_capital_id" model="account.group">
+            <field name="code_prefix_start">31</field>
+            <field name="code_prefix_end">31</field>
+            <field name="name">Capital Social</field>
+        </record>
+
+        <record id="subscribed_and_paidin_capital_id" model="account.group">
+            <field name="code_prefix_start">3105</field>
+            <field name="code_prefix_end">3105</field>
+            <field name="name">Capital Suscrito Y Pagado</field>
+        </record>
+
+        <record id="authorized_capital_id" model="account.group">
+            <field name="code_prefix_start">310505</field>
+            <field name="code_prefix_end">310505</field>
+            <field name="name">Capital Autorizado</field>
+        </record>
+
+        <record id="capital_to_be_subscribed_(db)_id" model="account.group">
+            <field name="code_prefix_start">310510</field>
+            <field name="code_prefix_end">310510</field>
+            <field name="name">Capital Por Suscribir (db)</field>
+        </record>
+
+        <record id="capital_surplus_id" model="account.group">
+            <field name="code_prefix_start">32</field>
+            <field name="code_prefix_end">32</field>
+            <field name="name">Superávit de capital</field>
+        </record>
+
+        <record id="premium_on_the_placement_of_shares_quotas_or_parts_of_social_interest_id" model="account.group">
+            <field name="code_prefix_start">3205</field>
+            <field name="code_prefix_end">3205</field>
+            <field name="name">Prima en colocación de acciones, cuotas o partes de interés social</field>
+        </record>
+
+        <record id="premium_on_share_placement_id" model="account.group">
+            <field name="code_prefix_start">320505</field>
+            <field name="code_prefix_end">320505</field>
+            <field name="name">Prima en Colocación de Acciones</field>
+        </record>
+
+        <record id="reserves_id" model="account.group">
+            <field name="code_prefix_start">33</field>
+            <field name="code_prefix_end">33</field>
+            <field name="name">Reservas</field>
+        </record>
+
+        <record id="mandatory_reservations_id" model="account.group">
+            <field name="code_prefix_start">3305</field>
+            <field name="code_prefix_end">3305</field>
+            <field name="name">Reservas obligatorias</field>
+        </record>
+
+        <record id="legal_reserve_id" model="account.group">
+            <field name="code_prefix_start">330505</field>
+            <field name="code_prefix_end">330505</field>
+            <field name="name">Reserva Legal</field>
+        </record>
+
+        <record id="appreciation_of_heritage_id" model="account.group">
+            <field name="code_prefix_start">34</field>
+            <field name="code_prefix_end">34</field>
+            <field name="name">Revalorización del patrimonio</field>
+        </record>
+
+        <record id="adjustments_for_inflation_id" model="account.group">
+            <field name="code_prefix_start">3405</field>
+            <field name="code_prefix_end">3405</field>
+            <field name="name">Ajustes por inflación</field>
+        </record>
+
+        <record id="of_share_capital_id" model="account.group">
+            <field name="code_prefix_start">340505</field>
+            <field name="code_prefix_end">340505</field>
+            <field name="name">de Capital Social</field>
+        </record>
+
+        <record id="of_reservations_id" model="account.group">
+            <field name="code_prefix_start">340515</field>
+            <field name="code_prefix_end">340515</field>
+            <field name="name">de Reservas</field>
+        </record>
+
+        <record id="of_results_of_prior_years_id" model="account.group">
+            <field name="code_prefix_start">340520</field>
+            <field name="code_prefix_end">340520</field>
+            <field name="name">de Resultados de Ejercicios Anteriores</field>
+        </record>
+
+        <record id="results_of_the_exercise_id" model="account.group">
+            <field name="code_prefix_start">36</field>
+            <field name="code_prefix_end">36</field>
+            <field name="name">Resultados del ejercicio</field>
+        </record>
+
+        <record id="profit_of_the_exercise_id" model="account.group">
+            <field name="code_prefix_start">3605</field>
+            <field name="code_prefix_end">3605</field>
+            <field name="name">Utilidad del ejercicio</field>
+        </record>
+
+        <record id="profit_of_the_exercise_id" model="account.group">
+            <field name="code_prefix_start">360505</field>
+            <field name="code_prefix_end">360505</field>
+            <field name="name">Utilidad Del Ejercicio</field>
+        </record>
+
+        <record id="results_from_previous_years_id" model="account.group">
+            <field name="code_prefix_start">37</field>
+            <field name="code_prefix_end">37</field>
+            <field name="name">Resultados de ejercicios anteriores</field>
+        </record>
+
+        <record id="accrued_earnings_id" model="account.group">
+            <field name="code_prefix_start">3705</field>
+            <field name="code_prefix_end">3705</field>
+            <field name="name">Utilidades acumuladas</field>
+        </record>
+
+        <record id="accrued_earnings_id" model="account.group">
+            <field name="code_prefix_start">370505</field>
+            <field name="code_prefix_end">370505</field>
+            <field name="name">Utilidades Acumuladas</field>
+        </record>
+
+        <record id="revenue_id" model="account.group">
+            <field name="code_prefix_start">4</field>
+            <field name="code_prefix_end">4</field>
+            <field name="name">Ingresos</field>
+        </record>
+
+        <record id="operational_id" model="account.group">
+            <field name="code_prefix_start">41</field>
+            <field name="code_prefix_end">41</field>
+            <field name="name">Operacionales</field>
+        </record>
+
+        <record id="wholesale_of_auto_parts_id" model="account.group">
+            <field name="code_prefix_start">4135</field>
+            <field name="code_prefix_end">4135</field>
+            <field name="name">Comercio Al Por Mayor De Autopartes</field>
+        </record>
+
+        <record id="sale_of_parts_parts_and_accessories_of_motor_vehicles_id" model="account.group">
+            <field name="code_prefix_start">413506</field>
+            <field name="code_prefix_end">413506</field>
+            <field name="name">Venta de partes, piezas y accesorios de vehículos automotores</field>
+        </record>
+
+        <record id="real_estate_business_and_rental_activities_id" model="account.group">
+            <field name="code_prefix_start">4155</field>
+            <field name="code_prefix_end">4155</field>
+            <field name="name">Actividades inmobiliarias, empresariales y de alquiler</field>
+        </record>
+
+        <record id="real_estate_leases_id" model="account.group">
+            <field name="code_prefix_start">415505</field>
+            <field name="code_prefix_end">415505</field>
+            <field name="name">Arrendamientos de Bienes Inmuebles</field>
+        </record>
+
+        <record id="sales_returns_id" model="account.group">
+            <field name="code_prefix_start">4175</field>
+            <field name="code_prefix_end">4175</field>
+            <field name="name">Devoluciones en Ventas</field>
+        </record>
+
+        <record id="return_sale_of_motor_vehicle_parts_parts_and_accessories_id" model="account.group">
+            <field name="code_prefix_start">417506</field>
+            <field name="code_prefix_end">417506</field>
+            <field name="name">Devolución Venta de partes, piezas y accesorios de vehículos automotores</field>
+        </record>
+
+        <record id="nonoperational_id" model="account.group">
+            <field name="code_prefix_start">42</field>
+            <field name="code_prefix_end">42</field>
+            <field name="name">No operacionales</field>
+        </record>
+
+        <record id="financial_id" model="account.group">
+            <field name="code_prefix_start">4210</field>
+            <field name="code_prefix_end">4210</field>
+            <field name="name">Financieros</field>
+        </record>
+
+        <record id="interests_id" model="account.group">
+            <field name="code_prefix_start">421005</field>
+            <field name="code_prefix_end">421005</field>
+            <field name="name">Intereses</field>
+        </record>
+
+        <record id="difference_in_change_id" model="account.group">
+            <field name="code_prefix_start">421020</field>
+            <field name="code_prefix_end">421020</field>
+            <field name="name">Diferencia en Cambio</field>
+        </record>
+
+        <record id="conditional_commercial_discounts_id" model="account.group">
+            <field name="code_prefix_start">421040</field>
+            <field name="code_prefix_end">421040</field>
+            <field name="name">Descuentos Comerciales Condicionados</field>
+        </record>
+        <record id="honorarium_id" model="account.group">
+            <field name="code_prefix_start">4230</field>
+            <field name="code_prefix_end">4230</field>
+            <field name="name">Honorarios</field>
+        </record>
+
+        <record id="consulting_id" model="account.group">
+            <field name="code_prefix_start">423005</field>
+            <field name="code_prefix_end">423005</field>
+            <field name="name">Asesorías</field>
+        </record>
+
+        <record id="technical_assistance_id" model="account.group">
+            <field name="code_prefix_start">423010</field>
+            <field name="code_prefix_end">423010</field>
+            <field name="name">Asistencia Técnica</field>
+        </record>
+
+        <record id="related_assets_management_id" model="account.group">
+            <field name="code_prefix_start">423015</field>
+            <field name="code_prefix_end">423015</field>
+            <field name="name">Administración de Vinculadas</field>
+        </record>
+
+        <record id="services_id" model="account.group">
+            <field name="code_prefix_start">4235</field>
+            <field name="code_prefix_end">4235</field>
+            <field name="name">Servicios</field>
+        </record>
+
+        <record id="freight_id" model="account.group">
+            <field name="code_prefix_start">423580</field>
+            <field name="code_prefix_end">423580</field>
+            <field name="name">Fletes</field>
+        </record>
+
+        <record id="recoveries_id" model="account.group">
+            <field name="code_prefix_start">4250</field>
+            <field name="code_prefix_end">4250</field>
+            <field name="name">Recuperaciones</field>
+        </record>
+
+        <record id="reimbursement_of_other_costs_and_expenses_id" model="account.group">
+            <field name="code_prefix_start">425050</field>
+            <field name="code_prefix_end">425050</field>
+            <field name="name">Reintegro de Otros Costos y Gastos</field>
+        </record>
+
+        <record id="indemnities_id" model="account.group">
+            <field name="code_prefix_start">4255</field>
+            <field name="code_prefix_end">4255</field>
+            <field name="name">Indemnizaciones</field>
+        </record>
+
+        <record id="by_sinister_id" model="account.group">
+            <field name="code_prefix_start">425505</field>
+            <field name="code_prefix_end">425505</field>
+            <field name="name">Por Siniestro</field>
+        </record>
+
+        <record id="sundry_id" model="account.group">
+            <field name="code_prefix_start">4295</field>
+            <field name="code_prefix_end">4295</field>
+            <field name="name">Diversos</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">429595</field>
+            <field name="code_prefix_end">429595</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="expense_id" model="account.group">
+            <field name="code_prefix_start">5</field>
+            <field name="code_prefix_end">5</field>
+            <field name="name">Gastos</field>
+        </record>
+
+        <record id="operational_administration_id" model="account.group">
+            <field name="code_prefix_start">51</field>
+            <field name="code_prefix_end">51</field>
+            <field name="name">Operacionales de administración</field>
+        </record>
+
+        <record id="personnel_costs_id" model="account.group">
+            <field name="code_prefix_start">5105</field>
+            <field name="code_prefix_end">5105</field>
+            <field name="name">Gastos de personal</field>
+        </record>
+
+        <record id="integral_salary_id" model="account.group">
+            <field name="code_prefix_start">510503</field>
+            <field name="code_prefix_end">510503</field>
+            <field name="name">Salario Integral</field>
+        </record>
+
+        <record id="salaries_id" model="account.group">
+            <field name="code_prefix_start">510506</field>
+            <field name="code_prefix_end">510506</field>
+            <field name="name">Sueldos</field>
+        </record>
+
+        <record id="overtime_and_surcharges_id" model="account.group">
+            <field name="code_prefix_start">510515</field>
+            <field name="code_prefix_end">510515</field>
+            <field name="name">Horas Extras y Recargos</field>
+        </record>
+
+        <record id="commissions_id" model="account.group">
+            <field name="code_prefix_start">510518</field>
+            <field name="code_prefix_end">510518</field>
+            <field name="name">Comisiones</field>
+        </record>
+
+        <record id="travel_id" model="account.group">
+            <field name="code_prefix_start">510521</field>
+            <field name="code_prefix_end">510521</field>
+            <field name="name">Viáticos</field>
+        </record>
+
+        <record id="disabilities_id" model="account.group">
+            <field name="code_prefix_start">510524</field>
+            <field name="code_prefix_end">510524</field>
+            <field name="name">Incapacidades</field>
+        </record>
+
+        <record id="transportation_assistance_id" model="account.group">
+            <field name="code_prefix_start">510527</field>
+            <field name="code_prefix_end">510527</field>
+            <field name="name">Auxilio de Transporte</field>
+        </record>
+
+        <record id="layoffs_id" model="account.group">
+            <field name="code_prefix_start">510530</field>
+            <field name="code_prefix_end">510530</field>
+            <field name="name">Cesantías</field>
+        </record>
+
+        <record id="interest_on_severance_id" model="account.group">
+            <field name="code_prefix_start">510533</field>
+            <field name="code_prefix_end">510533</field>
+            <field name="name">Intereses Sobre Cesantías</field>
+        </record>
+
+        <record id="premium_services_id" model="account.group">
+            <field name="code_prefix_start">510536</field>
+            <field name="code_prefix_end">510536</field>
+            <field name="name">Prima de Servicios</field>
+        </record>
+
+        <record id="vacation_id" model="account.group">
+            <field name="code_prefix_start">510539</field>
+            <field name="code_prefix_end">510539</field>
+            <field name="name">Vacaciones</field>
+        </record>
+
+        <record id="bonuses_id" model="account.group">
+            <field name="code_prefix_start">510548</field>
+            <field name="code_prefix_end">510548</field>
+            <field name="name">Bonificaciones</field>
+        </record>
+
+        <record id="staffing_and_supply_to_workers_id" model="account.group">
+            <field name="code_prefix_start">510551</field>
+            <field name="code_prefix_end">510551</field>
+            <field name="name">Dotación y Suministro a Trabajadores</field>
+        </record>
+
+        <record id="workers_compensation_id" model="account.group">
+            <field name="code_prefix_start">510560</field>
+            <field name="code_prefix_end">510560</field>
+            <field name="name">Indemnizaciones Laborales</field>
+        </record>
+
+        <record id="staff_training_id" model="account.group">
+            <field name="code_prefix_start">510563</field>
+            <field name="code_prefix_end">510563</field>
+            <field name="name">Capacitación al Personal</field>
+        </record>
+
+        <record id="contributions_to_professional_risk_managers_arp_id" model="account.group">
+            <field name="code_prefix_start">510568</field>
+            <field name="code_prefix_end">510568</field>
+            <field name="name">Aportes a Administradoras de Riesgos Profesionales, Arp</field>
+        </record>
+
+        <record id="contributions_to_health_promoting_entities_eps_id" model="account.group">
+            <field name="code_prefix_start">510569</field>
+            <field name="code_prefix_end">510569</field>
+            <field name="name">Aportes a Entidades Promotoras de Salud, Eps</field>
+        </record>
+
+        <record id="contributions_to_pension_andor_unemployment_funds_id" model="account.group">
+            <field name="code_prefix_start">510570</field>
+            <field name="code_prefix_end">510570</field>
+            <field name="name">Aportes a Fondos de Pensiones y/o Cesantías</field>
+        </record>
+
+        <record id="family_compensation_fund_contributions_id" model="account.group">
+            <field name="code_prefix_start">510572</field>
+            <field name="code_prefix_end">510572</field>
+            <field name="name">Aportes Cajas de Compensación Familiar</field>
+        </record>
+
+        <record id="icbf_contributions_id" model="account.group">
+            <field name="code_prefix_start">510575</field>
+            <field name="code_prefix_end">510575</field>
+            <field name="name">Aportes Icbf</field>
+        </record>
+
+        <record id="seine_id" model="account.group">
+            <field name="code_prefix_start">510578</field>
+            <field name="code_prefix_end">510578</field>
+            <field name="name">Sena</field>
+        </record>
+
+        <record id="medical_expenses_and_drugs_id" model="account.group">
+            <field name="code_prefix_start">510584</field>
+            <field name="code_prefix_end">510584</field>
+            <field name="name">Gastos Médicos y Drogas</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">510595</field>
+            <field name="code_prefix_end">510595</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="honorarium_id" model="account.group">
+            <field name="code_prefix_start">5110</field>
+            <field name="code_prefix_end">5110</field>
+            <field name="name">Honorarios</field>
+        </record>
+
+        <record id="tax_audit_id" model="account.group">
+            <field name="code_prefix_start">511010</field>
+            <field name="code_prefix_end">511010</field>
+            <field name="name">Revisoría Fiscal</field>
+        </record>
+
+        <record id="legal_advice_id" model="account.group">
+            <field name="code_prefix_start">511025</field>
+            <field name="code_prefix_end">511025</field>
+            <field name="name">Asesoría Jurídica</field>
+        </record>
+
+        <record id="technical_advice_id" model="account.group">
+            <field name="code_prefix_start">511035</field>
+            <field name="code_prefix_end">511035</field>
+            <field name="name">Asesoría Técnica</field>
+        </record>
+
+        <record id="taxation_id" model="account.group">
+            <field name="code_prefix_start">5115</field>
+            <field name="code_prefix_end">5115</field>
+            <field name="name">Impuestos</field>
+        </record>
+
+        <record id="to_real_estate_id" model="account.group">
+            <field name="code_prefix_start">511515</field>
+            <field name="code_prefix_end">511515</field>
+            <field name="name">a la Propiedad Raíz</field>
+        </record>
+
+        <record id="valuation_id" model="account.group">
+            <field name="code_prefix_start">511525</field>
+            <field name="code_prefix_end">511525</field>
+            <field name="name">de Valorización</field>
+        </record>
+
+        <record id="vehicle_centers_id" model="account.group">
+            <field name="code_prefix_start">511540</field>
+            <field name="code_prefix_end">511540</field>
+            <field name="name">de Vehículos</field>
+        </record>
+
+        <record id="discountable_vat_id" model="account.group">
+            <field name="code_prefix_start">511570</field>
+            <field name="code_prefix_end">511570</field>
+            <field name="name">Iva Descontable</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">511595</field>
+            <field name="code_prefix_end">511595</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="leases_id" model="account.group">
+            <field name="code_prefix_start">5120</field>
+            <field name="code_prefix_end">5120</field>
+            <field name="name">Arrendamientos</field>
+        </record>
+
+        <record id="constructions_and_buildings_id" model="account.group">
+            <field name="code_prefix_start">512010</field>
+            <field name="code_prefix_end">512010</field>
+            <field name="name">Construcciones y Edificaciones</field>
+        </record>
+
+        <record id="office_equipment_id" model="account.group">
+            <field name="code_prefix_start">512020</field>
+            <field name="code_prefix_end">512020</field>
+            <field name="name">Equipo de Oficina</field>
+        </record>
+
+        <record id="computer_and_communication_equipment_id" model="account.group">
+            <field name="code_prefix_start">512025</field>
+            <field name="code_prefix_end">512025</field>
+            <field name="name">Equipo de Computación y Comunicación</field>
+        </record>
+
+        <record id="fleet_transportation_equipment_id" model="account.group">
+            <field name="code_prefix_start">512040</field>
+            <field name="code_prefix_end">512040</field>
+            <field name="name">Flota y Equipo de Transporte</field>
+        </record>
+
+        <record id="contributions_and_affiliations_id" model="account.group">
+            <field name="code_prefix_start">5125</field>
+            <field name="code_prefix_end">5125</field>
+            <field name="name">Contribuciones y afiliaciones</field>
+        </record>
+
+        <record id="contributions_id" model="account.group">
+            <field name="code_prefix_start">512505</field>
+            <field name="code_prefix_end">512505</field>
+            <field name="name">Contribuciones</field>
+        </record>
+
+        <record id="affiliations_and_sustainment_id" model="account.group">
+            <field name="code_prefix_start">512510</field>
+            <field name="code_prefix_end">512510</field>
+            <field name="name">Afiliaciones y Sostenimiento</field>
+        </record>
+
+        <record id="insurance_id" model="account.group">
+            <field name="code_prefix_start">5130</field>
+            <field name="code_prefix_end">5130</field>
+            <field name="name">Seguros</field>
+        </record>
+
+        <record id="compliance_id" model="account.group">
+            <field name="code_prefix_start">513010</field>
+            <field name="code_prefix_end">513010</field>
+            <field name="name">Cumplimiento</field>
+        </record>
+
+        <record id="fire_id" model="account.group">
+            <field name="code_prefix_start">513025</field>
+            <field name="code_prefix_end">513025</field>
+            <field name="name">Incendio</field>
+        </record>
+
+        <record id="earthquake_id" model="account.group">
+            <field name="code_prefix_start">513030</field>
+            <field name="code_prefix_end">513030</field>
+            <field name="name">Terremoto</field>
+        </record>
+
+        <record id="theft_and_theft_id" model="account.group">
+            <field name="code_prefix_start">513035</field>
+            <field name="code_prefix_end">513035</field>
+            <field name="name">Sustracción y Hurto</field>
+        </record>
+
+        <record id="fleet_transportation_equipment_id" model="account.group">
+            <field name="code_prefix_start">513040</field>
+            <field name="code_prefix_end">513040</field>
+            <field name="name">Flota y Equipo de Transporte</field>
+        </record>
+
+        <record id="civil_and_extracontractual_liability_id" model="account.group">
+            <field name="code_prefix_start">513060</field>
+            <field name="code_prefix_end">513060</field>
+            <field name="name">Responsabilidad Civil y Extracontractual</field>
+        </record>
+
+        <record id="mandatory_traffic_accident_id" model="account.group">
+            <field name="code_prefix_start">513075</field>
+            <field name="code_prefix_end">513075</field>
+            <field name="name">Obligatorio Accidente de Tránsito</field>
+        </record>
+
+        <record id="freight_transport_id" model="account.group">
+            <field name="code_prefix_start">513085</field>
+            <field name="code_prefix_end">513085</field>
+            <field name="name">Transporte de Mercancía</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">513095</field>
+            <field name="code_prefix_end">513095</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="services_id" model="account.group">
+            <field name="code_prefix_start">5135</field>
+            <field name="code_prefix_end">5135</field>
+            <field name="name">Servicios</field>
+        </record>
+
+        <record id="temporary_id" model="account.group">
+            <field name="code_prefix_start">513510</field>
+            <field name="code_prefix_end">513510</field>
+            <field name="name">Temporales</field>
+        </record>
+
+        <record id="electronic_data_processing_id" model="account.group">
+            <field name="code_prefix_start">513520</field>
+            <field name="code_prefix_end">513520</field>
+            <field name="name">Procesamiento Electrónico de Datos</field>
+        </record>
+
+        <record id="aqueduct_and_sewerage_id" model="account.group">
+            <field name="code_prefix_start">513525</field>
+            <field name="code_prefix_end">513525</field>
+            <field name="name">Acueducto y Alcantarillado</field>
+        </record>
+
+        <record id="electrical_energy_id" model="account.group">
+            <field name="code_prefix_start">513530</field>
+            <field name="code_prefix_end">513530</field>
+            <field name="name">Energía Eléctrica</field>
+        </record>
+
+        <record id="telephone_id" model="account.group">
+            <field name="code_prefix_start">513535</field>
+            <field name="code_prefix_end">513535</field>
+            <field name="name">Teléfono</field>
+        </record>
+
+        <record id="mail_freight_and_telegrams_id" model="account.group">
+            <field name="code_prefix_start">513540</field>
+            <field name="code_prefix_end">513540</field>
+            <field name="name">Correo, Portes y Telegramas</field>
+        </record>
+
+        <record id="transportation_freight_and_cartage_id" model="account.group">
+            <field name="code_prefix_start">513550</field>
+            <field name="code_prefix_end">513550</field>
+            <field name="name">Transporte, Fletes y Acarreos</field>
+        </record>
+
+        <record id="gas_id" model="account.group">
+            <field name="code_prefix_start">513555</field>
+            <field name="code_prefix_end">513555</field>
+            <field name="name">Gas</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">513595</field>
+            <field name="code_prefix_end">513595</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="legal_expenses_id" model="account.group">
+            <field name="code_prefix_start">5140</field>
+            <field name="code_prefix_end">5140</field>
+            <field name="name">Gastos legales</field>
+        </record>
+
+        <record id="notarial_id" model="account.group">
+            <field name="code_prefix_start">514005</field>
+            <field name="code_prefix_end">514005</field>
+            <field name="name">Notariales</field>
+        </record>
+
+        <record id="commercial_registry_id" model="account.group">
+            <field name="code_prefix_start">514010</field>
+            <field name="code_prefix_end">514010</field>
+            <field name="name">Registro Mercantil</field>
+        </record>
+
+        <record id="procedures_and_licenses_id" model="account.group">
+            <field name="code_prefix_start">514015</field>
+            <field name="code_prefix_end">514015</field>
+            <field name="name">Trámites y Licencias</field>
+        </record>
+
+        <record id="maintenance_and_repairs_id" model="account.group">
+            <field name="code_prefix_start">5145</field>
+            <field name="code_prefix_end">5145</field>
+            <field name="name">Mantenimiento y reparaciones</field>
+        </record>
+
+        <record id="constructions_and_buildings_id" model="account.group">
+            <field name="code_prefix_start">514510</field>
+            <field name="code_prefix_end">514510</field>
+            <field name="name">Construcciones y Edificaciones</field>
+        </record>
+
+        <record id="machinery_equipment_id" model="account.group">
+            <field name="code_prefix_start">514515</field>
+            <field name="code_prefix_end">514515</field>
+            <field name="name">Maquinaria y Equipo</field>
+        </record>
+
+        <record id="office_equipment_id" model="account.group">
+            <field name="code_prefix_start">514520</field>
+            <field name="code_prefix_end">514520</field>
+            <field name="name">Equipo de Oficina</field>
+        </record>
+
+        <record id="computer_and_communication_equipment_id" model="account.group">
+            <field name="code_prefix_start">514525</field>
+            <field name="code_prefix_end">514525</field>
+            <field name="name">Equipo de Computación y Comunicación</field>
+        </record>
+
+        <record id="fleet_transportation_equipment_id" model="account.group">
+            <field name="code_prefix_start">514540</field>
+            <field name="code_prefix_end">514540</field>
+            <field name="name">Flota y Equipo de Transporte</field>
+        </record>
+
+        <record id="adaptation_and_installation_id" model="account.group">
+            <field name="code_prefix_start">5150</field>
+            <field name="code_prefix_end">5150</field>
+            <field name="name">Adecuación e instalación</field>
+        </record>
+
+        <record id="electrical_installations_id" model="account.group">
+            <field name="code_prefix_start">515005</field>
+            <field name="code_prefix_end">515005</field>
+            <field name="name">Instalaciones Eléctricas</field>
+        </record>
+
+        <record id="rental_repairs_id" model="account.group">
+            <field name="code_prefix_start">515015</field>
+            <field name="code_prefix_end">515015</field>
+            <field name="name">Reparaciones Locativas</field>
+        </record>
+
+        <record id="travel_expenses_id" model="account.group">
+            <field name="code_prefix_start">5155</field>
+            <field name="code_prefix_end">5155</field>
+            <field name="name">Gastos de viaje</field>
+        </record>
+
+        <record id="accommodation_and_meals_id" model="account.group">
+            <field name="code_prefix_start">515505</field>
+            <field name="code_prefix_end">515505</field>
+            <field name="name">Alojamiento y Manutención</field>
+        </record>
+
+        <record id="airfare_id" model="account.group">
+            <field name="code_prefix_start">515515</field>
+            <field name="code_prefix_end">515515</field>
+            <field name="name">Pasajes Aéreos</field>
+        </record>
+
+        <record id="land_passages_id" model="account.group">
+            <field name="code_prefix_start">515520</field>
+            <field name="code_prefix_end">515520</field>
+            <field name="name">Pasajes Terrestres</field>
+        </record>
+
+        <record id="depreciation_id" model="account.group">
+            <field name="code_prefix_start">5160</field>
+            <field name="code_prefix_end">5160</field>
+            <field name="name">Depreciaciones</field>
+        </record>
+
+        <record id="constructions_and_buildings_id" model="account.group">
+            <field name="code_prefix_start">516005</field>
+            <field name="code_prefix_end">516005</field>
+            <field name="name">Construcciones y Edificaciones</field>
+        </record>
+
+        <record id="machinery_equipment_id" model="account.group">
+            <field name="code_prefix_start">516010</field>
+            <field name="code_prefix_end">516010</field>
+            <field name="name">Maquinaria y Equipo</field>
+        </record>
+
+        <record id="office_equipment_id" model="account.group">
+            <field name="code_prefix_start">516015</field>
+            <field name="code_prefix_end">516015</field>
+            <field name="name">Equipo de Oficina</field>
+        </record>
+
+        <record id="computer_and_communication_equipment_id" model="account.group">
+            <field name="code_prefix_start">516020</field>
+            <field name="code_prefix_end">516020</field>
+            <field name="name">Equipo de Computación y Comunicación</field>
+        </record>
+
+        <record id="fleet_transportation_equipment_id" model="account.group">
+            <field name="code_prefix_start">516035</field>
+            <field name="code_prefix_end">516035</field>
+            <field name="name">Flota y Equipo de Transporte</field>
+        </record>
+
+        <record id="amortizations_id" model="account.group">
+            <field name="code_prefix_start">5165</field>
+            <field name="code_prefix_end">5165</field>
+            <field name="name">Amortizaciones</field>
+        </record>
+
+        <record id="deferred_charges_id" model="account.group">
+            <field name="code_prefix_start">516515</field>
+            <field name="code_prefix_end">516515</field>
+            <field name="name">Cargos Diferidos</field>
+        </record>
+
+        <record id="sundry_id" model="account.group">
+            <field name="code_prefix_start">5195</field>
+            <field name="code_prefix_end">5195</field>
+            <field name="name">Diversos</field>
+        </record>
+
+        <record id="books_subscriptions_newspapers_magazines_id" model="account.group">
+            <field name="code_prefix_start">519510</field>
+            <field name="code_prefix_end">519510</field>
+            <field name="name">Libros, Suscripciones, periódicos y revistas</field>
+        </record>
+
+        <record id="toiletries_and_cafeteria_id" model="account.group">
+            <field name="code_prefix_start">519525</field>
+            <field name="code_prefix_end">519525</field>
+            <field name="name">Elementos de Aseo y Cafetería</field>
+        </record>
+
+        <record id="supplies_stationery_and_photocopies_id" model="account.group">
+            <field name="code_prefix_start">519530</field>
+            <field name="code_prefix_end">519530</field>
+            <field name="name">Útiles, Papelería y Fotocopias</field>
+        </record>
+
+        <record id="taxis_and_buses_id" model="account.group">
+            <field name="code_prefix_start">519545</field>
+            <field name="code_prefix_end">519545</field>
+            <field name="name">Taxis y Buses</field>
+        </record>
+
+        <record id="casino_restaurant_id" model="account.group">
+            <field name="code_prefix_start">519560</field>
+            <field name="code_prefix_end">519560</field>
+            <field name="name">Casino y Restaurante</field>
+        </record>
+
+        <record id="parking_id" model="account.group">
+            <field name="code_prefix_start">519565</field>
+            <field name="code_prefix_end">519565</field>
+            <field name="name">Parqueaderos</field>
+        </record>
+
+        <record id="sales_operations_id" model="account.group">
+            <field name="code_prefix_start">52</field>
+            <field name="code_prefix_end">52</field>
+            <field name="name">Operacionales de ventas</field>
+        </record>
+
+        <record id="personnel_costs_id" model="account.group">
+            <field name="code_prefix_start">5205</field>
+            <field name="code_prefix_end">5205</field>
+            <field name="name">Gastos de personal</field>
+        </record>
+
+        <record id="integral_salary_id" model="account.group">
+            <field name="code_prefix_start">520503</field>
+            <field name="code_prefix_end">520503</field>
+            <field name="name">Salario Integral</field>
+        </record>
+
+        <record id="salaries_id" model="account.group">
+            <field name="code_prefix_start">520506</field>
+            <field name="code_prefix_end">520506</field>
+            <field name="name">Sueldos</field>
+        </record>
+
+        <record id="overtime_and_surcharges_id" model="account.group">
+            <field name="code_prefix_start">520515</field>
+            <field name="code_prefix_end">520515</field>
+            <field name="name">Horas Extras y Recargos</field>
+        </record>
+
+        <record id="commissions_id" model="account.group">
+            <field name="code_prefix_start">520518</field>
+            <field name="code_prefix_end">520518</field>
+            <field name="name">Comisiones</field>
+        </record>
+
+        <record id="travel_id" model="account.group">
+            <field name="code_prefix_start">520521</field>
+            <field name="code_prefix_end">520521</field>
+            <field name="name">Viáticos</field>
+        </record>
+
+        <record id="disabilities_id" model="account.group">
+            <field name="code_prefix_start">520524</field>
+            <field name="code_prefix_end">520524</field>
+            <field name="name">Incapacidades</field>
+        </record>
+
+        <record id="transportation_assistance_id" model="account.group">
+            <field name="code_prefix_start">520527</field>
+            <field name="code_prefix_end">520527</field>
+            <field name="name">Auxilio de Transporte</field>
+        </record>
+
+        <record id="layoffs_id" model="account.group">
+            <field name="code_prefix_start">520530</field>
+            <field name="code_prefix_end">520530</field>
+            <field name="name">Cesantías</field>
+        </record>
+
+        <record id="interest_on_severance_id" model="account.group">
+            <field name="code_prefix_start">520533</field>
+            <field name="code_prefix_end">520533</field>
+            <field name="name">Intereses Sobre Cesantías</field>
+        </record>
+
+        <record id="premium_services_id" model="account.group">
+            <field name="code_prefix_start">520536</field>
+            <field name="code_prefix_end">520536</field>
+            <field name="name">Prima de Servicios</field>
+        </record>
+
+        <record id="vacation_id" model="account.group">
+            <field name="code_prefix_start">520539</field>
+            <field name="code_prefix_end">520539</field>
+            <field name="name">Vacaciones</field>
+        </record>
+
+        <record id="bonuses_id" model="account.group">
+            <field name="code_prefix_start">520548</field>
+            <field name="code_prefix_end">520548</field>
+            <field name="name">Bonificaciones</field>
+        </record>
+
+        <record id="staffing_and_supply_to_workers_id" model="account.group">
+            <field name="code_prefix_start">520551</field>
+            <field name="code_prefix_end">520551</field>
+            <field name="name">Dotación y Suministro a Trabajadores</field>
+        </record>
+
+        <record id="insurance_id" model="account.group">
+            <field name="code_prefix_start">520554</field>
+            <field name="code_prefix_end">520554</field>
+            <field name="name">Seguros</field>
+        </record>
+
+        <record id="workers_compensation_id" model="account.group">
+            <field name="code_prefix_start">520560</field>
+            <field name="code_prefix_end">520560</field>
+            <field name="name">Indemnizaciones Laborales</field>
+        </record>
+
+        <record id="staff_training_id" model="account.group">
+            <field name="code_prefix_start">520563</field>
+            <field name="code_prefix_end">520563</field>
+            <field name="name">Capacitación al Personal</field>
+        </record>
+
+        <record id="contributions_to_professional_risk_managers_arp_id" model="account.group">
+            <field name="code_prefix_start">520568</field>
+            <field name="code_prefix_end">520568</field>
+            <field name="name">Aportes a Administradoras de Riesgos Profesionales, Arp</field>
+        </record>
+
+        <record id="contributions_to_health_promoting_entities_eps_id" model="account.group">
+            <field name="code_prefix_start">520569</field>
+            <field name="code_prefix_end">520569</field>
+            <field name="name">Aportes a Entidades Promotoras de Salud, Eps</field>
+        </record>
+
+        <record id="contributions_to_pension_andor_unemployment_funds_id" model="account.group">
+            <field name="code_prefix_start">520570</field>
+            <field name="code_prefix_end">520570</field>
+            <field name="name">Aportes a Fondos de Pensiones y/o Cesantías</field>
+        </record>
+
+        <record id="family_compensation_fund_contributions_id" model="account.group">
+            <field name="code_prefix_start">520572</field>
+            <field name="code_prefix_end">520572</field>
+            <field name="name">Aportes Cajas de Compensación Familiar</field>
+        </record>
+
+        <record id="icbf_contributions_id" model="account.group">
+            <field name="code_prefix_start">520575</field>
+            <field name="code_prefix_end">520575</field>
+            <field name="name">Aportes Icbf</field>
+        </record>
+
+        <record id="seine_id" model="account.group">
+            <field name="code_prefix_start">520578</field>
+            <field name="code_prefix_end">520578</field>
+            <field name="name">Sena</field>
+        </record>
+
+        <record id="medical_expenses_and_drugs_id" model="account.group">
+            <field name="code_prefix_start">520584</field>
+            <field name="code_prefix_end">520584</field>
+            <field name="name">Gastos Médicos y Drogas</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">520595</field>
+            <field name="code_prefix_end">520595</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="honorarium_id" model="account.group">
+            <field name="code_prefix_start">5210</field>
+            <field name="code_prefix_end">5210</field>
+            <field name="name">Honorarios</field>
+        </record>
+
+        <record id="technical_advice_id" model="account.group">
+            <field name="code_prefix_start">521035</field>
+            <field name="code_prefix_end">521035</field>
+            <field name="name">Asesoría Técnica</field>
+        </record>
+
+        <record id="taxation_id" model="account.group">
+            <field name="code_prefix_start">5215</field>
+            <field name="code_prefix_end">5215</field>
+            <field name="name">Impuestos</field>
+        </record>
+
+        <record id="industry_and_commerce_id" model="account.group">
+            <field name="code_prefix_start">521505</field>
+            <field name="code_prefix_end">521505</field>
+            <field name="name">Industria y Comercio</field>
+        </record>
+
+        <record id="to_real_estate_id" model="account.group">
+            <field name="code_prefix_start">521515</field>
+            <field name="code_prefix_end">521515</field>
+            <field name="name">a la Propiedad Raíz</field>
+        </record>
+
+        <record id="vehicle_centers_id" model="account.group">
+            <field name="code_prefix_start">521540</field>
+            <field name="code_prefix_end">521540</field>
+            <field name="name">de Vehículos</field>
+        </record>
+
+        <record id="discountable_vat_id" model="account.group">
+            <field name="code_prefix_start">521570</field>
+            <field name="code_prefix_end">521570</field>
+            <field name="name">Iva Descontable</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">521595</field>
+            <field name="code_prefix_end">521595</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="leases_id" model="account.group">
+            <field name="code_prefix_start">5220</field>
+            <field name="code_prefix_end">5220</field>
+            <field name="name">Arrendamientos</field>
+        </record>
+
+        <record id="constructions_and_buildings_id" model="account.group">
+            <field name="code_prefix_start">522010</field>
+            <field name="code_prefix_end">522010</field>
+            <field name="name">Construcciones y Edificaciones</field>
+        </record>
+
+        <record id="machinery_equipment_id" model="account.group">
+            <field name="code_prefix_start">522015</field>
+            <field name="code_prefix_end">522015</field>
+            <field name="name">Maquinaria y Equipo</field>
+        </record>
+
+        <record id="computer_and_communication_equipment_id" model="account.group">
+            <field name="code_prefix_start">522025</field>
+            <field name="code_prefix_end">522025</field>
+            <field name="name">Equipo de Computación y Comunicación</field>
+        </record>
+
+        <record id="contributions_and_affiliations_id" model="account.group">
+            <field name="code_prefix_start">5225</field>
+            <field name="code_prefix_end">5225</field>
+            <field name="name">Contribuciones y afiliaciones</field>
+        </record>
+
+        <record id="affiliations_and_sustainment_id" model="account.group">
+            <field name="code_prefix_start">522510</field>
+            <field name="code_prefix_end">522510</field>
+            <field name="name">Afiliaciones y Sostenimiento</field>
+        </record>
+
+        <record id="services_id" model="account.group">
+            <field name="code_prefix_start">5235</field>
+            <field name="code_prefix_end">5235</field>
+            <field name="name">Servicios</field>
+        </record>
+
+        <record id="cleaning_and_surveillance_id" model="account.group">
+            <field name="code_prefix_start">523505</field>
+            <field name="code_prefix_end">523505</field>
+            <field name="name">Aseo y Vigilancia</field>
+        </record>
+
+        <record id="temporary_id" model="account.group">
+            <field name="code_prefix_start">523510</field>
+            <field name="code_prefix_end">523510</field>
+            <field name="name">Temporales</field>
+        </record>
+
+        <record id="aqueduct_and_sewerage_id" model="account.group">
+            <field name="code_prefix_start">523525</field>
+            <field name="code_prefix_end">523525</field>
+            <field name="name">Acueducto y Alcantarillado</field>
+        </record>
+
+        <record id="electrical_energy_id" model="account.group">
+            <field name="code_prefix_start">523530</field>
+            <field name="code_prefix_end">523530</field>
+            <field name="name">Energía Eléctrica</field>
+        </record>
+
+        <record id="telephone_id" model="account.group">
+            <field name="code_prefix_start">523535</field>
+            <field name="code_prefix_end">523535</field>
+            <field name="name">Teléfono</field>
+        </record>
+
+        <record id="mail_freight_and_telegrams_id" model="account.group">
+            <field name="code_prefix_start">523540</field>
+            <field name="code_prefix_end">523540</field>
+            <field name="name">Correo, Portes y Telegramas</field>
+        </record>
+
+        <record id="transportation_freight_and_cartage_id" model="account.group">
+            <field name="code_prefix_start">523550</field>
+            <field name="code_prefix_end">523550</field>
+            <field name="name">Transporte, Fletes y Acarreos</field>
+        </record>
+
+        <record id="gas_id" model="account.group">
+            <field name="code_prefix_start">523555</field>
+            <field name="code_prefix_end">523555</field>
+            <field name="name">Gas</field>
+        </record>
+
+        <record id="advertising_propaganda_and_promotion_id" model="account.group">
+            <field name="code_prefix_start">523560</field>
+            <field name="code_prefix_end">523560</field>
+            <field name="name">Publicidad, Propaganda y Promoción</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">523595</field>
+            <field name="code_prefix_end">523595</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="legal_expenses_id" model="account.group">
+            <field name="code_prefix_start">5240</field>
+            <field name="code_prefix_end">5240</field>
+            <field name="name">Gastos legales</field>
+        </record>
+
+        <record id="notarial_id" model="account.group">
+            <field name="code_prefix_start">524005</field>
+            <field name="code_prefix_end">524005</field>
+            <field name="name">Notariales</field>
+        </record>
+
+        <record id="commercial_registry_id" model="account.group">
+            <field name="code_prefix_start">524010</field>
+            <field name="code_prefix_end">524010</field>
+            <field name="name">Registro Mercantil</field>
+        </record>
+
+        <record id="procedures_and_licenses_id" model="account.group">
+            <field name="code_prefix_start">524015</field>
+            <field name="code_prefix_end">524015</field>
+            <field name="name">Trámites y Licencias</field>
+        </record>
+
+        <record id="customs_id" model="account.group">
+            <field name="code_prefix_start">524020</field>
+            <field name="code_prefix_end">524020</field>
+            <field name="name">Aduaneros</field>
+        </record>
+
+        <record id="maintenance_and_repairs_id" model="account.group">
+            <field name="code_prefix_start">5245</field>
+            <field name="code_prefix_end">5245</field>
+            <field name="name">Mantenimiento y reparaciones</field>
+        </record>
+
+        <record id="constructions_and_buildings_id" model="account.group">
+            <field name="code_prefix_start">524510</field>
+            <field name="code_prefix_end">524510</field>
+            <field name="name">Construcciones y Edificaciones</field>
+        </record>
+
+        <record id="machinery_equipment_id" model="account.group">
+            <field name="code_prefix_start">524515</field>
+            <field name="code_prefix_end">524515</field>
+            <field name="name">Maquinaria y Equipo</field>
+        </record>
+
+        <record id="office_equipment_id" model="account.group">
+            <field name="code_prefix_start">524520</field>
+            <field name="code_prefix_end">524520</field>
+            <field name="name">Equipo de Oficina</field>
+        </record>
+
+        <record id="computer_and_communication_equipment_id" model="account.group">
+            <field name="code_prefix_start">524525</field>
+            <field name="code_prefix_end">524525</field>
+            <field name="name">Equipo de Computación y Comunicación</field>
+        </record>
+
+        <record id="fleet_transportation_equipment_id" model="account.group">
+            <field name="code_prefix_start">524540</field>
+            <field name="code_prefix_end">524540</field>
+            <field name="name">Flota y Equipo de Transporte</field>
+        </record>
+
+        <record id="travel_expenses_id" model="account.group">
+            <field name="code_prefix_start">5255</field>
+            <field name="code_prefix_end">5255</field>
+            <field name="name">Gastos de viaje</field>
+        </record>
+
+        <record id="accommodation_and_meals_id" model="account.group">
+            <field name="code_prefix_start">525505</field>
+            <field name="code_prefix_end">525505</field>
+            <field name="name">Alojamiento y Manutención</field>
+        </record>
+
+        <record id="airfare_id" model="account.group">
+            <field name="code_prefix_start">525515</field>
+            <field name="code_prefix_end">525515</field>
+            <field name="name">Pasajes Aéreos</field>
+        </record>
+
+        <record id="land_passages_id" model="account.group">
+            <field name="code_prefix_start">525520</field>
+            <field name="code_prefix_end">525520</field>
+            <field name="name">Pasajes Terrestres</field>
+        </record>
+
+        <record id="sundry_id" model="account.group">
+            <field name="code_prefix_start">5295</field>
+            <field name="code_prefix_end">5295</field>
+            <field name="name">Diversos</field>
+        </record>
+
+        <record id="representation_and_public_relations_expenses_id" model="account.group">
+            <field name="code_prefix_start">529520</field>
+            <field name="code_prefix_end">529520</field>
+            <field name="name">Gastos de Representación y Relaciones Públicas</field>
+        </record>
+
+        <record id="toiletries_and_cafeteria_id" model="account.group">
+            <field name="code_prefix_start">529525</field>
+            <field name="code_prefix_end">529525</field>
+            <field name="name">Elementos de Aseo y Cafetería</field>
+        </record>
+
+        <record id="supplies_stationery_and_photocopies_id" model="account.group">
+            <field name="code_prefix_start">529530</field>
+            <field name="code_prefix_end">529530</field>
+            <field name="name">Útiles, Papelería y Fotocopias</field>
+        </record>
+
+        <record id="fuels_lubricants_id" model="account.group">
+            <field name="code_prefix_start">529535</field>
+            <field name="code_prefix_end">529535</field>
+            <field name="name">Combustibles y Lubricantes</field>
+        </record>
+
+        <record id="containers_and_packaging_id" model="account.group">
+            <field name="code_prefix_start">529540</field>
+            <field name="code_prefix_end">529540</field>
+            <field name="name">Envases y Empaques</field>
+        </record>
+
+        <record id="taxis_and_buses_id" model="account.group">
+            <field name="code_prefix_start">529545</field>
+            <field name="code_prefix_end">529545</field>
+            <field name="name">Taxis y Buses</field>
+        </record>
+
+        <record id="parking_id" model="account.group">
+            <field name="code_prefix_start">529565</field>
+            <field name="code_prefix_end">529565</field>
+            <field name="name">Parqueaderos</field>
+        </record>
+
+        <record id="compensation_for_damages_to_third_parties_id" model="account.group">
+            <field name="code_prefix_start">529570</field>
+            <field name="code_prefix_end">529570</field>
+            <field name="name">Indemnización Por Daños a Terceros</field>
+        </record>
+
+        <record id="provisions_id" model="account.group">
+            <field name="code_prefix_start">5299</field>
+            <field name="code_prefix_end">5299</field>
+            <field name="name">Provisiones</field>
+        </record>
+
+        <record id="debtors_id" model="account.group">
+            <field name="code_prefix_start">529910</field>
+            <field name="code_prefix_end">529910</field>
+            <field name="name">Deudores</field>
+        </record>
+
+        <record id="inventories_id" model="account.group">
+            <field name="code_prefix_start">529915</field>
+            <field name="code_prefix_end">529915</field>
+            <field name="name">Inventarios</field>
+        </record>
+
+        <record id="nonoperational_id" model="account.group">
+            <field name="code_prefix_start">53</field>
+            <field name="code_prefix_end">53</field>
+            <field name="name">No operacionales</field>
+        </record>
+
+        <record id="financial_id" model="account.group">
+            <field name="code_prefix_start">5305</field>
+            <field name="code_prefix_end">5305</field>
+            <field name="name">Financieros</field>
+        </record>
+
+        <record id="bank_charges_id" model="account.group">
+            <field name="code_prefix_start">530505</field>
+            <field name="code_prefix_end">530505</field>
+            <field name="name">Gastos Bancarios</field>
+        </record>
+
+        <record id="commissions_id" model="account.group">
+            <field name="code_prefix_start">530515</field>
+            <field name="code_prefix_end">530515</field>
+            <field name="name">Comisiones</field>
+        </record>
+
+        <record id="interests_id" model="account.group">
+            <field name="code_prefix_start">530520</field>
+            <field name="code_prefix_end">530520</field>
+            <field name="name">Intereses</field>
+        </record>
+
+        <record id="difference_in_change_id" model="account.group">
+            <field name="code_prefix_start">530525</field>
+            <field name="code_prefix_end">530525</field>
+            <field name="name">Diferencia en Cambio</field>
+        </record>
+
+        <record id="conditional_commercial_discounts_id" model="account.group">
+            <field name="code_prefix_start">530535</field>
+            <field name="code_prefix_end">530535</field>
+            <field name="name">Descuentos Comerciales Condicionados</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">530595</field>
+            <field name="code_prefix_end">530595</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="extraordinary_expenses_id" model="account.group">
+            <field name="code_prefix_start">5315</field>
+            <field name="code_prefix_end">5315</field>
+            <field name="name">Gastos extraordinarios</field>
+        </record>
+
+        <record id="costs_and_expenses_of_prior_years_id" model="account.group">
+            <field name="code_prefix_start">531515</field>
+            <field name="code_prefix_end">531515</field>
+            <field name="name">Costos y Gastos de Ejercicios Anteriores</field>
+        </record>
+
+        <record id="taxes_assumed_id" model="account.group">
+            <field name="code_prefix_start">531520</field>
+            <field name="code_prefix_end">531520</field>
+            <field name="name">Impuestos Asumidos</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">531595</field>
+            <field name="code_prefix_end">531595</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="miscellaneous_expenses_id" model="account.group">
+            <field name="code_prefix_start">5395</field>
+            <field name="code_prefix_end">5395</field>
+            <field name="name">Gastos diversos</field>
+        </record>
+
+        <record id="indemnities_id" model="account.group">
+            <field name="code_prefix_start">539515</field>
+            <field name="code_prefix_end">539515</field>
+            <field name="name">Indemnizaciones</field>
+        </record>
+
+        <record id="fines_penalties_and_litigation_id" model="account.group">
+            <field name="code_prefix_start">539520</field>
+            <field name="code_prefix_end">539520</field>
+            <field name="name">Multas, Sanciones y Litigios</field>
+        </record>
+
+        <record id="amortization_of_goods_delivered_on_loan_id" model="account.group">
+            <field name="code_prefix_start">539535</field>
+            <field name="code_prefix_end">539535</field>
+            <field name="name">Amortización de Bienes Entregados en Comodato</field>
+        </record>
+
+        <record id="other_id" model="account.group">
+            <field name="code_prefix_start">539595</field>
+            <field name="code_prefix_end">539595</field>
+            <field name="name">Otros</field>
+        </record>
+
+        <record id="income_tax_and_complementary_taxes_id" model="account.group">
+            <field name="code_prefix_start">54</field>
+            <field name="code_prefix_end">54</field>
+            <field name="name">Impuesto de renta y complementarios</field>
+        </record>
+
+        <record id="income_tax_and_complementary_taxes_id" model="account.group">
+            <field name="code_prefix_start">5405</field>
+            <field name="code_prefix_end">5405</field>
+            <field name="name">Impuesto de renta y complementarios</field>
+        </record>
+
+        <record id="income_tax_and_complementary_taxes_id" model="account.group">
+            <field name="code_prefix_start">540505</field>
+            <field name="code_prefix_end">540505</field>
+            <field name="name">Impuesto de Renta y Complementarios</field>
+        </record>
+
+        <record id="profit_and_loss_id" model="account.group">
+            <field name="code_prefix_start">59</field>
+            <field name="code_prefix_end">59</field>
+            <field name="name">Ganancias y pérdidas</field>
+        </record>
+
+        <record id="profit_and_loss_id" model="account.group">
+            <field name="code_prefix_start">5905</field>
+            <field name="code_prefix_end">5905</field>
+            <field name="name">Ganancias y pérdidas</field>
+        </record>
+
+        <record id="profit_and_loss_id" model="account.group">
+            <field name="code_prefix_start">590505</field>
+            <field name="code_prefix_end">590505</field>
+            <field name="name">Ganancias y Pérdidas</field>
+        </record>
+
+        <record id="costs_of_sales_id" model="account.group">
+            <field name="code_prefix_start">6</field>
+            <field name="code_prefix_end">6</field>
+            <field name="name">Costos de ventas</field>
+        </record>
+
+        <record id="cost_of_sales_and_service_delivery_id" model="account.group">
+            <field name="code_prefix_start">61</field>
+            <field name="code_prefix_end">61</field>
+            <field name="name">Costo de ventas y de prestación de servicios</field>
+        </record>
+
+        <record id="wholesale_and_retail_trade_id" model="account.group">
+            <field name="code_prefix_start">6135</field>
+            <field name="code_prefix_end">6135</field>
+            <field name="name">Comercio al por mayor y al por menor</field>
+        </record>
+
+        <record id="sale_of_other_products_id" model="account.group">
+            <field name="code_prefix_start">613595</field>
+            <field name="code_prefix_end">613595</field>
+            <field name="name">Venta de Otros Productos</field>
+        </record>
+
+        <record id="transportation_storage_and_communications_id" model="account.group">
+            <field name="code_prefix_start">6145</field>
+            <field name="code_prefix_end">6145</field>
+            <field name="name">Transporte, almacenamiento y comunicaciones</field>
+        </record>
+
+        <record id="road_transportation_service_id" model="account.group">
+            <field name="code_prefix_start">614505</field>
+            <field name="code_prefix_end">614505</field>
+            <field name="name">Servicio de Transporte Por Carretera</field>
+        </record>
+
+        <record id="air_transportation_service_id" model="account.group">
+            <field name="code_prefix_start">614520</field>
+            <field name="code_prefix_end">614520</field>
+            <field name="name">Servicio de Transporte Por Vía Aérea</field>
+        </record>
+
+        <record id="real_estate_business_and_rental_activities_id" model="account.group">
+            <field name="code_prefix_start">6155</field>
+            <field name="code_prefix_end">6155</field>
+            <field name="name">Actividades inmobiliarias, empresariales y de alquiler</field>
+        </record>
+
+        <record id="maintenance_and_repair_of_machinery_and_equipment_id" model="account.group">
+            <field name="code_prefix_start">615590</field>
+            <field name="code_prefix_end">615590</field>
+            <field name="name">Mantenimiento y Reparación de Maquinaria y Equipo</field>
+        </record>
+
+        <record id="debit_memorandum_accounts_id" model="account.group">
+            <field name="code_prefix_start">8</field>
+            <field name="code_prefix_end">8</field>
+            <field name="name">Cuentas de orden deudoras</field>
+        </record>
+
+        <record id="contingent_duties_id" model="account.group">
+            <field name="code_prefix_start">81</field>
+            <field name="code_prefix_end">81</field>
+            <field name="name">Derechos contingentes</field>
+        </record>
+
+        <record id="assets_and_securities_held_by_third_parties_id" model="account.group">
+            <field name="code_prefix_start">8115</field>
+            <field name="code_prefix_end">8115</field>
+            <field name="name">Bienes y valores en poder de terceros</field>
+        </record>
+
+        <record id="in_deposit_id" model="account.group">
+            <field name="code_prefix_start">811515</field>
+            <field name="code_prefix_end">811515</field>
+            <field name="name">en Depósito</field>
+        </record>
+
+        <record id="control_debtors_id" model="account.group">
+            <field name="code_prefix_start">83</field>
+            <field name="code_prefix_end">83</field>
+            <field name="name">Deudoras de control</field>
+        </record>
+
+        <record id="fully_depreciated_depleted_andor_amortized_property_plant_and_equipment_id" model="account.group">
+            <field name="code_prefix_start">8315</field>
+            <field name="code_prefix_end">8315</field>
+            <field name="name">Propiedades, planta y equipo totalmente depreciados, agotados y/o amortizados</field>
+        </record>
+
+        <record id="constructions_and_buildings_id" model="account.group">
+            <field name="code_prefix_start">831516</field>
+            <field name="code_prefix_end">831516</field>
+            <field name="name">Construcciones y Edificaciones</field>
+        </record>
+
+        <record id="machinery_equipment_id" model="account.group">
+            <field name="code_prefix_start">831520</field>
+            <field name="code_prefix_end">831520</field>
+            <field name="name">Maquinaria y Equipo</field>
+        </record>
+
+        <record id="office_equipment_id" model="account.group">
+            <field name="code_prefix_start">831524</field>
+            <field name="code_prefix_end">831524</field>
+            <field name="name">Equipo de Oficina</field>
+        </record>
+
+        <record id="computer_and_communication_equipment_id" model="account.group">
+            <field name="code_prefix_start">831528</field>
+            <field name="code_prefix_end">831528</field>
+            <field name="name">Equipo de Computación y Comunicación</field>
+        </record>
+
+        <record id="containers_and_packaging_id" model="account.group">
+            <field name="code_prefix_start">831562</field>
+            <field name="code_prefix_end">831562</field>
+            <field name="name">Envases y Empaques</field>
+        </record>
+
+        <record id="credit_accounts_receivable_id" model="account.group">
+            <field name="code_prefix_start">9</field>
+            <field name="code_prefix_end">9</field>
+            <field name="name">Cuentas de orden acreedoras</field>
+        </record>
+
+        <record id="contingent_liabilities_id" model="account.group">
+            <field name="code_prefix_start">91</field>
+            <field name="code_prefix_end">91</field>
+            <field name="name">Responsabilidades contingentes</field>
+        </record>
+
+        <record id="goods_and_securities_received_from_third_parties_id" model="account.group">
+            <field name="code_prefix_start">9115</field>
+            <field name="code_prefix_end">9115</field>
+            <field name="name">Bienes y valores recibidos de terceros</field>
+        </record>
+
+        <record id="in_deposit_id" model="account.group">
+            <field name="code_prefix_start">911515</field>
+            <field name="code_prefix_end">911515</field>
+            <field name="name">en Depósito</field>
+        </record>
+
+        <record id="on_consignment_id" model="account.group">
+            <field name="code_prefix_start">911520</field>
+            <field name="code_prefix_end">911520</field>
+            <field name="name">en Consignación</field>
+        </record>
+
+        <record id="litigation_andor_lawsuits_id" model="account.group">
+            <field name="code_prefix_start">9120</field>
+            <field name="code_prefix_end">9120</field>
+            <field name="name">Litigios y/o demandas</field>
+        </record>
+
+        <record id="labour_id" model="account.group">
+            <field name="code_prefix_start">912005</field>
+            <field name="code_prefix_end">912005</field>
+            <field name="name">Laborales</field>
+        </record>
+
+        <record id="civil_id" model="account.group">
+            <field name="code_prefix_start">912010</field>
+            <field name="code_prefix_end">912010</field>
+            <field name="name">Civiles</field>
+        </record>
+
+        <record id="administrative_or_arbitral_id" model="account.group">
+            <field name="code_prefix_start">912015</field>
+            <field name="code_prefix_end">912015</field>
+            <field name="name">Administrativos o Arbitrales</field>
+        </record>
+
+        <record id="tax_id" model="account.group">
+            <field name="code_prefix_start">912020</field>
+            <field name="code_prefix_end">912020</field>
+            <field name="name">Tributarios</field>
+        </record>
+
+        <record id="control_creditors_id" model="account.group">
+            <field name="code_prefix_start">93</field>
+            <field name="code_prefix_end">93</field>
+            <field name="name">Acreedoras de control</field>
+        </record>
+
+        <record id="other_controlling_creditor_suspense_accounts_id" model="account.group">
+            <field name="code_prefix_start">9395</field>
+            <field name="code_prefix_end">9395</field>
+            <field name="name">Otras cuentas de orden acreedoras de control</field>
+        </record>
+
+        <record id="different_id" model="account.group">
+            <field name="code_prefix_start">939595</field>
+            <field name="code_prefix_end">939595</field>
+            <field name="name">Diversas</field>
+        </record>
+
+        <record id="cash_difference_loss_id" model="account.group">
+            <field name="code_prefix_start">999001</field>
+            <field name="code_prefix_end">999001</field>
+            <field name="name">Cash Difference Loss</field>
+        </record>
+
+        <record id="cash_difference_gain_id" model="account.group">
+            <field name="code_prefix_start">999002</field>
+            <field name="code_prefix_end">999002</field>
+            <field name="name">Cash Difference Gain</field>
+        </record>
+
+        <record id="undistributed_profitslosses_id" model="account.group">
+            <field name="code_prefix_start">999999</field>
+            <field name="code_prefix_end">999999</field>
+            <field name="name">Undistributed Profits/Losses</field>
+        </record>
+
+    </data>
+</odoo>

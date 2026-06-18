@@ -17,19 +17,19 @@
         <record id="action_hr_labor_certificate_history" model="ir.actions.act_window">
             <field name="name">Historico de certificados laborales generados</field>
             <field name="res_model">hr.labor.certificate.history</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <record model="ir.ui.view" id="zue_hr_employee.list_labor_certificate_history">
             <field name="name">zue list labor certificate history</field>
             <field name="model">hr.labor.certificate.history</field>
             <field name="arch" type="xml">
-                <tree create="false" edit="false" delete="false">
+                <list create="false" edit="false" delete="false">
                     <field name="sequence"/>
-                    <field name="contract_id"/>
+                    <field name="version_id"/>
                     <field name="date_generation"/>
                     <field name="info_to"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -39,16 +39,16 @@
             <field name="arch" type="xml">
                 <form string="Generar certificado laboral">
                     <group>
-                        <field name="contract_id" readonly="1" force_save="1"/>
+                        <field name="version_id" readonly="1" force_save="1"/>
                         <field name="date_generation" readonly="1" force_save="1"/>
-                        <field name="info_to" attrs="{'readonly': [['pdf','!=',False]]}"/>
+                        <field name="info_to" readonly="pdf"/>
                         <field name="z_functions_with"/>
                         <field name="pdf_name" invisible="1" readonly="1" force_save="1"/>
                         <field name="pdf" filename="pdf_name" readonly="1" force_save="1"/>
                     </group>
                     <footer>
                         <button icon="fa-cogs" string="Generate" name="generate_report" type="object"
-                                class="oe_highlight" attrs="{'invisible': [['pdf','!=',False]]}"/>
+                                class="oe_highlight" invisible="pdf"/>
                     </footer>
                 </form>
             </field>

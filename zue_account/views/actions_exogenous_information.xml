@@ -4,7 +4,7 @@
         <record model="ir.actions.act_window" id="action_fiscal_accounting_code">
             <field name="name">Código Fiscal</field>
             <field name="res_model">fiscal.accounting.code</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <!-- Crear record rule para filtrar las compañias-->
@@ -18,13 +18,13 @@
             <field name="name">fiscal accounting code list</field>
             <field name="model">fiscal.accounting.code</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="company_id"/>
                     <field name="concept_dian"/>
                     <field name="code_description"/>
                     <field name="account_type"/>
                     <field name="format_id"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -62,7 +62,7 @@
         <record model="ir.actions.act_window" id="action_fiscal_accounting_group">
             <field name="name">Grupo Fiscal</field>
             <field name="res_model">fiscal.accounting.group</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <!-- Crear record rule para filtrar las compañias-->
@@ -76,14 +76,14 @@
             <field name="name">fiscal accounting group list</field>
             <field name="model">fiscal.accounting.group</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="company_id"/>
                     <field name="fiscal_group"/>
                     <field name="group_description"/>
                     <field name="operator"/>
                     <field name="amount"/>
                     <field name="tax_type"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -125,7 +125,7 @@
         <record model="ir.actions.act_window" id="action_format_encab">
             <field name="name">Formato de Código Fiscal</field>
             <field name="res_model">format.encab</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <!-- Crear record rule para filtrar las compañias -->
@@ -139,12 +139,12 @@
             <field name="name">format encab</field>
             <field name="model">format.encab</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="company_id"/>
                     <field name="format_id"/>
                     <field name="description"/>
                     <field name="format_associated_id"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -169,10 +169,10 @@
                         <notebook>
                             <page string="Campos Disponibles">
                                  <field name="details_ids">
-                                        <tree editable="bottom">
+                                        <list editable="bottom">
                                             <field name="sequence" widget="handle"/>
                                             <field name="available_fields"/>
-                                        </tree>
+                                        </list>
                                 </field>
                             </page>
                         </notebook>
@@ -195,13 +195,15 @@
                 <form string="Medios Magnético">
                     <sheet>
                         <group>
-                            <h1>Generar Medios Magnético</h1>
+                            <h1 colspan="2">Generar Medios Magnético</h1>
                             <br></br>
-                            <field name="company_id" />
-                            <field name="type_media_magnetic" widget="radio"/>
-                            <field name="year" />
-                            <br></br>
-                            <button name="generate_media_magnetic" string="Generar" type="object" class="oe_highlight"/>
+                            <group>
+                                <field name="company_id" />
+                                <field name="type_media_magnetic" widget="radio"/>
+                                <field name="year" />
+                                <field name="with_resume" />
+                                <button name="generate_media_magnetic" string="Generar" type="object" class="oe_highlight"/>
+                            </group>
                         </group>
                     </sheet>
                     <footer></footer>

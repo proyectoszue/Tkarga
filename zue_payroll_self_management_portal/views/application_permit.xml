@@ -12,6 +12,7 @@
                     crossorigin="anonymous"></script>
             <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"/>
             <t t-call="web.basic_layout">
+                <script src="https://code.jquery.com/jquery-3.6.0.min.js"/>
                 <script type="text/javascript" src="/zue_payroll_self_management_portal/static/src/js/employee_absences.js"/>
                 <script>
                     $(function () {

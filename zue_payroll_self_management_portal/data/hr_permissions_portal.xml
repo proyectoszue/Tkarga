@@ -20,10 +20,10 @@
             <field name="model_id" ref="base.model_ir_actions_report"/>
             <field name="perm_read">1</field>
         </record>
-        <record model="ir.model.access" id="zue_payroll_self_management_portal.permissions_hr_contract_004">
+        <record model="ir.model.access" id="zue_payroll_self_management_portal.permissions_hr_version_004">
             <field name="group_id" ref="base.group_portal"/>
-            <field name="name">hr.contract Portal</field>
-            <field name="model_id" ref="hr_payroll_account.model_hr_contract"/>
+            <field name="name">hr.version Portal</field>
+            <field name="model_id" ref="hr_payroll_account.model_hr_version"/>
             <field name="perm_read">1</field>
         </record>
         <record model="ir.model.access" id="zue_payroll_self_management_portal.permissions_hr_payroll_structure_005">

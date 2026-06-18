@@ -4,7 +4,8 @@
         <t t-call="web.html_container">
             <t t-foreach="inside_foreach_docs or docs" t-as="m">
                 <t t-call="web.basic_layout">
-                    <t t-set="o" t-value="m.contract_id"/>
+                    <t t-set="o" t-value="m.version_id"/>
+                    <t t-set="version_full" t-value="o.env['hr.version'].sudo().browse(o.id)"/>
                     <t t-set="cp" t-value="m.get_hr_labor_certificate_template()"/>
                     <t t-if="cp.type_header_footer == 'default'">
                         <t t-set="company" t-value="o.employee_id.company_id"/>
@@ -12,7 +13,7 @@
                             <div class="row">
                                 <div class="col-3 mb4">
                                     <img t-if="company.logo" t-att-src="image_data_uri(company.logo)"
-                                         style="max-height: 45px;" alt="Logo"/>
+                                         style="max-height: 40px;" alt="Logo"/>
                                 </div>
                             </div>
                             <div t-if="company.logo or company.report_header" class="row zero_min_height">
@@ -23,15 +24,11 @@
                             <div class="row">
                                 <ul class="list-inline mb4">
                                     <li class="list-inline-item d-inline">
-                                        <b>
-                                            <span class="o_force_ltr" t-field="company.name"/>
-                                        </b>
+                                       <b><span class="o_force_ltr" t-field="company.name"/></b>
                                     </li>
                                     <li class="list-inline-item d-inline">
                                         <b>NIT:</b>
-                                        <b>
-                                            <span class="o_force_ltr" t-field="company.vat"/>
-                                        </b>
+                                        <b><span class="o_force_ltr" t-field="company.vat"/></b>
                                     </li>
                                     <li class="list-inline-item d-inline">
                                         <b>DIRECCIÓN:</b>
@@ -48,8 +45,7 @@
                         </div>
                         <div class="watermark">
                             <img t-if="cp.z_img_watermark_file"
-                                 t-att-src="cp.get_img_watermark()"
-                                 style="position: absolute;font-size: 3em;width: 100%;z-index: 1000;"/>
+                                 t-att-src="cp.get_img_watermark()" style="position: absolute;font-size: 3em;width: 100%;z-index: 1000;"/>
                         </div>
                     </t>
 
@@ -68,7 +64,7 @@
                                 <strong>
                                     <h4>
                                         NIT:
-                                        <span t-field="o.employee_id.company_id.company_registry"/> - <span t-field="o.employee_id.company_id.partner_id.x_digit_verification"/>
+                                        <span t-field="o.employee_id.company_id.company_registry"/>
                                     </h4>
                                 </strong>
                             </p>
@@ -81,114 +77,205 @@
                         </div>
                         <br/>
                         <div class="col-md-12">
-                            <p style="text-align:justify">
-                                <span t-if="o.employee_id.gender == 'male'">El señor</span>
-                                <span t-if="o.employee_id.gender == 'female'">La señora</span>
-                                <b>
-                                    <span t-esc="o.employee_id.name"/>,
-                                </b>
-                                identificado con cédula de ciudadanía número
-                                <span
-                                        t-esc="str('{:20,.0f}'.format(int(o.employee_id.identification_id))).replace(',','.')"/>
-                                ,
-                                <t t-if="o.state != 'open'">
-                                    laboró en nuestra compañía desde el
-                                    <span t-esc="o.get_date_text(o.date_start)"/>
-                                    hasta el<span t-esc="o.get_date_text(o.retirement_date)"/>,
-                                </t>
-                                <t t-else="">
-                                    labora en nuestra compañía desde el<span t-esc="o.get_date_text(o.date_start)"/>,
-                                </t>
-                                mediante un&#160;
-                                <b>
-                                    <span t-esc="o.get_contract_type()"/>,
-                                </b>
-                                <t t-if="o.state == 'open'">
-                                    hasta la fecha.
-                                </t>
-                                <t>
-                                    Desempeñando el cargo de&#160;
+                            <t t-set="rules_to_group" t-value="cp.certificate_template_detail_ids.filtered(lambda x: x.z_group_non_salary == True)"/>
+                            <t t-if="rules_to_group">
+                                <!-- Nuevo párrafo con agrupación de reglas marcadas -->
+                                <p style="text-align:justify">
+                                    Por medio de la presente la empresa
+                                    <b>
+                                        <span t-esc="o.employee_id.company_id.name"/>
+                                    </b>
+                                    certifica que
+                                    <t t-set="employee_gender" t-value="version_full.employee_id.sex or ''"/>
+                                    <span t-if="employee_gender in ('male', 'masculino')">el señor</span>
+                                    <span t-elif="employee_gender in ('female', 'femenino')">la señora</span>
+                                    <span t-else="">la persona</span>
+                                    <b>
+                                        <span t-esc="o.employee_id.name"/>
+                                    </b>
+                                    identificado con cédula de ciudadanía número
+                                    <span t-esc="str('{:20,.0f}'.format(int(o.employee_id.identification_id))).replace(',','.')"/>
+                                    <t t-if="o.contract_date_end == False">
+                                        prestó sus servicios a la empresa en el cargo de
+                                    </t>
+                                    <t t-else="">
+                                        presta sus servicios a la empresa en el cargo de
+                                    </t>
                                     <b>
                                         <span t-esc="o.job_id.name"/>
                                     </b>
-                                </t>
-                                <t/>
-                                en la seccional
-                                <b>
-                                    <span t-esc="o.employee_id.branch_id.name"/>,
-                                </b>
-                                devengando un salario básico mensual de&#160;
-                                <b>
-                                    <span t-esc="o.get_amount_text(o.wage)"/>
-                                    M/Cte.
-                                </b>
-                                (
-                                <span t-esc="o.wage"
-                                      t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
-                                <t t-set="promedio_heyrec" t-value="o.get_average_concept_heyrec()"/>
-                                <t t-if="promedio_heyrec and cp.show_average_overtime">
-                                    ),
-                                </t>
-                                <t t-else="">
-                                    ).
-                                </t>
-                                <t t-if="promedio_heyrec and cp.show_average_overtime">
-                                    Y un promedio de horas extras mensual en los últimos tres meses de&#160;
+                                    bajo un contrato de trabajo a término
                                     <b>
-                                        <span t-esc="o.get_amount_text(promedio_heyrec)"/>
+                                        <span t-esc="o.get_version_type()"/>
+                                    </b>
+                                    , entre el
+                                        <span t-esc="o.get_date_text(o.contract_date_start)"/>
+                                        <t t-if="o.contract_date_end == False and version_full.retirement_date">
+                                            y el
+                                            <span t-esc="o.get_date_text(version_full.retirement_date)"/>
+                                        </t>
+                                    <t t-else="">
+                                        y hasta la fecha
+                                    </t>
+                                    , recibiendo una remuneración en la suma de
+                                    <b>
+                                        <span t-esc="o.get_amount_text(o.wage)"/>
                                         M/Cte.
                                     </b>
                                     (
-                                    <span t-esc="promedio_heyrec"
+                                    <span t-esc="o.wage"
                                           t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
-                                    ),
-                                </t>
-                                <t t-if="cp.z_show_total_rules">
-                                    <t t-set="salary_rule_amount" t-value="0"/>
-                                    <t t-foreach="sorted(cp.certificate_template_detail_ids, key=lambda x: x.sequence)"
-                                       t-as="cpd">
-                                        <t t-set="salary_rule_amount"
-                                           t-value="salary_rule_amount+o.get_average_concept_certificate(cpd.rule_salary_id,cpd.last_month,cpd.average_last_months,cpd.z_value_contract,cpd.z_payment_frequency,cpd.z_view_in_certificate)"/>
-                                    </t>
-                                    <t t-if="salary_rule_amount">
-                                        Y un salario variable de&#160;
-                                        <span t-esc="o.get_amount_text(salary_rule_amount)"/>
-                                        M/Cte.
+                                    )
+                                    <t t-set="total_auxilios_no_salariales" t-value="version_full.get_grouped_non_salary_benefits(cp.certificate_template_detail_ids)"/>
+                                    <t t-if="total_auxilios_no_salariales and total_auxilios_no_salariales > 0">
+                                        y un concepto no salarial (promedio últimos tres meses) que correspondía a la suma de
+                                        <b>
+                                            <span t-esc="o.get_amount_text(total_auxilios_no_salariales)"/>
+                                            M/Cte.
+                                        </b>
                                         (
-                                        <span t-esc="salary_rule_amount"
+                                        <span t-esc="total_auxilios_no_salariales"
                                               t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
                                         ).
                                     </t>
-                                </t>
-                                <t t-else="">
-                                    <t t-foreach="sorted(cp.certificate_template_detail_ids, key=lambda x: x.sequence)"
+                                    <t t-else="">
+                                        .
+                                    </t>
+                                <!-- Mostrar reglas NO marcadas individualmente en el mismo párrafo -->
+                                    <t t-set="rules_not_grouped" t-value="cp.certificate_template_detail_ids.filtered(lambda x: not x.z_group_non_salary)"/>
+                                    <t t-foreach="sorted(rules_not_grouped, key=lambda x: x.sequence)"
                                        t-as="cpd">
                                         <t t-set="salary_rule_amount"
-                                           t-value="o.get_average_concept_certificate(cpd.rule_salary_id,cpd.last_month,cpd.average_last_months,cpd.z_value_contract,cpd.z_payment_frequency,cpd.z_view_in_certificate)"/>
+                                           t-value="o.get_average_concept_certificate(cpd.rule_salary_id,cpd.last_month,cpd.average_last_months,cpd.z_value_contract,cpd.z_payment_frequency)"/>
                                         <t t-if="salary_rule_amount">
-                                            Y un
-                                            <t t-if="cpd.average_last_months">
-                                                promedio de
-                                                <span t-esc="cpd.rule_salary_id.name"/>
-                                                en los últimos tres meses de&#160;
-                                            </t>
-                                            <t t-if="cpd.last_month or cpd.z_value_contract">
-                                                <span t-esc="cpd.rule_salary_id.name"/>
-                                                de&#160;
-                                            </t>
+                                            y un valor de&#160;
+                                            <span t-esc="cpd.rule_salary_id.name"/>
+                                            &#160;
+                                            <b>
+                                                <span t-esc="o.get_amount_text(salary_rule_amount)"/>
+                                            </b>
+                                            &#160;M/Cte.&#160;(
+                                            <span t-esc="salary_rule_amount"
+                                                  t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
+                                            ).
+                                        </t>
+                                    </t>
+                                </p>
+                            </t>
+                            <t t-else="">
+                                <!-- Párrafo original sin agrupación -->
+                                <p style="text-align:justify">
+                                    <t t-set="employee_gender" t-value="version_full.employee_id.sex or ''"/>
+                                    <span t-if="employee_gender in ('male', 'masculino')">El señor</span>
+                                    <span t-elif="employee_gender in ('female', 'femenino')">La señora</span>
+                                    <span t-else="">La persona</span>
+                                    <b>
+                                        <span t-esc="o.employee_id.name"/>,
+                                    </b>
+                                    identificado con cédula de ciudadanía número
+                                    <span
+                                            t-esc="str('{:20,.0f}'.format(int(o.employee_id.identification_id))).replace(',','.')"/>
+                                    ,
+                                    <t t-if="o.contract_date_end == True">
+                                        laboró en nuestra compañía desde el
+                                        <span t-esc="o.get_date_text(o.contract_date_start)"/>
+                                        hasta el<span t-esc="o.get_date_text(version_full.retirement_date)"/>,
+                                    </t>
+                                    <t t-else="">
+                                        labora en nuestra compañía desde el <span t-esc="o.get_date_text(o.contract_date_start)"/>,
+                                    </t>
+                                    mediante un&#160;
+                                    <b>
+                                        <span t-esc="o.get_version_type()"/>,
+                                    </b>
+                                    <t t-if="o.contract_date_end == False">
+                                        hasta la fecha.
+                                    </t>
+                                    <t>
+                                        Desempeñando el cargo de&#160;
+                                        <b>
+                                            <span t-esc="o.job_id.name"/>
+                                        </b>
+                                    </t>
+                                    <t/>
+                                    en la seccional
+                                    <b>
+                                        <span t-esc="o.employee_id.branch_id.name"/>,
+                                    </b>
+                                    <t t-if="o.modality_salary == 'integral'">devengando un salario integral mensual de&#160;</t>
+                                    <t t-else="">devengando un salario básico mensual de&#160;</t>
+                                    <b>
+                                        <span t-esc="o.get_amount_text(o.wage)"/>
+                                        M/Cte.
+                                    </b>
+                                    (
+                                    <span t-esc="o.wage"
+                                          t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
+                                    <t t-set="promedio_heyrec" t-value="o.get_average_concept_heyrec()"/>
+                                    <t t-if="promedio_heyrec and cp.show_average_overtime">
+                                        ),
+                                    </t>
+                                    <t t-else="">
+                                        ).
+                                    </t>
+                                    <t t-if="promedio_heyrec and cp.show_average_overtime">
+                                        Y un promedio de horas extras mensual en los últimos tres meses de&#160;
+                                        <b>
+                                            <span t-esc="o.get_amount_text(promedio_heyrec)"/>
+                                            M/Cte.
+                                        </b>
+                                        (
+                                        <span t-esc="promedio_heyrec"
+                                              t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
+                                        ),
+                                    </t>
+                                    <t t-if="cp.z_show_total_rules">
+                                        <t t-set="salary_rule_amount" t-value="0"/>
+                                        <t t-foreach="sorted(cp.certificate_template_detail_ids, key=lambda x: x.sequence)"
+                                           t-as="cpd">
+                                            <t t-set="salary_rule_amount"
+                                               t-value="salary_rule_amount+o.get_average_concept_certificate(cpd.rule_salary_id,cpd.last_month,cpd.average_last_months,cpd.z_value_contract,cpd.z_payment_frequency)"/>
+                                        </t>
+                                        <t t-if="salary_rule_amount">
+                                            Y un salario variable de&#160;
                                             <span t-esc="o.get_amount_text(salary_rule_amount)"/>
                                             M/Cte.
                                             (
                                             <span t-esc="salary_rule_amount"
                                                   t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
-                                            )
-                                            <t t-if="cpd.last_month or cpd.z_value_contract">
-                                                promedio mensual.
+                                            ).
+                                        </t>
+                                    </t>
+                                    <t t-else="">
+                                        <t t-foreach="sorted(cp.certificate_template_detail_ids, key=lambda x: x.sequence)"
+                                           t-as="cpd">
+                                            <t t-set="salary_rule_amount"
+                                               t-value="o.get_average_concept_certificate(cpd.rule_salary_id,cpd.last_month,cpd.average_last_months,cpd.z_value_contract,cpd.z_payment_frequency)"/>
+                                            <t t-if="salary_rule_amount">
+                                                Y un
+                                                <t t-if="cpd.average_last_months">
+                                                    valor promedio de
+                                                    <span t-esc="cpd.rule_salary_id.name"/>
+                                                    de los últimos tres (3) meses.&#160;
+                                                </t>
+                                                <t t-if="cpd.last_month or cpd.z_value_contract">
+                                                    <span t-esc="cpd.rule_salary_id.name"/>
+                                                    de&#160;
+                                                </t>
+                                                <span t-esc="o.get_amount_text(salary_rule_amount)"/>
+                                                M/Cte.
+                                                (
+                                                <span t-esc="salary_rule_amount"
+                                                      t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.company_id.currency_id}"/>
+                                                )
+                                                <t t-if="cpd.last_month or cpd.z_value_contract">
+                                                    promedio mensual.
+                                                </t>
                                             </t>
                                         </t>
                                     </t>
-                                </t>
-                            </p>
+                                </p>
+                            </t>
                             <p style="text-align:justify">
                                 <br/>
                                 <t t-if="m.z_functions_with == True">
@@ -200,13 +287,11 @@
                                 </t>
                                 <t t-else=""/>
                             </p>
-                            <br/>
                             <p style="text-align:justify">
                                 Se expide a solicitud del interesado
                                 <span t-esc="m.info_to"/>
                                 <br/>
-                                Para constancia se firma en la ciudad de<span
-                                    t-esc="str(o.company_id.partner_id.x_city.name)"/>, el
+                                Para constancia se firma en la ciudad de <span t-esc="' ' + str(o.company_id.partner_id.city_id.name)"/>, el
                                 <span t-esc="o.get_date_text(datetime.datetime.now(),1)"/>.
                             </p>
                         </div>
@@ -263,8 +348,9 @@
     <template id="report_certificacion_laboral">
         <t t-foreach="docs" t-as="o">
             <t t-set="inside_foreach_docs" t-value="o"/>
+            <!-- partner_encab_id puede ser False en portal: usar lang seguro -->
             <t t-call="zue_hr_employee.report_certificacion_laboral_document"
-               t-lang="o.contract_id.employee_id.address_home_id.lang"/>
+               t-lang="(o.version_id.employee_id.partner_encab_id and o.version_id.employee_id.partner_encab_id.lang) or o.env.lang"/>
         </t>
     </template>
 </odoo>

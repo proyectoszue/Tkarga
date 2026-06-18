@@ -14,7 +14,7 @@ class documents_document(models.Model):
         for document in self:
             # Verificar documentos expirados
             datetime_today = datetime.now()
-            if document.expiration_date and document.type != 'empty':
+            if document.expiration_date and document.type == 'binary':
                 equivalent_documents = self.env['documents.document']
                 for tag in document.tag_ids:
                     equivalent_documents += self.env['documents.document'].search(

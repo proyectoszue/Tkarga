@@ -26,72 +26,104 @@ class notes_documents_support(models.Model):
     qty_done = fields.Integer(string='Cantidad Aceptados', default=0, copy=False)
 
     def consecutive_assignment(self):
-        #Elimine información del detalle en caso de existir
-        self.env['sending.notes.document.support.detail'].search([('document_support_id', '=', self.id)]).unlink()
-        #Se obtienen los movimientos publicados en el rango de fechas que tienen un diario con documento soporte
-        obj_moves = self.env['account.move'].search([('state', '=', 'posted'),
-                                                     ('date', '>=', self.initial_date), ('date', '<=', self.end_date),
-                                                     ('move_type','in',['out_refund','in_refund']),
-                                                     ('journal_id.document_analyze','=',True),
-                                                     ('x_support_document_sent', '=', False)]) #Se asignan unicamente apuntes que aun no se han enviado
-        obj_moves_lines = self.env['account.move.line'].search([('move_id','in',obj_moves.ids),
-                                                                ('partner_id.zue_electronic_invoice_fiscal_regimen', '=', '49'),
-                                                                ('partner_id.obliged_invoice','=',False),
-                                                                ('account_id.accounting_class','=','RESULTADO')])
-        #Obtener diario consecutivo dian
-        journal_nc_support_document_co = self.company_id.journal_nc_support_document_co
-        #sequence_dian = journal_nc_support_document_co.sequence_id
+        self.ensure_one()
+        Detail = self.env['sending.notes.document.support.detail']
+        # Detectar si line_move_ids es M2M (recomendado) o Char
+        line_move_field = Detail._fields.get('line_move_ids')
+        is_line_move_m2m = bool(line_move_field and line_move_field.type == 'many2many')
+        # Limpiar detalle previo
+        Detail.search([('document_support_id', '=', self.id)]).unlink()
 
-        #Insertar movimientos
-        if len(obj_moves_lines) == 0:
+        obj_moves = self.env['account.move'].search([('state', '=', 'posted'),
+            ('date', '>=', self.initial_date), ('date', '<=', self.end_date),
+            ('move_type', 'in', ['out_refund', 'in_refund']),
+            ('journal_id.document_analyze', '=', True),
+            ('x_support_document_sent', '=', False)])
+
+        obj_moves_lines = self.env['account.move.line'].search([('move_id', 'in', obj_moves.ids),
+            ('partner_id.zue_electronic_invoice_fiscal_regimen', '=', '49'),
+            ('partner_id.obliged_invoice', '=', False),
+            ('account_id.accounting_class', '=', 'RESULTADO')])
+
+        if not obj_moves_lines:
             raise ValidationError(_('No se encontro información de acuerdo a los filtros ingresados.'))
 
-        lst_moves = []
-        for move in obj_moves_lines:
-            dict_move = {
-                'document_support_id': self.id,
-                'partner_id': move.partner_id.id,
-                'move_id': move.move_id.id,
-                'line_move_id': move.id,
-                'line_move_ids': '/',
-                'concept': move.name,
-                'first_concept': '/',
-                'amount': move.debit - move.credit,
-                'journal_id':move.move_id.journal_id.id,
-                'prefix_doc_support': '/',
-                'item_doc_support': 0,
-                'consecutive_doc_support': '0',
-            }
-            lst_moves.append(dict_move)
-        #Se guarda la data en pandas
-        moves_df = pd.DataFrame(lst_moves)
-        # Se agrupa por tercero, asiento contable y diario
-        group_moves_df = moves_df.groupby(
-            by=['document_support_id', 'partner_id', 'move_id', 'line_move_ids', 'first_concept', 'journal_id',
-                'prefix_doc_support', 'item_doc_support', 'consecutive_doc_support'], group_keys=False,
-            as_index=False).sum()
-        #Se obtiene el primer concepto de cada detalle y los apuntes contables
-        #sequence_number_next = journal_nc_support_document_co.sequence_number_next
-        count_sequence = 0
-        for i,j in group_moves_df.iterrows():
-            concepts = moves_df.loc[(moves_df['move_id'] == group_moves_df.loc[i,'move_id']) & (moves_df['partner_id'] == group_moves_df.loc[i,'partner_id']), 'concept']
-            line_move_ids_series = moves_df.loc[(moves_df['move_id'] == group_moves_df.loc[i,'move_id']) & (moves_df['partner_id'] == group_moves_df.loc[i,'partner_id']), 'line_move_id']
-            group_moves_df.loc[i,'first_concept'] = concepts.values[0]
-            group_moves_df.loc[i,'line_move_ids'] = ','.join(map(str, line_move_ids_series.values))
-            obj_move_select = self.env['account.move'].search([('id','=',group_moves_df.loc[i,'move_id'])])
-            group_moves_df.loc[i, 'prefix_doc_support'] = obj_move_select.journal_id.code
-            group_moves_df.loc[i, 'item_doc_support'] = 0
-            group_moves_df.loc[i, 'consecutive_doc_support'] = obj_move_select.name
-            count_sequence+=1
-        #Salvar proceso
-        lst_moves_finally = group_moves_df.to_dict(orient='records')
-        for dict_move in lst_moves_finally:
-            # Se eliminan las columnas que no se van guardar
-            del dict_move['line_move_id']
-            #Se obtienen los apuntes contables
-            dict_move['line_move_ids'] = list(map(int,dict_move['line_move_ids'].split(',')))
-            #Se guarda en la tabla detalle del proceso
-            self.env['sending.notes.document.support.detail'].create(dict_move)
+        journal_nc_support_document_co = self.company_id.journal_nc_support_document_co
+        sequence_dian = journal_nc_support_document_co.z_secure_sequence_id
+
+        # Helper para sacar el siguiente consecutivo de la secuencia (v19 seguro)
+        def _next_seq():
+            # Preferible en Odoo: next_by_id()
+            if hasattr(sequence_dian, 'next_by_id'):
+                return str(sequence_dian.next_by_id())
+            # fallback (si tu custom usa _next)
+            return str(sequence_dian._next())
+
+        # Helper para obtener "item" como tu lógica actual
+        def _compute_item(next_seq_str):
+            code = journal_nc_support_document_co.code or ''
+            # Mantengo tu idea: cortar por longitud del código del diario de resolución
+            num_part = next_seq_str[len(code):] if code and next_seq_str.startswith(code) else ''.join(ch for ch in next_seq_str if ch.isdigit())
+            try:
+                return int(num_part) + 1  # <-- mantengo tu +1
+            except Exception:
+                return 0
+
+        # Agrupar SIN pandas (evita numpy.int64 y acelera)
+        grouped = {}
+        # key: (partner_id, move_id, journal_id)
+        for ml in obj_moves_lines:
+            partner_id = ml.partner_id.id
+            move = ml.move_id
+            move_id = move.id
+            journal_id = move.journal_id.id
+            key = (partner_id, move_id, journal_id)
+
+            if key not in grouped:
+                grouped[key] = {
+                    'document_support_id': self.id,
+                    'partner_id': partner_id,
+                    'move_id': move_id,
+                    'journal_id': journal_id,
+                    'first_concept': ml.name or '/',
+                    'amount': 0.0,
+                    'line_ids': [],
+                    # se completan luego:
+                    'prefix_doc_support': '/',
+                    'item_doc_support': 0,
+                    'consecutive_doc_support': '0',
+                }
+
+            grouped[key]['amount'] += (ml.debit - ml.credit)
+            grouped[key]['line_ids'].append(ml.id)
+
+        # Crear detalle con consecutivo por grupo
+        for (partner_id, move_id, journal_id), data in grouped.items():
+            move = self.env['account.move'].browse(move_id)  # sin query extra real (prefetch)
+            data['prefix_doc_support'] = move.journal_id.code or '/'
+            seq_str = _next_seq()
+            data['item_doc_support'] = _compute_item(seq_str)
+            data['consecutive_doc_support'] = move.name or '0'
+
+            line_ids = data.pop('line_ids', [])
+
+            # line_move_ids según tipo real del campo
+            if is_line_move_m2m:
+                data['line_move_ids'] = [(6, 0, line_ids)]
+            else:
+                # tu implementación actual usa texto con ids separados por coma
+                data['line_move_ids'] = ','.join(map(str, line_ids)) if line_ids else '/'
+
+            # Cast “limpio” (por si hay floats raros)
+            data['document_support_id'] = int(data['document_support_id'])
+            data['partner_id'] = int(data['partner_id'])
+            data['move_id'] = int(data['move_id'])
+            data['journal_id'] = int(data['journal_id'])
+            data['item_doc_support'] = int(data['item_doc_support'] or 0)
+            data['amount'] = float(data['amount'] or 0.0)
+
+            Detail.create(data)
+
         self.state = 'ac'
 
     def cancel_process(self):
@@ -150,8 +182,7 @@ class sending_notes_document_support_detail(models.Model):
         ('finished', 'Finalizado'),
     ], string='Estado doc', default='draft', copy=False)
 
-    def name_get(self):
-        result = []
+    @api.depends('consecutive_doc_support','partner_id','move_id')
+    def _compute_display_name(self):
         for record in self:
-            result.append((record.id, "{} - {} - {}".format(record.consecutive_doc_support,record.partner_id.name,record.move_id.name)))
-        return result
+            record.display_name = "{} - {} - {}".format(record.consecutive_doc_support,record.partner_id.name,record.move_id.name)

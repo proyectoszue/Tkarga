@@ -1,0 +1,306 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="O_13" model="zue.responsibilities_rut">
+            <field name="code">O-13</field>
+            <field name="description">Gran contribuyente</field>
+            <field name="valid_for_fe">True</field>
+        </record>
+
+        <record id="O_15" model="zue.responsibilities_rut">
+            <field name="code">O-15</field>
+            <field name="description">Autorretenedor</field>
+            <field name="valid_for_fe">True</field>
+        </record>
+
+        <record id="O_23" model="zue.responsibilities_rut">
+            <field name="code">O-23</field>
+            <field name="description">Agente de retención en el impuesto sobre las ventas</field>
+            <field name="valid_for_fe">True</field>
+        </record>
+
+        <record id="O_47" model="zue.responsibilities_rut">
+            <field name="code">O-47</field>
+            <field name="description">Régimen Simple de Tributación – SIMPLE</field>
+            <field name="valid_for_fe">True</field>
+        </record>
+
+        <record id="R_99_PN" model="zue.responsibilities_rut">
+            <field name="code">R-99-PN</field>
+            <field name="description">No responsable PN</field>
+            <field name="valid_for_fe">True</field>
+        </record>
+
+        <record id="O_05" model="zue.responsibilities_rut">
+            <field name="code">O-05</field>
+            <field name="description">Impto. renta y compl. régimen ordinario</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_07" model="zue.responsibilities_rut">
+            <field name="code">O-07</field>
+            <field name="description">Retención en la fuente a titulo de renta</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_22" model="zue.responsibilities_rut">
+            <field name="code">O-22</field>
+            <field name="description">Obligado a cumplir deberes formales</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_42" model="zue.responsibilities_rut">
+            <field name="code">O-42</field>
+            <field name="description">Obligado a llevar Contabilidad</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_48" model="zue.responsibilities_rut">
+            <field name="code">O-48</field>
+            <field name="description">Impuesto sobre las ventas - IVA</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_52" model="zue.responsibilities_rut">
+            <field name="code">O-52</field>
+            <field name="description">Facturador Electrónico</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_49" model="zue.responsibilities_rut">
+            <field name="code">O-49</field>
+            <field name="description">No responsable de IVA (Reemplaza al antiguo  Código 12 Régimen Simplificado)</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_50" model="zue.responsibilities_rut">
+            <field name="code">O-50</field>
+            <field name="description">No responsable de Consumo restaurantes y bares</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_51" model="zue.responsibilities_rut">
+            <field name="code">O-51</field>
+            <field name="description">Agente retención Impoconsumo de bienes inmuebles</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_03" model="zue.responsibilities_rut">
+            <field name="code">O-03</field>
+            <field name="description">Impuesto al Patrimonio</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_04" model="zue.responsibilities_rut">
+            <field name="code">O-04</field>
+            <field name="description">Impto. renta y compl. régimen tributario especial</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_06" model="zue.responsibilities_rut">
+            <field name="code">O-06</field>
+            <field name="description">Ingresos y patrimonio</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_08" model="zue.responsibilities_rut">
+            <field name="code">O-08</field>
+            <field name="description">Retención Timbre Nacional</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_09" model="zue.responsibilities_rut">
+            <field name="code">O-09</field>
+            <field name="description">Retención en la Fuente en el Impuesto Sobre las Ventas</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_10" model="zue.responsibilities_rut">
+            <field name="code">O-10</field>
+            <field name="description">Oblilgado Aduanero</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_14" model="zue.responsibilities_rut">
+            <field name="code">O-14</field>
+            <field name="description">Informante de Exógena</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_16" model="zue.responsibilities_rut">
+            <field name="code">O-16</field>
+            <field name="description">Obligación de facturar por ingresos de bienes y/o servicios excluidos</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_17" model="zue.responsibilities_rut">
+            <field name="code">O-17</field>
+            <field name="description">Profesionales de compra y venta de divisas</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_18" model="zue.responsibilities_rut">
+            <field name="code">O-18</field>
+            <field name="description">Precios de Transferencia</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_19" model="zue.responsibilities_rut">
+            <field name="code">O-19</field>
+            <field name="description">Productor y/o exportador de bienes exentos</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_20" model="zue.responsibilities_rut">
+            <field name="code">O-20</field>
+            <field name="description">Obtención NIT</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_21" model="zue.responsibilities_rut">
+            <field name="code">O-21</field>
+            <field name="description">Declarar el ingreso o salida del país de divisas o moneda legal colombiana</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_22" model="zue.responsibilities_rut">
+            <field name="code">O-22</field>
+            <field name="description">Obligado a cumplir deberes formales a nombre de terceros</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_24" model="zue.responsibilities_rut">
+            <field name="code">O-24</field>
+            <field name="description">Declaración Informativa Consolidada Precios de transferencia</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_26" model="zue.responsibilities_rut">
+            <field name="code">O-26</field>
+            <field name="description">Declaración Informativa Individual Precios de transferencia</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_32" model="zue.responsibilities_rut">
+            <field name="code">O-32</field>
+            <field name="description">Impuesto Nacional a la Gasolina y al ACPM</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_33" model="zue.responsibilities_rut">
+            <field name="code">O-33</field>
+            <field name="description">Impuesto Nacional al Consumo</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_36" model="zue.responsibilities_rut">
+            <field name="code">O-36</field>
+            <field name="description">Establecimiento Permanente</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_39" model="zue.responsibilities_rut">
+            <field name="code">O-39</field>
+            <field name="description">Proveedor de Servicios Tecnológicos (PST)</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_41" model="zue.responsibilities_rut">
+            <field name="code">O-41</field>
+            <field name="description">Declaración anual de activos en el exterior</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_45" model="zue.responsibilities_rut">
+            <field name="code">O-45</field>
+            <field name="description">Autorretenedor de rendimientos financieros</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_46" model="zue.responsibilities_rut">
+            <field name="code">O-46</field>
+            <field name="description">IVA Prestadores de Servicios desde el Exterior</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_53" model="zue.responsibilities_rut">
+            <field name="code">O-53</field>
+            <field name="description">Persona Jurídica No Responsable de IVA</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_59" model="zue.responsibilities_rut">
+            <field name="code">O-59</field>
+            <field name="description">Autorretención especial renta</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_55" model="zue.responsibilities_rut">
+            <field name="code">O-55</field>
+            <field name="description">Informante de Beneficiarios Finales</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_37" model="zue.responsibilities_rut">
+            <field name="code">O-37</field>
+            <field name="description">Obligado a Facturar Electrónicamente</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_38" model="zue.responsibilities_rut">
+            <field name="code">O-38</field>
+            <field name="description">Facturación Electrónica Voluntaria</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_54" model="zue.responsibilities_rut">
+            <field name="code">O-54</field>
+            <field name="description">Intercambio Automático de Información CRS</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_56" model="zue.responsibilities_rut">
+            <field name="code">O-56</field>
+            <field name="description">Impuesto al Carbono</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_58" model="zue.responsibilities_rut">
+            <field name="code">O-58</field>
+            <field name="description">“Intercambio Automático de Información FATCA"</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_59" model="zue.responsibilities_rut">
+            <field name="code">O-59</field>
+            <field name="description">“Autorretención especial renta"</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_60" model="zue.responsibilities_rut">
+            <field name="code">O-60</field>
+            <field name="description">“Autorretención por concepto de intereses y rendimientos financieros de entidades vigiladas por la Superintendencia Financiera de Colombia"</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_61" model="zue.responsibilities_rut">
+            <field name="code">O-61</field>
+            <field name="description">“Autorretención por concepto de comisiones de entidades vigiladas por la Superintendencia Financiera de Colombia"</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_01" model="zue.responsibilities_rut">
+            <field name="code">O-01</field>
+            <field name="description">Aporte especial para la administración de justicia</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+        <record id="O_02" model="zue.responsibilities_rut">
+            <field name="code">O-02</field>
+            <field name="description">Gravamen a los Movimientos Financieros (GMF)</field>
+            <field name="valid_for_fe">False</field>
+        </record>
+
+    </data>
+</odoo>

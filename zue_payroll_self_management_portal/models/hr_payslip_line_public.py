@@ -7,12 +7,11 @@ class HrPayslipWorkedDaysPublic(models.Model):
     _auto = False
     _log_access = True
 
-    id = fields.Integer(string='id')
     name = fields.Char(string='Concepto')
-    note = fields.Char(string='Nota')
+    #note = fields.Char(string='Nota')
     code = fields.Char(string='Codigo')
     slip_id = fields.Many2one('hr.payslip',string='Nomina')
-    contract_id = fields.Many2one('hr.contract.public',string='Contrato')
+    version_id = fields.Many2one('hr.version.public',string='Contrato')
     employee_id = fields.Many2one('hr.employee.public',string='Empleado')
     category_id = fields.Many2one('hr.salary.rule.category',string='Categoria')
     amount = fields.Float(string='Valor')

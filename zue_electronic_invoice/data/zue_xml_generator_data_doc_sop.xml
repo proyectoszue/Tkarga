@@ -1,0 +1,2389 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="DocSopElectronico_Ftech" model="zue.xml.generator.header">
+            <field name="name">Documento Soporte Electrónico</field>
+            <field name="code">DocSopElectronico_Ftech</field>
+            <field name="description">Documento Soporte Electrónico Factura Tech</field>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_1" model="zue.xml.generator.details">
+            <field name="name">FACTURA</field>
+            <field name="sequence">1</field>
+            <field name="is_parent">True</field>
+            <field name="code_validation_python">tag = 'DOCUMENTO_SOPORTE'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_2" model="zue.xml.generator.details">
+            <field name="name">ENC</field>
+            <field name="sequence">2</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_3" model="zue.xml.generator.details">
+            <field name="name">ENC_1</field>
+            <field name="sequence">3</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = 'NC' if o.move_id.move_type in ['out_refund', 'in_refund'] else 'DS'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_4" model="zue.xml.generator.details">
+            <field name="name">ENC_2</field>
+            <field name="sequence">4</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = str(o.move_id.company_id.partner_id.vat)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_5" model="zue.xml.generator.details">
+            <field name="name">ENC_3</field>
+            <field name="sequence">5</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_6" model="zue.xml.generator.details">
+            <field name="name">ENC_4</field>
+            <field name="sequence">6</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = 'UBL 2.1'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_7" model="zue.xml.generator.details">
+            <field name="name">ENC_5</field>
+            <field name="sequence">7</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = 'DIAN 2.1'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_8" model="zue.xml.generator.details">
+            <field name="name">ENC_6</field>
+            <field name="sequence">8</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = o.consecutive_doc_support</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_9" model="zue.xml.generator.details">
+            <field name="name">ENC_7</field>
+            <field name="sequence">9</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = str(o.move_id.invoice_date) if o.move_id.invoice_date else str(o.move_id.date)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_10" model="zue.xml.generator.details">
+            <field name="name">ENC_8</field>
+            <field name="sequence">10</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = '00:00:00-05:00'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_11" model="zue.xml.generator.details">
+            <field name="name">ENC_9</field>
+            <field name="sequence">11</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">if o.move_id.move_type in ['out_invoice', 'in_invoice']:
+            if o.move_id.currency_id.name == 'COP':
+                val = '05'
+            else:
+                val = '05'
+        elif o.move_id.move_type in ['out_refund', 'in_refund']:
+            val = '95'
+        else:
+            val = '05'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_12" model="zue.xml.generator.details">
+            <field name="name">ENC_10</field>
+            <field name="sequence">12</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = o.move_id.currency_id.name</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_13" model="zue.xml.generator.details">
+            <field name="name">ENC_11</field>
+            <field name="sequence">13</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_14" model="zue.xml.generator.details">
+            <field name="name">ENC_12</field>
+            <field name="sequence">14</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_15" model="zue.xml.generator.details">
+            <field name="name">ENC_13</field>
+            <field name="sequence">15</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_16" model="zue.xml.generator.details">
+            <field name="name">ENC_14</field>
+            <field name="sequence">16</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_17" model="zue.xml.generator.details">
+            <field name="name">ENC_15</field>
+            <field name="sequence">17</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = '1'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_18" model="zue.xml.generator.details">
+            <field name="name">ENC_16</field>
+            <field name="sequence">18</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = str(o.move_id.invoice_date_due) if o.move_id.invoice_date_due else str(o.move_id.invoice_date)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_19" model="zue.xml.generator.details">
+            <field name="name">ENC_17</field>
+            <field name="sequence">19</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_20" model="zue.xml.generator.details">
+            <field name="name">ENC_18</field>
+            <field name="sequence">20</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_21" model="zue.xml.generator.details">
+            <field name="name">ENC_19</field>
+            <field name="sequence">21</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_22" model="zue.xml.generator.details">
+            <field name="name">ENC_20</field>
+            <field name="sequence">22</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">val = '1' if o.move_id.company_id.zue_electronic_invoice_environment == 'prod' else '2'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_23" model="zue.xml.generator.details">
+            <field name="name">ENC_21</field>
+            <field name="sequence">23</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ENC</field>
+            <field name="code_python">if o.partner_id.country_id.name != 'Colombia':
+            val = '11'
+        else:
+            val = '10'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_24" model="zue.xml.generator.details">
+            <field name="name">PRO</field>
+            <field name="sequence">24</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_25" model="zue.xml.generator.details">
+            <field name="name">PRO_1</field>
+            <field name="sequence">25</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = '1' if o.partner_id.l10n_latam_identification_type_id.z_code_dian == '31' else '2'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_26" model="zue.xml.generator.details">
+            <field name="name">PRO_2</field>
+            <field name="sequence">26</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = str(o.partner_id.vat)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_27" model="zue.xml.generator.details">
+            <field name="name">PRO_3</field>
+            <field name="sequence">27</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = '31'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_28" model="zue.xml.generator.details">
+            <field name="name">PRO_4</field>
+            <field name="sequence">28</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_29" model="zue.xml.generator.details">
+            <field name="name">PRO_5</field>
+            <field name="sequence">29</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_30" model="zue.xml.generator.details">
+            <field name="name">PRO_6</field>
+            <field name="sequence">30</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = o.partner_id.display_name</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_31" model="zue.xml.generator.details">
+            <field name="name">PRO_7</field>
+            <field name="sequence">31</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_32" model="zue.xml.generator.details">
+            <field name="name">PRO_8</field>
+            <field name="sequence">32</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_33" model="zue.xml.generator.details">
+            <field name="name">PRO_9</field>
+            <field name="sequence">33</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_34" model="zue.xml.generator.details">
+            <field name="name">PRO_10</field>
+            <field name="sequence">34</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = o.partner_id.street</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_35" model="zue.xml.generator.details">
+            <field name="name">PRO_11</field>
+            <field name="sequence">35</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = o.partner_id.city_id.z_code_dian</field>
+            <field name="code_validation_python">validation = o.partner_id.country_id.name == 'Colombia'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_36" model="zue.xml.generator.details">
+            <field name="name">PRO_12</field>
+            <field name="sequence">36</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_37" model="zue.xml.generator.details">
+            <field name="name">PRO_13</field>
+            <field name="sequence">37</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">if o.partner_id.country_id.name != 'Colombia':
+            val = o.partner_id.country_id.name
+        else:
+            val = o.partner_id.city_id.name</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_38" model="zue.xml.generator.details">
+            <field name="name">PRO_14</field>
+            <field name="sequence">38</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = str(o.partner_id.x_zip_id.code).zfill(6) if o.partner_id.x_zip_id.code else 'False'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_39" model="zue.xml.generator.details">
+            <field name="name">PRO_15</field>
+            <field name="sequence">39</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = o.partner_id.country_id.code</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_40" model="zue.xml.generator.details">
+            <field name="name">PRO_16</field>
+            <field name="sequence">40</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_41" model="zue.xml.generator.details">
+            <field name="name">PRO_17</field>
+            <field name="sequence">41</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_42" model="zue.xml.generator.details">
+            <field name="name">PRO_18</field>
+            <field name="sequence">42</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_43" model="zue.xml.generator.details">
+            <field name="name">PRO_19</field>
+            <field name="sequence">43</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">if o.partner_id.country_id.name != 'Colombia':
+            val = o.partner_id.country_id.name
+        else:
+            val = o.partner_id.state_id.name</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_44" model="zue.xml.generator.details">
+            <field name="name">PRO_20</field>
+            <field name="sequence">44</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_45" model="zue.xml.generator.details">
+            <field name="name">PRO_21</field>
+            <field name="sequence">45</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = o.partner_id.country_id.name</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_46" model="zue.xml.generator.details">
+            <field name="name">PRO_22</field>
+            <field name="sequence">46</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = str(o.partner_id._compute_verification_digit(return_digit=1))</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_47" model="zue.xml.generator.details">
+            <field name="name">PRO_23</field>
+            <field name="sequence">47</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = o.partner_id.city_id.z_code_dian</field>
+            <field name="code_validation_python">validation = o.partner_id.country_id.name == 'Colombia'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_48" model="zue.xml.generator.details">
+            <field name="name">PRO_24</field>
+            <field name="sequence">48</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_49" model="zue.xml.generator.details">
+            <field name="name">PRO_25</field>
+            <field name="sequence">49</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_50" model="zue.xml.generator.details">
+            <field name="name">TAC</field>
+            <field name="sequence">50</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">PRO</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_51" model="zue.xml.generator.details">
+            <field name="name">TAC_1</field>
+            <field name="sequence">51</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TAC</field>
+            <field name="code_python">val = o.get_TAC_TCR('TCR')</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_52" model="zue.xml.generator.details">
+            <field name="name">DFE</field>
+            <field name="sequence">52</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_53" model="zue.xml.generator.details">
+            <field name="name">DFE_1</field>
+            <field name="sequence">53</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFE</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_54" model="zue.xml.generator.details">
+            <field name="name">DFE_2</field>
+            <field name="sequence">54</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFE</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_55" model="zue.xml.generator.details">
+            <field name="name">DFE_3</field>
+            <field name="sequence">55</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFE</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_56" model="zue.xml.generator.details">
+            <field name="name">DFE_4</field>
+            <field name="sequence">56</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFE</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_57" model="zue.xml.generator.details">
+            <field name="name">DFE_5</field>
+            <field name="sequence">57</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFE</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_58" model="zue.xml.generator.details">
+            <field name="name">DFE_6</field>
+            <field name="sequence">58</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFE</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_59" model="zue.xml.generator.details">
+            <field name="name">DFE_7</field>
+            <field name="sequence">59</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFE</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_60" model="zue.xml.generator.details">
+            <field name="name">DFE_8</field>
+            <field name="sequence">60</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFE</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_61" model="zue.xml.generator.details">
+            <field name="name">ICC</field>
+            <field name="sequence">61</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_62" model="zue.xml.generator.details">
+            <field name="name">ICC_1</field>
+            <field name="sequence">62</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ICC</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_63" model="zue.xml.generator.details">
+            <field name="name">ICC_2</field>
+            <field name="sequence">63</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ICC</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_65" model="zue.xml.generator.details">
+            <field name="name">ICC_7</field>
+            <field name="sequence">65</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ICC</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_66" model="zue.xml.generator.details">
+            <field name="name">ICC_8</field>
+            <field name="sequence">66</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ICC</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_67" model="zue.xml.generator.details">
+            <field name="name">ICC_9</field>
+            <field name="sequence">67</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ICC</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_68" model="zue.xml.generator.details">
+            <field name="name">CDE</field>
+            <field name="sequence">68</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">PRO</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_69" model="zue.xml.generator.details">
+            <field name="name">CDE_1</field>
+            <field name="sequence">69</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">CDE</field>
+            <field name="code_python">val = '1'</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_70" model="zue.xml.generator.details">
+            <field name="name">CDE_2</field>
+            <field name="sequence">70</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">CDE</field>
+            <field name="code_python">val = o.partner_id.name</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_71" model="zue.xml.generator.details">
+            <field name="name">CDE_3</field>
+            <field name="sequence">71</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">CDE</field>
+            <field name="code_python">val = o.partner_id.phone</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_72" model="zue.xml.generator.details">
+            <field name="name">CDE_4</field>
+            <field name="sequence">72</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">CDE</field>
+            <field name="code_python">val = o.partner_id.email</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_73" model="zue.xml.generator.details">
+            <field name="name">GTE</field>
+            <field name="sequence">73</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">PRO</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_74" model="zue.xml.generator.details">
+            <field name="name">GTE_1</field>
+            <field name="sequence">74</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">GTE</field>
+            <field name="code_python">val = '01' if o.partner_id.zue_electronic_invoice_responsable_iva else 'ZZ'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_75" model="zue.xml.generator.details">
+            <field name="name">GTE_2</field>
+            <field name="sequence">75</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">GTE</field>
+            <field name="code_python">val = 'IVA' if o.partner_id.zue_electronic_invoice_responsable_iva else 'No aplica'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_76" model="zue.xml.generator.details">
+            <field name="name">ADQ</field>
+            <field name="sequence">76</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_77" model="zue.xml.generator.details">
+            <field name="name">ADQ_1</field>
+            <field name="sequence">77</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = '1'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_78" model="zue.xml.generator.details">
+            <field name="name">ADQ_2</field>
+            <field name="sequence">78</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = str(o.move_id.company_id.partner_id.vat)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_79" model="zue.xml.generator.details">
+            <field name="name">ADQ_3</field>
+            <field name="sequence">79</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = str(o.partner_id.l10n_latam_identification_type_id.name)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_80" model="zue.xml.generator.details">
+            <field name="name">ADQ_4</field>
+            <field name="sequence">80</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_81" model="zue.xml.generator.details">
+            <field name="name">ADQ_5</field>
+            <field name="sequence">81</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_82" model="zue.xml.generator.details">
+            <field name="name">ADQ_6</field>
+            <field name="sequence">82</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = o.move_id.company_id.partner_id.display_name</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_83" model="zue.xml.generator.details">
+            <field name="name">ADQ_7</field>
+            <field name="sequence">83</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_84" model="zue.xml.generator.details">
+            <field name="name">ADQ_8</field>
+            <field name="sequence">84</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_85" model="zue.xml.generator.details">
+            <field name="name">ADQ_9</field>
+            <field name="sequence">85</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_86" model="zue.xml.generator.details">
+            <field name="name">ADQ_10</field>
+            <field name="sequence">86</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_87" model="zue.xml.generator.details">
+            <field name="name">ADQ_11</field>
+            <field name="sequence">87</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_88" model="zue.xml.generator.details">
+            <field name="name">ADQ_12</field>
+            <field name="sequence">88</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_89" model="zue.xml.generator.details">
+            <field name="name">ADQ_13</field>
+            <field name="sequence">89</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_90" model="zue.xml.generator.details">
+            <field name="name">ADQ_14</field>
+            <field name="sequence">90</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_91" model="zue.xml.generator.details">
+            <field name="name">ADQ_15</field>
+            <field name="sequence">91</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_92" model="zue.xml.generator.details">
+            <field name="name">ADQ_16</field>
+            <field name="sequence">92</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_93" model="zue.xml.generator.details">
+            <field name="name">ADQ_17</field>
+            <field name="sequence">93</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_94" model="zue.xml.generator.details">
+            <field name="name">ADQ_18</field>
+            <field name="sequence">94</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_95" model="zue.xml.generator.details">
+            <field name="name">ADQ_19</field>
+            <field name="sequence">95</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_96" model="zue.xml.generator.details">
+            <field name="name">ADQ_20</field>
+            <field name="sequence">96</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_97" model="zue.xml.generator.details">
+            <field name="name">ADQ_21</field>
+            <field name="sequence">97</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_98" model="zue.xml.generator.details">
+            <field name="name">ADQ_22</field>
+            <field name="sequence">98</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = o.move_id.company_id.partner_id.x_digit_verification</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_99" model="zue.xml.generator.details">
+            <field name="name">ADQ_23</field>
+            <field name="sequence">99</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_100" model="zue.xml.generator.details">
+            <field name="name">ADQ_24</field>
+            <field name="sequence">100</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_101" model="zue.xml.generator.details">
+            <field name="name">ADQ_25</field>
+            <field name="sequence">101</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_102" model="zue.xml.generator.details">
+            <field name="name">ADQ_26</field>
+            <field name="sequence">102</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_103" model="zue.xml.generator.details">
+            <field name="name">TCR</field>
+            <field name="sequence">103</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">ADQ</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_104" model="zue.xml.generator.details">
+            <field name="name">TCR_1</field>
+            <field name="sequence">104</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TCR</field>
+            <field name="code_python">val = o.get_TAC_TCR('TAC')</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_105" model="zue.xml.generator.details">
+            <field name="name">ILA</field>
+            <field name="sequence">105</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_106" model="zue.xml.generator.details">
+            <field name="name">ILA_1</field>
+            <field name="sequence">106</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ILA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_107" model="zue.xml.generator.details">
+            <field name="name">ILA_2</field>
+            <field name="sequence">107</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ILA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_108" model="zue.xml.generator.details">
+            <field name="name">ILA_3</field>
+            <field name="sequence">108</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ILA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_109" model="zue.xml.generator.details">
+            <field name="name">ILA_4</field>
+            <field name="sequence">109</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ILA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_110" model="zue.xml.generator.details">
+            <field name="name">CDA</field>
+            <field name="sequence">110</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_111" model="zue.xml.generator.details">
+            <field name="name">CDA_1</field>
+            <field name="sequence">111</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">CDA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_112" model="zue.xml.generator.details">
+            <field name="name">CDA_2</field>
+            <field name="sequence">112</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">CDA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_113" model="zue.xml.generator.details">
+            <field name="name">CDA_3</field>
+            <field name="sequence">113</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">CDA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_114" model="zue.xml.generator.details">
+            <field name="name">CDA_4</field>
+            <field name="sequence">114</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">CDA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_115" model="zue.xml.generator.details">
+            <field name="name">DFA</field>
+            <field name="sequence">115</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">ADQ</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_116" model="zue.xml.generator.details">
+            <field name="name">DFA_1</field>
+            <field name="sequence">116</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_117" model="zue.xml.generator.details">
+            <field name="name">DFA_2</field>
+            <field name="sequence">117</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_118" model="zue.xml.generator.details">
+            <field name="name">DFA_3</field>
+            <field name="sequence">118</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_119" model="zue.xml.generator.details">
+            <field name="name">DFA_4</field>
+            <field name="sequence">119</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_120" model="zue.xml.generator.details">
+            <field name="name">DFA_5</field>
+            <field name="sequence">120</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_121" model="zue.xml.generator.details">
+            <field name="name">DFA_6</field>
+            <field name="sequence">121</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_122" model="zue.xml.generator.details">
+            <field name="name">DFA_7</field>
+            <field name="sequence">122</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_123" model="zue.xml.generator.details">
+            <field name="name">DFA_8</field>
+            <field name="sequence">123</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DFA</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_124" model="zue.xml.generator.details">
+            <field name="name">GTA</field>
+            <field name="sequence">124</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">ADQ</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_125" model="zue.xml.generator.details">
+            <field name="name">GTA_1</field>
+            <field name="sequence">125</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">GTA</field>
+            <field name="code_python">val = '01' if o.move_id.company_id.partner_id.zue_electronic_invoice_responsable_iva else 'ZZ'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_126" model="zue.xml.generator.details">
+            <field name="name">GTA_2</field>
+            <field name="sequence">126</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">GTA</field>
+            <field name="code_python">val = 'IVA' if o.move_id.company_id.partner_id.zue_electronic_invoice_responsable_iva else 'No aplica'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_127" model="zue.xml.generator.details">
+            <field name="name">TOT</field>
+            <field name="sequence">127</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_128" model="zue.xml.generator.details">
+            <field name="name">TOT_1</field>
+            <field name="sequence">128</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TOT</field>
+            <field name="code_python">val = abs(o.amount)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_129" model="zue.xml.generator.details">
+            <field name="name">TOT_2</field>
+            <field name="sequence">129</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TOT</field>
+            <field name="code_python">val = o.move_id.currency_id.name</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_130" model="zue.xml.generator.details">
+            <field name="name">TOT_3</field>
+            <field name="sequence">130</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TOT</field>
+            <field name="code_python">val = 0</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_131" model="zue.xml.generator.details">
+            <field name="name">TOT_4</field>
+            <field name="sequence">131</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TOT</field>
+            <field name="code_python">val = o.move_id.currency_id.name</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_132" model="zue.xml.generator.details">
+            <field name="name">TOT_5</field>
+            <field name="sequence">132</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TOT</field>
+            <field name="code_python">val = abs(o.amount)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_133" model="zue.xml.generator.details">
+            <field name="name">TOT_6</field>
+            <field name="sequence">133</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TOT</field>
+            <field name="code_python">val = o.move_id.currency_id.name</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_134" model="zue.xml.generator.details">
+            <field name="name">TOT_7</field>
+            <field name="sequence">134</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TOT</field>
+            <field name="code_python">val = abs(o.amount)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_135" model="zue.xml.generator.details">
+            <field name="name">TOT_8</field>
+            <field name="sequence">135</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TOT</field>
+            <field name="code_python">val = o.move_id.currency_id.name</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_136" model="zue.xml.generator.details">
+            <field name="name">TIM</field>
+            <field name="sequence">136</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="code_python">impuestos = []
+        for_item = impuestos</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_137" model="zue.xml.generator.details">
+            <field name="name">TIM_1</field>
+            <field name="sequence">137</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TIM</field>
+            <field name="code_python">val = for_item[index_i]['retention']</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_138" model="zue.xml.generator.details">
+            <field name="name">TIM_2</field>
+            <field name="sequence">138</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TIM</field>
+            <field name="code_python">val = abs(for_item[index_i]['amount'])</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_139" model="zue.xml.generator.details">
+            <field name="name">TIM_3</field>
+            <field name="sequence">139</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TIM</field>
+            <field name="code_python">val = o.move_id.currency_id.name</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_140" model="zue.xml.generator.details">
+            <field name="name">TIM_4</field>
+            <field name="sequence">140</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TIM</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_141" model="zue.xml.generator.details">
+            <field name="name">TIM_5</field>
+            <field name="sequence">141</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TIM</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_142" model="zue.xml.generator.details">
+            <field name="name">IMP</field>
+            <field name="sequence">142</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">TIM</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_143" model="zue.xml.generator.details">
+            <field name="name">IMP_1</field>
+            <field name="sequence">143</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">IMP</field>
+            <field name="code_python">val = for_item[index_i]['type']</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_144" model="zue.xml.generator.details">
+            <field name="name">IMP_2</field>
+            <field name="sequence">144</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">IMP</field>
+            <field name="code_python">val = abs(for_item[index_i]['amount'] / float(for_item[index_i]['percent']) * 100)</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_145" model="zue.xml.generator.details">
+            <field name="name">IMP_3</field>
+            <field name="sequence">145</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">IMP</field>
+            <field name="code_python">val = o.move_id.currency_id.name</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_146" model="zue.xml.generator.details">
+            <field name="name">IMP_4</field>
+            <field name="sequence">146</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">IMP</field>
+            <field name="code_python">val = abs(for_item[index_i]['amount'])</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_147" model="zue.xml.generator.details">
+            <field name="name">IMP_5</field>
+            <field name="sequence">147</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">IMP</field>
+            <field name="code_python">val = o.move_id.currency_id.name</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_148" model="zue.xml.generator.details">
+            <field name="name">IMP_6</field>
+            <field name="sequence">148</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">IMP</field>
+            <field name="code_python">val = abs(for_item[index_i]['percent'])</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_149" model="zue.xml.generator.details">
+            <field name="name">IMP_7</field>
+            <field name="sequence">149</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">IMP</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_150" model="zue.xml.generator.details">
+            <field name="name">IMP_8</field>
+            <field name="sequence">150</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">IMP</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_151" model="zue.xml.generator.details">
+            <field name="name">IMP_9</field>
+            <field name="sequence">151</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">IMP</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_152" model="zue.xml.generator.details">
+            <field name="name">IMP_10</field>
+            <field name="sequence">152</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">IMP</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1==2</field>
+            <field name="is_for">True</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_153" model="zue.xml.generator.details">
+            <field name="name">TDC</field>
+            <field name="sequence">153</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="code_validation_python">validation = o.move_id.currency_id.name != 'COP'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_154" model="zue.xml.generator.details">
+            <field name="name">TDC_1</field>
+            <field name="sequence">154</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TDC</field>
+            <field name="code_python">val = o.move_id.currency_id.name</field>
+            <field name="code_validation_python">validation = o.move_id.currency_id.name != 'COP'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_155" model="zue.xml.generator.details">
+            <field name="name">TDC_2</field>
+            <field name="sequence">155</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TDC</field>
+            <field name="code_python">val = o.move_id.company_id.currency_id.name</field>
+            <field name="code_validation_python">validation = o.move_id.currency_id.name != 'COP'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_157" model="zue.xml.generator.details">
+            <field name="name">TDC_4</field>
+            <field name="sequence">157</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TDC</field>
+            <field name="code_python">val = str(o.invoice_date)</field>
+            <field name="code_validation_python">validation = o.move_id.currency_id.name != 'COP'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_158" model="zue.xml.generator.details">
+            <field name="name">TDC_5</field>
+            <field name="sequence">158</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TDC</field>
+            <field name="code_python">val = '1'</field>
+            <field name="code_validation_python">validation = o.move_id.currency_id.name != 'COP'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_159" model="zue.xml.generator.details">
+            <field name="name">TDC_6</field>
+            <field name="sequence">159</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">TDC</field>
+            <field name="code_python">val = '1'</field>
+            <field name="code_validation_python">validation = o.move_id.currency_id.name != 'COP'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_160" model="zue.xml.generator.details">
+            <field name="name">DRF</field>
+            <field name="sequence">160</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_161" model="zue.xml.generator.details">
+            <field name="name">DRF_1</field>
+            <field name="sequence">161</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DRF</field>
+            <field name="code_python">val = str(o.document_support_id.journal_resolution_id.dian_authorization_number)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_162" model="zue.xml.generator.details">
+            <field name="name">DRF_2</field>
+            <field name="sequence">162</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DRF</field>
+            <field name="code_python">val = str(o.document_support_id.journal_resolution_id.dian_authorization_date)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_163" model="zue.xml.generator.details">
+            <field name="name">DRF_3</field>
+            <field name="sequence">163</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DRF</field>
+            <field name="code_python">val = str(o.document_support_id.journal_resolution_id.dian_authorization_end_date)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_164" model="zue.xml.generator.details">
+            <field name="name">DRF_4</field>
+            <field name="sequence">164</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DRF</field>
+            <field name="code_python">val = o.document_support_id.journal_resolution_id.code</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_165" model="zue.xml.generator.details">
+            <field name="name">DRF_5</field>
+            <field name="sequence">165</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DRF</field>
+            <field name="code_python">val = str(o.document_support_id.journal_resolution_id.dian_min_range_number)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_166" model="zue.xml.generator.details">
+            <field name="name">DRF_6</field>
+            <field name="sequence">166</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DRF</field>
+            <field name="code_python">val = str(o.document_support_id.journal_resolution_id.dian_max_range_number)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_167" model="zue.xml.generator.details">
+            <field name="name">ITD</field>
+            <field name="sequence">167</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_168" model="zue.xml.generator.details">
+            <field name="name">ITD_1</field>
+            <field name="sequence">168</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITD</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_169" model="zue.xml.generator.details">
+            <field name="name">ITD_2</field>
+            <field name="sequence">169</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITD</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_170" model="zue.xml.generator.details">
+            <field name="name">ITD_3</field>
+            <field name="sequence">170</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITD</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_171" model="zue.xml.generator.details">
+            <field name="name">ITD_4</field>
+            <field name="sequence">171</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITD</field>
+            <field name="code_python">val = ''</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_172" model="zue.xml.generator.details">
+            <field name="name">ITD_5</field>
+            <field name="sequence">172</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITD</field>
+            <field name="code_python">val = str('%.2f' % o.amount_total)</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_173" model="zue.xml.generator.details">
+            <field name="name">ITD_6</field>
+            <field name="sequence">173</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITD</field>
+            <field name="code_python">val = o.move_id.currency_id.name</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_174" model="zue.xml.generator.details">
+            <field name="name">NOT</field>
+            <field name="sequence">174</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_175" model="zue.xml.generator.details">
+            <field name="name">NOT_1</field>
+            <field name="sequence">175</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">NOT</field>
+            <field name="code_python">val = o.first_concept[:300]</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_176" model="zue.xml.generator.details">
+            <field name="name">ORC</field>
+            <field name="sequence">176</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_177" model="zue.xml.generator.details">
+            <field name="name">ORC_1</field>
+            <field name="sequence">177</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="code_python">val = str(o.ref and o.ref[:35])</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_178" model="zue.xml.generator.details">
+            <field name="name">ORC_2</field>
+            <field name="sequence">178</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_179" model="zue.xml.generator.details">
+            <field name="name">ORC_3</field>
+            <field name="sequence">179</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_180" model="zue.xml.generator.details">
+            <field name="name">ORC_4</field>
+            <field name="sequence">180</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="code_python">val = str(o.invoice_origin)</field>
+            <field name="code_validation_python">validation = 1 == 2</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_181" model="zue.xml.generator.details">
+            <field name="name">CDN</field>
+            <field name="sequence">181</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="code_validation_python">validation = o.move_id.move_type in  ('in_refund', 'out_refund')</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_182" model="zue.xml.generator.details">
+            <field name="name">CDN_1</field>
+            <field name="sequence">182</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">CDN</field>
+            <field name="code_python">val = '1'</field>
+            <field name="code_validation_python">validation = o.move_id.move_type in  ('in_refund', 'out_refund')</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_183" model="zue.xml.generator.details">
+            <field name="name">CDN_2</field>
+            <field name="sequence">183</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">CDN</field>
+            <field name="code_python">if o.move_id.move_type == 'out_refund':
+            val = o.move_id.description_code_credit
+        elif o.move_id.move_type == 'in_refund':
+            val = o.move_id.description_code_debit
+        else:
+            val = ''</field>
+            <field name="code_validation_python">validation = o.move_id.move_type in  ('in_refund', 'out_refund')</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_184" model="zue.xml.generator.details">
+            <field name="name">DCN</field>
+            <field name="sequence">184</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">CDN</field>
+            <field name="code_validation_python">validation = o.move_id.move_type in  ('in_refund', 'out_refund')</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_185" model="zue.xml.generator.details">
+            <field name="name">DCN_1</field>
+            <field name="sequence">185</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">DCN</field>
+            <field name="code_python">val =  str(dict(o.move_id._fields['description_code_credit'].selection).get(o.move_id.description_code_credit)) if o.move_id.move_type == 'out_refund' or o.move_id.move_type == 'in_refund' else str(dict(o.move_id._fields['description_code_debit'].selectio</field>
+            <field name="code_validation_python">validation = o.move_id.move_type in  ('in_refund', 'out_refund')</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_186" model="zue.xml.generator.details">
+            <field name="name">REF</field>
+            <field name="sequence">186</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="code_validation_python">validation = o.move_id.move_type in  ('in_refund', 'out_refund')</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_187" model="zue.xml.generator.details">
+            <field name="name">REF_1</field>
+            <field name="sequence">187</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">REF</field>
+            <field name="code_python">val = 'IV'</field>
+            <field name="code_validation_python">validation = o.move_id.move_type in  ('in_refund', 'out_refund')</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_188" model="zue.xml.generator.details">
+            <field name="name">REF_2</field>
+            <field name="sequence">188</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">REF</field>
+            <field name="code_python">val = o.document_support_reverse_id.consecutive_doc_support</field>
+            <field name="code_validation_python">validation = o.move_id.move_type in  ('in_refund', 'out_refund')</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_189" model="zue.xml.generator.details">
+            <field name="name">REF_3</field>
+            <field name="sequence">189</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">REF</field>
+            <field name="code_python">val = o.document_support_reverse_id.move_date</field>
+            <field name="code_validation_python">validation = o.move_id.move_type in  ('in_refund', 'out_refund')</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_190" model="zue.xml.generator.details">
+            <field name="name">REF_4</field>
+            <field name="sequence">190</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">REF</field>
+            <field name="code_python">val = o.document_support_reverse_id.cuds</field>
+            <field name="code_validation_python">validation = o.move_id.move_type in  ('in_refund', 'out_refund')</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_191" model="zue.xml.generator.details">
+            <field name="name">REF_5</field>
+            <field name="sequence">191</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">REF</field>
+            <field name="code_python">val = 'CUDS-SHA384'</field>
+            <field name="code_validation_python">validation = o.move_id.move_type in  ('in_refund', 'out_refund')</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_192" model="zue.xml.generator.details">
+            <field name="name">MEP</field>
+            <field name="sequence">192</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_193" model="zue.xml.generator.details">
+            <field name="name">MEP_1</field>
+            <field name="sequence">193</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">MEP</field>
+            <field name="code_python">val = '10' #o.move_id.fe_payment_option_id.code</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_194" model="zue.xml.generator.details">
+            <field name="name">MEP_2</field>
+            <field name="sequence">194</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">MEP</field>
+            <field name="code_python">val = '1' #if o.move_id.invoice_payment_term_id.name == 'Pago inmediato' else '2'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_195" model="zue.xml.generator.details">
+            <field name="name">MEP_3</field>
+            <field name="sequence">195</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">MEP</field>
+            <field name="code_python">if o.move_id.invoice_date:
+            if o.move_id.invoice_date_due:
+                val = str(o.move_id.invoice_date) if o.move_id.invoice_payment_term_id.name == 'Pago inmediato' else str(o.move_id.invoice_date_due)
+            else:
+                val = str(o.move_id.invoice_date) if o.move_id.invoi</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_197" model="zue.xml.generator.details">
+            <field name="name">CTS</field>
+            <field name="sequence">197</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_198" model="zue.xml.generator.details">
+            <field name="name">CTS_1</field>
+            <field name="sequence">198</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">CTS</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_199" model="zue.xml.generator.details">
+            <field name="name">ITE</field>
+            <field name="sequence">199</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">FACTURA</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_200" model="zue.xml.generator.details">
+            <field name="name">ITE_1</field>
+            <field name="sequence">200</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = 1</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_201" model="zue.xml.generator.details">
+            <field name="name">ITE_2</field>
+            <field name="sequence">201</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_202" model="zue.xml.generator.details">
+            <field name="name">ITE_3</field>
+            <field name="sequence">202</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = 1</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_203" model="zue.xml.generator.details">
+            <field name="name">ITE_4</field>
+            <field name="sequence">203</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = '94'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_204" model="zue.xml.generator.details">
+            <field name="name">ITE_5</field>
+            <field name="sequence">204</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = abs(o.amount)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_205" model="zue.xml.generator.details">
+            <field name="name">ITE_6</field>
+            <field name="sequence">205</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = o.move_id.currency_id.name</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_206" model="zue.xml.generator.details">
+            <field name="name">ITE_7</field>
+            <field name="sequence">206</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = abs(o.amount)</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_207" model="zue.xml.generator.details">
+            <field name="name">ITE_8</field>
+            <field name="sequence">207</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = o.move_id.currency_id.name</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_208" model="zue.xml.generator.details">
+            <field name="name">ITE_9</field>
+            <field name="sequence">208</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_209" model="zue.xml.generator.details">
+            <field name="name">ITE_10</field>
+            <field name="sequence">209</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = o.first_concept[:300]</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_210" model="zue.xml.generator.details">
+            <field name="name">ITE_11</field>
+            <field name="sequence">210</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = o.first_concept[:300]</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_211" model="zue.xml.generator.details">
+            <field name="name">ITE_12</field>
+            <field name="sequence">211</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = o.first_concept[:300]</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_212" model="zue.xml.generator.details">
+            <field name="name">ITE_13</field>
+            <field name="sequence">212</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_213" model="zue.xml.generator.details">
+            <field name="name">ITE_14</field>
+            <field name="sequence">213</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_214" model="zue.xml.generator.details">
+            <field name="name">ITE_15</field>
+            <field name="sequence">214</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = '1'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_215" model="zue.xml.generator.details">
+            <field name="name">ITE_16</field>
+            <field name="sequence">215</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_216" model="zue.xml.generator.details">
+            <field name="name">ITE_17</field>
+            <field name="sequence">216</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_217" model="zue.xml.generator.details">
+            <field name="name">ITE_18</field>
+            <field name="sequence">217</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_218" model="zue.xml.generator.details">
+            <field name="name">ITE_19</field>
+            <field name="sequence">218</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_219" model="zue.xml.generator.details">
+            <field name="name">ITE_20</field>
+            <field name="sequence">219</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_220" model="zue.xml.generator.details">
+            <field name="name">ITE_21</field>
+            <field name="sequence">220</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_221" model="zue.xml.generator.details">
+            <field name="name">ITE_22</field>
+            <field name="sequence">221</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_222" model="zue.xml.generator.details">
+            <field name="name">ITE_23</field>
+            <field name="sequence">222</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_223" model="zue.xml.generator.details">
+            <field name="name">ITE_24</field>
+            <field name="sequence">223</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = ''</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_224" model="zue.xml.generator.details">
+            <field name="name">ITE_27</field>
+            <field name="sequence">224</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = '1'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_225" model="zue.xml.generator.details">
+            <field name="name">ITE_28</field>
+            <field name="sequence">225</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_python">val = '94'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_226" model="zue.xml.generator.details">
+            <field name="name">IAE</field>
+            <field name="sequence">226</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">ITE</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_227" model="zue.xml.generator.details">
+            <field name="name">IAE_1</field>
+            <field name="sequence">227</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">IAE</field>
+            <field name="code_python">val = o.partner_id.display_name</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_228" model="zue.xml.generator.details">
+            <field name="name">IAE_2</field>
+            <field name="sequence">228</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">IAE</field>
+            <field name="code_python">val = '999'</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_229" model="zue.xml.generator.details">
+            <field name="name">IBS</field>
+            <field name="sequence">229</field>
+            <field name="is_parent">True</field>
+            <field name="name_parent">ITE</field>
+            <field name="code_validation_python">validation = o.move_id.move_type not in ['out_refund', 'in_refund']</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_230" model="zue.xml.generator.details">
+            <field name="name">IBS_1</field>
+            <field name="sequence">230</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">IBS</field>
+            <field name="code_python">val = str(o.document_support_id.end_date)</field>
+            <field name="code_validation_python">validation = o.move_id.move_type not in ['out_refund', 'in_refund']</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_231" model="zue.xml.generator.details">
+            <field name="name">IBS_2</field>
+            <field name="sequence">231</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">IBS</field>
+            <field name="code_python">val = '2'</field>
+            <field name="code_validation_python">validation = o.move_id.move_type not in ['out_refund', 'in_refund']</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+
+        <record id="DocSopElectronico_Ftech_232" model="zue.xml.generator.details">
+            <field name="name">IBS_3</field>
+            <field name="sequence">232</field>
+            <field name="is_parent">False</field>
+            <field name="name_parent">IBS</field>
+            <field name="code_python">val = 'Acumulado semanal'</field>
+            <field name="code_validation_python">validation = o.move_id.move_type not in ['out_refund', 'in_refund']</field>
+            <field name="is_for">False</field>
+            <field name="xml_generator_id" ref="DocSopElectronico_Ftech"/>
+        </record>
+    </data>
+</odoo>

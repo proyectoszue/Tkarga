@@ -8,7 +8,7 @@ class hr_novelties_different_concepts(models.Model):
     employee_id = fields.Many2one('hr.employee', string='Empleado', index=True)
     employee_identification = fields.Char('Identificación empleado')
     salary_rule_id = fields.Many2one('hr.salary.rule', string='Regla salarial', required=True)
-    dev_or_ded = fields.Selection(related='salary_rule_id.dev_or_ded',store=True, readonly=True)
+    dev_or_ded = fields.Selection(related='salary_rule_id.dev_or_ded',store=True)
     date = fields.Date('Fecha', required=True)
     amount = fields.Float('Valor', required=True)
     description = fields.Char('Descripción') 
@@ -22,14 +22,15 @@ class hr_novelties_different_concepts(models.Model):
             if record.dev_or_ded == 'devengo' and record.amount < 0:
                 raise UserError(_('La regla es de tipo devengo, el valor ingresado debe ser positivo')) 
 
-    @api.model
-    def create(self, vals):
-        if vals.get('employee_identification'):
-            obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('identification_id', '=', vals.get('employee_identification'))])
-            vals['employee_id'] = obj_employee.id
-        if vals.get('employee_id'):
-            obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('id', '=', vals.get('employee_id'))])
-            vals['employee_identification'] = obj_employee.identification_id            
+    @api.model_create_multi
+    def create(self, values_list):
+        for vals in values_list:
+            if vals.get('employee_identification'):
+                obj_employee = self.env['hr.employee'].search([('identification_id', '=', vals.get('employee_identification'))], limit=1)
+                vals['employee_id'] = obj_employee.id
+            if vals.get('employee_id'):
+                obj_employee = self.env['hr.employee'].search([('id', '=', vals.get('employee_id'))], limit=1)
+                vals['employee_identification'] = obj_employee.identification_id
         
-        res = super(hr_novelties_different_concepts, self).create(vals)
+        res = super(hr_novelties_different_concepts, self).create(values_list)
         return res

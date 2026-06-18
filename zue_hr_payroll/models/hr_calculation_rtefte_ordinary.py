@@ -11,5 +11,5 @@ class hr_calculation_rtefte_ordinary(models.Model):
     addition_uvt = fields.Integer('UVTs a sumar ',required=True)
     porc = fields.Integer('Porcentaje',required=True)
 
-    _sql_constraints = [('change_rangei_uniq', 'unique(range_initial)', 'Ya existe un registro con este rango inicial, por favor verficar.')]
-    _sql_constraints = [('change_rangef_uniq', 'unique(range_finally)', 'Ya existe un registro con este rango final, por favor verficar.')]
+    _change_rangei_uniq = models.Constraint('unique(range_initial)', 'Ya existe un registro con este rango inicial, por favor verficar.')
+    _change_rangef_uniq = models.Constraint('unique(range_finally)', 'Ya existe un registro con este rango final, por favor verficar.')
