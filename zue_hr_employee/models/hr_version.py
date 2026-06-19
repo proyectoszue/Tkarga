@@ -427,7 +427,7 @@ class hr_version(models.Model):
                 promedio = total/(len(slips_ids)/2)
         return promedio
 
-    def get_average_concept_certificate(self,salary_rule_id,last,average,z_value_contract,z_payment_frequency): #Promedio horas extra
+    def get_average_concept_certificate(self,salary_rule_id,last,average,z_value_contract,z_payment_frequency,z_view_in_certificate): #Promedio horas extra
         model_payslip = self.env['hr.payslip']
         model_payslip_line = self.env['hr.payslip.line']
         today = datetime.today()
@@ -463,7 +463,8 @@ class hr_version(models.Model):
                 rule_value = sum(obj_concept.amount for obj_concept in obj_concepts)
                 for obj_concept in obj_concepts:
                     if obj_concept.aplicar == '0':
-                        rule_value *= 2
+                        if z_view_in_certificate != '0':
+                            rule_value *= 2
                 if obj_concept.input_id.modality_value == 'diario':
                     rule_value *= 30
                 return rule_value
@@ -492,7 +493,8 @@ class hr_version(models.Model):
                 rule_detail.last_month,
                 rule_detail.average_last_months,
                 rule_detail.z_value_contract,
-                rule_detail.z_payment_frequency
+                rule_detail.z_payment_frequency,
+                rule_detail.z_view_in_certificate
             )
             if rule_value:
                 total += rule_value

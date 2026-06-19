@@ -69,6 +69,7 @@
                                     <field name="z_value_contract"/>
                                     <field name="z_group_non_salary"/>
                                     <field name="z_payment_frequency"/>
+                                    <field name="z_view_in_certificate"/>
                                 </list>
                             </field>
                         </group>

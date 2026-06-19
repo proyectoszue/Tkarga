@@ -146,7 +146,7 @@
                                     <t t-foreach="sorted(rules_not_grouped, key=lambda x: x.sequence)"
                                        t-as="cpd">
                                         <t t-set="salary_rule_amount"
-                                           t-value="o.get_average_concept_certificate(cpd.rule_salary_id,cpd.last_month,cpd.average_last_months,cpd.z_value_contract,cpd.z_payment_frequency)"/>
+                                           t-value="o.get_average_concept_certificate(cpd.rule_salary_id,cpd.last_month,cpd.average_last_months,cpd.z_value_contract,cpd.z_payment_frequency,cpd.z_view_in_certificate)"/>
                                         <t t-if="salary_rule_amount">
                                             y un valor de&#160;
                                             <span t-esc="cpd.rule_salary_id.name"/>
@@ -234,7 +234,7 @@
                                         <t t-foreach="sorted(cp.certificate_template_detail_ids, key=lambda x: x.sequence)"
                                            t-as="cpd">
                                             <t t-set="salary_rule_amount"
-                                               t-value="salary_rule_amount+o.get_average_concept_certificate(cpd.rule_salary_id,cpd.last_month,cpd.average_last_months,cpd.z_value_contract,cpd.z_payment_frequency)"/>
+                                               t-value="salary_rule_amount+o.get_average_concept_certificate(cpd.rule_salary_id,cpd.last_month,cpd.average_last_months,cpd.z_value_contract,cpd.z_payment_frequency,cpd.z_view_in_certificate)"/>
                                         </t>
                                         <t t-if="salary_rule_amount">
                                             Y un salario variable de&#160;
@@ -250,7 +250,7 @@
                                         <t t-foreach="sorted(cp.certificate_template_detail_ids, key=lambda x: x.sequence)"
                                            t-as="cpd">
                                             <t t-set="salary_rule_amount"
-                                               t-value="o.get_average_concept_certificate(cpd.rule_salary_id,cpd.last_month,cpd.average_last_months,cpd.z_value_contract,cpd.z_payment_frequency)"/>
+                                               t-value="o.get_average_concept_certificate(cpd.rule_salary_id,cpd.last_month,cpd.average_last_months,cpd.z_value_contract,cpd.z_payment_frequency,cpd.z_view_in_certificate)"/>
                                             <t t-if="salary_rule_amount">
                                                 Y un
                                                 <t t-if="cpd.average_last_months">
