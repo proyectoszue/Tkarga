@@ -26,9 +26,12 @@
                 <br/><br/>
                 <div class="col-md-12">
                     <p style="text-align:justify">
-                    <!-- Se comentan campos hasta migrar app zue_payroll_self_management_portal: <span t-if="o.employee_id.gender == 'male'">El señor</span> <span t-if="o.employee_id.gender == 'female'">La señora</span> -->
-                    El señor/a <b><span t-esc="o.employee_id.name"/></b>
-                    , identificado con cédula de ciudadanía número <span t-esc="'{:20,.0f}'.format(int(o.employee_id.identification_id))"/>,
+                    <t t-set="employee_gender" t-value="(o.version_id.sex or o.version_id.employee_id.sex or o.sex or o.employee_id.sex or '') if o else ''"/>
+                    <span t-if="employee_gender in ('male', 'masculino')">El señor</span>
+                    <span t-elif="employee_gender in ('female', 'femenino')">La señora</span>
+                    <span t-else="">La persona</span>
+                    <b><span t-esc="o.employee_id.name"/></b>
+                    , <span t-if="employee_gender in ('female', 'femenino')">identificada</span><span t-else="">identificado</span> con cédula de ciudadanía número <span t-esc="'{:20,.0f}'.format(int(o.employee_id.identification_id))"/>,
                     labora en nuestra compañía desde el <span t-esc="o.get_date_text(o.contract_date_start)"/>, mediante un <b><span t-esc="o.get_version_type()"/></b>
                     , desempeñando el cargo de <b><span t-esc="o.sudo().job_id.name"/></b>
                     en la seccional <b><span t-esc="o.employee_id.branch_id.name"/></b>

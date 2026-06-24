@@ -6,6 +6,7 @@
                 <t t-call="web.basic_layout">
                     <t t-set="o" t-value="m.version_id"/>
                     <t t-set="version_full" t-value="o.env['hr.version'].sudo().browse(o.id)"/>
+                    <t t-set="employee_gender" t-value="version_full.sex or version_full.employee_id.sex or ''"/>
                     <t t-set="cp" t-value="m.get_hr_labor_certificate_template()"/>
                     <t t-if="cp.type_header_footer == 'default'">
                         <t t-set="company" t-value="o.employee_id.company_id"/>
@@ -86,14 +87,13 @@
                                         <span t-esc="o.employee_id.company_id.name"/>
                                     </b>
                                     certifica que
-                                    <t t-set="employee_gender" t-value="version_full.employee_id.sex or ''"/>
                                     <span t-if="employee_gender in ('male', 'masculino')">el señor</span>
                                     <span t-elif="employee_gender in ('female', 'femenino')">la señora</span>
                                     <span t-else="">la persona</span>
                                     <b>
                                         <span t-esc="o.employee_id.name"/>
                                     </b>
-                                    identificado con cédula de ciudadanía número
+                                    <span t-if="employee_gender in ('female', 'femenino')">identificada</span><span t-else="">identificado</span> con cédula de ciudadanía número
                                     <span t-esc="str('{:20,.0f}'.format(int(o.employee_id.identification_id))).replace(',','.')"/>
                                     <t t-if="o.contract_date_end == False">
                                         prestó sus servicios a la empresa en el cargo de
@@ -165,14 +165,13 @@
                             <t t-else="">
                                 <!-- Párrafo original sin agrupación -->
                                 <p style="text-align:justify">
-                                    <t t-set="employee_gender" t-value="version_full.employee_id.sex or ''"/>
                                     <span t-if="employee_gender in ('male', 'masculino')">El señor</span>
                                     <span t-elif="employee_gender in ('female', 'femenino')">La señora</span>
                                     <span t-else="">La persona</span>
                                     <b>
                                         <span t-esc="o.employee_id.name"/>,
                                     </b>
-                                    identificado con cédula de ciudadanía número
+                                    <span t-if="employee_gender in ('female', 'femenino')">identificada</span><span t-else="">identificado</span> con cédula de ciudadanía número
                                     <span
                                             t-esc="str('{:20,.0f}'.format(int(o.employee_id.identification_id))).replace(',','.')"/>
                                     ,
