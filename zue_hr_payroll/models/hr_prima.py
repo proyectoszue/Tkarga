@@ -189,8 +189,6 @@ class Hr_payslip(models.Model):
                                 wage = 0
                         auxtransporte = annual_parameters.transportation_assistance_monthly
                         auxtransporte_tope = annual_parameters.top_max_transportation_assistance
-                        if version.z_not_pay_auxtransportation:
-                            auxtransporte = 0
                     value_rules_base_auxtransporte_tope = localdict['payslip'].get_accumulated_prima(self.date_from,self.date_to,1)
                     if inherit_contrato != 0:
                         value_rules_base_auxtransporte_tope = localdict['payslip'].get_accumulated_prima(self.date_prima,self.date_liquidacion,1)

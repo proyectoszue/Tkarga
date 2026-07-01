@@ -14,6 +14,7 @@ patch(PayslipBatchFormController.prototype, {
             this.model.root.data.schedule_pay,
             this.model.root.data.z_filter_state_finished,
             this.model.root.data.method_schedule_pay,
+            this.model.root.data.prima_run_reverse_id?.id || false,
         ]);
         return this.actionService.doAction({
             ...employeeListAction,

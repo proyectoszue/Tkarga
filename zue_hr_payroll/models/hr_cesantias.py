@@ -245,8 +245,6 @@ class Hr_payslip(models.Model):
                         #Auxilio de transporte
                         auxtransporte = annual_parameters.transportation_assistance_monthly
                         auxtransporte_tope = annual_parameters.top_max_transportation_assistance
-                        if version.z_not_pay_auxtransportation:
-                            auxtransporte = 0
                     #Calculo base
                     value_rules_base_auxtransporte_tope = localdict['payslip'].get_accumulated_cesantias(self.date_from, self.date_to, 1)
                     if inherit_contrato != 0:

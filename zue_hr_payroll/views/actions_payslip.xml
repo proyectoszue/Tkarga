@@ -255,8 +255,11 @@
                     <field name="definitive_plan" readonly="0"/>
                 </xpath>
                 <xpath expr="//field[@name='schedule_pay']" position="replace">
+                    <field name="structure_process" invisible="1"/>
                     <field name="z_filter_state_finished" widget="radio"/>
                     <field name="method_schedule_pay" widget="radio"/>
+                    <field name="prima_run_reverse_id" invisible="structure_process != 'prima'"
+                           options="{'no_create': True, 'no_quick_create': True}"/>
                 </xpath>
                 <xpath expr="//field[@name='structure_id']" position="attributes">
                     <attribute name="required">1</attribute>

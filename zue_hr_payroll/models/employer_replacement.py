@@ -161,9 +161,19 @@ class zue_employer_replacement(models.Model):
             # Contrato anterior: cierre con la fecha de hoy (ejecución del proceso)
             old_contract_end_date = fields.Date.context_today(self)
             current_version = self.z_employee_id.current_version_id
+            source_contract_start_date = current_version.date_start
+            source_contract_end_date = current_version.date_end
+            source_contract_date_start = current_version.contract_date_start
+            source_contract_date_end = current_version.contract_date_end
+            source_change_wage = max(current_version.change_wage_ids, key=lambda wage_change: wage_change.date_start or date.min) if current_version.change_wage_ids else False
+            source_contract_wage = source_change_wage.wage if source_change_wage else current_version.wage
+            source_contract_job_id = source_change_wage.job_id.id if source_change_wage and source_change_wage.job_id else (current_version.job_id.id if current_version.job_id else False)
             current_version.write({'retirement_date': old_contract_end_date, 'date_end': old_contract_end_date})
             # Nuevo empleado/contrato: la fecha de sustitución del asistente se guarda en el contrato (z_employer_replacement_date)
             new_cv_employee[0]['date_version'] = replacement_date
+            # Conservar las fechas inicio/fin del contrato origen en el contrato creado cuando estén diligenciadas.
+            contract_start_date = source_contract_start_date or replacement_date
+            contract_end_date = source_contract_end_date
 
             # Guardar concepts_ids válidos (sin state=cancel) ANTES de crear
             concepts_to_write = []
@@ -178,7 +188,16 @@ class zue_employer_replacement(models.Model):
 
             obj_new_employee = self.with_context(from_multicash=True).with_company(self.z_new_company_id.id).env['hr.employee'].create(new_cv_employee[0])
             if obj_new_employee.current_version_id:
-                obj_new_employee.current_version_id.write({'z_employer_replacement_date': replacement_date})
+                update_new_version_vals = {
+                    'z_employer_replacement_date': replacement_date,
+                }
+                if contract_start_date:
+                    update_new_version_vals['date_start'] = contract_start_date
+                    update_new_version_vals['contract_date_start'] = source_contract_date_start or contract_start_date
+                if contract_end_date:
+                    update_new_version_vals['date_end'] = contract_end_date
+                    update_new_version_vals['contract_date_end'] = source_contract_date_end or contract_end_date
+                obj_new_employee.current_version_id.write(update_new_version_vals)
 
             # Escribir los concepts DESPUÉS de crear, evitando los métodos internos del create
             if concepts_to_write:
@@ -293,6 +312,8 @@ class zue_employer_replacement(models.Model):
             #         wage_change.write({'job_id': self.z_new_job_id.id})
 
             create_objects = []
+            payslip_map = {}
+            leave_map = {}
 
             # DUPLICAR LAS LIQUIDACIONES DE ULTIMO AÑO
             date_start_payslips = str(datetime.now().date().year - 1)+'-01-01'
@@ -307,27 +328,111 @@ class zue_employer_replacement(models.Model):
 
                 cr_payslip = self.with_company(self.z_new_company_id.id).env['hr.payslip'].create(new_payslips[0])
                 cr_payslip.write({'employee_id': obj_new_employee.id, 'version_id': obj_new_employee.current_version_id.id})
+                payslip_map[payslips.id] = cr_payslip.id
                 create_objects.append(cr_payslip)
 
-            # DUPLICAR HISTORICOS DE CESANTIAS Y LIQUIDACIONES
+            # DUPLICAR AUSENCIAS ASOCIADAS AL EMPLEADO
             obj_history_vacations = self.env['hr.vacation'].search([('version_id', '=', current_version.id)])
+            referenced_leave_ids = obj_history_vacations.mapped('leave_id').ids
+            # sudo: required to read source leaves from the origin company under multi-company record rules
+            obj_leaves = self.env['hr.leave'].sudo().search([
+                ('employee_id', '=', obj_employee.id),
+                '|',
+                ('state', '=', 'validate'),
+                ('id', 'in', referenced_leave_ids or [0]),
+            ])
+            # standard Odoo version "19": hr.leave no permite copy_data sin skip_copy_check.
+            # No cancelar ausencias en origen: action_refuse elimina hr.vacation vinculado y altera el histórico de Molpartes.
+            leave_migration_context = {
+                'skip_copy_check': True,
+                'leave_fast_create': True,
+                'leave_skip_date_check': True,
+                'leave_skip_state_check': True,
+                'tracking_disable': True,
+                'mail_activity_automation_skip': True,
+            }
+            leave_vals_list = []
+            leave_origin_ids = []
+            for leave in obj_leaves:
+                new_leave = leave.sudo().with_company(self.z_new_company_id.id).with_context(
+                    **leave_migration_context,
+                ).copy_data()
+                leave_vals = new_leave[0]
+                for field_name in (
+                    'message_follower_ids', 'message_ids', 'activity_ids', 'z_leave_extension_ids',
+                    'meeting_id', 'first_approver_id', 'second_approver_id', 'employee_company_id',
+                ):
+                    leave_vals.pop(field_name, None)
+                leave_vals['employee_id'] = obj_new_employee.id
+                leave_vals['company_id'] = self.z_new_company_id.id
+                leave_vals['state'] = leave.state
+                # Evitar que hr.leave.create resuelva employee_id por cédula al empleado origen
+                leave_vals.pop('employee_identification', None)
+                leave_origin_ids.append(leave.id)
+                leave_vals_list.append(leave_vals)
+            if leave_vals_list:
+                # sudo: required to create validated historical leaves bypassing time-off create/write rules
+                cr_leaves = self.with_company(self.z_new_company_id.id).sudo().with_context(
+                    **leave_migration_context,
+                ).env['hr.leave'].create(leave_vals_list)
+                for origin_leave_id, cr_leave in zip(leave_origin_ids, cr_leaves):
+                    leave_map[origin_leave_id] = cr_leave.id
+                    create_objects.append(cr_leave)
+
+            # DUPLICAR HISTORICOS DE VACACIONES, CESANTIAS, PRIMA Y RTEfte
             for hr_vacation in obj_history_vacations:
                 new_hr_vacation = hr_vacation.with_company(self.z_new_company_id.id).copy_data()
                 new_hr_vacation[0]['employee_id'] = obj_new_employee.id
                 new_hr_vacation[0]['version_id'] = obj_new_employee.current_version_id.id
+                if new_hr_vacation[0].get('leave_id'):
+                    new_hr_vacation[0]['leave_id'] = leave_map.get(new_hr_vacation[0]['leave_id'], False)
+                if new_hr_vacation[0].get('payslip'):
+                    new_hr_vacation[0]['payslip'] = payslip_map.get(new_hr_vacation[0]['payslip'], False)
                 cr_hr_vacation = self.with_company(self.z_new_company_id.id).env['hr.vacation'].create(new_hr_vacation[0])
                 cr_hr_vacation.write({'employee_id':obj_new_employee.id, 'version_id':obj_new_employee.current_version_id.id})
                 create_objects.append(cr_hr_vacation)
-
 
             obj_history_cesantias = self.env['hr.history.cesantias'].search([('version_id','=',current_version.id)])
             for hr_cesantia in obj_history_cesantias:
                 new_hr_cesantia = hr_cesantia.with_company(self.z_new_company_id.id).copy_data()
                 new_hr_cesantia[0]['employee_id'] = obj_new_employee.id
                 new_hr_cesantia[0]['version_id'] = obj_new_employee.current_version_id.id
+                if new_hr_cesantia[0].get('payslip'):
+                    new_hr_cesantia[0]['payslip'] = payslip_map.get(new_hr_cesantia[0]['payslip'], False)
                 cr_hr_cesantias = self.with_company(self.z_new_company_id.id).env['hr.history.cesantias'].create(new_hr_cesantia[0])
                 cr_hr_cesantias.write({'employee_id': obj_new_employee.id, 'version_id': obj_new_employee.current_version_id.id})
                 create_objects.append(cr_hr_cesantias)
+
+            obj_history_prima = self.env['hr.history.prima'].search([('version_id', '=', current_version.id)])
+            for hr_prima in obj_history_prima:
+                new_hr_prima = hr_prima.with_company(self.z_new_company_id.id).copy_data()
+                new_hr_prima[0]['employee_id'] = obj_new_employee.id
+                new_hr_prima[0]['version_id'] = obj_new_employee.current_version_id.id
+                if new_hr_prima[0].get('payslip'):
+                    new_hr_prima[0]['payslip'] = payslip_map.get(new_hr_prima[0]['payslip'], False)
+                cr_hr_prima = self.with_company(self.z_new_company_id.id).env['hr.history.prima'].create(new_hr_prima[0])
+                cr_hr_prima.write({'employee_id': obj_new_employee.id, 'version_id': obj_new_employee.current_version_id.id})
+                create_objects.append(cr_hr_prima)
+
+            obj_rtefte_history = self.env['hr.employee.rtefte.history'].search([('z_employee_id', '=', obj_employee.id)])
+            for rtefte_history in obj_rtefte_history:
+                new_rtefte_history = self.with_company(self.z_new_company_id.id).env['hr.employee.rtefte.history'].create({
+                    'z_employee_id': obj_new_employee.id,
+                    'z_year': rtefte_history.z_year,
+                    'z_month': rtefte_history.z_month,
+                    'z_payslip_id': payslip_map.get(rtefte_history.z_payslip_id.id, False) if rtefte_history.z_payslip_id else False,
+                })
+                rtefte_line_vals_list = []
+                for line in rtefte_history.z_line_ids:
+                    rtefte_line_vals_list.append({
+                        'z_history_id': new_rtefte_history.id,
+                        'z_concept_deduction_id': line.z_concept_deduction_id.id,
+                        'z_result_base': line.z_result_base,
+                        'z_result_calculation': line.z_result_calculation,
+                    })
+                if rtefte_line_vals_list:
+                    self.with_company(self.z_new_company_id.id).env['hr.employee.deduction.retention.history'].create(rtefte_line_vals_list)
+                create_objects.append(new_rtefte_history)
 
             # MARCAR SI SE CAMBIO LA CUENTA BANCARIA
             if self.z_bank_account_id != self.z_new_bank_account_id:
@@ -349,6 +454,31 @@ class zue_employer_replacement(models.Model):
                 new_contact_created.write({'email':email})
                 final_employee_update['work_email'] = email
             obj_new_employee.write(final_employee_update)
+
+            # Reaplicar datos del contrato al final del proceso para evitar que queden vacíos por procesos posteriores.
+            final_version = obj_new_employee.current_version_id or obj_new_employee.get_info_version()
+            if final_version:
+                final_version_update_vals = {'z_employer_replacement_date': replacement_date}
+                if source_contract_start_date:
+                    final_version_update_vals['date_start'] = source_contract_start_date
+                    final_version_update_vals['contract_date_start'] = source_contract_date_start or source_contract_start_date
+                if source_contract_end_date:
+                    final_version_update_vals['date_end'] = source_contract_end_date
+                    final_version_update_vals['contract_date_end'] = source_contract_date_end or source_contract_end_date
+                final_version.write(final_version_update_vals)
+
+                if source_contract_wage and not final_version.change_wage_ids:
+                    self.env['hr.contract.change.wage'].create([{
+                        'version_id': final_version.id,
+                        'date_start': source_contract_start_date or replacement_date,
+                        'wage': source_contract_wage,
+                        'job_id': source_contract_job_id or False,
+                    }])
+                elif source_contract_wage and not final_version.wage:
+                    final_version.write({
+                        'wage': source_contract_wage,
+                        'job_id': source_contract_job_id or False,
+                    })
 
 
             self.state = 'done'

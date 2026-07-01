@@ -192,7 +192,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
             Left Join hr_department dt on c.department_id = dt.id
             Left Join res_partner rp on c.address_id = rp.id
             --Info Bancaria
-            Left join res_partner_bank bank on c.work_contact_id = bank.partner_id and bank.is_main = true and (bank.company_id = a.company_id or bank.company_id is null)
+            Left join res_partner_bank bank on c.work_contact_id = bank.partner_id and bank.active = true and bank.is_main = true and (bank.company_id = a.company_id or bank.company_id is null)
             Left join res_bank rb on bank.bank_id = rb.id 
             Left join account_journal ajb on bank.payroll_dispersion_account = ajb.id 
             Where a.id in (%s)     
@@ -232,7 +232,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
             Left Join hr_employee_entities et on b.entity_id = et.id
             Left Join res_partner rp_et on et.partner_id = rp_et.id
             --Info Bancaria
-            Left join res_partner_bank bank on c.work_contact_id = bank.partner_id and bank.is_main = true and (bank.company_id = a.company_id or bank.company_id is null)
+            Left join res_partner_bank bank on c.work_contact_id = bank.partner_id and bank.active = true and bank.is_main = true and (bank.company_id = a.company_id or bank.company_id is null)
             Left join res_bank rb on bank.bank_id = rb.id 
             Left join account_journal ajb on bank.payroll_dispersion_account = ajb.id             
             Where a.id in (%s)     
@@ -273,7 +273,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
             Left Join hr_employee_entities et on b.entity_id = et.id
             Left Join res_partner rp_et on et.partner_id = rp_et.id
             --Info Bancaria
-            Left join res_partner_bank bank on c.work_contact_id = bank.partner_id and bank.is_main = true and (bank.company_id = a.company_id or bank.company_id is null)
+            Left join res_partner_bank bank on c.work_contact_id = bank.partner_id and bank.active = true and bank.is_main = true and (bank.company_id = a.company_id or bank.company_id is null)
             Left join res_bank rb on bank.bank_id = rb.id 
             Left join account_journal ajb on bank.payroll_dispersion_account = ajb.id             
             Where a.id in (%s)
