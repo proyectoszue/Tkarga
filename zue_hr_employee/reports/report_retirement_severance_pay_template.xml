@@ -22,7 +22,7 @@
                         <br/>
                         <p>Ref. Autorización de retiro de cesantías por terminación de contrato</p>
                         <br/>
-                        <p>
+                        <p style="text-align:justify">
                             Por medio de la presente la compañia
                             <span t-field="o.z_version_id.employee_id.company_id.partner_id.name"/>&#160;
                             identificada con Nit:
@@ -61,7 +61,7 @@
                         <br/>
                         <p>Ref. Autorización para retiro parcial de cesantías</p>
                         <br/>
-                        <p>
+                        <p style="text-align:justify">
                             Según lo dispuesto en el artículo 21 de la ley 1429 de 2010 (que modifico el Art. 256 del
                             código
                             sustantivo del trabajo) y la aclaración contenida en la carta circular 011 del 07 de febrero
