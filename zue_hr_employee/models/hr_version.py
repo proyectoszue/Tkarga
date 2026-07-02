@@ -378,18 +378,18 @@ class hr_version(models.Model):
             return ''
         #Mes
         month = ''
-        month = 'Enero' if date.month == 1 else month
-        month = 'Febrero' if date.month == 2 else month
-        month = 'Marzo' if date.month == 3 else month
-        month = 'Abril' if date.month == 4 else month
-        month = 'Mayo' if date.month == 5 else month
-        month = 'Junio' if date.month == 6 else month
-        month = 'Julio' if date.month == 7 else month
-        month = 'Agosto' if date.month == 8 else month
-        month = 'Septiembre' if date.month == 9 else month
-        month = 'Octubre' if date.month == 10 else month
-        month = 'Noviembre' if date.month == 11 else month
-        month = 'Diciembre' if date.month == 12 else month
+        month = 'enero' if date.month == 1 else month
+        month = 'febrero' if date.month == 2 else month
+        month = 'marzo' if date.month == 3 else month
+        month = 'abril' if date.month == 4 else month
+        month = 'mayo' if date.month == 5 else month
+        month = 'junio' if date.month == 6 else month
+        month = 'julio' if date.month == 7 else month
+        month = 'agosto' if date.month == 8 else month
+        month = 'septiembre' if date.month == 9 else month
+        month = 'octubre' if date.month == 10 else month
+        month = 'noviembre' if date.month == 11 else month
+        month = 'diciembre' if date.month == 12 else month
         #Dia de la semana
         week = ''
         week = 'Lunes' if date.weekday() == 0 else week
@@ -500,6 +500,20 @@ class hr_version(models.Model):
                 total += rule_value
 
         return total
+
+    def getCertificateConceptPhrase(self, rule_detail=None, certificate_template_detail_ids=None):
+        if rule_detail:
+            if rule_detail.z_value_contract:
+                return 'auxilio no salarial de %s de' % rule_detail.rule_salary_id.name
+            if rule_detail.average_last_months:
+                return 'salario variable promedio de los últimos tres (3) meses de'
+            return 'salario variable de'
+        rules = certificate_template_detail_ids or self.env['hr.labor.certificate.template.detail']
+        if rules.filtered(lambda x: x.last_month or x.average_last_months):
+            return 'salario variable de'
+        if rules.filtered(lambda x: x.z_value_contract):
+            return 'auxilio no salarial de'
+        return 'salario variable de'
 
     def get_signature_certification(self):
         res = {'nombre':'NO AUTORIZADO', 'cargo':'NO AUTORIZADO','firma':''}
