@@ -345,9 +345,15 @@ class hr_executing_provisions(models.Model):
                                 analytic_account_id = last_payslip.analytic_account_id
 
                             # Cierre de provision cuando existe liq de contrato, prima o cesantias (Cierre de año)
-                            if len(obj_liq_prima_cesantias_exists) > 0 and provision != 'vacaciones' and date_end.month in (6,12):
-                                value_provision = value_payments - amount_ant
-                                current_payable_value = 0
+                            if provision != 'vacaciones' and date_end.month in (6, 12):
+                                struct_provision = struct_cesantias if provision == 'cesantias' else struct_intcesantias if provision == 'intcesantias' else struct_prima if provision == 'prima' else False
+                                obj_liq_provision_exists = struct_provision and self.env['hr.payslip'].search([
+                                    ('state', '=', 'done'), ('contract_id', '=', contract.id),
+                                    ('struct_id', '=', struct_provision.id),
+                                    ('date_to', '>=', date_start), ('date_to', '<=', date_end)], limit=1)
+                                if obj_liq_provision_exists or value_payments > 0:
+                                    value_provision = value_payments - amount_ant
+                                    current_payable_value = 0
 
                             #Guardar valores
                             values_details = {
