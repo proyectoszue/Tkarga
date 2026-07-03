@@ -498,6 +498,13 @@ class hr_employee(models.Model):
                 obj_version += self.env['hr.version'].search([('employee_id', '=', record.id), ('retirement_date', '!=', False)],limit=1)
             return obj_version
 
+    def get_retirement_date_version(self):
+        self.ensure_one()
+        active_version = self.env['hr.version'].search([('employee_id', '=', self.id), ('retirement_date', '=', False)], order='contract_date_start desc', limit=1)
+        if active_version:
+            return active_version
+        return self.env['hr.version'].search([('employee_id', '=', self.id), ('retirement_date', '!=', False)], order='retirement_date desc', limit=1)
+
     def get_age_for_date(self, o_date):
         if o_date:
             today = date.today()

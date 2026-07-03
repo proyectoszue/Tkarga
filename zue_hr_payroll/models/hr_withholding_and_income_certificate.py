@@ -153,6 +153,8 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                                                                                      ('date', '<=', date_end_ant)])
                 obj_payslip_contract = self.getContractLiquidationPayslips(employee, date_start, date_end)
                 empty_accumulated_payroll = self.env['hr.accumulated.payroll']
+                employee_version = employee.get_retirement_date_version()
+                retirement_date = employee_version.retirement_date if employee_version else False
                 #Info dependientes:
                 dependents_type_vat,dependents_vat,dependents_name,dependents_type = '','','',''
                 for dependent in employee.dependents_information.filtered(lambda a: a.z_report_income_and_withholdings == True):
@@ -223,7 +225,10 @@ class hr_withholding_and_income_certificate(models.TransientModel):
                         value = str(year_process)+'-01-01'
                     # Tipo de Calculo ---------------------- FECHA CERTIFICACIÓN FINAL
                     elif conf.calculation == 'end_date_year':
-                        value = str(year_process)+'-12-31'
+                        if retirement_date and date_start <= retirement_date <= date_end:
+                            value = str(retirement_date)
+                        else:
+                            value = str(year_process)+'-12-31'
                     # Tipo de Calculo ---------------------- DEPENDIENTES - TIPO DOCUMENTO
                     elif conf.calculation == 'dependents_type_vat':
                         value = dependents_type_vat
