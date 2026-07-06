@@ -10,7 +10,12 @@ from dateutil.relativedelta import relativedelta
 
 class hr_version(models.Model):
     _inherit = 'hr.version'
-    
+
+    def get_vacation_base_amount(self, amount_base, annual_parameters=False):
+        if self.modality_salary == 'integral' and annual_parameters:
+            return amount_base * (annual_parameters.porc_integral_salary / 100.0)
+        return amount_base
+
     #Libro de vacaciones
     def get_info_book_vacation(self):
         return self.env['hr.vacation'].search([('version_id','=',self.id)])

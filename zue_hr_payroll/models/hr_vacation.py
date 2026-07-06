@@ -595,7 +595,8 @@ class Hr_payslip(models.Model):
                                 }
                                 if days_period_caused > 360:
                                     days_period_caused = 360
-                                dict_period_caused['z_base'] = dict_period_caused['z_daily_wage']+dict_period_caused['z_daily_variable']
+                                period_monthly_base = wage_period_caused + (variable_period_caused * 30 / days_period_caused)
+                                dict_period_caused['z_base'] = version.get_vacation_base_amount(period_monthly_base, annual_parameters) / 30
                                 dict_period_caused['z_amount'] = dict_period_caused['z_base']*((days_period_caused*15)/360)
                                 amount += dict_period_caused['z_amount']
                                 self.env['hr.vacation.period.caused'].create(dict_period_caused)
@@ -631,7 +632,7 @@ class Hr_payslip(models.Model):
                             else:
                                 wage = 0
 
-                            amount_base = wage + acumulados_promedio
+                            amount_base = version.get_vacation_base_amount(wage + acumulados_promedio, annual_parameters)
 
                             amount = round(amount_base / 720, 0) if round_payroll == False else amount_base / 720
                             qty = dias_liquidacion
