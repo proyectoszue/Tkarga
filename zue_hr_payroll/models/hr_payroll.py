@@ -56,6 +56,15 @@ class HrPayslipRun(models.Model):
         if self.structure_id.process != 'prima':
             self.prima_run_reverse_id = False
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        # standard Odoo version "19"
+        for vals in vals_list:
+            prima_run_reverse = vals.get('prima_run_reverse_id')
+            if isinstance(prima_run_reverse, dict):
+                vals['prima_run_reverse_id'] = prima_run_reverse.get('id') or False
+        return super().create(vals_list)
+
     @api.depends("slip_ids.state")
     def _compute_state(self):
         for payslip_run in self:

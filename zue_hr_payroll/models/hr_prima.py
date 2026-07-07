@@ -217,7 +217,7 @@ class Hr_payslip(models.Model):
                     value_reverse = sum(self.prima_payslip_reverse_id.line_ids.filtered(lambda line: line.code == 'PRIMA').mapped('total'))
                     tot_rule_original -= value_reverse
                 part_decimal, part_value = math.modf(tot_rule_original)
-                tot_rule = amount * qty * rate / 100.0
+                tot_rule = tot_rule_original
                 if part_decimal >= 0.5 and math.modf(tot_rule)[1] == part_value:
                     tot_rule = (part_value + 1) + previous_amount
                 else:
@@ -226,10 +226,10 @@ class Hr_payslip(models.Model):
                 localdict[rule.code] = tot_rule
                 rules_dict[rule.code] = rule
                 # sum the amount for its salary category
-                localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount) 
+                localdict = _sum_salary_rule_category(localdict, rule.category_id, tot_rule - previous_amount)
                 localdict = _sum_salary_rule(localdict, rule, tot_rule)
                 # create/overwrite the rule in the temporary results
-                if amount != 0:                    
+                if amount != 0:
                     result[rule.code] = {
                         'sequence': rule.sequence,
                         'code': rule.code,
@@ -242,7 +242,7 @@ class Hr_payslip(models.Model):
                         'amount': amount,
                         'quantity': qty,
                         'rate': rate,
-                        'total': self._get_payslip_line_total(amount, qty, rate, rule),
+                        'total': tot_rule - previous_amount if rule.code == 'PRIMA' and self.prima_payslip_reverse_id else self._get_payslip_line_total(amount, qty, rate, rule),
                         'days_unpaid_absences':dias_ausencias,
                         'slip_id': self.id,
                     }
