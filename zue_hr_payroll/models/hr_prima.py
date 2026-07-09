@@ -189,6 +189,26 @@ class Hr_payslip(models.Model):
                                 wage = 0
                         auxtransporte = annual_parameters.transportation_assistance_monthly
                         auxtransporte_tope = annual_parameters.top_max_transportation_assistance
+                        if version.z_not_pay_auxtransportation:
+                            auxtransporte = 0
+                        if prima_salary_take and len(obj_wage) > 0 and auxtransporte != 0:  # Prorratea el auxilio de transporte segun los dias con derecho
+                            auxtransporte_average = 0
+                            initial_process_date = self.date_prima if inherit_contrato != 0 else self.date_from
+                            end_process_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
+                            while initial_process_date <= end_process_date:
+                                if initial_process_date.day != 31:
+                                    if version.get_wage_in_date(initial_process_date) <= auxtransporte_tope:  # Solo cuenta los dias en que tuvo derecho al auxilio
+                                        if initial_process_date.month == 2 and  initial_process_date.day == 28 and (initial_process_date + timedelta(days=1)).day != 29:
+                                            auxtransporte_average += (auxtransporte / 30)*3
+                                        elif initial_process_date.month == 2 and initial_process_date.day == 29:
+                                            auxtransporte_average += (auxtransporte / 30)*2
+                                        else:
+                                            auxtransporte_average += auxtransporte/30
+                                initial_process_date = initial_process_date + timedelta(days=1)
+                            if dias_trabajados != 0:
+                                auxtransporte = 0 if auxtransporte_average == 0 else (auxtransporte_average/dias_trabajados)*30
+                            else:
+                                auxtransporte = 0
                     value_rules_base_auxtransporte_tope = localdict['payslip'].get_accumulated_prima(self.date_from,self.date_to,1)
                     if inherit_contrato != 0:
                         value_rules_base_auxtransporte_tope = localdict['payslip'].get_accumulated_prima(self.date_prima,self.date_liquidacion,1)
