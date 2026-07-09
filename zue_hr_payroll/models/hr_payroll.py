@@ -96,16 +96,22 @@ class HrPayslipRun(models.Model):
             prima_run_reverse_id,
         )
 
-        payslip_domain = Domain.AND([
-           Domain('version_id', 'in', valid_version_ids),
-           Domain('date_from', '=', fields.Date.from_string(date_start) if date_start else self.date_start),
-           Domain('date_to', '=', fields.Date.from_string(date_end) if date_end else self.date_end),
-           Domain('struct_id', '=', structure_id if structure_id else (self.structure_id.id if self.structure_id else False)),
-           Domain('state', '!=', 'cancel')#,
-           #Domain('version_id.schedule_pay', '=', schedule_pay if schedule_pay else False)
-        ])
-        existing_version_ids = self.env['hr.payslip'].search(payslip_domain).version_id.ids
-        filtered_version_ids = set(valid_version_ids) - set(existing_version_ids)
+        structure = self.env['hr.payroll.structure'].browse(structure_id) if structure_id else self.structure_id
+        if prima_run_reverse_id is None:
+            prima_run_reverse_id = self.prima_run_reverse_id.id if self.prima_run_reverse_id else False
+        is_prima_adjustment = bool(prima_run_reverse_id) and structure.process == 'prima'
+
+        filtered_version_ids = set(valid_version_ids)
+        if not is_prima_adjustment:
+            payslip_domain = Domain.AND([
+                Domain('version_id', 'in', valid_version_ids),
+                Domain('date_from', '=', fields.Date.from_string(date_start) if date_start else self.date_start),
+                Domain('date_to', '=', fields.Date.from_string(date_end) if date_end else self.date_end),
+                Domain('struct_id', '=', structure_id if structure_id else (self.structure_id.id if self.structure_id else False)),
+                Domain('state', '!=', 'cancel'),
+            ])
+            existing_version_ids = self.env['hr.payslip'].search(payslip_domain).version_id.ids
+            filtered_version_ids -= set(existing_version_ids)
         action['domain'] = [("id", "in", list(filtered_version_ids))]
         return action
 
@@ -120,7 +126,24 @@ class HrPayslipRun(models.Model):
         if prima_run_reverse_id is None:
             prima_run_reverse_id = self.prima_run_reverse_id.id if self.prima_run_reverse_id else False
         company = company_id or self.company_id.id
-        if z_filter_state_finished == 'open':
+        is_prima_adjustment = bool(prima_run_reverse_id) and structure.process == 'prima'
+        if is_prima_adjustment:
+            version_domain = Domain([
+                ('company_id', '=', company),
+                ('employee_id', '!=', False),
+                ('employee_id.active', '=', True),
+                ('z_state_finished', '=', False),
+                ('contract_date_start', '<=', date_end),
+                ('date_version', '<=', date_end),
+                ('structure_type_id', '!=', False),
+                '|',
+                    ('retirement_date', '=', False),
+                    ('retirement_date', '>', date_end),
+                '|',
+                    ('contract_date_end', '=', False),
+                    ('contract_date_end', '>', date_end),
+            ])
+        elif z_filter_state_finished == 'open':
             version_domain = Domain([
                 ('company_id', '=', company),
                 ('employee_id', '!=', False),
@@ -303,7 +326,7 @@ class HrPayslipRun(models.Model):
             payslip.mapped('move_id').unlink()
             #Eliminar historicos
             #self.env['hr.vacation'].search([('payslip', '=', payslip.id)]).unlink()
-            self.env['hr.history.prima'].search([('payslip', '=', payslip.id)]).unlink()
+            #self.env['hr.history.prima'].search([('payslip', '=', payslip.id)]).unlink()
             self.env['hr.history.cesantias'].search([('payslip', '=', payslip.id)]).unlink()
             #Reversar Liquidación
             payslip.write({'state': 'draft'})
@@ -315,7 +338,7 @@ class HrPayslipRun(models.Model):
             payslip.mapped('move_id').unlink()
             #Eliminar historicos
             #self.env['hr.vacation'].search([('payslip', '=', payslip.id)]).unlink()
-            self.env['hr.history.prima'].search([('payslip', '=', payslip.id)]).unlink()
+            #self.env['hr.history.prima'].search([('payslip', '=', payslip.id)]).unlink()
             self.env['hr.history.cesantias'].search([('payslip', '=', payslip.id)]).unlink()
             #Reversar Liquidación
             payslip.write({'state':'draft'})
@@ -339,6 +362,7 @@ class Hr_payslip_line(models.Model):
     category_id = fields.Many2one(related='salary_rule_id.category_id', readonly=True, store=True)
     branch_employee_id = fields.Many2one(related='employee_id.branch_id', string='Sucursal', store=True)
     state_slip = fields.Selection(related='slip_id.state', string='Estado Nómina', store=True)
+    z_analytic_account_slip_id = fields.Many2one(related='slip_id.z_analytic_account_id', string='Cuenta Analitica', store=True)
     struct_slip_id = fields.Many2one(related='slip_id.struct_id', string='Estructura', store=True)
     contract_type = fields.Many2one(related='version_id.contract_type_id', string='Tipo de contrato', store=True)
     date_end = fields.Date(related='version_id.date_end', string='Fecha de finalización de contrato', store=True)
@@ -426,6 +450,7 @@ class Hr_payslip(models.Model):
     rtefte_id = fields.Many2one('hr.employee.rtefte', 'RteFte')
     not_line_ids = fields.One2many('hr.payslip.not.line', 'slip_id', string='Reglas no aplicadas')
     observation = fields.Text(string='Observación')
+    z_analytic_account_id = fields.Many2one('account.analytic.account', string='Cuenta analítica', compute='_compute_analytic_account_distribution', store=True)
     analytic_distribution = fields.Json(groups="hr.group_hr_user", tracking=False, string='Distribución analítica')
     analytic_precision = fields.Integer(groups="hr.group_hr_user", tracking=False)
     distribution_analytic_account_ids = fields.Many2many(groups="hr.group_hr_user", tracking=False)
@@ -440,14 +465,37 @@ class Hr_payslip(models.Model):
     date_cesantias = fields.Date('Fecha liquidación de cesantías')
     date_vacaciones = fields.Date('Fecha liquidación de vacaciones')
 
-    # Eliminar históricos de vacaciones cuando la liquidación pase a Borrador o Cancelado y al reversar contabilización del lote
+    @api.depends('analytic_distribution', 'version_id.analytic_distribution')
+    def _compute_analytic_account_distribution(self):
+        for payslip in self:
+            distribution = payslip.analytic_distribution or (
+                payslip.version_id.analytic_distribution if payslip.version_id else False
+            )
+            if not distribution:
+                payslip.z_analytic_account_id = False
+                continue
+            best_analytic_id = False
+            best_percentage = None
+            for analytic_id, percentage in distribution.items():
+                try:
+                    analytic_id_int = int(analytic_id)
+                except (TypeError, ValueError):
+                    continue
+                pct = percentage or 0.0
+                if best_percentage is None or pct > best_percentage:
+                    best_percentage = pct
+                    best_analytic_id = analytic_id_int
+            payslip.z_analytic_account_id = best_analytic_id or False
+
+    # Eliminar históricos de vacaciones y prima cuando la liquidación pase a Borrador o Cancelado y al reversar contabilización del lote
     def write(self, vals):
-        vacation_history = self.env['hr.payslip']
+        history = self.env['hr.payslip']
         if 'state' in vals and vals['state'] in ('draft', 'cancel'):
-            vacation_history = self.filtered(lambda p: p.state not in ('draft', 'cancel'))
+            history = self.filtered(lambda p: p.state not in ('draft', 'cancel'))
         res = super().write(vals)
-        if vacation_history:
-            self.env['hr.vacation'].search([('payslip', 'in', vacation_history.ids)]).unlink()
+        if history:
+            self.env['hr.vacation'].search([('payslip', 'in', history.ids)]).unlink()
+            self.env['hr.history.prima'].search([('payslip', 'in', history.ids)]).unlink()
         return res
 
     # Campo computado para traer solo contratos activos
@@ -599,7 +647,7 @@ class Hr_payslip(models.Model):
             payslip.not_line_ids.unlink()
             #Eliminar historicos
             #self.env['hr.vacation'].search([('payslip', '=', payslip.id)]).unlink()
-            self.env['hr.history.prima'].search([('payslip', '=', payslip.id)]).unlink()
+            #self.env['hr.history.prima'].search([('payslip', '=', payslip.id)]).unlink()
             self.env['hr.history.cesantias'].search([('payslip', '=', payslip.id)]).unlink()
             #Reversar Liquidación            
             payslip.action_payslip_draft()            
