@@ -487,10 +487,10 @@ class hr_electronic_payroll(models.Model):
         return ''.join(ch for ch in value if unicodedata.category(ch) != 'Cc')
 
     def finalizeElectronicPayrollXml(self, xml):
+        xml_bytes = xml.encode('utf-8') if isinstance(xml, str) else xml
+        xml_formatted = xml_bytes
         try:
-            if isinstance(xml, str):
-                xml = xml.encode('utf-8')
-            root = etree.fromstring(xml)
+            root = etree.fromstring(xml_bytes)
             for el in root.iter():
                 if el.text:
                     el.text = self._normalize_string(el.text)
@@ -499,16 +499,17 @@ class hr_electronic_payroll(models.Model):
                 if el.attrib:
                     for attr_key in list(el.attrib.keys()):
                         el.attrib[attr_key] = self._normalize_string(el.attrib[attr_key])
-            xml = etree.tostring(
+            etree.indent(root, space='  ')
+            xml_formatted = etree.tostring(
                 root,
                 encoding='UTF-8',
                 xml_declaration=False,
-                pretty_print=True
+                pretty_print=True,
             )
         except Exception:
             pass
 
-        xml_str = xml.decode('utf-8') if isinstance(xml, bytes) else xml
+        xml_str = xml_formatted.decode('utf-8')
         if xml_str.lstrip().startswith('<?xml') and '?>' in xml_str:
             xml_str = xml_str.split('?>', 1)[1]
         return ('<?xml version="1.0" encoding="utf-8" standalone="no"?>\n' + xml_str.lstrip('\n')).encode('utf-8')
