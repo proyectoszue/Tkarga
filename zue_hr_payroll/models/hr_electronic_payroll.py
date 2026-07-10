@@ -503,7 +503,7 @@ class hr_electronic_payroll(models.Model):
                 root,
                 encoding='UTF-8',
                 xml_declaration=False,
-                pretty_print=False
+                pretty_print=True
             )
         except Exception:
             pass
