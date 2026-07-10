@@ -61,7 +61,6 @@ class hr_electronic_adjust_payroll_detail(models.Model):
         try:
             identificador = 'NomElectronica_Ajuste_' + str(self.electronic_adjust_payroll_id.company_id.payroll_electronic_operator)
             obj_xml = self.env['zue.xml.generator.header'].search([('code','=',identificador)])
-            xml = obj_xml.xml_generator(self)
 
             if len(obj_xml) > 0:
                 xml = obj_xml.xml_generator(self)
@@ -72,6 +71,8 @@ class hr_electronic_adjust_payroll_detail(models.Model):
                 xml = xml.decode('utf-8').replace('SchemaLocation=""','SchemaLocation="" xsi:schemaLocation="dian:gov:co:facturaelectronica:NominaIndividualDeAjuste NominaIndividualDeAjusteElectronicaXSD.xsd"')
                 xml = xml.replace('<UBLExtensions> </UBLExtensions>','<ext:UBLExtensions/>')
                 xml = bytes(xml, 'utf-8')
+
+            xml = self.electronic_adjust_payroll_id.electronic_payroll_id.finalizeElectronicPayrollXml(xml)
 
             filename = f'NominaElectronicaAjuste{str(self.electronic_adjust_payroll_id.electronic_payroll_id.year)}-{self.electronic_adjust_payroll_id.electronic_payroll_id.month}_{str(self.employee_id.identification_id)}.xml'
             self.write({

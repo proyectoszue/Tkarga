@@ -70,28 +70,8 @@ class hr_electronic_payroll_detail(models.Model):
                 xml = xml.decode('utf-8').replace('SchemaLocation=""','SchemaLocation="" xsi:schemaLocation="dian:gov:co:facturaelectronica:NominaIndividual NominaIndividualElectronicaXSD.xsd"')
                 xml = xml.replace('<UBLExtensions> </UBLExtensions>','<ext:UBLExtensions/>')
                 xml = bytes(xml, 'utf-8')
-            try:
-                if isinstance(xml, str):
-                    xml = xml.encode('utf-8')
-                root = etree.fromstring(xml)
-                for el in root.iter():
-                    # Textos
-                    if el.text:
-                        el.text = self.electronic_payroll_id._normalize_string(el.text)
-                    if el.tail:
-                        el.tail = self.electronic_payroll_id._normalize_string(el.tail)
-                    # Atributos
-                    if el.attrib:
-                        for k in list(el.attrib.keys()):
-                            el.attrib[k] = self.electronic_payroll_id._normalize_string(el.attrib[k])
-                xml = etree.tostring(
-                    root,
-                    encoding='UTF-8',
-                    xml_declaration=True,
-                    pretty_print=False
-                )
-            except Exception as _e:
-                pass
+
+            xml = self.electronic_payroll_id.finalizeElectronicPayrollXml(xml)
 
             filename = f'NominaElectronica{str(self.electronic_payroll_id.year)}-{self.electronic_payroll_id.month}_{str(self.employee_id.identification_id)}.xml'
             self.write({
@@ -502,12 +482,36 @@ class hr_electronic_payroll(models.Model):
         return result
 
     def _normalize_string(self, value):
-        # Normalizar los caracteres especiales:
         if not value:
             return ''
-        normalized = unicodedata.normalize('NFD', value)
-        normalized = normalized.encode('ascii', 'ignore').decode('utf-8')
-        return normalized
+        return ''.join(ch for ch in value if unicodedata.category(ch) != 'Cc')
+
+    def finalizeElectronicPayrollXml(self, xml):
+        try:
+            if isinstance(xml, str):
+                xml = xml.encode('utf-8')
+            root = etree.fromstring(xml)
+            for el in root.iter():
+                if el.text:
+                    el.text = self._normalize_string(el.text)
+                if el.tail:
+                    el.tail = self._normalize_string(el.tail)
+                if el.attrib:
+                    for attr_key in list(el.attrib.keys()):
+                        el.attrib[attr_key] = self._normalize_string(el.attrib[attr_key])
+            xml = etree.tostring(
+                root,
+                encoding='UTF-8',
+                xml_declaration=False,
+                pretty_print=False
+            )
+        except Exception:
+            pass
+
+        xml_str = xml.decode('utf-8') if isinstance(xml, bytes) else xml
+        if xml_str.lstrip().startswith('<?xml') and '?>' in xml_str:
+            xml_str = xml_str.split('?>', 1)[1]
+        return ('<?xml version="1.0" encoding="utf-8" standalone="no"?>\n' + xml_str.lstrip('\n')).encode('utf-8')
 
     def executing_electronic_payroll(self):
         # Eliminar ejecución
