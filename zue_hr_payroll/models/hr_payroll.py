@@ -447,6 +447,13 @@ class Hr_payslip(models.Model):
         string='To', readonly=False, required=True, tracking=True,
         compute=False, store=True, precompute=False)
 
+    def _get_errors_by_slip(self):
+        # Se sobrescribe estándar de Odoo para evitaar error en fechas de liquidación
+        errors_by_slip = super(Hr_payslip, self.filtered(lambda slip: slip.date_from and slip.date_to))._get_errors_by_slip()
+        for slip in self.filtered(lambda slip: not slip.date_from or not slip.date_to):
+            errors_by_slip.setdefault(slip, [])
+        return errors_by_slip
+
     rtefte_id = fields.Many2one('hr.employee.rtefte', 'RteFte')
     not_line_ids = fields.One2many('hr.payslip.not.line', 'slip_id', string='Reglas no aplicadas')
     observation = fields.Text(string='Observación')
