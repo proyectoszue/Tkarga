@@ -163,6 +163,7 @@ class Hr_payslip(models.Model):
                     else:
                         acumulados_promedio = 0
                     wage,auxtransporte,auxtransporte_tope = 0,0,0
+                    auxtransporte_prorated = False
                     if version.subcontract_type not in ('obra_parcial', 'obra_integral'):
                         wage = 0
                         obj_wage = self.env['hr.contract.change.wage'].search([('version_id', '=', version.id), ('date_start', '<', self.date_to)])
@@ -209,6 +210,7 @@ class Hr_payslip(models.Model):
                                 auxtransporte = 0 if auxtransporte_average == 0 else (auxtransporte_average/dias_trabajados)*30
                             else:
                                 auxtransporte = 0
+                            auxtransporte_prorated = True
                     value_rules_base_auxtransporte_tope = localdict['payslip'].get_accumulated_prima(self.date_from,self.date_to,1)
                     if inherit_contrato != 0:
                         value_rules_base_auxtransporte_tope = localdict['payslip'].get_accumulated_prima(self.date_prima,self.date_liquidacion,1)
@@ -216,7 +218,9 @@ class Hr_payslip(models.Model):
                         value_rules_base_auxtransporte_tope = (value_rules_base_auxtransporte_tope/dias_acumulados_promedio) * 30 # dias_liquidacion
                     else:
                         value_rules_base_auxtransporte_tope = 0
-                    if (wage+value_rules_base_auxtransporte_tope) <= auxtransporte_tope:
+                    # Si el auxilio ya fue prorrateado por dias con derecho, siempre se incluye en la base
+                    # (no se descarta por comparar el salario promedio final contra el tope).
+                    if auxtransporte_prorated or (wage+value_rules_base_auxtransporte_tope) <= auxtransporte_tope:
                         amount_base = round(wage + auxtransporte + acumulados_promedio, 0) if round_payroll == False else wage + auxtransporte + acumulados_promedio
                     else:
                         amount_base = round(wage + acumulados_promedio, 0) if round_payroll == False else wage + acumulados_promedio
