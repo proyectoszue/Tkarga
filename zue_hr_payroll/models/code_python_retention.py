@@ -24,15 +24,15 @@ result = payslip.get_deduction_retention_value(employee.id,payslip.date_to,'RE_A
 #ING_BASE_O
 result = payslip.get_deduction_retention_value(employee.id,payslip.date_to,'TOTAL_ING_BASE_O').result_calculation - payslip.get_deduction_retention_value(employee.id,payslip.date_to,'ING_NO_GRAVADOS_O').result_calculation
 #DED_VIVIENDA_O
-result = payslip.get_contract_deductions_rtf(contract.id,payslip.date_to,'INTVIV').value_monthly
+result = payslip.get_contract_deductions_rtf(version.id,payslip.date_to,'INTVIV').value_monthly
 result = annual_parameters.value_uvt*100 if result > annual_parameters.value_uvt*100 else result
 #DED_DEPENDIENTES_O
-result = payslip.get_contract_deductions_rtf(contract.id,payslip.date_to,'DEDDEP').value_monthly
+result = payslip.get_contract_deductions_rtf(version.id,payslip.date_to,'DEDDEP').value_monthly
 if result > 0:
     result = (payslip.get_deduction_retention_value(employee.id,payslip.date_to,'TOTAL_ING_BASE_O').result_calculation * 0.1000) 
     result = annual_parameters.value_uvt*32 if result > annual_parameters.value_uvt*32 else result
 #DED_MPREPAGADA_O
-result = payslip.get_contract_deductions_rtf(contract.id,payslip.date_to,'MEDPRE').value_monthly
+result = payslip.get_contract_deductions_rtf(version.id,payslip.date_to,'MEDPRE').value_monthly
 result = annual_parameters.value_uvt*16 if result > annual_parameters.value_uvt*16 else result
 #TOTAL_DEDUCCIONES_O
 result = payslip.get_deduction_retention_value(employee.id,payslip.date_to,'DED_VIVIENDA_O').result_calculation + payslip.get_deduction_retention_value(employee.id,payslip.date_to,'DED_DEPENDIENTES_O').result_calculation + payslip.get_deduction_retention_value(employee.id,payslip.date_to,'DED_MPREPAGADA_O').result_calculation
@@ -225,7 +225,7 @@ result = payslip.get_deduction_retention_value(employee.id,payslip.date_to,'TOTA
 result = payslip.sum_mount_x_rule('INTVIV', payslip.date_from, payslip.date_to) + rules_computed.INTVIV
 result = annual_parameters.value_uvt*100 if result > annual_parameters.value_uvt*100 else result
 #DED_DEPENDIENTES_3
-result = payslip.get_contract_deductions_rtf(contract.id,payslip.date_to,'DEDDEP').value_monthly
+result = payslip.get_contract_deductions_rtf(version.id,payslip.date_to,'DEDDEP').value_monthly
 if result > 0:
     result = (payslip.get_deduction_retention_value(employee.id,payslip.date_to,'TOTAL_ING_BASE_3').result_calculation * 0.1000)
     result = annual_parameters.value_uvt*32*12 if result > annual_parameters.value_uvt*32*12 else result

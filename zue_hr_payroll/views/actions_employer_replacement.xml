@@ -5,7 +5,7 @@
         <record model="ir.actions.act_window" id="action_zue_employer_replacement">
             <field name="name">Sustitución patronal</field>
             <field name="res_model">zue.employer.replacement</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <!-- Crear record rule para filtrar las compañias-->
@@ -19,10 +19,10 @@
             <field name="name">Sustitución patronal list</field>
             <field name="model">zue.employer.replacement</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="z_employee_id"/>
                     <field name="z_identification"/>
-                    <field name="z_contract"/>
+                    <field name="z_version_id"/>
                     <field name="z_company_id"/>
                     <field name="z_new_company_id"/>
                     <field name="z_employer_replacement_date"/>
@@ -30,7 +30,7 @@
                            decoration-muted="state == 'draft'"
                            decoration-success="state == 'done'"
                     />
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -40,21 +40,44 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="replace_employee_company" type="object" string="Sustituir" class="oe_highlight" states="draft"
+                        <button name="replace_employee_company" type="object" string="Sustituir" class="oe_highlight" invisible="state != 'draft'"
                                 confirm="¿Está seguro de realizar la sustitución patronal para este empleado?"/>
                         <field name="state" widget="statusbar" nolabel="1" readonly="1" force_save="1"/>
                     </header>
                     <sheet>
+                        <field name="z_bank_account_changed" invisible="1"/>
+                        <div class="alert alert-warning" role="alert"
+                             invisible="state != 'done' or not z_bank_account_changed">
+                            <strong>⚠️ Advertencia:</strong> La cuenta bancaria ha sido modificada en esta sustitución.
+                            Recuerde actualizar esta información directamente en el contacto/empleado si es necesario.
+                        </div>
                         <group>
-                            <group>
-                                <field name="z_employee_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                            <group string="Información del Empleado">
+                                <field name="z_employee_id" readonly="state == 'done'"/>
                                 <field name="z_identification"/>
-                                <field name="z_contract"/>
+                                <field name="z_version_id"/>
                                 <field name="z_company_id"/>
                             </group>
-                            <group>
-                                <field name="z_new_company_id" attrs="{'readonly': [('state', '=', 'done')]}"/>
+                            <group string="Nueva Compañía">
+                                <field name="z_new_company_id" readonly="state == 'done'"/>
                                 <field name="z_employer_replacement_date"/>
+                            </group>
+                        </group>
+                        <group>
+                            <group string="Información Actual del Empleado">
+                                <field name="z_analytic_account_id"/>
+                                <field name="z_department_id"/>
+                                <field name="z_job_id"/>
+                                <field name="z_bank_account_id"/>
+                            </group>
+                            <group string="Nueva Información para la Sustitución">
+                                <field name="z_new_analytic_account_id" readonly="state == 'done'"
+                                       context="{'default_company_id': z_new_company_id}"/>
+                                <field name="z_new_department_id" readonly="state == 'done'"/>
+                                <field name="z_new_job_id" readonly="state == 'done'"/>
+                                <field name="z_new_bank_account_id"
+                                       readonly="state == 'done'"
+                                       context="{'default_company_id': z_new_company_id, 'default_partner_id': z_employee_id.work_contact_id}"/>
                             </group>
                         </group>
                     </sheet>

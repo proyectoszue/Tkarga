@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_zue_account_closing_reversal_wizard_form" model="ir.ui.view">
+        <field name="name">zue.account.closing.reversal.wizard.form</field>
+        <field name="model">zue.account.closing.reversal.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Reversión Cierre Contable">
+                <group>
+                    <field name="z_company_id"/>
+                    <field name="z_closing_year" widget="integer"/>
+                    <field name="z_move_id"/>
+                </group>
+
+                <footer>
+                    <button name="action_execute" string="Eliminar cierre" type="object" class="btn-danger"
+                            confirm="¿Está seguro de que desea eliminar el cierre definitivo? Esta acción no se podrá recuperar."/>
+                    <button string="Cancelar" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_zue_account_closing_reversal_wizard" model="ir.actions.act_window">
+        <field name="name">Reversión Cierre Contable</field>
+        <field name="res_model">zue.account.closing.reversal.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>

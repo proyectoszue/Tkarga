@@ -61,41 +61,40 @@ class hr_payroll_flat_file(models.TransientModel):
     _description = 'Archivo plano de pago de nómina'
 
     journal_id = fields.Many2one('account.journal', string='Diario', domain=[('is_payroll_spreader', '=', True)])
-    payment_type = fields.Selection([('225', 'Pago de Nómina')], string='Tipo de pago', required=True, default='225', readonly=True)
+    payment_type = fields.Selection([('225', 'Pago de Nómina')], string='Tipo de pago', required=True, default='225')
     company_id = fields.Many2one('res.company',string='Compañia', required=True, default=lambda self: self.env.company)
-    vat_payer = fields.Char(string='NIT Pagador', store=True, readonly=True, related='company_id.partner_id.vat')
+    vat_payer = fields.Char(string='NIT Pagador', store=True, related='company_id.partner_id.vat')
     payslip_id = fields.Many2one('hr.payslip.run',string='Lote de nómina', domain=[('definitive_plan', '=', False)])
     transmission_date = fields.Datetime(string="Fecha transmisión de lote", required=True, default=fields.Datetime.now())
     application_date = fields.Date(string="Fecha aplicación transacciones", required=True, default=fields.Date.today())
     description = fields.Char(string='Descripción', required=True)
     type_flat_file = fields.Selection([('sap', 'Bancolombia SAP'),
                                         ('pab', 'Bancolombia PAB'),
-                                        ('occired','Occired')],'Tipo de archivo', default='sap') 
+                                        ('occired','Occired')],'Tipo de archivo', default='sap')
     source_information = fields.Selection([('lote', 'Por lote'),
-                                          ('liquidacion', 'Por liquidaciones')],'Origen información', default='lote') 
+                                          ('liquidacion', 'Por liquidaciones')],'Origen información', default='lote')
     liquidations_ids= fields.Many2many('hr.payslip', string='Liquidaciones', domain=[('definitive_plan', '=', False),('payslip_run_id', '=', False)])
     flat_file_detail_ids = fields.One2many('hr.payroll.flat.file.detail','flat_file_id',string='Archivos planos')
     flat_rule_not_included = fields.Boolean('Plano de reglas no incluidas')
     z_send_blank_email = fields.Boolean(string='Enviar correo electrónico en blanco')
-    
-    def name_get(self):
-        result = []
-        for record in self:            
-            result.append((record.id, "Archivo de Pago - {}".format(record.description)))
-        return result
+
+    @api.depends('description')
+    def _compute_display_name(self):
+        for record in self:
+            record.display_name = "Archivo de Pago - {}".format(record.description)
 
     #Lógica de bancolombia sap
     def generate_flat_file_sap(self,obj_payslip):
         filler = ' '
         def left(s, amount):
                 return s[:amount]
-            
+
         def right(s, amount):
             return s[-amount:]
         #----------------------------------Registro de Control de Lote----------------------------------
         tipo_registro = '1'
         nit_entidad = right(10*'0'+self.vat_payer,10)
-        nombre_entidad = left(self.company_id.partner_id.name+16*filler,16) 
+        nombre_entidad = left(self.company_id.partner_id.name+16*filler,16)
         clase_transacciones = self.payment_type
         descripcion = left(self.description+10*filler,10)
         fecha_transmision = str(self.transmission_date.year)[-2:]+right('00'+str(self.transmission_date.month),2)+right('00'+str(self.transmission_date.day),2)
@@ -107,7 +106,7 @@ class hr_payroll_flat_file(models.TransientModel):
         #Obtener cuenta
         cuenta_cliente = ''
         tipo_cuenta = ''
-        for journal in self.journal_id:            
+        for journal in self.journal_id:
             cuenta_cliente = right(11*'0'+str(journal.bank_account_id.acc_number).replace("-",""),11)
             tipo_cuenta = 'S' if journal.bank_account_id.type_account == 'A' else 'D' # S : aho / D : cte
         if cuenta_cliente == '':
@@ -123,25 +122,25 @@ class hr_payroll_flat_file(models.TransientModel):
             cant_detalle = cant_detalle + 1
 
             tipo_registro = '6'
-            if payslip.contract_id.employee_id.identification_id:
-                nit_beneficiario = nit_entidad = right(15*'0'+payslip.contract_id.employee_id.identification_id,15)
+            if payslip.version_id.employee_id.identification_id:
+                nit_beneficiario = nit_entidad = right(15*'0'+payslip.version_id.employee_id.identification_id,15)
             else:
                 nit_beneficiario = nit_entidad = right(15*'0', 15)
-            nombre_beneficiario = left(payslip.contract_id.employee_id.name+18*filler,18) 
+            nombre_beneficiario = left(payslip.version_id.employee_id.name+18*filler,18)
             #Inf Bancaria
             banco = ''
             cuenta_beneficiario = ''
             indicador_lugar_pago = ''
             tipo_transaccion = ''
-            for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
+            for bank in payslip.version_id.employee_id.work_contact_id.bank_ids:
                 if bank.is_main:
                     banco = right(9*'0'+bank.bank_id.bic,9)
                     cuenta_beneficiario = right(17*'0'+str(bank.acc_number).replace("-",""),17)
                     indicador_lugar_pago = 'S'
-                    tipo_transaccion = '37' if bank.type_account == 'A' else '27' # 27: Abono a cuenta corriente / 37: Abono a cuenta ahorros 
+                    tipo_transaccion = '37' if bank.type_account == 'A' else '27' # 27: Abono a cuenta corriente / 37: Abono a cuenta ahorros
             if cuenta_beneficiario == '':
-                raise ValidationError(_('El empleado '+payslip.contract_id.employee_id.name+' no tiene configurada la información bancaria, por favor verificar.'))
-            #Obtener valor de transacción 
+                raise ValidationError(_('El empleado '+payslip.version_id.employee_id.name+' no tiene configurada la información bancaria, por favor verificar.'))
+            #Obtener valor de transacción
             valor_transacción = 10*'0'
             valor_not_include = 0
             for line in payslip.line_ids:
@@ -169,7 +168,7 @@ class hr_payroll_flat_file(models.TransientModel):
         valor_total = str(total_valor_transaccion).split(".") # Eliminar decimales
         encab_content = encab_content.replace("SumCreditos", right(12*'0'+str(valor_total[0]),12))
         #Unir Encabezado y Detalle
-        content_txt = encab_content +'\n'+ detalle_content 
+        content_txt = encab_content +'\n'+ detalle_content
 
         #Retornar archivo
         return base64.encodebytes((content_txt).encode())
@@ -179,7 +178,7 @@ class hr_payroll_flat_file(models.TransientModel):
         filler = ' '
         def left(s, amount):
                 return s[:amount]
-            
+
         def right(s, amount):
             return s[-amount:]
         #----------------------------------Registro de Control de Lote----------------------------------
@@ -198,7 +197,7 @@ class hr_payroll_flat_file(models.TransientModel):
         #Obtener cuenta
         cuenta_cliente = ''
         tipo_cuenta = ''
-        for journal in self.journal_id:            
+        for journal in self.journal_id:
             cuenta_cliente = right(11*'0'+str(journal.bank_account_id.acc_number).replace("-",""),11)
             tipo_cuenta = 'S' if journal.bank_account_id.type_account == 'A' else 'D' # S : aho / D : cte
         if cuenta_cliente == '':
@@ -217,22 +216,22 @@ class hr_payroll_flat_file(models.TransientModel):
             cant_detalle = cant_detalle + 1
 
             tipo_registro = '6'
-            nit_beneficiario = left(payslip.contract_id.employee_id.identification_id+15*' ',15)
-            nombre_beneficiario = left(payslip.contract_id.employee_id.name+30*' ',30) 
+            nit_beneficiario = left(payslip.version_id.employee_id.identification_id+15*' ',15)
+            nombre_beneficiario = left(payslip.version_id.employee_id.name+30*' ',30)
             #Inf Bancaria
             banco = ''
             cuenta_beneficiario = ''
             indicador_lugar_pago = ''
             tipo_transaccion = ''
-            for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
+            for bank in payslip.version_id.employee_id.work_contact_id.bank_ids:
                 if bank.is_main:
                     banco = right(9*'0'+bank.bank_id.bic,9)
                     cuenta_beneficiario = left(str(bank.acc_number).replace("-","")+17*' ',17)
                     indicador_lugar_pago = 'S'
-                    tipo_transaccion = '37' if bank.type_account == 'A'  else ('57' if bank.type_account == 'N' else '27')# 27: Abono a cuenta corriente / 37: Abono a cuenta ahorros / 57: Nequi
+                    tipo_transaccion = '37' if bank.type_account == 'A'  else ('52' if bank.type_account == 'N' else '27')# 27: Abono a cuenta corriente / 37: Abono a cuenta ahorros / 57: Nequi
             if cuenta_beneficiario == '':
-                raise ValidationError(_('El empleado '+payslip.contract_id.employee_id.name+' no tiene configurada la información bancaria, por favor verificar.'))
-            #Obtener valor de transacción 
+                raise ValidationError(_('El empleado '+payslip.version_id.employee_id.name+' no tiene configurada la información bancaria, por favor verificar.'))
+            #Obtener valor de transacción
             valor_transaccion = 15*'0'
             valor_transaccion_decimal = 2*'0'
             valor_not_include = 0
@@ -245,7 +244,7 @@ class hr_payroll_flat_file(models.TransientModel):
                     val_write = 0 if val_write < 0 else val_write
                     valor = str(val_write).split(".") # Eliminar decimales
                     valor_transaccion = right(15*'0'+str(valor[0]),15)
-                    valor_transaccion_decimal = right(2*'0'+str(valor[1]),2)
+                    valor_transaccion_decimal = right(2*'0'+str(valor[1]),2) if len(valor) > 1 else '00'
             fecha_aplicacion_det = fecha_aplicacion
             referencia = 21*filler
             tipo_identificacion = ' ' # Es requerido solo si el pago es para entregar por ventanilla por ende enviamos vacio
@@ -254,7 +253,7 @@ class hr_payroll_flat_file(models.TransientModel):
             if self.z_send_blank_email == True:
                 email = 80*' '
             else:
-                email = left(payslip.contract_id.employee_id.work_email+80*' ',80)
+                email = left(payslip.version_id.employee_id.work_email+80*' ',80)
             identificacion_autorizado = 15*filler # Solo se llena cuando es cheques
             relleno = filler*27
 
@@ -321,17 +320,17 @@ class hr_payroll_flat_file(models.TransientModel):
             tipo_transaccion = ''
             banco_destino = ''
             no_cuenta_beneficiario = ''
-            for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
+            for bank in payslip.version_id.employee_id.work_contact_id.bank_ids:
                 if bank.is_main:
                     tipo_transaccion = 'A' if bank.type_account == 'A' else 'C' # C: Abono a cuenta corriente / A: Abono a cuenta ahorros
                     banco_destino = '0'+right(3*'0'+bank.bank_id.bic,3)
                     forma_de_pago = '2' if bank.bank_id.bic == '1023' else forma_de_pago
                     no_cuenta_beneficiario = right(16*'0'+str(bank.acc_number).replace("-",""),16)
             if no_cuenta_beneficiario == '':
-                raise ValidationError(_('El empleado '+payslip.contract_id.employee_id.name+' no tiene configurada la información bancaria, por favor verificar.'))
+                raise ValidationError(_('El empleado '+payslip.version_id.employee_id.name+' no tiene configurada la información bancaria, por favor verificar.'))
 
-            nit_beneficiario = right(11*'0'+payslip.contract_id.employee_id.identification_id,11)
-            nombre_beneficiario = left(payslip.contract_id.employee_id.name+30*' ',30)
+            nit_beneficiario = right(11*'0'+payslip.version_id.employee_id.identification_id,11)
+            nombre_beneficiario = left(payslip.version_id.employee_id.name+30*' ',30)
             fecha_pago = str(self.application_date.year)+right('00'+str(self.application_date.month),2)+right('00'+str(self.application_date.day),2)
 
             #Obtener valor de transacción
@@ -347,9 +346,10 @@ class hr_payroll_flat_file(models.TransientModel):
                     val_write = 0 if val_write < 0 else val_write
                     valor = str(val_write).split(".") # Eliminar decimales
                     valor_transaccion = right(13*'0'+str(valor[0]),13)
-                    valor_transaccion_decimal = right(2*'0'+str(valor[1]),2)
+                    valor_transaccion_decimal = right(2*'0'+str(valor[1]),2) if len(valor) > 1 else '00'
 
-            numbers = [temp for temp in payslip.number.split("/") if temp.isdigit()]
+            reference_value = payslip.name or str(payslip.id)
+            numbers = [temp for temp in reference_value if temp.isdigit()]
             documento_autorizado = ''
             for i in numbers:
                 documento_autorizado = documento_autorizado + str(i)
@@ -370,7 +370,7 @@ class hr_payroll_flat_file(models.TransientModel):
         if len(valor)>1:
             parte_decimal = right(2*'0'+str(valor[1]),2)
         else:
-            parte_decimal = 2*'0'
+            parte_decimal = '00'
         encab_content_txt = encab_content_txt.replace("ValTotal", parte_entera+''+parte_decimal)
 
         #Totales
@@ -382,7 +382,7 @@ class hr_payroll_flat_file(models.TransientModel):
         if len(valor)>1:
             parte_decimal = right(2*'0'+str(valor[1]),2)
         else:
-            parte_decimal = 2*'0'
+            parte_decimal = '00'
         valor_total = parte_entera+''+parte_decimal
         ceros = 172*'0'
 
@@ -438,19 +438,19 @@ class hr_payroll_flat_file(models.TransientModel):
         for payslip in obj_payslip:
             cant_detalle = cant_detalle + 1
             secuencia = right(9*'0' + str(cant_detalle), 9)
-            nombre = left(payslip.contract_id.employee_id.name + 30 * ' ', 30)
-            numero_documento = right(11 * '0' + payslip.contract_id.employee_id.identification_id, 11)
+            nombre = left(payslip.version_id.employee_id.name + 30 * ' ', 30)
+            numero_documento = right(11 * '0' + payslip.version_id.employee_id.identification_id, 11)
 
             # Inf Bancaria
             tipo_producto_destino = ''
             no_cuenta_beneficiario = ''
-            for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
+            for bank in payslip.version_id.employee_id.work_contact_id.bank_ids:
                 if bank.is_main:
                     tipo_producto_destino = '01' if bank.type_account == 'A' else '06'  # 01: Abono a cuenta ahorros /  06: Abono a cuenta corriente
                     no_cuenta_beneficiario = right(16 * '0' + str(bank.acc_number).replace("-", ""), 16)
             if no_cuenta_beneficiario == '':
                 raise ValidationError(
-                    _('El empleado ' + payslip.contract_id.employee_id.name + ' no tiene configurada la información bancaria, por favor verificar.'))
+                    _('El empleado ' + payslip.version_id.employee_id.name + ' no tiene configurada la información bancaria, por favor verificar.'))
 
             # Obtener valor de transacción
             valor_transaccion = 16 * '0'
@@ -465,7 +465,7 @@ class hr_payroll_flat_file(models.TransientModel):
                     val_write = 0 if val_write < 0 else val_write
                     valor = str(val_write).split(".")  # Eliminar decimales
                     valor_transaccion = right(16 * '0' + str(valor[0]), 16)
-                    valor_transaccion_decimal = right(2 * '0' + str(valor[1]), 2)
+                    valor_transaccion_decimal = right(2 * '0' + str(valor[1]), 2) if len(valor) > 1 else '00'
 
             content_line = '''%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s''' % (
             tipo_registro_det, codigo_transaccion, tipo_producto_origen, cuenta_origen, entidad_destino,
@@ -485,7 +485,7 @@ class hr_payroll_flat_file(models.TransientModel):
         if len(valor) > 1:
             parte_decimal = right(2 * '0' + str(valor[1]), 2)
         else:
-            parte_decimal = 2 * '0'
+            parte_decimal = '00'
         valor_total_tra = parte_entera + '' + parte_decimal
         digito_chequeo = 15 * filler
         relleno = 145 * filler
@@ -560,7 +560,7 @@ class hr_payroll_flat_file(models.TransientModel):
             motivo = 4 * '0'
             relleno = 7 * '0'
 
-            tipo_identificacion_beneficiario = payslip.contract_id.employee_id.address_home_id.x_document_type
+            tipo_identificacion_beneficiario = payslip.version_id.employee_id.work_contact_id.l10n_latam_identification_type_id.z_code_dian
             if tipo_identificacion_beneficiario == '11':
                 tipo_identificacion_beneficiario =  '13' #  Registro Civil de Nacimiento
             elif tipo_identificacion_beneficiario == '12':
@@ -578,10 +578,10 @@ class hr_payroll_flat_file(models.TransientModel):
             elif tipo_identificacion_beneficiario == 'PT':
                 tipo_identificacion_beneficiario = '02'  # Permiso por proteccion temporal
             else:
-                raise ValidationError(_('El tipo de documento del empleado '+payslip.contract_id.employee_id.name+' no es valido, por favor verificar.'))
+                raise ValidationError(_('El tipo de documento del empleado '+payslip.version_id.employee_id.name+' no es valido, por favor verificar.'))
 
-            if payslip.contract_id.employee_id.identification_id:
-                nit_beneficiario = nit_entidad = right(16 * '0' + payslip.contract_id.employee_id.identification_id, 16)
+            if payslip.version_id.employee_id.identification_id:
+                nit_beneficiario = nit_entidad = right(16 * '0' + payslip.version_id.employee_id.identification_id, 16)
             else:
                 nit_beneficiario = nit_entidad = right(16 * '0', 16)
             # Inf Bancaria
@@ -589,7 +589,7 @@ class hr_payroll_flat_file(models.TransientModel):
             cuenta_beneficiario = ''
             indicador_lugar_pago = ''
             tipo_transaccion = ''
-            for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
+            for bank in payslip.version_id.employee_id.work_contact_id.bank_ids:
                 if bank.is_main:
                     banco = right(9 * '0' + bank.bank_id.bic, 9)
                     cuenta_beneficiario = right(16 * '0' + str(bank.acc_number).replace("-", ""), 16)
@@ -598,9 +598,9 @@ class hr_payroll_flat_file(models.TransientModel):
                     tipo_transaccion = 'DP' if bank.type_account == 'DP' else tipo_transaccion  # DP: Daviplata
             if cuenta_beneficiario == '':
                 raise ValidationError(
-                    _('El empleado ' + payslip.contract_id.employee_id.name + ' no tiene configurada la información bancaria, por favor verificar.'))
+                    _('El empleado ' + payslip.version_id.employee_id.name + ' no tiene configurada la información bancaria, por favor verificar.'))
             # Obtener valor de transacción
-            valor_transacción = 18 * '0'
+            valor_transaccion = 18 * '0'
             valor_not_include = 0
             for line in payslip.line_ids:
                 valor_not_include += line.total if line.salary_rule_id.not_include_flat_payment_file else 0
@@ -610,11 +610,11 @@ class hr_payroll_flat_file(models.TransientModel):
                     val_write = line.total - valor_not_include
                     val_write = 0 if val_write < 0 else val_write
                     valor = str(val_write).split(".")  # Eliminar decimales
-                    valor_transacción = right(16 * '0' + str(valor[0]), 16) +''+ right(2 * '0' + str(valor[1]), 2)
+                    valor_transaccion = right(16 * '0' + str(valor[0]), 16) +''+ (right(2 * '0' + str(valor[1]), 2) if len(valor) > 1 else '00')
 
             content_line = '''%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s''' % (
             tipo_registro, nit_beneficiario, referencia, cuenta_beneficiario, tipo_transaccion, cod_banco,
-            valor_transacción, talon, tipo_identificacion_beneficiario, validar_ach, resultado_proceso,
+            valor_transaccion, talon, tipo_identificacion_beneficiario, validar_ach, resultado_proceso,
             mensaje_respuesta, valor_acumulado, fecha_aplicacion, oficina_recaudo, motivo, relleno)
 
             if cant_detalle == 1:
@@ -625,7 +625,7 @@ class hr_payroll_flat_file(models.TransientModel):
         # ----------------------------------Generar archivo---------------------------------
         # Reemplazar valores del encabezado
         valor_total = str(total_valor_transaccion).split(".")  # Eliminar decimales
-        encab_content_txt = encab_content_txt.replace("ValorTotalTraslados", right(16 * '0' + str(valor_total[0]), 16) +''+ right(2 * '0' + str(valor_total[1]), 2))
+        encab_content_txt = encab_content_txt.replace("ValorTotalTraslados", right(16 * '0' + str(valor_total[0]), 16) +''+ (right(2 * '0' + str(valor_total[1]), 2) if len(valor_total) > 1 else '00'))
         encab_content_txt = encab_content_txt.replace("NumTraslados", right(6 * '0' + str(cant_detalle), 6))
         # Unir Encabezado y Detalle
         content_txt = encab_content_txt + '\n' + detalle_content
@@ -656,7 +656,7 @@ class hr_payroll_flat_file(models.TransientModel):
         #for employee in obj_payslip.employee_id.ids:
         for payslip in obj_payslip:
             # Tipo documento
-            sheet.write(aument_rows, 0, payslip.employee_id.address_home_id.x_document_type)
+            sheet.write(aument_rows, 0, payslip.employee_id.work_contact_id.l10n_latam_identification_type_id.z_code_dian)
             # Nombre
             sheet.write(aument_rows, 1, payslip.employee_id.name)
             # Identificación
@@ -665,7 +665,7 @@ class hr_payroll_flat_file(models.TransientModel):
             banco = ''
             cuenta_beneficiario = ''
             tipo_cuenta = ''
-            for bank in payslip.employee_id.address_home_id.bank_ids:
+            for bank in payslip.employee_id.work_contact_id.bank_ids:
                 if bank.is_main:
                     banco = bank.bank_id.bic
                     cuenta_beneficiario = str(bank.acc_number).replace("-", "")
@@ -739,10 +739,10 @@ class hr_payroll_flat_file(models.TransientModel):
             sheet.write(aument_rows, 1, self.payslip_id.name)
             sheet.write(aument_rows, 2, 'cédula')
             sheet.write(aument_rows, 3, payslip.employee_id.identification_id)
-            sheet.write(aument_rows, 4, payslip.employee_id.address_home_id.x_first_name if payslip.employee_id.address_home_id.x_first_name!=False else '')
-            sheet.write(aument_rows, 5, payslip.employee_id.address_home_id.x_second_name if payslip.employee_id.address_home_id.x_second_name!=False else '')
-            sheet.write(aument_rows, 6, payslip.employee_id.address_home_id.x_first_lastname if payslip.employee_id.address_home_id.x_first_lastname!=False else '')
-            sheet.write(aument_rows, 7, payslip.employee_id.address_home_id.x_second_lastname if payslip.employee_id.address_home_id.x_second_lastname!=False else '')
+            sheet.write(aument_rows, 4, payslip.employee_id.work_contact_id.x_first_name if payslip.employee_id.work_contact_id.x_first_name!=False else '')
+            sheet.write(aument_rows, 5, payslip.employee_id.work_contact_id.x_second_name if payslip.employee_id.work_contact_id.x_second_name!=False else '')
+            sheet.write(aument_rows, 6, payslip.employee_id.work_contact_id.x_first_lastname if payslip.employee_id.work_contact_id.x_first_lastname!=False else '')
+            sheet.write(aument_rows, 7, payslip.employee_id.work_contact_id.x_second_lastname if payslip.employee_id.work_contact_id.x_second_lastname!=False else '')
             sheet.write(aument_rows, 8, self.payslip_id.name)
             valor = 0
             valor_rtfte = 0
@@ -773,7 +773,7 @@ class hr_payroll_flat_file(models.TransientModel):
             banco = ''
             cuenta_beneficiario = ''
             tipo_cuenta = ''
-            for bank in payslip.employee_id.address_home_id.bank_ids:
+            for bank in payslip.employee_id.work_contact_id.bank_ids:
                 if bank.is_main:
                     banco = bank.bank_id.name
                     cuenta_beneficiario = bank.acc_number
@@ -784,10 +784,10 @@ class hr_payroll_flat_file(models.TransientModel):
             sheet.write(aument_rows, 20, '')#si
             sheet.write(aument_rows, 21, '')#Cédula
             sheet.write(aument_rows, 22, '')#payslip.employee_id.identification_id
-            sheet.write(aument_rows, 23, '')#payslip.employee_id.address_home_id.x_first_name if payslip.employee_id.address_home_id.x_first_name!=False else ''
-            sheet.write(aument_rows, 24, '')#payslip.employee_id.address_home_id.x_second_name if payslip.employee_id.address_home_id.x_second_name!=False else ''
-            sheet.write(aument_rows, 25, '')#payslip.employee_id.address_home_id.x_first_lastname if payslip.employee_id.address_home_id.x_first_lastname!=False else ''
-            sheet.write(aument_rows, 26, '')#payslip.employee_id.address_home_id.x_second_lastname if payslip.employee_id.address_home_id.x_second_lastname!=False else ''
+            sheet.write(aument_rows, 23, '')#payslip.employee_id.work_contact_id.x_first_name if payslip.employee_id.work_contact_id.x_first_name!=False else ''
+            sheet.write(aument_rows, 24, '')#payslip.employee_id.work_contact_id.x_second_name if payslip.employee_id.work_contact_id.x_second_name!=False else ''
+            sheet.write(aument_rows, 25, '')#payslip.employee_id.work_contact_id.x_first_lastname if payslip.employee_id.work_contact_id.x_first_lastname!=False else ''
+            sheet.write(aument_rows, 26, '')#payslip.employee_id.work_contact_id.x_second_lastname if payslip.employee_id.work_contact_id.x_second_lastname!=False else ''
             sheet.write(aument_rows, 27, '')#self.payslip_id.name
             aument_rows = aument_rows + 1
             cont_item = cont_item + 1
@@ -829,7 +829,7 @@ class hr_payroll_flat_file(models.TransientModel):
         nombre_entidad = left(self.company_id.partner_id.name + 40 * filler, 40)
         nit_empresa = right(11 * '0' + self.vat_payer + '' + str(self.company_id.partner_id.x_digit_verification), 11)
         codigo_transaccion = '021'  # 021 pago nomina- TD plus y abono afc #022 pago provedores #023 pago Transferencias
-        cod_ciudad = '0001' #right(17 * '0' + self.company_id.partner_id.x_city.code, 4)
+        cod_ciudad = '0001' #right(17 * '0' + self.company_id.partner_id.city_id.z_code_dian, 4)
         fecha_creacion = fecha_pago
         codigo_oficina = '999'
         tipo_identificacion_titular = 'N'
@@ -853,37 +853,37 @@ class hr_payroll_flat_file(models.TransientModel):
 
             # Tipo documento
             document_type = 'C'
-            x_document_type = payslip.employee_id.address_home_id.x_document_type
-            if x_document_type == '13':
+            l10n_latam_identification_type = payslip.employee_id.work_contact_id.l10n_latam_identification_type_id.z_code_dian
+            if l10n_latam_identification_type == '13':
                 document_type = 'C'
-            elif x_document_type == '12':
+            elif l10n_latam_identification_type == '12':
                 document_type = 'T'
-            elif x_document_type == '22':
+            elif l10n_latam_identification_type == '22':
                 document_type = 'E'
-            elif x_document_type == '31':
+            elif l10n_latam_identification_type == '31':
                 document_type = 'N'
-            elif x_document_type == '41':
+            elif l10n_latam_identification_type == '41':
                 document_type = 'P'
-            elif x_document_type == '44':
+            elif l10n_latam_identification_type == '44':
                 document_type = 'E'
             else:
                 raise ValidationError(
-                    _('El empleado ' + payslip.contract_id.employee_id.name + ' no tiene tipo de documento valido, por favor verificar.'))
-            nit_beneficiario = right(11 * '0' + payslip.contract_id.employee_id.identification_id, 11)
-            nombre_beneficiario = left(payslip.contract_id.employee_id.name + 40 * ' ', 40)
+                    _('El empleado ' + payslip.version_id.employee_id.name + ' no tiene tipo de documento valido, por favor verificar.'))
+            nit_beneficiario = right(11 * '0' + payslip.version_id.employee_id.identification_id, 11)
+            nombre_beneficiario = left(payslip.version_id.employee_id.name + 40 * ' ', 40)
 
             # Inf Bancaria
             tipo_transaccion = ''
             banco_destino = ''
             no_cuenta_beneficiario = ''
-            for bank in payslip.employee_id.address_home_id.bank_ids:
+            for bank in payslip.employee_id.work_contact_id.bank_ids:
                 if bank.is_main:
                     tipo_transaccion = '02' if bank.type_account == 'A' else '01'  # 01: Abono a cuenta corriente / 02: Abono a cuenta ahorros
                     banco_destino = right(3 * '0' + bank.bank_id.bic, 3)
                     no_cuenta_beneficiario = left(str(bank.acc_number).replace("-", "") + 17 * ' ', 17)
             if no_cuenta_beneficiario == '':
                 raise ValidationError(
-                    _('El empleado ' + payslip.contract_id.employee_id.name + ' no tiene configurada la información bancaria, por favor verificar.'))
+                    _('El empleado ' + payslip.version_id.employee_id.name + ' no tiene configurada la información bancaria, por favor verificar.'))
 
             # Obtener valor de transacción
             valor_transaccion = 16 * '0'
@@ -905,10 +905,11 @@ class hr_payroll_flat_file(models.TransientModel):
 
             forma_de_pago = 'A'
             codigo_oficina = '000'
-            cod_ciudad = '0001' #right(4 * '0' +  payslip.employee_id.address_home_id.x_city.code, 4)
+            cod_ciudad = '0001' #right(4 * '0' +  payslip.employee_id.work_contact_id.city_id.z_code_dian, 4)
             espacios = filler*80
             cero = '0'
-            numbers = [temp for temp in payslip.number.split("/") if temp.isdigit()]
+            reference_value = payslip.name or str(payslip.id)
+            numbers = [temp for temp in reference_value if temp.isdigit()]
             num_factura = ''
             for i in numbers:
                 num_factura = num_factura + str(i)
@@ -972,16 +973,17 @@ class hr_payroll_flat_file(models.TransientModel):
                 pass
             else:
                 #Tipo documento
-                x_document_type = payslip.employee_id.address_home_id.x_document_type
-                if x_document_type == '13':
+                document_type = 'CC'
+                l10n_latam_identification_type = payslip.employee_id.work_contact_id.l10n_latam_identification_type_id.z_code_dian
+                if l10n_latam_identification_type == '13':
                     document_type = 'CC'
-                elif x_document_type == '12':
+                elif l10n_latam_identification_type == '12':
                     document_type = 'TI'
-                elif x_document_type == '41':
+                elif l10n_latam_identification_type == '41':
                     document_type = 'PP'
-                elif x_document_type == '22':
+                elif l10n_latam_identification_type == '22':
                     document_type = 'CE'
-                elif record.x_document_type == '31':
+                elif l10n_latam_identification_type == '31':
                     document_type = 'NTN'
                 sheet.write(aument_rows, 0, document_type)
                 #Documento
@@ -1031,53 +1033,53 @@ class hr_payroll_flat_file(models.TransientModel):
             cant_detalle = cant_detalle + 1
             # Tipo documento
             document_type = '01'
-            x_document_type = payslip.employee_id.address_home_id.x_document_type
-            if x_document_type == '13':
+            l10n_latam_identification_type = payslip.employee_id.work_contact_id.l10n_latam_identification_type_id.z_code_dian
+            if l10n_latam_identification_type == '13':
                 document_type = '01'
-            elif x_document_type == '12':
+            elif l10n_latam_identification_type == '12':
                 document_type = '04'
-            elif x_document_type == '22':
+            elif l10n_latam_identification_type == '22':
                 document_type = '02'
-            elif x_document_type == '31':
+            elif l10n_latam_identification_type == '31':
                 document_type = '03'
-            elif x_document_type == '41':
+            elif l10n_latam_identification_type == '41':
                 document_type = '05'
             else:
-                raise ValidationError(_('El empleado ' + payslip.contract_id.employee_id.name + ' no tiene tipo de documento valido, por favor verificar.'))
-            nit_beneficiario = right(15 * '0' + payslip.contract_id.employee_id.identification_id, 15)
+                raise ValidationError(_('El empleado ' + payslip.version_id.employee_id.name + ' no tiene tipo de documento valido, por favor verificar.'))
+            nit_beneficiario = right(15 * '0' + payslip.version_id.employee_id.identification_id, 15)
             codigo_nit = '0'
-            for vat in payslip.employee_id.address_home_id.x_document_type:
-                dig_verificacion = payslip.employee_id.address_home_id.x_digit_verification
-                if x_document_type == '31':
+            for vat in payslip.employee_id.work_contact_id.l10n_latam_identification_type_id.z_code_dian:
+                dig_verificacion = payslip.employee_id.work_contact_id.x_digit_verification
+                if l10n_latam_identification_type == '31':
                     codigo_nit = dig_verificacion
             forma_pago = '1'
             cuenta_ajuste = '0'
             banco_destino = ''
-            for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
+            for bank in payslip.version_id.employee_id.work_contact_id.bank_ids:
                 if bank.is_main == True:
                     banco_destino = right(bank.bank_id.bic, 3)
             # oficina_receptora = '0000'
             # digito_verificacion = '00'
             # tipo_transaccion = ''
-            # for bank in payslip.employee_id.address_home_id.bank_ids:
+            # for bank in payslip.employee_id.work_contact_id.bank_ids:
             #     if bank.is_main and banco_destino == '0013':
             #         tipo_transaccion = '0200' if bank.type_account == 'A' else '0100' # 0100: Abono a cuenta corriente / 0200: Abono a cuenta ahorros
             #     else:
             #         tipo_transaccion = '0000'
             cuenta = ''
-            for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
+            for bank in payslip.version_id.employee_id.work_contact_id.bank_ids:
                 if bank.is_main == True and banco_destino == '013':
                     cuenta = right(16 * '0' + (bank.acc_number[-16:]), 16)
                 else:
                     cuenta = '0000000000000000'
             tipo_cuenta_nacham = ''
-            for bank in payslip.employee_id.address_home_id.bank_ids:
+            for bank in payslip.employee_id.work_contact_id.bank_ids:
                 if bank.is_main == True and banco_destino != '013':
                     tipo_cuenta_nacham = '02' if bank.type_account == 'A' else '01'  # 01: Abono a cuenta corriente / 02: Abono a cuenta ahorros
                 elif banco_destino == '013':
                     tipo_cuenta_nacham = '00'
             no_cuenta_nacham = ''
-            for bank in payslip.contract_id.employee_id.address_home_id.bank_ids:
+            for bank in payslip.version_id.employee_id.work_contact_id.bank_ids:
                 if bank.is_main == True and banco_destino != '013':
                     no_cuenta_nacham = left(str(bank.acc_number).replace("-", "") + 17 * ' ', 17)
                 elif banco_destino == '013':
@@ -1096,11 +1098,11 @@ class hr_payroll_flat_file(models.TransientModel):
                     val_write = 0 if val_write < 0 else val_write
                     valor = str(val_write).split(".")  # Eliminar decimales
                     valor_transaccion = right(13 * '0' + str(valor[0]), 13)
-                    valor_transaccion_decimal = right(2 * '0' + str(valor[1]), 2)
+                    valor_transaccion_decimal = right(2 * '0' + str(valor[1]), 2) if len(valor) > 1 else '00'
             fecha_mov = '00000000'
             codigo_oficina_pagadora = '0000'
-            nombre_beneficiario = left(payslip.contract_id.employee_id.name + 36 * ' ' , 36)
-            direccion_beneficiario = left(payslip.contract_id.employee_id.address_home_id.street + 36 * ' ', 36)
+            nombre_beneficiario = left(payslip.version_id.employee_id.name + 36 * ' ' , 36)
+            direccion_beneficiario = left(payslip.version_id.employee_id.work_contact_id.street + 36 * ' ', 36)
             direccion_beneficiario_dos = '                                   '
             email_beneficiario = '                                                 '
             concepto = left(self.description + 40 * ' ', 40)
@@ -1140,7 +1142,7 @@ class hr_payroll_flat_file(models.TransientModel):
             # Filtro por diario / Cuenta bancaria dispersora nómina
             for payslip in obj_payslip_tmp:
                 count_bank_main = 0
-                for bank in payslip.employee_id.address_home_id.bank_ids:
+                for bank in payslip.employee_id.work_contact_id.bank_ids:
                     if bank.is_main == True:
                         count_bank_main += 1
                         obj_payslip += payslip
@@ -1184,7 +1186,7 @@ class hr_payroll_flat_file(models.TransientModel):
                         #Filtro por diario / Cuenta bancaria dispersora nómina
                         for payslip in obj_payslip_tmp:
                             count_bank_main = 0
-                            for bank in payslip.employee_id.address_home_id.bank_ids.filtered(lambda x: x.company_id.id == self.company_id.id):
+                            for bank in payslip.employee_id.work_contact_id.bank_ids.filtered(lambda x: x.company_id.id == self.company_id.id):
                                 if bank.is_main == True:
                                     count_bank_main += 1
                                     if bank.payroll_dispersion_account.id == self.journal_id.id:

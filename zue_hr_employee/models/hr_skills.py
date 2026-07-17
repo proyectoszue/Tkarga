@@ -12,9 +12,7 @@ class hr_skills_employee(models.Model):
     is_other = fields.Boolean(related='skill_id.is_other')
     which_is = fields.Char('¿Cual?')
 
-    _sql_constraints = [
-        ('_unique_skill', 'unique (employee_id, skill_id, which_is)', "Two levels for the same skill is not allowed"),
-    ]
+    _unique_skill = models.Constraint('unique(employee_id, skill_id, which_is)', 'Two levels for the same skill is not allowed')
 
 # class hr_resume_line(models.Model):
 #     _inherit = 'hr.resume.line'

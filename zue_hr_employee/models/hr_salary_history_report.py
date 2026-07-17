@@ -48,25 +48,25 @@ class hr_salary_history_report(models.TransientModel):
             query_where = query_where + f"and e.id in ({str_ids_branch}) "
         #Filtro contratos activos
         if self.contract_active == True:
-            query_where = query_where + f"and a.state = 'open' "
+            query_where = query_where + f"and a.contract_date_start <= '{str(self.date_end)}' and (a.contract_date_end is null or a.contract_date_end >= '{str(self.date_end)}' or ('{str(self.date_end)}' <= a.retirement_date)) "
         # ----------------------------------Ejecutar consulta
         query_report = f'''
-                        select coalesce(a."sequence",'/') ||' - '|| a."name" as contrato, a.date_start as fecha_ingreso, 
-                                case when a.state = 'open' then 'En Proceso' else 'Inactivo' end as estado_contrato,
+                        select coalesce(a."sequence",'/') ||' - '|| a."name" as contrato, a.contract_date_start as fecha_ingreso,
+                                case when a.contract_date_start <= '{str(self.date_end)}' and (a.contract_date_end is null or a.contract_date_end >= '{str(self.date_end)}' or ('{str(self.date_end)}' <= a.retirement_date)) then 'En Proceso' else 'Inactivo' end as estado_contrato,
                                 b."name" as empleado,c."name" as compania, coalesce(e."name",'') as sucursal,
-                                coalesce(d.date_start,'1900-01-01') as fecha_inicio_salario_cargo, coalesce(d.wage,0) as salario, coalesce(f."name",'') as cargo
-                        from hr_contract as a
+                                coalesce(d.date_start,'1900-01-01') as fecha_inicio_salario_cargo, coalesce(d.wage,0) as salario, coalesce(coalesce(f."name"->>'es_ES',f."name"->>'en_US'),'') as cargo
+                        from hr_version as a
                         inner join hr_employee as b on a.employee_id = b.id
                         inner join res_company as c on b.company_id = c.id
-                        left join hr_contract_change_wage as d on a.id =d.contract_id 
+                        left join hr_contract_change_wage as d on a.id = d.version_id 
                         left join zue_res_branch as e on b.branch_id = e.id
                         left join hr_job as f on d.job_id = f.id
                         %s
                         order by b."name",d.date_start 
         ''' % query_where
 
-        self._cr.execute(query_report)
-        result_query = self._cr.dictfetchall()
+        self.env.cr.execute(query_report)
+        result_query = self.env.cr.dictfetchall()
 
         # Generar EXCEL
         filename = 'Reporte histórico salarial'

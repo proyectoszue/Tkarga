@@ -109,41 +109,31 @@ class hr_accumulated_reports(models.TransientModel):
             query_where = query_where + f"and l.id in ({str_ids_entities}) "
             query_where_accumulated = query_where_accumulated + f"and 1 = 2 "
         # ----------------------------------Ejecutar consulta tablas estandar
-        query_report = '''
+        query_report = f'''
            Select estructura,liquidacion,estado_de_liquidacion,descripcion,contrato,estado_de_contrato,fecha_liquidacion,fecha_inicial,fecha_final,compania,sucursal,identificacion,empleado,ubicacion_laboral,
                     cuenta_analitica,secuencia_contrato,categoria_regla,regla_salarial,entidad,unidades,valor_devengo,valor_deduccion,
                     base_seguridad_social,base_parafiscales,base_prima,base_cesantias,base_intereses_cesantias,base_vacaciones,base_vacaciones_dinero  
             From ( 
-           Select upper(a.struct_process) as estructura,a."number" as liquidacion,
+           Select upper(a.struct_process) as estructura,a."name" as liquidacion,
             case when a."state" = 'draft' then 'Borrador'
-						else case when a."state" = 'verify' then 'En espera'
-							else case when a."state" = 'done' then 'Hecho'
-								else case when a."state" = 'draft' then 'Nuevo'
-									else case when a."state" = 'cancel' then 'Rechazada'
-										else ''
-										end
-									end
-								end
+						else case when a."state" = 'validated' then 'Validado'
+							else case when a."state" = 'paid' then 'Pagado'								
+                                else ''
+                                end									
 							end
 						end as estado_de_liquidacion,
             a."name" as descripcion,e."name" as contrato,
-				case when e."state" = 'open' then 'En proceso'
-						else case when e."state" = 'close' then 'Expirado'
-							else case when e."state" = 'finished' then 'Finalizado'
-								else case when e."state" = 'draft' then 'Nuevo'
-									else case when e."state" = 'cancel' then 'Cancelado(a)'
-										else ''
-										end
-									end
-								end
-							end
-						end as estado_de_contrato,
+				case when e.retirement_date is null and (e.z_state_finished = false or e.z_state_finished is null) then 'En proceso'
+                    else 'Expirado'
+                    end as estado_de_contrato,
                     a.date_to as fecha_liquidacion,a.date_from as fecha_inicial,a.date_to as fecha_final,
                     b."name" as compania,coalesce(h."name",'') as sucursal,
-                    c.identification_id as identificacion,c."name" as empleado,
-                    coalesce(i."name",'') as ubicacion_laboral, coalesce(k."name",'') as cuenta_analitica,
+                    e.identification_id as identificacion,c."name" as empleado,
+                    coalesce(i."name",'') as ubicacion_laboral,
+                    coalesce(coalesce(k."name"->>'es_ES',k."name"->>'en_US'),'') as cuenta_analitica,
                     e."sequence" as secuencia_contrato,
-                    g."name" as categoria_regla, f."name" as regla_salarial, f."sequence" as secuencia_regla,coalesce(m."name",'') as entidad,
+                    coalesce(coalesce(g."name"->>'es_ES',g."name"->>'en_US'),'') as categoria_regla,
+                    coalesce(coalesce(f."name"->>'es_ES',f."name"->>'en_US'),'') as regla_salarial, f."sequence" as secuencia_regla,coalesce(m."name",'') as entidad,
                     aa.quantity as unidades, 
                     case when aa.total > 0 then aa.total else 0 end as valor_devengo,
                     case when aa.total <= 0 then aa.total else 0 end as valor_deduccion,
@@ -153,23 +143,26 @@ class hr_accumulated_reports(models.TransientModel):
             inner join hr_payslip_line as aa on a.id = aa.slip_id 
             inner join res_company as b on a.company_id = b.id
             inner join hr_employee as c on a.employee_id = c.id
-            inner join res_partner as d on c.address_home_id = d.id
-            inner join hr_contract as e on a.contract_id = e.id
+            inner join res_partner as d on c.work_contact_id   = d.id
+            inner join hr_version as e on a.version_id = e.id
             inner join hr_salary_rule as f on aa.salary_rule_id = f.id 
             inner join hr_salary_rule_category as g on f.category_id = g.id
             left join zue_res_branch as h on c.branch_id = h.id
-            left join res_partner as i on c.address_id = i.id            
-            left join account_analytic_account as k on a.analytic_account_id  = k.id
+            left join res_partner as i on c.work_contact_id  = i.id            
+            --left join account_analytic_account as k on a.analytic_account_id  = k.id
+            left join account_analytic_account as k on a.analytic_distribution = to_jsonb(json_build_object(k.id, 100))
             left join hr_employee_entities as l on aa.entity_id = l.id
             left join res_partner as m on l.partner_id = m.id 
-            %s          
+            {query_where}          
             UNION ALL
            Select 'ACUMULADOS' as estructura,'SLIP/00000' as liquidacion,'' as estado_de_liquidacion,'Tabla de acumulados' as descripcion,'' as contrato,'' as estado_de_contrato,
                     a."date" as fecha_liquidacion,a."date" as fecha_inicial,a."date" as fecha_final,
                     c."name" as compania,coalesce(h."name",'') as sucursal,
-                    b.identification_id as identificacion,b."name" as empleado,
-                    coalesce(i."name",'') as ubicacion_laboral, coalesce(k."name",'') as cuenta_analitica,
-                    '' as secuencia_contrato,g."name" as categoria_regla, f."name" as regla_salarial, f."sequence" as secuencia_regla,'' as entidad,
+                    hc.identification_id as identificacion,b."name" as empleado,
+                    coalesce(i."name",'') as ubicacion_laboral,
+                    coalesce(coalesce(k."name"->>'es_ES',k."name"->>'en_US'),'') as cuenta_analitica,
+                    '' as secuencia_contrato,coalesce(coalesce(g."name"->>'es_ES',g."name"->>'en_US'),'') as categoria_regla,
+                    coalesce(coalesce(f."name"->>'es_ES',f."name"->>'en_US'),'') as regla_salarial, f."sequence" as secuencia_regla,'' as entidad,
                     1 as unidades, 
                     case when a.amount > 0 then a.amount else 0 end as valor_devengo,
                     case when a.amount <= 0 then a.amount else 0 end as valor_deduccion,
@@ -178,19 +171,20 @@ class hr_accumulated_reports(models.TransientModel):
             from hr_accumulated_payroll as a 
             inner join hr_employee as b on a.employee_id = b.id 
             inner join res_company as c on b.company_id = c.id
-            inner join res_partner as d on b.address_home_id = d.id
+            inner join res_partner as d on b.work_contact_id = d.id
             inner join hr_salary_rule as f on a.salary_rule_id = f.id 
             inner join hr_salary_rule_category as g on f.category_id = g.id
             left join zue_res_branch as h on b.branch_id = h.id
-            left join res_partner as i on b.address_id = i.id     
-            left join hr_contract as hc on hc.employee_id = b.id and hc.state = 'open'       
-            left join account_analytic_account as k on hc.analytic_account_id  = k.id
-            %s
+            left join res_partner as i on b.work_contact_id  = i.id     
+            left join hr_version as hc on hc.employee_id = b.id and hc.contract_date_start <= '{date_to}' and (contract_date_end is null or contract_date_end >= '{date_from}' or ('{date_to}' <= hc.retirement_date))      
+            --left join account_analytic_account as k on hc.analytic_account_id  = k.id
+            left join account_analytic_account as k on hc.analytic_distribution = to_jsonb(json_build_object(k.id, 100))
+            {query_where_accumulated}
             ) as a
             order by a.fecha_liquidacion,a.fecha_inicial,a.fecha_final,a.compania,a.sucursal, a.empleado, a.secuencia_regla           
-            ''' % (query_where,query_where_accumulated)
-        self._cr.execute(query_report)
-        result_query = self._cr.dictfetchall()
+            '''
+        self.env.cr.execute(query_report)
+        result_query = self.env.cr.dictfetchall()
 
         # Generar EXCEL
         filename = f'Reporte Acumulados {str(self.initial_year)}-{str(self.initial_month)} hasta {str(self.final_year)}-{str(self.final_month)}.xlsx'
@@ -239,7 +233,7 @@ class hr_accumulated_reports(models.TransientModel):
                 if str(type(row)).find('date') > -1:
                     sheet.write_datetime(aument_rows, aument_columns, row, date_format)
                 else:
-                    sheet.write(aument_rows, aument_columns, row)
+                    sheet.write(aument_rows, aument_columns, str(row))
                 #Ajustar tamaño columna
                 sheet.set_column(aument_columns, aument_columns, width)
                 aument_columns = aument_columns + 1

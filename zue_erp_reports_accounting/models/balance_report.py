@@ -6,10 +6,6 @@ from pytz import timezone
 import pandas as pd
 import base64
 import io
-import psutil
-import logging
-
-_logger = logging.getLogger(__name__)
 
 class account_balance_report_filters(models.TransientModel):
     _name = "account.balance.report.filters"
@@ -55,8 +51,8 @@ class account_balance_report_filters(models.TransientModel):
         ('1', 'Por Cuenta Contable'),
         ('2', 'Por Cuenta Contable - Tercero'),
         ('2.1', 'Por Tercero - Cuenta Contable'),
-        ('3', 'Por Cuenta Contable – Cuenta Analítica'),
-        ('3.1', 'Por Cuenta Analítica - Cuenta Contable')
+        #('3', 'Por Cuenta Contable – Cuenta Analítica'),
+        #('3.1', 'Por Cuenta Analítica - Cuenta Contable')
     ], string='Tipo de balance', required=True, default='1')
     #Filtros
     #--Cuentas
@@ -73,15 +69,6 @@ class account_balance_report_filters(models.TransientModel):
     ], string='Nivel')
     # --Terceros
     filter_partner_ids = fields.Many2many('res.partner', string="Terceros")
-    # --Cuentas Analíticas
-    filter_account_analytic_group_ids = fields.Many2many('account.analytic.group', string="Cuentas analíticas mayores")
-    filter_account_analytic_ids = fields.Many2many('account.analytic.account', string="Cuentas analíticas terminales")
-    filter_show_only_terminal_account_analytic = fields.Boolean(string='Mostrar solo cuentas analíticas terminales')
-    filter_higher_level_analytic = fields.Selection([
-        ('1', '1'), ('2', '2'), ('3', '3'),
-        ('4', '4'), ('5', '5'), ('6', '6'),
-        ('7', '7'), ('8', '8'), ('9', '9')
-    ], string='Nivel Analítico')
     # --Diarios
     filter_account_journal_ids = fields.Many2many('account.journal', string="Diarios Excluidos")
     #Cierre de año
@@ -92,14 +79,13 @@ class account_balance_report_filters(models.TransientModel):
     #Html
     preview = fields.Html('Reporte Preview')
 
-    def name_get(self):
-        result = []
+    @api.depends('modality', 'type_balance', 'ano_filter', 'month_filter')
+    def _compute_display_name(self):
         for record in self:
-            modality_txt = 'PERIODO' if self.modality == '1' else 'ANUAL' if self.modality == '2' else 'RANGO DE PERIODOS'
-            type_balance_txt = dict(self._fields['type_balance'].selection).get(self.type_balance)
-            name_get = f'Balance {modality_txt.lower()} {str(self.ano_filter)}-{self.month_filter} {type_balance_txt}'
-            result.append((record.id, name_get))
-        return result
+            modality_txt = 'PERIODO' if record.modality == '1' else 'ANUAL' if record.modality == '2' else 'RANGO DE PERIODOS'
+            type_balance_txt = dict(self._fields['type_balance'].selection).get(record.type_balance)
+            display_name = f'Balance {modality_txt.lower()} {str(record.ano_filter)}-{record.month_filter} {type_balance_txt}'
+            record.display_name = display_name
 
     def generate_report_html(self):
         html = self.generate_report(1)
@@ -152,21 +138,17 @@ class account_balance_report_filters(models.TransientModel):
         #-----------------------------Variable necesarias para generar el reporte-------------------------------------
         date_start = datetime.strptime(date_start, '%Y-%m-%d').date()
         date_end = datetime.strptime(date_end, '%Y-%m-%d').date() - timedelta(days=1)
+        company_root_id = self.company_id.root_id.id
+        # account.code_store en Odoo 19 se indexa por compania raiz.
+        # Se deja fallback a compania activa por compatibilidad con datos legados.
+        account_code_expr = f"coalesce(c.code_store->>'{company_root_id}', c.code_store->>'{self.company_id.id}')"
         #-----------------------------Filtros necesarios para obtener la información----------------------------------
-        query_where = f"where b.company_id = {self.company_id.id} and a.parent_state = 'posted' and a.date <= '{date_end}' "
+        query_where = f"where b.company_id = {self.company_id.id} and a.company_id = {self.company_id.id} and a.parent_state = 'posted' and a.date <= '{date_end}' "
         #domain = [('company_id', '=', self.company_id.id), ('parent_state', '=', 'posted'), ('date', '<=', date_end)]
         # --Terceros
         if len(self.filter_partner_ids) > 0 and self.type_balance in ('2','2.1'):
             query_where += f"\n and a.partner_id in {str(self.filter_partner_ids.ids).replace('[', '(').replace(']', ')')} "
             #domain.append(('partner_id', 'in', self.filter_partner_ids.ids))
-        # --Cuentas Analíticas
-        if len(self.filter_account_analytic_ids) > 0 and self.type_balance in ('3', '3.1'):
-            query_where += f"\n and a.analytic_account_id in {str(self.filter_account_analytic_ids.ids).replace('[', '(').replace(']', ')')} "
-            #domain.append(('analytic_account_id', 'in', self.filter_account_analytic_ids.ids))
-        if len(self.filter_account_analytic_group_ids) > 0:  # Cuentas analiticas mayores
-            raise ValidationError('El filtro de cuentas analiticas mayores esta en desarrollo.')
-            #No se puede hacer con la nueva versión del balance que es con consulta SQL
-            #domain.append(('analytic_account_id.group_id', 'child_of', self.filter_account_analytic_group_ids.ids))
         # --Excluir Diarios
         if len(self.filter_account_journal_ids) > 0:
             query_where += f"\n and a.journal_id not in {str(self.filter_account_journal_ids.ids).replace('[', '(').replace(']', ')')} "
@@ -184,9 +166,9 @@ class account_balance_report_filters(models.TransientModel):
             i = 1
             for filter in self.filter_account_group_ids:
                 if i == j:
-                    query_where += f"c.code like '{filter.code_prefix_start}%'"
+                    query_where += f"{account_code_expr} like '{filter.code_prefix_start}%'"
                 else:
-                    query_where += f"c.code like '{filter.code_prefix_start}%' or "
+                    query_where += f"{account_code_expr} like '{filter.code_prefix_start}%' or "
                 i += 1
             query_where += ')'
             #domain.append(('account_id.group_id', 'child_of', self.filter_account_group_ids.ids))
@@ -233,258 +215,148 @@ class account_balance_report_filters(models.TransientModel):
                         df_name_columns_account.append('Nivel ' + str(i))
                         df_name_columns_account.append('Nivel ' + str(i) + ' Descripción')
                         df_name_columns_account.append('Nivel ' + str(i) + ' Tercero')
-                        df_name_columns_account.append('Nivel ' + str(i) + ' Cuenta Analítica')
                     i += 1
                 else:
                     have_parent = False
         query_select_levels_group = ''
         query_from_levels_group = ''
         for q_group in lst_levels_group:
-            query_select_levels_group += f'c{q_group[0]}.code_prefix_start as "{q_group[1]}", c{q_group[0]}."name" as "{q_group[2]}",'
-            query_select_levels_group += f''' ' ' as "Nivel {q_group[0]} Tercero", ' ' as "Nivel {q_group[0]} Cuenta Analítica", '''
+            query_select_levels_group += f'c{q_group[0]}.code_prefix_start as "{q_group[1]}", c{q_group[0]}."name"->>\'en_US\' as "{q_group[2]}",'
+            query_select_levels_group += f''' ' ' as "Nivel {q_group[0]} Tercero", '''
             query_from_levels_group += f'left join account_group as c{q_group[0]} on c{q_group[0]-1}.parent_id = c{q_group[0]}.id '
         query_select_levels_group = '--NO AHI GRUPOS DE CUENTA' if query_select_levels_group == '' else query_select_levels_group
         query_from_levels_group = '--NO AHI GRUPOS DE CUENTA' if query_from_levels_group == '' else query_from_levels_group
-        # Obtener la cantidad de niveles existentes en el plan de cuentas analiticas
-        obj_account_analytic_account = self.env['account.analytic.account'].search([])
-        lst_levels_group_analytic = []
-        lst_levels_group_analytic_str = []
-        df_name_columns_analytic = []
-        for account_analytic in obj_account_analytic_account:
-            j = 1
-            have_parent_analytic = True
-            group_analytic_account = account_analytic.group_id
-            while have_parent_analytic:
-                if group_analytic_account.parent_id:
-                    name_in_dict_analytic = (j,'Nivel Analítica ' + str(j))
-                    group_analytic_account = group_analytic_account.parent_id
-                    if not name_in_dict_analytic in lst_levels_group_analytic:
-                        lst_levels_group_analytic.append(name_in_dict_analytic)
-                        lst_levels_group_analytic_str.append('Nivel Analítica ' + str(j))
-                        df_name_columns_analytic.append('Nivel Analítica ' + str(j))
-                    j += 1
-                else:
-                    have_parent_analytic = False
-        query_select_levels_group_analytic = ''
-        query_from_levels_group_analytic = ''
-        for q_group_analytic in lst_levels_group_analytic:
-            str_empty = 'Cuenta Analítica Vacia'
-            query_select_levels_group_analytic += f'''coalesce(e{q_group_analytic[0]}."name",'{str_empty}') as "Nivel Analítica {q_group_analytic[0]}", '''
-            query_from_levels_group_analytic += f'left join account_analytic_group as e{q_group_analytic[0]} on e{q_group_analytic[0]-1}.parent_id = e{q_group_analytic[0]}.id '
-        query_select_levels_group_analytic = '--NO AHI GRUPOS DE CUENTA ANALITICA' if query_select_levels_group_analytic == '' else query_select_levels_group_analytic
-        query_from_levels_group_analytic = '--NO AHI GRUPOS DE CUENTA ANALITICA' if query_from_levels_group_analytic == '' else query_from_levels_group_analytic
+        # Un solo account.group por cuenta: misma regla que account.account._compute_account_group (Odoo 19)
+        # para evitar filas duplicadas por padre/hijo que cumplan el rango de prefijos.
+        company_id_for_group = company_root_id
         #--------------QUERY FINAL
-        df_name_columns = df_name_columns_account + ['Nivel 0','Nivel 0 Descripción','Nivel 0 Tercero','Nivel 0 Cuenta Analítica','Cuenta','Descripción','Tercero']
-        df_name_columns = df_name_columns + df_name_columns_analytic
-        df_name_columns = df_name_columns + ['Nivel Analítica 0','Cuenta Analítica','Saldo Anterior','Débito','Crédito','Nuevo Saldo','Total']
-        query = f'''
+        query = f'''with alldata as (
                 Select --Cuenta
                         {query_select_levels_group}
-                        c0.code_prefix_start as "Nivel 0", c0."name" as "Nivel 0 Descripción",
-                        ' ' as "Nivel 0 Tercero", ' ' as "Nivel 0 Cuenta Analítica",
-                        c.code as "Cuenta", c."name" as "Descripción",
+                        c0.code_prefix_start as "Nivel 0", c0."name"->>'en_US' as "Nivel 0 Descripción",
+                        ' ' as "Nivel 0 Tercero",' ' as "Nivel 0 TerceroD",
+                        {account_code_expr} as "Cuenta", c."name"->>'en_US' as "Descripción",
                         --Tercero
-                        case when {str(self.filter_not_accumulated_partner).lower()} = true and '{self.type_balance}' in ('2','2.1') and c.z_not_disaggregate_partner_balance_test then 'Z_NO_PERMITE_DESAGREGAR_POR_TERCERO' 
-                            else coalesce(case when d.vat is not null then d.vat || ' | ' || d.display_name
-                                                else d.display_name end,'Tercero Vacio') end as "Tercero",
-                        --Cuenta Analítica
-                        {query_select_levels_group_analytic}
-                        coalesce(e0."name",'Cuenta Analítica Vacia') as "Nivel Analítica 0",
-                        coalesce(e."name",'Cuenta Analítica Vacia') as "Cuenta Analítica",
+                        case when {str(self.filter_not_accumulated_partner).lower()} = true and '{self.type_balance}' in ('2','2.1') and c.z_not_disaggregate_partner_balance_test then 'Z_NO_PERMITE_DESAGREGAR_POR_TERCERO'
+                            else coalesce(case when d.vat is not null then d.vat || ' | ' || d.name
+                                                else d.name end,'Tercero Vacio') end as "Tercero",
                         --Valores
                         case when a."date" < '{date_start}' then a.debit - a.credit
                             else 0 end as "Saldo Anterior",
                         case when a.date >= '{date_start}' and a.date <= '{date_end}' then a.debit
-                            else 0 end as "Débito",	
+                            else 0 end as "Débito",
                         case when a.date >= '{date_start}' and a.date <= '{date_end}' then a.credit
                             else 0 end as "Crédito",
-                        (case when a."date" < '{date_start}' then a.debit - a.credit else 0 end) + ((case when a.date >= '{date_start}' and a.date <= '{date_end}' then a.debit else 0 end) - (case when a.date >= '{date_start}' and a.date <= '{date_end}' then a.credit else 0 end)) as "Nuevo Saldo",                            
-                        '--TOTAL--' as "Total"
+                        (case when a."date" < '{date_start}' then a.debit - a.credit else 0 end) + ((case when a.date >= '{date_start}' and a.date <= '{date_end}' then a.debit else 0 end) - (case when a.date >= '{date_start}' and a.date <= '{date_end}' then a.credit else 0 end)) as "Nuevo Saldo"
                 From account_move_line as a
-                inner join account_move as b on a.move_id = b.id 
+                inner join account_move as b on a.move_id = b.id
                 inner join account_account as c on a.account_id = c.id
-                left join res_partner as d on a.partner_id = d.id  
-                left join account_analytic_account as e on a.analytic_account_id = e.id
-                left join account_group as c0 on c.group_id = c0.id
+                left join res_partner as d on a.partner_id = d.id
+                left join lateral (
+                    select ag.id, ag.parent_id, ag.code_prefix_start, ag.name
+                    from account_group as ag
+                    where ag.company_id = {company_id_for_group}
+                      and ag.code_prefix_start <= left({account_code_expr}, char_length(ag.code_prefix_start))
+                      and ag.code_prefix_end >= left({account_code_expr}, char_length(ag.code_prefix_end))
+                    order by char_length(ag.code_prefix_start) desc, ag.id
+                    limit 1
+                ) as c0 on true
                 {query_from_levels_group}
-                left join account_analytic_group as e0 on e.group_id = e0.id      
-                {query_from_levels_group_analytic}  
                 {query_where}
-        '''
-        #self.env.cr.execute(query)
-        #lst_info = self.env.cr.fetchall()
-        # ----------------------------------------DATAFRAMES PANDAS--------------------------------------------------
-        lst_levels_group, lst_levels_group_analytic = lst_levels_group_str, lst_levels_group_analytic_str
-        # Obtener estadísticas de memoria
-        mem = psutil.virtual_memory()
-        # Mostrar la memoria disponible en bytes, megabytes y porcentaje
-        _logger.info(f"Memoria disponible: {mem.available} bytes")
-        _logger.info(f"Memoria disponible: {mem.available / (1024 ** 2):.2f} MB")
-        _logger.info(f"Porcentaje de memoria disponible: {mem.percent}%")
-        chunks_report_original = pd.read_sql(query, self._cr.connection, chunksize=250000)  # self.env.cr.connection
-        # df_report_original = pd.concat(
-        #    pd.read_sql(query, self._cr.connection, chunksize=250000),
-        #    ignore_index=True
-        # )
-        # Recorrer y procesar cada chunk
-        chunk_count = 0
-        df_report_finally = False
-        df_total = False
-        for df_report_original in chunks_report_original:
-            chunk_count += 1
-            df_report_original = df_report_original.set_axis(df_name_columns, axis=1)
-            if len(df_report_original) == 0:
-                raise ValidationError(_('No se encontro información con los filtros seleccionados, por favor verificar.'))
-            _logger.info(f'(CREAR DATAFRAME CHUNK {str(chunk_count)}) BALANCE DE PRUEBA - CANT REGISTROS:{str(len(df_report_original))}.')
-            _logger.info(f'(USO DE PANDAS PARA AGRUPAR LA INFORMACIÓN) BALANCE DE PRUEBA.')
-            lst_levels_group = sorted(lst_levels_group,reverse=True)
-            lst_levels_group_analytic = sorted(lst_levels_group_analytic, reverse=True)
-            #Agrupar información de acuerdo al tipo de balance
-            lst_dataframes,lst_group_by,lst_levels_group_by,lst_levels_group_analytic_by = [],[],[],[]
-            cant_levels = len(lst_levels_group) + 2 #La cantidad de niveles encontrados + los 2 por defecto
-            cant_levels_analytic = len(lst_levels_group_analytic) + 2  # La cantidad de niveles encontrados + los 2 por defecto
-            filter_higher_level = int(self.filter_higher_level) if self.filter_higher_level else 9999
-            filter_higher_level_analytic = int(self.filter_higher_level_analytic) if self.filter_higher_level_analytic else 9999
-            if self.type_balance == '1': # Balance por Cuenta Contable
-                lst_group_by = ['Cuenta', 'Descripción']
-                lst_levels_group_by = ['Nivel 0', 'Nivel 0 Descripción']
-            elif self.type_balance == '2': # Balance por Cuenta Contable - Tercero
-                lst_group_by = ['Cuenta', 'Descripción','Tercero']
-                lst_levels_group_by = ['Nivel 0', 'Nivel 0 Descripción','Nivel 0 Tercero']
-            elif self.type_balance == '2.1': # Balance por Tercero - Cuenta Contable
-                lst_group_by = ['Tercero','Cuenta', 'Descripción']
-                lst_levels_group_by = ['Tercero','Nivel 0', 'Nivel 0 Descripción']
-            elif self.type_balance == '3': # Balance por Cuenta Contable – Cuenta Analítica
-                lst_group_by = ['Cuenta', 'Descripción', 'Cuenta Analítica']
-                lst_levels_group_by = ['Nivel 0', 'Nivel 0 Descripción', 'Nivel 0 Cuenta Analítica']
-                lst_levels_group_analytic_by = ['Cuenta', 'Descripción', 'Nivel Analítica 0']
-            elif self.type_balance == '3.1': # Balance por Cuenta Analítica - Cuenta Contable
-                lst_group_by = ['Cuenta Analítica','Cuenta', 'Descripción']
-                top_analytic = lst_levels_group_analytic[filter_higher_level_analytic-1] if filter_higher_level_analytic <= len(lst_levels_group_analytic) else 'Nivel Analítica 0'
-                top_analytic = 'Cuenta Analítica' if filter_higher_level_analytic > len(lst_levels_group_analytic)+1 else top_analytic
-                lst_levels_group_by = [top_analytic,'Nivel 0', 'Nivel 0 Descripción']
-                lst_levels_group_analytic_by = ['Nivel Analítica 0','Cuenta', 'Descripción']
-            df_report = df_report_original.groupby(by=lst_group_by, group_keys=False,as_index=False).sum()
-            # Agrupar información niveles cuentas
-            lst_agroup_higher_level = []
-            if self.filter_show_only_terminal_accounts == False:
-                if filter_higher_level >= cant_levels - 1:
-                    lst_levels_group_by_dinamic = []
-                    if self.type_balance in ('2', '3') and filter_higher_level == cant_levels - 1:
-                        for index, group in enumerate(lst_levels_group_by):
-                            lst_agroup_higher_level.append(lst_levels_group_by[index])
-                            level_replace = lst_levels_group_by[index] if lst_levels_group_by[index] != 'Nivel 0 Tercero' else 'Tercero'
-                            level_replace = level_replace if lst_levels_group_by[index] != 'Nivel 0 Cuenta Analítica' else 'Cuenta Analítica'
-                            lst_levels_group_by_dinamic.append(level_replace)
-                    else:
-                        lst_levels_group_by_dinamic = lst_levels_group_by
-                    df_level_0 = df_report_original.groupby(by=lst_levels_group_by_dinamic, group_keys=False,as_index=False).sum()
-                    lst_dataframes.append(df_level_0)
-                item_level = 1
-                for level in lst_levels_group: #Se recorren los niveles de las cuentas contables y se mayoriza
-                    if filter_higher_level >= item_level:
-                        lst_levels_group_by_dinamic = []
-                        for index, group in enumerate(lst_levels_group_by):
-                            if self.type_balance in ('2','3') and filter_higher_level == item_level:
-                                lst_agroup_higher_level.append(lst_levels_group_by[index].replace('Nivel 0',level))
-                                level_replace = lst_levels_group_by[index].replace('Nivel 0', level) if lst_levels_group_by[index] != 'Nivel 0 Tercero' else 'Tercero'
-                                level_replace = level_replace if lst_levels_group_by[index] != 'Nivel 0 Cuenta Analítica' else 'Cuenta Analítica'
-                                lst_levels_group_by_dinamic.append(level_replace)
-                            else:
-                                lst_levels_group_by_dinamic.append(lst_levels_group_by[index].replace('Nivel 0',level))
-                        df_level = df_report_original.groupby(by=lst_levels_group_by_dinamic, group_keys=False,as_index=False).sum()
-                        lst_dataframes.append(df_level)
-                    item_level += 1
-            # Agrupar información niveles cuentas analíticas cuando el tipo de balance lo requiere
-            lst_agroup_higher_level_analytic = []
-            if self.filter_show_only_terminal_account_analytic == False and self.type_balance in ('3','3.1'):
-                if self.type_balance == '3':
-                    if filter_higher_level >= cant_levels:
-                        lst_dinamic_inherit_account = lst_levels_group_analytic_by
-                    else:
-                        lst_dinamic_inherit_account = [lst_levels_group_by_dinamic[0],lst_levels_group_by_dinamic[1],'Nivel Analítica 0']
-                    if filter_higher_level_analytic >= cant_levels_analytic - 1:
-                        df_level_analytic_0 = df_report_original.groupby(by=lst_dinamic_inherit_account, group_keys=False,
-                                                                as_index=False).sum()
-                        lst_dataframes.append(df_level_analytic_0)
-                    item_level = 1
-                    for level in lst_levels_group_analytic:  # Se recorren los niveles de las cuentas contables y se mayoriza
-                        if filter_higher_level_analytic >= item_level:
-                            lst_levels_group_by_dinamic = []
-                            for index, group in enumerate(lst_dinamic_inherit_account):
-                                lst_levels_group_by_dinamic.append(lst_dinamic_inherit_account[index].replace('Nivel Analítica 0', level))
-                            df_level = df_report_original.groupby(by=lst_levels_group_by_dinamic, group_keys=False,
-                                                                  as_index=False).sum()
-                            lst_dataframes.append(df_level)
-                        item_level += 1
-                else:
-                    if filter_higher_level >= cant_levels:
-                        lst_dinamic_inherit_account = ['Nivel Analítica 0', 'Cuenta', 'Descripción']
-                    else:
-                        lst_dinamic_inherit_account = lst_levels_group_by_dinamic
-                    lst_level_0_group_by_dinamic = ['Nivel Analítica 0', 'Nivel 0 Tercero', 'Nivel 0 Cuenta Analítica']
-                    if filter_higher_level_analytic >= cant_levels_analytic - 1:
-                        if filter_higher_level_analytic == cant_levels_analytic - 1:
-                            lst_level_0_group_by_dinamic = ['Nivel Analítica 0',lst_dinamic_inherit_account[1],lst_dinamic_inherit_account[2]]
+                )'''
+        # Definir agrupaciones a realizar
+        lst_levels_group = sorted(lst_levels_group_str, reverse=True)
+        lst_all_groupby = []
+        lst_group_by, lst_levels_group_by = [], []
+        cant_levels = len(lst_levels_group) + 2  # La cantidad de niveles encontrados + los 2 por defecto
+        filter_higher_level = int(self.filter_higher_level) if self.filter_higher_level else 9999
 
-                        df_level_analytic_0 = df_report_original.groupby(by=lst_level_0_group_by_dinamic, group_keys=False,
-                                                                         as_index=False).sum()
-                        lst_dataframes.append(df_level_analytic_0)
-                    item_level = 1
-                    lst_level_0_group_by_dinamic = ['Nivel Analítica 0', 'Nivel 0 Tercero', 'Nivel 0 Cuenta Analítica']
-                    for level in lst_levels_group_analytic:  # Se recorren los niveles de las cuentas contables y se mayoriza
-                        if filter_higher_level_analytic >= item_level:
-                            lst_levels_group_by_dinamic = []
-                            if filter_higher_level_analytic == item_level:
-                                lst_levels_group_by_dinamic = [level,lst_dinamic_inherit_account[1],lst_dinamic_inherit_account[2]]
-                            else:
-                                for index, group in enumerate(lst_level_0_group_by_dinamic):
-                                    lst_levels_group_by_dinamic.append(lst_level_0_group_by_dinamic[index].replace('Nivel Analítica 0', level))
-                            df_level = df_report_original.groupby(by=lst_levels_group_by_dinamic, group_keys=False,
-                                                                  as_index=False).sum()
-                            lst_dataframes.append(df_level)
-                        item_level += 1
-            #Agrupar por tipo de balance
-            if self.type_balance in ['2','3']:
-                if filter_higher_level >= cant_levels:  # Si es balance con tercero o cuenta analitica se crea la sumatoria de la cuenta contable
-                    df_account = df_report_original.groupby(by=['Cuenta', 'Descripción', 'Nivel 0 Tercero'],group_keys=False,as_index=False).sum()
-                    lst_dataframes.append(df_account)
+        if self.type_balance == '1':  # Balance por Cuenta Contable
+            lst_group_by = ['Cuenta', 'Descripción']
+            lst_levels_group_by = ['Nivel 0', 'Nivel 0 Descripción']
+        elif self.type_balance == '2':  # Balance por Cuenta Contable - Tercero
+            lst_group_by = ['Cuenta', 'Descripción', 'Tercero']
+            lst_levels_group_by = ['Nivel 0', 'Nivel 0 Descripción', 'Nivel 0 Tercero']
+        elif self.type_balance == '2.1':  # Balance por Tercero - Cuenta Contable
+            lst_group_by = ['Tercero', 'Cuenta', 'Descripción']
+            lst_levels_group_by = ['Tercero', 'Nivel 0', 'Nivel 0 Descripción']
+
+        lst_all_groupby.append(lst_group_by)
+        lst_agroup_higher_level = []
+        lst_levels_group_by_dinamic = lst_levels_group_by
+        if self.filter_show_only_terminal_accounts is False:
+            if filter_higher_level >= cant_levels - 1:
+                lst_levels_group_by_dinamic = []
+                if self.type_balance == '2' and filter_higher_level == cant_levels - 1:
+                    for index, group in enumerate(lst_levels_group_by):
+                        lst_agroup_higher_level.append(lst_levels_group_by[index])
+                        level_replace = lst_levels_group_by[index] if lst_levels_group_by[index] != 'Nivel 0 Tercero' else 'Tercero'
+                        lst_levels_group_by_dinamic.append(level_replace)
                 else:
-                    df_account = df_report_original.groupby(by=lst_agroup_higher_level,group_keys=False, as_index=False).sum()
-                    lst_dataframes.append(df_account)
-            if self.type_balance in ['2.1']:  # Si es balance por tercero - cuenta contable, se crea la sumatoria del tercero
-                df_account = df_report_original.groupby(by=['Tercero', 'Nivel 0 Tercero', 'Nivel 0 Cuenta Analítica'],group_keys=False,as_index=False).sum()
-                lst_dataframes.append(df_account)
-            if self.type_balance in ['3.1']:  # Si es balance por cuenta analitica - cuenta contable, se crea la sumatoria de la cuenta analitica
-                df_account = df_report_original.groupby(by=[top_analytic, 'Nivel 0 Tercero', 'Nivel 0 Cuenta Analítica'], group_keys=False,as_index=False).sum()
-                lst_dataframes.append(df_account)
-            #Concatenar dataframes
-            if filter_higher_level >= cant_levels and filter_higher_level_analytic >= cant_levels_analytic:
-                lst_dataframes.append(df_report)
-            columns = lst_group_by + ['Saldo Anterior', 'Débito', 'Crédito', 'Nuevo Saldo']
-            for df in lst_dataframes:
-                df.columns = columns
-                if type(df_report_finally) is bool:
-                    df_report_finally = df
-                else:
-                    df_report_finally = df_report_finally.append(df)
-            try:
-                df_report_finally = df_report_finally.sort_values(by=lst_group_by)
-            except:
-                df_report_finally = df_report_finally.sort_values(by=lst_levels_group_by_dinamic)
-            #Eliminar duplicados para garantizar la información
-            df_report_finally = df_report_finally.groupby(by=lst_group_by, group_keys=False,as_index=False).sum()
-            df_report_finally = df_report_finally.drop_duplicates()
-            #Eliminar filas con todos sus valores en 0
-            df_report_finally = df_report_finally[(df_report_finally['Saldo Anterior'] != 0) | (df_report_finally['Débito'] != 0) | (df_report_finally['Crédito'] != 0) | (df_report_finally['Nuevo Saldo'] != 0)]
-            if self.filter_not_accumulated_partner and self.type_balance in ['2', '2.1']:
-                df_report_finally = df_report_finally[(df_report_finally['Tercero'] != 'Z_NO_PERMITE_DESAGREGAR_POR_TERCERO')]
-            #Dataframe totales
-            if type(df_total) is bool:
-                df_total = df_report_original.groupby(by=['Total'], group_keys=False,as_index=False).sum()
-            else:
-                df_total = df_total.append(df_report_original.groupby(by=['Total'], group_keys=False,as_index=False).sum())
-                df_total = df_total.groupby(by=['Total'], group_keys=False, as_index=False).sum()
+                    lst_levels_group_by_dinamic = lst_levels_group_by
+                lst_all_groupby.append(lst_levels_group_by_dinamic)
+            item_level = 1
+            for level in lst_levels_group:  # Se recorren los niveles de las cuentas contables y se mayoriza
+                if filter_higher_level >= item_level:
+                    lst_levels_group_by_dinamic = []
+                    for index, group in enumerate(lst_levels_group_by):
+                        if self.type_balance == '2' and filter_higher_level == item_level:
+                            lst_agroup_higher_level.append(lst_levels_group_by[index].replace('Nivel 0', level))
+                            level_replace = lst_levels_group_by[index].replace('Nivel 0', level) if lst_levels_group_by[index] != 'Nivel 0 Tercero' else 'Tercero'
+                            lst_levels_group_by_dinamic.append(level_replace)
+                        else:
+                            lst_levels_group_by_dinamic.append(lst_levels_group_by[index].replace('Nivel 0', level))
+                    lst_all_groupby.append(lst_levels_group_by_dinamic)
+                item_level += 1
+        # Agrupar por tipo de balance
+        if self.type_balance == '2':
+            if filter_higher_level >= cant_levels:  # Sumatoria de cuenta contable
+                lst_all_groupby.append(['Cuenta', 'Descripción', 'Nivel 0 Tercero'])
+            elif lst_agroup_higher_level:
+                lst_all_groupby.append(lst_agroup_higher_level)
+        if self.type_balance == '2.1':  # Sumatoria del tercero
+            lst_all_groupby.append(['Tercero', 'Nivel 0 Tercero', 'Nivel 0 TerceroD'])
+
+        if filter_higher_level < cant_levels and lst_group_by in lst_all_groupby:
+            lst_all_groupby.remove(lst_group_by)
+
+        # ----------------------------------------DATAFRAMES PANDAS--------------------------------------------------
+        fields_sum = ',sum("Saldo Anterior") as "Saldo Anterior",sum("Débito") as "Débito",sum("Crédito") as "Crédito",sum("Nuevo Saldo") as "Nuevo Saldo"'
+        query_total = query + f'''
+            select '--TOTAL--' as "Total"{fields_sum}
+            from alldata
+        '''
+        def _df_from_sql(sql_query):
+            self.env.cr.execute(sql_query)
+            rows = self.env.cr.fetchall()
+            columns = [col[0] for col in (self.env.cr.description or [])]
+            return pd.DataFrame(rows, columns=columns)
+
+        df_total = _df_from_sql(query_total)
+        query_report = query
+        for index, group_query in enumerate(lst_all_groupby):
+            str_group_query = ','.join([f'"{field}"' for field in group_query])
+            query_group = f'''
+                select {str_group_query}{fields_sum}
+                from alldata
+                group by {str_group_query}
+            '''
+            if index != 0:
+                query_report += '\n UNION '
+            query_report += '\n ' + query_group
+
+        # Ejecutar query agregado
+        df_report_finally = _df_from_sql(query_report)
+        if len(df_report_finally) == 0:
+            raise ValidationError(_('No se encontro información con los filtros seleccionados, por favor verificar.'))
+        df_report_finally = df_report_finally.sort_values(by=lst_all_groupby[0])
+        lst_cols_values = ['Saldo Anterior', 'Débito', 'Crédito', 'Nuevo Saldo']
+        df_report_finally = df_report_finally.groupby(by=lst_all_groupby[0], group_keys=False, as_index=False)[lst_cols_values].sum()
+        df_report_finally = df_report_finally.drop_duplicates()
+        df_report_finally = df_report_finally[(df_report_finally['Saldo Anterior'] != 0) | (df_report_finally['Débito'] != 0) | (df_report_finally['Crédito'] != 0) | (df_report_finally['Nuevo Saldo'] != 0)]
+        if self.filter_not_accumulated_partner and self.type_balance in ['2', '2.1']:
+            df_report_finally = df_report_finally[(df_report_finally['Tercero'] != 'Z_NO_PERMITE_DESAGREGAR_POR_TERCERO')]
+        df_total = df_total[['Total', 'Saldo Anterior', 'Débito', 'Crédito', 'Nuevo Saldo']]
         #-------------------------------------------Crear Excel------------------------------------------------------
         if return_html == 0:
             modality_txt = 'PERIODO' if self.modality == '1' else 'ANUAL' if self.modality == '2' else 'RANGO DE PERIODOS'
@@ -493,9 +365,9 @@ class account_balance_report_filters(models.TransientModel):
             stream = io.BytesIO()
             writer = pd.ExcelWriter(stream, engine='xlsxwriter')
             writer.book.filename = stream
-            columns = lst_group_by + ['Saldo Anterior', 'Débito', 'Crédito', 'Nuevo Saldo']
+            columns = lst_all_groupby[0] + ['Saldo Anterior', 'Débito', 'Crédito', 'Nuevo Saldo']
             df_report_finally.to_excel(writer, sheet_name='Balance', float_format="%.2f", columns=columns, header=columns, index=False, startrow=4, startcol=0)
-            df_total.to_excel(writer, sheet_name='Balance', float_format="%.2f", columns=['Total','Saldo Anterior', 'Débito', 'Crédito', 'Nuevo Saldo'], header=False, index=False, startrow=len(df_report_finally)+8, startcol=len(lst_group_by) - 1)
+            df_total.to_excel(writer, sheet_name='Balance', float_format="%.2f", columns=['Total','Saldo Anterior', 'Débito', 'Crédito', 'Nuevo Saldo'], header=False, index=False, startrow=len(df_report_finally)+8, startcol=len(lst_all_groupby[0]) - 1)
             worksheet = writer.sheets['Balance']
             # Agregar formatos al excel
             cell_format_title = writer.book.add_format({'bold': True, 'align': 'center'})
@@ -507,10 +379,10 @@ class account_balance_report_filters(models.TransientModel):
             cell_format_text_generate.set_font_size(10)
             cell_format_text_generate.set_font_color('#1F497D')
             #Encabezado
-            cant_columns = (len(lst_group_by) - 1) + 4
+            cant_columns = (len(lst_all_groupby[0]) - 1) + 4
             text_generate = 'Generado por: \n %s \nFecha: \n %s %s \nTipo de balance: \n %s' % (
-                                self.env.user.name, datetime.now(timezone(self.env.user.tz)).date(),
-                                datetime.now(timezone(self.env.user.tz)).time(), type_balance_txt)
+                                self.env.user.name, datetime.now().date(),
+                                datetime.now().time(), type_balance_txt)
             worksheet.merge_range(0, 0, 0, cant_columns - 2, self.company_id.name, cell_format_title)
             worksheet.merge_range(1, 0, 1, cant_columns - 2, self.company_id.company_registry, cell_format_title)
             worksheet.merge_range(0, cant_columns - 1, 3, cant_columns, text_generate,cell_format_text_generate)
@@ -520,7 +392,7 @@ class account_balance_report_filters(models.TransientModel):
             position_initial = 0
             for c in columns:
                 size = len(c)
-                size_tmp = max(len(str(j)) for j in df_report_original[c])
+                size_tmp = max(len(str(j)) for j in df_report_finally[c]) if len(df_report_finally) > 0 else size
                 size = size if size >= size_tmp else size_tmp
 
                 format_align = writer.book.add_format({'align': 'left'})
@@ -531,7 +403,7 @@ class account_balance_report_filters(models.TransientModel):
                     worksheet.set_column(position_initial, position_initial, size + 10,format_align)
                 position_initial +=1
             # Guardar excel
-            writer.save()
+            writer.close()
 
             self.write({
                 'excel_file': base64.encodebytes(stream.getvalue()),
@@ -548,21 +420,21 @@ class account_balance_report_filters(models.TransientModel):
             return action
         # -------------------------------------------Crear HTML------------------------------------------------------
         else:
-            columns = lst_group_by + ['Saldo Anterior', 'Débito', 'Crédito', 'Nuevo Saldo']
+            columns = lst_all_groupby[0] + ['Saldo Anterior', 'Débito', 'Crédito', 'Nuevo Saldo']
             sizes = []
             for c in columns:
                 size = len(c)
-                size_tmp = max(len(str(j)) for j in df_report_original[c])
+                size_tmp = max(len(str(j)) for j in df_report_finally[c]) if len(df_report_finally) > 0 else size
                 size = size if size >= size_tmp else size_tmp
                 size = size*15 if size*15 <= 500 else 500
                 sizes.append(size)
 
-            columns = lst_group_by + ['Saldo Anterior', 'Débito', 'Crédito', 'Nuevo Saldo']
+            columns = lst_all_groupby[0] + ['Saldo Anterior', 'Débito', 'Crédito', 'Nuevo Saldo']
             modality_txt = 'PERIODO' if self.modality == '1' else 'ANUAL' if self.modality == '2' else 'RANGO DE PERIODOS'
             type_balance_txt = dict(self._fields['type_balance'].selection).get(self.type_balance)
             text_generate = 'Generado por: %s <br/> Fecha: %s %s <br/> Tipo de balance: %s' % (
-                self.env.user.name, datetime.now(timezone(self.env.user.tz)).date(),
-                datetime.now(timezone(self.env.user.tz)).time(), type_balance_txt)
+                self.env.user.name, datetime.now().date(),
+                datetime.now().time(), type_balance_txt)
 
             html = '''
                     <div class="d-flex bd-highlight">                        

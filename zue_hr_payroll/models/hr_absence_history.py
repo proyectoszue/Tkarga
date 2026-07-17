@@ -13,15 +13,16 @@ class hr_absence_history(models.Model):
     employee_identification = fields.Char('Identificación empleado')
     description = fields.Char(string='Descripción')
 
-    @api.model
-    def create(self, vals):
-        if vals.get('employee_identification'):
-            obj_employee = self.env['hr.employee'].search(
-                [('company_id','=',self.env.company.id),('identification_id', '=', vals.get('employee_identification'))])
-            vals['employee_id'] = obj_employee.id
-        if vals.get('employee_id'):
-            obj_employee = self.env['hr.employee'].search([('company_id','=',self.env.company.id),('id', '=', vals.get('employee_id'))])
-            vals['employee_identification'] = obj_employee.identification_id
+    @api.model_create_multi
+    def create(self, values_list):
+        for vals in values_list:
+            if vals.get('employee_identification'):
+                obj_employee = self.env['hr.employee'].search(
+                    [('identification_id', '=', vals.get('employee_identification'))], limit=1)
+                vals['employee_id'] = obj_employee.id
+            if vals.get('employee_id'):
+                obj_employee = self.env['hr.employee'].search([('id', '=', vals.get('employee_id'))], limit=1)
+                vals['employee_identification'] = obj_employee.identification_id
 
-        res = super(hr_absence_history, self).create(vals)
+        res = super(hr_absence_history, self).create(values_list)
         return res

@@ -1,0 +1,16 @@
+<!-- Vista de certificados -->
+<odoo>
+	<data>
+		<record id="l10n_co_reports_retention_report_wizard_form_inherit" model="ir.ui.view">
+			<field name="name">l10n_co_reports_retention_report_wizard_form_inherit</field>
+			<field name="model">l10n_co_reports.retention_report.wizard</field>
+			<field name="priority">50</field>
+			<field name="inherit_id" ref="l10n_co_reports.retention_report_wizard_form"/>
+			<field name="arch" type="xml">
+                <xpath expr="//field[@name='article']" position="after">
+                    <field name="z_save_documents"/>
+				</xpath>
+			</field>
+		</record>
+    </data>
+</odoo>

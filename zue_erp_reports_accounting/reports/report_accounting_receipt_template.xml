@@ -4,48 +4,72 @@
         <t t-call="web.html_container">
             <t t-foreach="inside_foreach_docs or docs" t-as="o">
                 <t t-call="web.basic_layout">
-                    <div class="header">
-                        <div style="display: -webkit-box;-webkit-box-pack: center;justify-content: center;">
-                            <div class="p-2 flex-grow-1 bd-highlight"
-                                 style="-webkit-box-flex: 1;-webkit-flex: 1;flex: 1;">
-                                <img t-if="o.company_id.logo" t-att-src="image_data_uri(o.company_id.logo)"
-                                     style="height: 80px; width:160px" alt="Logo"/>
-                            </div>
-                            <div class="p-2 bd-highlight" style="-webkit-box-flex: 1;-webkit-flex: 1;flex: 1;">
-                                <br/>
-                                <h4>
-                                    <strong>
+                    <div class="custom_header_receipt" style="width: 100%; margin-bottom: 15px; border: 0 !important;">
+                        <table style="width: 100%; border-collapse: separate !important; border-spacing: 0 !important; border: 0 !important;">
+                            <tr style="border: 0 !important;">
+                                <td style="width: 30%; vertical-align: middle; text-align: left; border: 0 !important; outline: none !important;">
+                                    <img t-if="o.company_id.logo"
+                                         t-att-src="image_data_uri(o.company_id.logo)"
+                                         style="max-height: 70px; max-width: 150px; border: 0 !important;"
+                                         alt="Logo"/>
+                                </td>
+                                <td style="width: 70%; vertical-align: middle; text-align: center; border: 0 !important; outline: none !important;">
+                                    <div style="font-size: 18px; font-weight: bold; line-height: 1.2; border: 0 !important;">
                                         <span t-esc="o.company_id.name"/>
-                                    </strong>
-                                </h4>
-                                <h4>
-                                    <strong>
+                                    </div>
+                                    <div style="font-size: 15px; font-weight: bold; line-height: 1.2; margin-top: 4px; border: 0 !important;">
                                         <span t-esc="o.company_id.vat"/>
-                                    </strong>
-                                </h4>
-                            </div>
-                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        </table>
                     </div>
                     <div style="display: -webkit-box;-webkit-box-pack: center;justify-content: center;">
                         <div class="flex-grow-1 bd-highlight" style="-webkit-box-flex: 1;-webkit-flex: 1;flex: 1;border: 2px solid black;">
+                            <t t-set="bank_line" t-value="o.line_ids.filtered(lambda l: (l.account_id.account_type or '').startswith('asset_'))"/>
                             <strong>Nombre Tercero:
-                                <span t-field="o.partner_id.name"/>
+                                <t t-if="len(bank_line) > 0">
+                                    <span t-field="bank_line[0].partner_id.name"/>
+                                </t>
+                                <t t-else="">
+                                    <span t-field="o.line_ids[0].partner_id.name"/>
+                                </t>
                             </strong>
                             <br/>
                             <strong>Nit Tercero:
-                                <span t-field="o.partner_id.vat"/>
+                                <t t-if="len(bank_line) > 0">
+                                    <span t-field="bank_line[0].partner_id.vat"/>
+                                </t>
+                                <t t-else="">
+                                    <span t-field="o.line_ids[0].partner_id.vat"/>
+                                </t>
                             </strong>
                             <br/>
                             <strong>Dirección:
-                                <span t-field="o.partner_id.street"/>
+                                <t t-if="len(bank_line) > 0">
+                                    <span t-field="bank_line[0].partner_id.street"/>
+                                </t>
+                                <t t-else="">
+                                    <span t-field="o.line_ids[0].partner_id.street"/>
+                                </t>
                             </strong>
                             <br/>
                             <strong>Télefono:
-                                <span t-field="o.partner_id.phone"/>
+                                <t t-if="len(bank_line) > 0">
+                                    <span t-field="bank_line[0].partner_id.phone"/>
+                                </t>
+                                <t t-else="">
+                                    <span t-field="o.line_ids[0].partner_id.phone"/>
+                                </t>
                             </strong>
                             <br/>
                             <strong>Ciudad:
-                                <span t-field="o.partner_id.x_city.name"/>
+                                <t t-if="len(bank_line) > 0">
+                                    <span t-field="bank_line[0].partner_id.city_id.name"/>
+                                </t>
+                                <t t-else="">
+                                    <span t-field="o.line_ids[0].partner_id.city_id.name"/>
+                                </t>
                             </strong>
                             <br/>
                         </div>

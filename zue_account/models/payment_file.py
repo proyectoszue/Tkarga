@@ -9,22 +9,24 @@ import io
 import xlsxwriter
 import requests
 import math
+import zipfile
+from io import BytesIO
 
 #---------------------------Pagos-------------------------------#
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
     x_property_account_advance_id = fields.Many2one('account.account', company_dependent=True, string='Cuenta anticipo',tracking=True)
-    
+
 class AccountPayment(models.Model):
     _inherit = 'account.payment'
-    
-    x_payment_file = fields.Boolean(string='Reportado en archivo de pago')    
+
+    x_payment_file = fields.Boolean(string='Reportado en archivo de pago')
     x_description = fields.Text(string='Descripción')
     x_is_advance = fields.Boolean(string=' ¿Es Anticipo?')
 
-    def _prepare_move_line_default_vals(self, write_off_line_vals=None):
-        line_vals_list = super(AccountPayment, self)._prepare_move_line_default_vals(write_off_line_vals)
+    def _prepare_move_line_default_vals(self, write_off_line_vals=None, force_balance=None):
+        line_vals_list = super(AccountPayment, self)._prepare_move_line_default_vals(write_off_line_vals, force_balance)
         self.ensure_one()
         if self.x_is_advance and self.partner_id.x_property_account_advance_id:
             for line in line_vals_list:
@@ -36,31 +38,72 @@ class AccountPayment(models.Model):
         process = super(AccountPayment, self).action_post()
         for record in self:
             if record.x_is_advance and record.partner_id.x_property_account_advance_id:
-                obj_account_move_line = self.env['account.move.line'].search([('payment_id', '=', record.id)]) 
+                obj_account_move_line = self.env['account.move.line'].search([('payment_id', '=', record.id)])
                 for line in obj_account_move_line:
                     if line.account_id.id == record.partner_id.property_account_payable_id.id:
                         line.write({'account_id':record.partner_id.x_property_account_advance_id.id})
 
         return process
 
+    def download_masive_invoices_pdf(self):
+        zip_buffer = BytesIO()  # Buffer en memoria para el archivo ZIP
+        filename = 'Recibos_de_pago.zip'
+
+        # Eliminar archivos anteriores con el mismo nombre
+        self.env['ir.attachment'].sudo().search([('res_model', '=', False), ('name', '=', filename)]).unlink()
+
+        # Crear un archivo ZIP en memoria
+        with zipfile.ZipFile(zip_buffer, 'a', zipfile.ZIP_DEFLATED) as zip_file:
+            for record in self:
+                report_action = self.env.ref('account.action_report_payment_receipt')
+                pdf_content, _ = report_action._render_qweb_pdf([record.id])
+
+                if pdf_content:
+                    # Convertir el contenido del reporte a base64
+                    pdf_file = BytesIO(pdf_content)
+                    # Agregar el archivo PDF al ZIP con un nombre adecuado
+                    name = record.name.replace("/","_")
+                    zip_file.writestr(f'{name}.pdf', pdf_file.read())
+
+        # Volver al inicio del buffer para leer el contenido del ZIP
+        zip_buffer.seek(0)
+        zip_content = zip_buffer.read()
+
+        zip_attachment_vals = {
+            'name': filename,
+            'type': 'binary',
+            'datas': base64.b64encode(zip_content),
+            'store_fname': filename,
+        }
+        zip_attachment = self.env['ir.attachment'].create(zip_attachment_vals)
+
+        # Devolver una acción para abrir o descargar el archivo ZIP
+        return {
+            'type': 'ir.actions.act_url',
+            'url': f"/web/content/{zip_attachment.id}?download=true",
+            'target': 'self'
+        }
+
 #---------------------------Archivo de pago-------------------------------#
 class Zue_Payment_File(models.Model):
     _name = 'zue.payment.file'
     _description = 'Archivo de pago'
     _rec_name = 'description'
-    
+
     type_file = fields.Selection([
                                         ('1', 'Archivo Plano'),
-                                        ('2', 'Excel')     
-                                    ], string='Archivo a generar', required=True, default='1')  
+                                        ('2', 'Excel')
+                                    ], string='Archivo a generar', required=True, default='1')
     format_file = fields.Selection([
                                         ('bancolombia', 'Bancolombia SAP'),
                                         ('bancolombia_pab', 'Bancolombia PAB'),
                                         ('occired', 'Occired'),
-                                        ('bogota', 'Banco Bogota')
+                                        ('bogota', 'Banco Bogota'),
+                                        ('popular', 'Banco Popular'),
+                                        ('credicorp', 'Credicorp')
                                     ], string='Tipo de plano', required=True, default='bancolombia')
     journal_id = fields.Many2one('account.journal', string='Diario', required=True)
-    vat_payer = fields.Char(string='NIT Pagador', store=True, readonly=True, related='journal_id.company_id.partner_id.vat', change_default=True)
+    vat_payer = fields.Char(string='NIT Pagador', store=True, related='journal_id.company_id.partner_id.vat')
     payment_type = fields.Selection([
                                         ('220', 'Pago a Proveedores')
                                         # ('225', 'Pago de Nómina'),
@@ -70,69 +113,68 @@ class Zue_Payment_File(models.Model):
                                         # ('320', 'Credipago a Proveedores'),
                                         # ('325', 'Credipago Nómina'),
                                         # ('820', 'Pago Nómina Efectivo'),
-                                        # ('920', 'Pago Proveedores Efectivo')                                        
+                                        # ('920', 'Pago Proveedores Efectivo')
                                     ], string='Tipo de pago', required=True, default='220')
     application = fields.Selection([
                                         ('I', 'Inmediata'),
                                         ('M', 'Medio día'),
-                                        ('N', 'Noche')                                      
+                                        ('N', 'Noche')
                                     ], string='Aplicación', required=True)
     sequence = fields.Char(string='Secuencia de envío', required=True)
-    account_debit = fields.Char(string='Nro. Cuenta a debitar', store=True, readonly=True, related='journal_id.bank_account_id.acc_number', change_default=True)
+    account_debit = fields.Char(string='Nro. Cuenta a debitar', store=True, related='journal_id.bank_account_id.acc_number', change_default=True)
     account_type_debit = fields.Selection(related='journal_id.bank_account_id.type_account', string='Tipo de cuenta a debitar', required=True)
     description = fields.Char(string='Descripción del pago', required=True)
     payment_date = fields.Date(string='Fecha de Pago', required=True, default=fields.Date.today())
-    
-    payment_ids = fields.Many2many('account.payment', string='Pagos', required=True, domain="[('state', '=', 'posted'), ('x_payment_file', '=', False), ('journal_id', '=', journal_id), '|', ('partner_type', '=', 'supplier'), ('x_is_advance', '=', True)]")
-    
+
+    payment_ids = fields.Many2many('account.payment', string='Pagos', required=True, domain="[('state', '=', 'paid'), ('x_payment_file', '=', False), ('journal_id', '=', journal_id), '|', ('partner_type', '=', 'supplier'), ('x_is_advance', '=', True)]")
+
     excel_file = fields.Binary('Excel file')
     excel_file_name = fields.Char('Excel name')
-    
+
     txt_file = fields.Binary('TXT file')
     txt_file_name = fields.Char('TXT name')
-    
-    def name_get(self):
-        result = []
-        for record in self:            
-            result.append((record.id, "Archivo de Pago - ".format(record.description)))
-        return result
-    
+
+    @api.depends('description')
+    def _compute_display_name(self):
+        for record in self:
+            record.display_name = "Archivo de Pago - {}".format(record.description)
+
     #Retonar columnas
     def get_columns_encab(self):
         columns = 'NIT PAGADOR,TIPO DE PAGO,APLICACIÓN,SECUENCIA DE ENVÍO,NRO CUENTA A DEBITAR,TIPO DE CUENTA A DEBITAR,DESCRIPCIÓN DEL PAGO'
         _columns = columns.split(",")
         return _columns
-    
+
     def get_columns_detail(self):
         columns = 'Tipo Documento Beneficiario,Nit Beneficiario,Nombre Beneficiario,Tipo Transaccion,Código Banco,No Cuenta Beneficiario,Email,Documento Autorizado,Referencia,OficinaEntrega,ValorTransaccion,Fecha de aplicación'
         _columns = columns.split(",")
         return _columns
-    
+
     #Ejecutar consulta SQL
     def run_sql(self):
-        
-        #Fecha actual        
+
+        #Fecha actual
         date_today = fields.Date.context_today(self)
-            
+
         #Obtener Pagos
-        payments_ids = ''        
+        payments_ids = ''
         for payment_id in self.payment_ids:
             id = payment_id.id
             if payments_ids == '':
                 payments_ids = str(id)
             else:
                 payments_ids = payments_ids+','+str(id)
-            
+
         #raise ValidationError(_(payments_ids))
-        
+
         #Consulta final
         query = '''
-            Select distinct coalesce(case when b.x_document_type = '12' then '4' --Tarjeta de Identidad
-				 when b.x_document_type = '13' then '1' --Cedula de ciudadania
-				 when b.x_document_type = '22' then '2' --Cedula de extranjeria
-				 when b.x_document_type = '31' then '3' --NIT
-				 when b.x_document_type = '41' then '5' --Pasaporte
-				 when b.x_document_type = '44' then '44' --Documento de identificación extranjero persona jurídica
+            Select distinct coalesce(case when lat.z_code_dian = '12' then '4' --Tarjeta de Identidad
+				 when lat.z_code_dian = '13' then '1' --Cedula de ciudadania
+				 when lat.z_code_dian = '22' then '2' --Cedula de extranjeria
+				 when lat.z_code_dian = '31' then '3' --NIT
+				 when lat.z_code_dian = '41' then '5' --Pasaporte
+				 when lat.z_code_dian = '44' then '44' --Documento de identificación extranjero persona jurídica
                     else '' end,'') as TipoDocumentoBeneficiario,
                     coalesce(b.vat,'') as NitBeneficiario,
                     coalesce(substring(b."name" from 1 for 30),'') as NombreBeneficiario,
@@ -150,15 +192,16 @@ class Zue_Payment_File(models.Model):
             From account_payment a
             inner join account_move am on a.move_id = am.id
             inner join res_partner b on a.partner_id = b.id
+            left join l10n_latam_identification_type lat on b.l10n_latam_identification_type_id = lat.id
             left join res_partner_bank c on a.partner_bank_id = c.id 
             left join res_bank d on c.bank_id = d.id
             left join res_partner_bank f on b.id = f.partner_id and f.is_main = true and f.company_id = %s 
             left join res_bank g on f.bank_id = g.id
             where a.id in (%s) and (partner_type = 'supplier' or x_is_advance = true)
         ''' % (self.env.company.id,payments_ids)
-        
-        self._cr.execute(query)
-        _res = self._cr.dictfetchall()
+
+        self.env.cr.execute(query)
+        _res = self.env.cr.dictfetchall()
         return _res
 
     def validate_info_bank(self,vat,name,bank):
@@ -172,29 +215,29 @@ class Zue_Payment_File(models.Model):
         }
         for payment in self.payment_ids:
             payment.update(values_update)
-        
+
     #Lógica de bancolombia SAP
-    def get_excel_bancolombia(self):        
-        
+    def get_excel_bancolombia(self):
+
         if self.payment_type != '220':
-            raise ValidationError(_('El tipo de pago seleccionado no esta desarrollado por ahora, seleccione otro por favor.'))     
-        
+            raise ValidationError(_('El tipo de pago seleccionado no esta desarrollado por ahora, seleccione otro por favor.'))
+
         result_columns_encab = self.get_columns_encab()
         result_columns_detail = self.get_columns_detail()
         result_query = self.run_sql()
-        
+
         #Logica Archivo Plano
         if self.type_file == '1':
             filename= 'Archivo de Pago '+str(self.description)+'.txt'
             filler = ' '
-            
+
             def left(s, amount):
                 return s[:amount]
-            
+
             def right(s, amount):
                 return s[-amount:]
-            
-            #Encabezado - parte 1          
+
+            #Encabezado - parte 1
             tipo_registro_encab = '1'
             vat_payer = str(self.vat_payer).split("-")
             nit_entidad_originadora = right('0'*10+vat_payer[0],10)
@@ -203,20 +246,20 @@ class Zue_Payment_File(models.Model):
             name_company = left(self.journal_id.company_id.name+16*filler,16)
             clase_de_transaccion = self.payment_type
             descripcion_proposito = left(self.description+10*filler,10)
-            
+
             date_today = fields.Date.context_today(self)
             fecha_transmision = right('0000'+str(date_today.year),2)+right('00'+str(date_today.month),2)+right('00'+str(date_today.day),2)
-            
-            secuencia_envio = left(self.sequence+filler,1) 
-            fecha_aplicacion = fecha_transmision
+
+            secuencia_envio = left(self.sequence+filler,1)
+            fecha_aplicacion = right('0000'+str(self.payment_date.year),2)+right('00'+str(self.payment_date.month),2)+right('00'+str(self.payment_date.day),2)
             numero_registro = 'NumRegs'
             sumatoria_debitos = '0'*12
             sumatoria_creditos = 'SumatoriaCreditos'
             cuenta_cliente = right('00000000000'+str(self.account_debit).replace("-",""),11)
             tipo_cuenta = 'S' if self.account_type_debit == 'A' else 'D'
-            
+
             encab_content_txt = '''%s%s%s%s%s%s%s%s%s%s%s%s%s''' % (tipo_registro_encab,nit_entidad_originadora,name_company,clase_de_transaccion,descripcion_proposito,fecha_transmision,secuencia_envio,fecha_aplicacion,numero_registro,sumatoria_debitos,sumatoria_creditos,cuenta_cliente,tipo_cuenta)
-            
+
             #Detalle
             det_content_txt = ''''''
             tipo_registro_det = '6'
@@ -224,25 +267,25 @@ class Zue_Payment_File(models.Model):
             numero_fax = 15*filler
             numero_identificacion_autorizado = 15*filler
             filler_three = 27*filler
-            
+
             columns = 0
             cant_detalle = 0
             total_valor_transaccion = 0.0
             #Agregar query
-            for query in result_query: 
+            for query in result_query:
                 cant_detalle = cant_detalle + 1
                 for row in query.values():
                     if columns == 0:
                         tipo_documento = row
                     if columns == 1:
-                        nit_beneficiario = right('0'*15+row,15) 
-                    if columns == 2: 
-                        nombre_beneficiario = left(row+18*filler,18) 
+                        nit_beneficiario = right('0'*15+row,15)
+                    if columns == 2:
+                        nombre_beneficiario = left(row+18*filler,18)
                     if columns == 3:
                         tipo_transaccion = right('  '+row,2)
                     if columns == 4:
                         self.validate_info_bank(nit_beneficiario,nombre_beneficiario,row)
-                        banco_destino = right('000000000'+row,9) 
+                        banco_destino = right('000000000'+row,9)
                     if columns == 5:
                         no_cuenta_beneficiario = right('0'*17+row,17)
                     if columns == 6:
@@ -258,36 +301,36 @@ class Zue_Payment_File(models.Model):
                         total_valor_transaccion = total_valor_transaccion + parte_entera
                         parte_entera = str(parte_entera).split(".")
                         parte_decimal = str(parte_decimal).split(".")
-                        valor_transaccion = right('0'*10+str(parte_entera[0]),10) #+left(str(parte_decimal[1])+'00',2)  
+                        valor_transaccion = right('0'*10+str(parte_entera[0]),10) #+left(str(parte_decimal[1])+'00',2)
                     if columns == 11:
                         fecha_aplicacion = row
-                        
+
                     columns = columns + 1
                 columns = 0
-                
+
                 content_line = '''%s%s%s%s%s%s%s%s%s%s''' % (tipo_registro_det,nit_beneficiario,nombre_beneficiario,banco_destino,no_cuenta_beneficiario,indicador_lugar,tipo_transaccion,valor_transaccion,referencia,filler)
                 if cant_detalle == 1:
                     det_content_txt = content_line
                 else:
                     det_content_txt = det_content_txt +'\n'+ content_line
-                
-            #Encabezado - parte 2            
+
+            #Encabezado - parte 2
             encab_content_txt = encab_content_txt.replace("NumRegs", right('000000000'+str(cant_detalle),6))
             parte_decimal, parte_entera = math.modf(total_valor_transaccion)
             parte_entera = str(parte_entera).split(".")
             parte_decimal = str(parte_decimal).split(".")
             encab_content_txt = encab_content_txt.replace("SumatoriaCreditos", right('0'*12+str(parte_entera[0]),12)) # +left(str(parte_decimal[1])+'00',2)
-            
+
             #Unir Encabezado y Detalle
-            content_txt = encab_content_txt +'\n'+ det_content_txt            
-            
+            content_txt = encab_content_txt +'\n'+ det_content_txt
+
             #Actualizar pagos
             self.update_payments()
 
-            #Crear archivo        
+            #Crear archivo
             self.write({
-                'txt_file': base64.encodestring((content_txt).encode()),
-                #base64.encodestring((content).encode()).decode().strip()
+                'txt_file': base64.encodebytes((content_txt).encode()),
+                #base64.encodebytes((content).encode()).decode().strip()
                 'txt_file_name': filename,
             })
 
@@ -298,16 +341,16 @@ class Zue_Payment_File(models.Model):
                         'target': 'self',
                     }
             return action
-        
-        
+
+
         #Logica Excel
-        if self.type_file == '2':        
+        if self.type_file == '2':
             filename= 'Archivo de Pago '+str(self.description)+'.xlsx'
             stream = io.BytesIO()
             book = xlsxwriter.Workbook(stream, {'in_memory': True})
             sheet = book.add_worksheet('FORMATOPAB')
 
-            #Estilos - https://xlsxwriter.readthedocs.io/format.html 
+            #Estilos - https://xlsxwriter.readthedocs.io/format.html
 
             ##Encabezado - Encab
             cell_format_header = book.add_format({'bold': True, 'font_color': 'white'})
@@ -315,17 +358,17 @@ class Zue_Payment_File(models.Model):
             cell_format_header.set_font_name('Calibri')
             cell_format_header.set_font_size(11)
             cell_format_header.set_align('center')
-            cell_format_header.set_align('vcenter')        
+            cell_format_header.set_align('vcenter')
 
             ##Detalle - Encab
             cell_format_det = book.add_format()
             cell_format_det.set_font_name('Calibri')
-            cell_format_det.set_font_size(11)   
+            cell_format_det.set_font_size(11)
 
             ###Campos númericos monetarios
             number_format = book.add_format({'num_format': '#,##'})
             number_format.set_font_name('Calibri')
-            number_format.set_font_size(11)        
+            number_format.set_font_size(11)
 
             ###Campos tipo número
             number = book.add_format()
@@ -335,11 +378,11 @@ class Zue_Payment_File(models.Model):
 
             #Agregar columnas - Encab
             aument_columns = 0
-            for columns in result_columns_encab:            
+            for columns in result_columns_encab:
                 sheet.write(0, aument_columns, columns, cell_format_header)
                 aument_columns = aument_columns + 1
 
-            #Agregar fila - Encab        
+            #Agregar fila - Encab
             vat_payer = str(self.vat_payer).split("-")
             sheet.write(1, 0, vat_payer[0], number)
             sheet.write(1, 1, self.payment_type, number)
@@ -351,14 +394,14 @@ class Zue_Payment_File(models.Model):
 
             #Agregar columnas - Detail
             aument_columns = 0
-            for columns in result_columns_detail:            
+            for columns in result_columns_detail:
                 sheet.write(2, aument_columns, columns, cell_format_header)
                 aument_columns = aument_columns + 1
 
             #Agregar query
             aument_columns = 0
             aument_rows = 3
-            for query in result_query: 
+            for query in result_query:
                 for row in query.values():
                     if aument_columns == 2 or aument_columns == 8:
                         row = str(row).replace("/","")
@@ -366,7 +409,7 @@ class Zue_Payment_File(models.Model):
                         row = str(row).replace(",","")
                         row = str(row).replace(":","")
                         row = str(row).replace(";","")
-                    
+
                     if aument_columns == 10:
                         sheet.write(aument_rows, aument_columns, row, number_format)
                     else:
@@ -383,14 +426,14 @@ class Zue_Payment_File(models.Model):
             sheet.set_column('G:G', 50)
             sheet.set_column('H:L', 25)
 
-            book.close()            
+            book.close()
 
             #Actualizar pagos
             self.update_payments()
 
-            #Crear archivo        
+            #Crear archivo
             self.write({
-                'excel_file': base64.encodestring(stream.getvalue()),
+                'excel_file': base64.encodebytes(stream.getvalue()),
                 'excel_file_name': filename,
             })
 
@@ -401,29 +444,29 @@ class Zue_Payment_File(models.Model):
                         'target': 'self',
                     }
             return action
-    
+
     #Lógica de bancolombia PAB
-    def get_excel_bancolombia_pab(self):        
-        
+    def get_excel_bancolombia_pab(self):
+
         if self.payment_type != '220':
-            raise ValidationError(_('El tipo de pago seleccionado no esta desarrollado por ahora, seleccione otro por favor.'))     
-        
+            raise ValidationError(_('El tipo de pago seleccionado no esta desarrollado por ahora, seleccione otro por favor.'))
+
         result_columns_encab = self.get_columns_encab()
         result_columns_detail = self.get_columns_detail()
         result_query = self.run_sql()
-        
+
         #Logica Archivo Plano
         if self.type_file == '1':
             filename= 'Archivo de Pago '+str(self.description)+'.txt'
             filler = ' '
-            
+
             def left(s, amount):
                 return s[:amount]
-            
+
             def right(s, amount):
                 return s[-amount:]
-            
-            #Encabezado - parte 1          
+
+            #Encabezado - parte 1
             tipo_registro_encab = '1'
             vat_payer = str(self.vat_payer).split("-")
             nit_entidad_originadora = right('0'*15+vat_payer[0],15)
@@ -434,16 +477,16 @@ class Zue_Payment_File(models.Model):
             date_today = fields.Date.context_today(self)
             fecha_transmision = right('0000'+str(date_today.year),4)+right('00'+str(date_today.month),2)+right('00'+str(date_today.day),2)
             secuencia_envio = right('00'+self.sequence,2)
-            fecha_aplicacion = fecha_transmision
+            fecha_aplicacion = right('0000'+str(self.payment_date.year),4)+right('00'+str(self.payment_date.month),2)+right('00'+str(self.payment_date.day),2)
             num_registros = 'NumRegs' # Mas adelante se reeemplaza con el valor correcto
             sum_debitos = 17*'0'
             sum_creditos = 'SumCreditos' # Mas adelante se reeemplaza con el valor correcto
             cuenta_cliente = right(11*'0'+str(self.account_debit).replace("-",""),11)
             tipo_cuenta = self.account_type_debit
             filler_two = filler*149
-            
+
             encab_content_txt = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s' % (tipo_registro_encab,nit_entidad_originadora,application,filler_one,clase_de_transaccion,descripcion_proposito,fecha_transmision,secuencia_envio,fecha_aplicacion,num_registros,sum_debitos,sum_creditos,cuenta_cliente,tipo_cuenta,filler_two)
-            
+
             #Detalle
             det_content_txt = ''
             tipo_registro_det = '6'
@@ -451,25 +494,25 @@ class Zue_Payment_File(models.Model):
             numero_fax = 15*filler
             numero_identificacion_autorizado = 15*filler
             filler_three = 27*filler
-            
+
             columns = 0
             cant_detalle = 0
             total_valor_transaccion = 0.0
             #Agregar query
-            for query in result_query: 
+            for query in result_query:
                 cant_detalle = cant_detalle + 1
                 for row in query.values():
                     if columns == 0:
                         tipo_documento = row
                     if columns == 1:
-                        nit_beneficiario = left(row+15*filler,15) 
-                    if columns == 2: 
-                        nombre_beneficiario = left(row+30*filler,30) 
+                        nit_beneficiario = left(row+15*filler,15)
+                    if columns == 2:
+                        nombre_beneficiario = left(row+30*filler,30)
                     if columns == 3:
                         tipo_transaccion = right('  '+row,2)
                     if columns == 4:
                         self.validate_info_bank(nit_beneficiario, nombre_beneficiario, row)
-                        banco_destino = right('000000000'+row,9) 
+                        banco_destino = right('000000000'+row,9)
                     if columns == 5:
                         no_cuenta_beneficiario = left(row+' '*17,17)
                     if columns == 6:
@@ -485,37 +528,37 @@ class Zue_Payment_File(models.Model):
                         parte_decimal, parte_entera = math.modf(row)
                         parte_entera = str(parte_entera).split(".")
                         parte_decimal = str(parte_decimal).split(".")
-                        valor_transaccion = right('0'*15+str(parte_entera[0]),15)+'00'#left(str(parte_decimal[0])+'00',2)  
+                        valor_transaccion = right('0'*15+str(parte_entera[0]),15)+'00'#left(str(parte_decimal[0])+'00',2)
                     if columns == 11:
                         fecha_aplicacion = row
-                        
+
                     columns = columns + 1
                 columns = 0
-                
+
                 content_line = '%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s' % (tipo_registro_det,nit_beneficiario,nombre_beneficiario,banco_destino,no_cuenta_beneficiario,indicador_lugar,tipo_transaccion,valor_transaccion,fecha_aplicacion,referencia,tipo_documento,oficina_entrega,numero_fax,email,numero_identificacion_autorizado,filler_three)
-                
+
                 if cant_detalle == 1:
                     det_content_txt = content_line
                 else:
                     det_content_txt = det_content_txt +'\n'+ content_line
-                
-            #Encabezado - parte 2            
+
+            #Encabezado - parte 2
             encab_content_txt = encab_content_txt.replace("NumRegs", right(6*'0'+str(cant_detalle),6))
             parte_decimal, parte_entera = math.modf(total_valor_transaccion)
             parte_entera = str(parte_entera).split(".")
             parte_decimal = str(parte_decimal).split(".")
             encab_content_txt = encab_content_txt.replace("SumCreditos", right('0'*15+str(parte_entera[0]),15)+'00')#left(str(parte_decimal[0])+'00',2)
-            
+
             #Unir Encabezado y Detalle
-            content_txt = encab_content_txt +'\n'+ det_content_txt            
-            
+            content_txt = encab_content_txt +'\n'+ det_content_txt
+
             #Actualizar pagos
             self.update_payments()
 
-            #Crear archivo        
+            #Crear archivo
             self.write({
-                'txt_file': base64.encodestring((content_txt).encode()),
-                #base64.encodestring((content).encode()).decode().strip()
+                'txt_file': base64.encodebytes((content_txt).encode()),
+                #base64.encodebytes((content).encode()).decode().strip()
                 'txt_file_name': filename,
             })
 
@@ -528,43 +571,43 @@ class Zue_Payment_File(models.Model):
             return action
 
         #Logica Excel
-        if self.type_file == '2':        
+        if self.type_file == '2':
             raise ValidationError(_('El formato Bancolombia PAB no posee vista de excel.'))
 
     #Lógica de occired
-    def get_excel_occired(self):        
-        
+    def get_excel_occired(self):
+
         if self.payment_type != '220':
-            raise ValidationError(_('El tipo de pago seleccionado no esta desarrollado por ahora, seleccione otro por favor.'))     
-        
+            raise ValidationError(_('El tipo de pago seleccionado no esta desarrollado por ahora, seleccione otro por favor.'))
+
         result_columns_encab = self.get_columns_encab()
         result_columns_detail = self.get_columns_detail()
         result_query = self.run_sql()
-        
+
         #Logica Archivo Plano
         if self.type_file == '1':
             filename= 'Archivo de Pago '+str(self.description)+'.txt'
             filler = ' '
-            
+
             def left(s, amount):
                 return s[:amount]
-            
+
             def right(s, amount):
                 return s[-amount:]
-            
-            #Encabezado - parte 1          
+
+            #Encabezado - parte 1
             tipo_registro_encab = '1'
             consecutivo = '0000'
             date_today = self.payment_date
-            fecha_pago = str(date_today.year)+right('00'+str(date_today.month),2)+right('00'+str(date_today.day),2) 
+            fecha_pago = str(date_today.year)+right('00'+str(date_today.month),2)+right('00'+str(date_today.day),2)
             numero_registro = 'NumRegs'
             valor_total = 'ValTotal'
             cuenta_principal = right(16*'0'+str(self.account_debit).replace("-",""),16)
             identificacion_del_archivo = 6*'0'
-            ceros = 142*'0'            
-         
+            ceros = 142*'0'
+
             encab_content_txt = '''%s%s%s%s%s%s%s%s''' % (tipo_registro_encab,consecutivo,fecha_pago,numero_registro,valor_total,cuenta_principal,identificacion_del_archivo,ceros)
-            
+
             #Detalle
             det_content_txt = ''''''
             tipo_registro_det = '2'
@@ -573,7 +616,7 @@ class Zue_Payment_File(models.Model):
             cant_detalle = 0
             total_valor_transaccion = 0.0
             #Agregar query
-            for query in result_query: 
+            for query in result_query:
                 cant_detalle = cant_detalle + 1
                 consecutivo = right('0000'+str(cant_detalle),4)
                 forma_de_pago = '3' # 1: Pago en Cheque  2: Pago abono a cuenta  - Banco de Occidente  3: Abono a cuenta otras entidades
@@ -581,12 +624,12 @@ class Zue_Payment_File(models.Model):
                     if columns == 0:
                         tipo_documento = row
                     if columns == 1:
-                        nit_beneficiario = right(11*'0'+row,11) 
-                    if columns == 2: 
-                        nombre_beneficiario = left(row+30*filler,30) 
+                        nit_beneficiario = right(11*'0'+row,11)
+                    if columns == 2:
+                        nombre_beneficiario = left(row+30*filler,30)
                     if columns == 3:
                         tipo_transaccion = 'A' if row == '37' else 'A'
-                        tipo_transaccion = 'C' if row == '27' else tipo_transaccion                        
+                        tipo_transaccion = 'C' if row == '27' else tipo_transaccion
                     if columns == 4:
                         self.validate_info_bank(nit_beneficiario, nombre_beneficiario, row)
                         banco_destino = '0'+right(3*'0'+row,3)
@@ -617,23 +660,23 @@ class Zue_Payment_File(models.Model):
                         digito_verificacion = str(row)
                         if str(tipo_documento) == '3':
                             nit_beneficiario = right(11*'0'+str(nit_beneficiario)+str(digito_verificacion),11)
-                        
+
                     columns = columns + 1
                 columns = 0
-                    
+
                 content_line = '''%s%s%s%s%s%s%s%s%s%s%s%s%s''' % (tipo_registro_det,consecutivo,cuenta_principal,nombre_beneficiario,nit_beneficiario,banco_destino,fecha_pago,forma_de_pago,valor_transaccion,no_cuenta_beneficiario,documento_autorizado,tipo_transaccion,referencia)
                 if cant_detalle == 1:
                     det_content_txt = content_line
                 else:
                     det_content_txt = det_content_txt +'\n'+ content_line
-                
-            #Encabezado - parte 2            
+
+            #Encabezado - parte 2
             encab_content_txt = encab_content_txt.replace("NumRegs", right('0000'+str(cant_detalle),4))
             parte_decimal, parte_entera = math.modf(total_valor_transaccion)
             parte_entera = str(parte_entera).split(".")
             parte_decimal = str(parte_decimal).split(".")
             encab_content_txt = encab_content_txt.replace("ValTotal", right(16*'0'+str(parte_entera[0]),16)+'00') #left(str(parte_decimal[1])+'00',2))
-            
+
             #Totales
             tipo_registro_tot = '3'
             secuencia = '9999'
@@ -647,15 +690,15 @@ class Zue_Payment_File(models.Model):
             tot_content_txt = '''%s%s%s%s%s''' % (tipo_registro_tot,secuencia,numero_registro,valor_total,ceros)
 
             #Unir Encabezado, Detalle y Totales
-            content_txt = encab_content_txt +'\n'+ det_content_txt +'\n'+ tot_content_txt            
-            
+            content_txt = encab_content_txt +'\n'+ det_content_txt +'\n'+ tot_content_txt
+
             #Actualizar pagos
             self.update_payments()
 
-            #Crear archivo        
+            #Crear archivo
             self.write({
-                'txt_file': base64.encodestring((content_txt).encode()),
-                #base64.encodestring((content).encode()).decode().strip()
+                'txt_file': base64.encodebytes((content_txt).encode()),
+                #base64.encodebytes((content).encode()).decode().strip()
                 'txt_file_name': filename,
             })
 
@@ -666,10 +709,10 @@ class Zue_Payment_File(models.Model):
                         'target': 'self',
                     }
             return action
-        
-        
+
+
         #Logica Excel
-        if self.type_file == '2':        
+        if self.type_file == '2':
             raise ValidationError(_('El formato Occired no posee vista de excel.'))
 
     # Lógica de bogota
@@ -709,7 +752,7 @@ class Zue_Payment_File(models.Model):
             nombre_entidad = left(self.journal_id.company_id.partner_id.name + 40 * filler, 40)
             nit_empresa = right(11 * '0' + self.vat_payer + '' + str(self.journal_id.company_id.partner_id.x_digit_verification), 11)
             codigo_transaccion = '022'  # 021 pago nomina- TD plus y abono afc #022 pago provedores #023 pago Transferencias
-            cod_ciudad = '0001'  # right(17 * '0' + self.company_id.partner_id.x_city.code, 4)
+            cod_ciudad = '0001'  # right(17 * '0' + self.company_id.partner_id.city_id.z_code_dian, 4)
             fecha_creacion = fecha_pago
             codigo_oficina = '999'
             tipo_identificacion_titular = 'N'
@@ -780,7 +823,7 @@ class Zue_Payment_File(models.Model):
 
                     forma_de_pago = 'A'
                     codigo_oficina = '000'
-                    cod_ciudad = '0001'  # right(4 * '0' +  payslip.employee_id.address_home_id.x_city.code, 4)
+                    cod_ciudad = '0001'  # right(4 * '0' +  payslip.employee_id.work_contact_id.city_id.z_code_dian, 4)
                     espacios = filler * 80
                     cero = '0'
 
@@ -826,8 +869,8 @@ class Zue_Payment_File(models.Model):
 
             # Crear archivo
             self.write({
-                'txt_file': base64.encodestring((content_txt).encode()),
-                # base64.encodestring((content).encode()).decode().strip()
+                'txt_file': base64.encodebytes((content_txt).encode()),
+                # base64.encodebytes((content).encode()).decode().strip()
                 'txt_file_name': filename,
             })
 
@@ -844,6 +887,302 @@ class Zue_Payment_File(models.Model):
         if self.type_file == '2':
             raise ValidationError(_('El formato Banco de Bogota no posee vista de excel.'))
 
+    def get_txt_credicorp(self):
+        if self.payment_type != '220':
+            raise ValidationError(_('El tipo de pago seleccionado no esta desarrollado por ahora, seleccione otro por favor.'))
+
+        result_columns_encab = self.get_columns_encab()
+        result_columns_detail = self.get_columns_detail()
+        result_query = self.run_sql()
+
+        if self.type_file == '1':
+            filename = 'Archivo de Pago ' + str(self.description) + '.txt'
+            filler = ' '
+
+            def left(s, amount):
+                return s[:amount]
+
+            def right(s, amount):
+                return s[-amount:]
+
+            # ----------------------------------Registro de Control----------------------------------
+            #Id_linea
+            tipo_registro_encab = '1'
+            #inicio_conteo
+            inicio_conteo = '0000'
+            #fechas
+            date_today = self.payment_date
+            fecha_pago = str(date_today.year) + right('00' + str(date_today.month), 2) + right('00' + str(date_today.day),2)
+            #remplazo de valores
+            numero_registro = 'NumRegs'
+            valor_total = 'ValorTotalRegs'
+            nit_empresa = right(10 * '0' + self.vat_payer, 10)
+            tipo_cuenta_dispersora = '01'
+            # # Inf Bancaria
+            cuenta_principal = ''
+            tipo_cuenta = ''
+            for journal in self.journal_id:
+                tipo_cuenta = '02' if self.journal_id.bank_account_id.type_account == 'A' else '01'  # 01: Cuenta corriente / 02: Cuenta ahorros
+                cuenta_principal = right(16 * ' ' + str(journal.bank_account_id.acc_number).replace("-", ""), 16)
+            if cuenta_principal == '':
+                raise ValidationError(_('No existe una cuenta bancaria configurada como dispersora de nómina, por favor verificar.'))
+            relleno_encabezado = 136 * '0'
+
+            encab_content_txt = '''%s%s%s%s%s%s%s%s%s''' % (
+                tipo_registro_encab, inicio_conteo, fecha_pago, numero_registro, valor_total, nit_empresa, tipo_cuenta_dispersora, cuenta_principal, relleno_encabezado)
+
+            # ----------------------------------Registro del detalle----------------------------------
+            det_content_txt = ''
+            tipo_registro_det = '2'
+            cant_detalle = 0
+            total_valor_transaccion = 0
+            columns = 0
+            # ajuste
+            coontador_ajuste = '0001'
+
+            for query in result_query:
+                cant_detalle = cant_detalle + 1
+                for row in query.values():
+                    if columns == 0:
+                        nit_empresa = right(10 * '0' + self.vat_payer, 10)
+                    if columns == 1:
+                        nit_beneficiario = right(11 * '0' + row, 11)
+                        relleno = '000000'
+                    if columns == 2:
+                        nombre_beneficiario = left(row + 30 * ' ', 30)
+                    if columns == 3:
+                        fecha_pago = str(date_today.year) + right('00' + str(date_today.month), 2) + right('00' + str(date_today.day), 2)
+                    if columns == 4:
+                        self.validate_info_bank(nit_beneficiario, nombre_beneficiario, row)
+                        banco_destino = right(4 * '0' + row, 4)
+                        tipo_pago = '1'
+                    if columns == 5:
+                        no_cuenta_beneficiario = left(str(row).replace("-", "")+ 16 * ' ', 16)
+                    if columns == 7:
+                        numbers = [temp for temp in row.split("/") if temp.isdigit()]
+                        num_factura = ''
+                        for i in numbers:
+                            num_factura = num_factura + str(i)
+                        num_factura = right('0' * 12 + num_factura, 12)
+                    if columns == 10:
+                        tipo_cuenta = ''
+                        for journal in self.journal_id:
+                            tipo_cuenta = 'A' if self.journal_id.bank_account_id.type_account == 'A' else 'C'
+                        # Obtener valor de transacción
+                        total_valor_transaccion = total_valor_transaccion + round(row,0)
+                        parte_decimal, parte_entera = math.modf(round(row,0))
+                        valor_transaccion = right(15 * '0' + str(round(parte_entera)) + '00', 15)
+                        valor_transaccion_decimal = right(2 * '0' + str(parte_decimal), 2)
+                    columns = columns + 1
+
+                columns = 0
+                content_line = '''%s%s%s%s%s%s%s%s%s%s%s%s%s''' % (
+                    tipo_registro_det, coontador_ajuste, nit_empresa, relleno, nombre_beneficiario, nit_beneficiario, banco_destino, fecha_pago,
+                    tipo_pago,valor_transaccion,no_cuenta_beneficiario,num_factura,tipo_cuenta)
+                if cant_detalle == 1:
+                    det_content_txt = content_line
+                else:
+                    det_content_txt = det_content_txt + '\n' + content_line
+
+            # Reemplazar valores del encabezado
+            encab_content_txt = encab_content_txt.replace("NumRegs", right(4 * '0' + str(cant_detalle), 4))
+            parte_decimal, parte_entera = math.modf(total_valor_transaccion)
+            parte_entera = str(parte_entera).split(".")
+            parte_decimal = str(parte_decimal).split(".")
+            valor_total = right(16 * '0' + str(parte_entera[0]), 16) + '00'  # left(str(parte_decimal[1])+'00',2)
+            encab_content_txt = encab_content_txt.replace("ValorTotalRegs", valor_total)
+            # Unir Encabezado, Detalle y Totales
+            if det_content_txt == '':
+                raise ValidationError(_('No existe información en las liquidaciones seleccionadas, por favor verificar.'))
+
+            content_txt = encab_content_txt + '\n' + det_content_txt
+            total_pagos_line = '3'  # Primero el número 3
+            total_pagos_line += '9999'  # Luego el número 9999
+            total_pagos_line += right(4 * '0' + str(cant_detalle), 4)  # El total de pagos con 4 dígitos
+            total_pagos_line += valor_total  # El total a pagar (ValorTotalRegs)
+            total_pagos_line += '0' * 122  # El relleno de 122 ceros
+
+            content_txt += '\n' + total_pagos_line
+
+            # Actualizar pagos
+            self.update_payments()
+
+            # Crear archivo
+            self.write({
+                'txt_file': base64.encodebytes((content_txt).encode()),
+                # base64.encodebytes((content).encode()).decode().strip()
+                'txt_file_name': filename,
+            })
+
+            action = {
+                'name': 'ArchivoPagos',
+                'type': 'ir.actions.act_url',
+                'url': "web/content/?model=zue.payment.file&id=" + str(
+                    self.id) + "&filename_field=txt_file_name&field=txt_file&download=true&filename=" + self.txt_file_name,
+                'target': 'self',
+            }
+            return action
+
+        # Logica Excel
+        if self.type_file == '2':
+            raise ValidationError(_('El formato Credicorp no posee vista de excel.'))
+
+    def get_excel_popular(self):
+        if self.payment_type != '220':
+            raise ValidationError(_('El tipo de pago seleccionado no esta desarrollado por ahora, seleccione otro por favor.'))
+
+        filename = f'Plano de patrimonio autonomo popular.xlsx'
+        stream = io.BytesIO()
+        book = xlsxwriter.Workbook(stream, {'in_memory': True})
+
+        #Campos númericos monetarios
+        number_format = book.add_format({'num_format': '#,##'})
+        number_format.set_font_name('Calibri')
+        number_format.set_font_size(11)
+
+        # Columnas
+        columns = ['Item', 'No. Factura', 'Tipo de Documento', 'Numero identificación', 'Nombre 1', 'Nombre 2', 'Apellido 1', 'Apellido 2',
+                   'Concepto de pago', 'Valor bruto', 'Valor IVA', 'Rete fuente', 'Rete IVA', 'Rete ICA', 'Valor neto a girar',
+                   'Tipo de pago', 'Banco', 'No Cuenta', 'Tipo']
+        sheet = book.add_worksheet('Patrimonio autonomo popular')
+
+        # Formato para fechas
+        date_format = book.add_format({'num_format': 'dd/mm/yyyy'})
+
+        # Agregar columnas
+        aument_columns = 0
+        for column in columns:
+            sheet.write(0, aument_columns, column)
+            aument_columns = aument_columns + 1
+
+        # Agregar pagos
+        aument_columns = 0
+        aument_rows = 1
+        cont_item = 1
+        for payment in self.payment_ids:
+            #obj_moves_line = self.env['account.move.line'].search([('payment_id', '=', payment.id)])
+            for move in payment.reconciled_bill_ids:#obj_moves_line.move_id:
+                #Item
+                sheet.write(aument_rows, 0, cont_item)
+                sheet.set_column(0, 0, len(str(cont_item)) + 10)
+                #No.Factura
+                sheet.write(aument_rows, 1, move.name)
+                sheet.set_column(1, 1, len(str(move.name)) + 10)
+                # Tipo documento
+                document_type = '01'
+                x_document_type = move.partner_id.x_document_type
+                if x_document_type == '13':
+                    document_type = 'Cédula de ciudadanía'
+                elif x_document_type == '12':
+                    document_type = 'Tarjeta de identidad'
+                elif x_document_type == '22':
+                    document_type = 'Cédula de extranjería'
+                elif x_document_type == '31':
+                    document_type = 'NIT'
+                elif x_document_type == '41':
+                    document_type = 'Pasaporte'
+                else:
+                    raise ValidationError(_('El tercero ' + move.partner_id.name + ' no tiene tipo de documento valido, por favor verificar.'))
+                sheet.write(aument_rows, 2, document_type)
+                sheet.set_column(2, 2, len(str(document_type)) + 10)
+                #No de identificación
+                sheet.write(aument_rows, 3, self.vat_payer)
+                sheet.set_column(3, 3, len(str(self.vat_payer)) + 10)
+                #Primer nombre
+                sheet.write(aument_rows, 4, move.partner_id.x_first_name if move.partner_id.x_first_name!=False else '')
+                sheet.set_column(4, 4, len(str(move.partner_id.x_first_name)) + 10)
+                #Segundo nombre
+                sheet.write(aument_rows, 5, move.partner_id.x_second_name if move.partner_id.x_second_name!=False else '')
+                sheet.set_column(5, 5, len(str(move.partner_id.x_second_name)) + 10)
+                # Primer apellido
+                sheet.write(aument_rows, 6, move.partner_id.x_first_lastname if move.partner_id.x_first_lastname!=False else '')
+                sheet.set_column(6, 6, len(str(move.partner_id.x_first_lastname)) + 10)
+                # Segundo apellido
+                sheet.write(aument_rows, 7, move.partner_id.x_second_lastname if move.partner_id.x_second_lastname!=False else '')
+                sheet.set_column(7, 7, len(str(move.partner_id.x_second_lastname)) + 10)
+                #concepto de pago
+                sheet.write(aument_rows, 8, self.description)
+                sheet.set_column(8, 8, len(str(self.description)) + 10)
+                value_iva = 0
+                valor_rtefte = 0
+                valor_rteiva = 0
+                valor_rteica = 0
+                for line in move.line_ids:
+                    if line.tax_line_id.tax_type.name == 'IVA':
+                        value_iva = line.balance
+                    if line.tax_line_id.tax_type.name == 'ReteRenta':
+                        valor_rtefte = line.balance
+                    if line.tax_line_id.tax_type.name == 'ReteIVA':
+                        valor_rteiva = line.balance
+                    if line.tax_line_id.tax_type.name == 'ReteICA':
+                        valor_rteica = line.balance
+                #Monto antes de impuestos
+                sheet.write(aument_rows, 9, abs(move.amount_untaxed_signed))
+                sheet.set_column(9, 9, len(str(move.amount_untaxed_signed)) + 10)
+                #valor IVA
+                sheet.write(aument_rows, 10, abs(value_iva))
+                sheet.set_column(10, 10, len(str(value_iva)) + 10)
+                #valor retencion en la fuente
+                sheet.write(aument_rows, 11, abs(valor_rtefte))
+                sheet.set_column(11, 11, len(str(valor_rtefte)) + 10)
+                #valor retencion IVA
+                sheet.write(aument_rows, 12, abs(valor_rteiva))
+                sheet.set_column(12, 12, len(str(valor_rteiva)) + 10)
+                #valor retencion ICA
+                sheet.write(aument_rows, 13, abs(valor_rteica))
+                sheet.set_column(13, 13, len(str(valor_rteica)) + 10)
+                #Monto de pues de impuestos
+                sheet.write(aument_rows, 14, abs(move.amount_total_signed))
+                sheet.set_column(14, 14, len(str(move.amount_total_signed)) + 10)
+                #Tipo de pago
+                sheet.write(aument_rows, 15, 'ACH')
+                sheet.set_column(15, 15, len(str('ACH')) + 10)
+                banco = ''
+                cuenta_beneficiario = ''
+                tipo_cuenta = ''
+                for bank in move.partner_id.bank_ids:
+                    if bank.is_main:
+                        banco = bank.bank_id.name
+                        cuenta_beneficiario = bank.acc_number
+                        tipo_cuenta = 'CC' if bank.type_account == 'A' else 'CA'
+                #banco
+                sheet.write(aument_rows, 16, banco)
+                sheet.set_column(16, 16, len(str(banco)) + 10)
+                #No de cuenta beneficiario
+                sheet.write(aument_rows, 17, cuenta_beneficiario)
+                sheet.set_column(17, 17, len(str(cuenta_beneficiario)) + 10)
+                #tipo de cuenta
+                sheet.write(aument_rows, 18, tipo_cuenta)
+                sheet.set_column(18, 18, len(str(tipo_cuenta)) + 10)
+                aument_rows = aument_rows + 1
+                cont_item = cont_item + 1
+        # Convertir en tabla
+        array_header_table = []
+        for i in columns:
+            dict = {'header': i}
+            array_header_table.append(dict)
+
+        sheet.add_table(0, 0, aument_rows - 1, len(columns) - 1, {'style': 'Table Style Medium 2', 'columns': array_header_table})
+        # Guadar Excel
+        book.close()
+
+        # Actualizar pagos
+        self.update_payments()
+
+        # Crear archivo
+        self.write({
+            'excel_file': base64.encodebytes(stream.getvalue()),
+            'excel_file_name': filename,
+        })
+
+        action = {
+            'name': 'Informes pagos',
+            'type': 'ir.actions.act_url',
+            'url': "web/content/?model=zue.payment.file&id=" + str(self.id) + "&filename_field=excel_file_name&field=excel_file&download=true&filename=" + self.excel_file_name,
+            'target': 'self',
+        }
+        return action
+
 
     def get_excel(self):
         if self.format_file == 'bancolombia':
@@ -854,4 +1193,7 @@ class Zue_Payment_File(models.Model):
             return self.get_excel_occired()
         if self.format_file == 'bogota':
             return self.get_excel_bogota()
-
+        if self.format_file == 'popular':
+            return self.get_excel_popular()
+        if self.format_file == 'credicorp':
+            return self.get_txt_credicorp()

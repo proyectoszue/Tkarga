@@ -34,6 +34,7 @@ class AccountMoveReversal(models.TransientModel):
                                                  ('2', 'Anulación de factura electrónica'),
                                                  ('3', 'Rebaja o descuento parcial o total'),
                                                  ('4', 'Ajuste de precio'),
+                                                 ('8', 'Refacturación'),
                                                  ('5', 'Otros')], string='Concepto nota crédito')
     description_code_debit = fields.Selection([('1', 'Intereses'),
                                                ('2', 'Gastos por cobrar'),
@@ -42,7 +43,7 @@ class AccountMoveReversal(models.TransientModel):
     analytic_account_id = fields.Many2one('account.analytic.account', 'Cuenta analítica')
 
     def _prepare_default_reversal(self, move):
-        reverse_date = self.date if self.date_mode == 'custom' else move.date
+        reverse_date = self.date or fields.Date.context_today(self)
         return {
             'ref': _('Reversal of: %(move_name)s, %(reason)s', move_name=move.name, reason=self.reason)
             if self.reason
@@ -52,29 +53,30 @@ class AccountMoveReversal(models.TransientModel):
             'journal_id': self.journal_id.id,
             'invoice_payment_term_id': None,
             'invoice_user_id': move.invoice_user_id.id,
-            'auto_post': True if reverse_date > fields.Date.context_today(self) else False,
+            'auto_post': 'at_date' if reverse_date > fields.Date.context_today(self) else 'no',
             'description_code_credit': self.description_code_credit,
             'description_code_debit': self.description_code_debit,
         }
 
-    def reverse_moves(self):
+    def reverse_moves(self, is_modify=False):
         if self.description_code_debit and not self.journal_id.z_is_debit_note:
             raise ValidationError(_('El diario seleccionado no ha sido marcado como nota débito. Por favor verifique!'))
 
         if self.description_code_credit and not self.journal_id.z_is_credit_note:
             raise ValidationError(_('El diario seleccionado no ha sido marcado como nota crédito. Por favor verifique!'))
 
-        super(AccountMoveReversal, self).reverse_moves()
+        return super(AccountMoveReversal, self).reverse_moves(is_modify=is_modify)
 
 
 class account_move(models.Model):
     _inherit = 'account.move'
 
-    @api.model
-    def create(self, vals):
-        invoice = super(account_move, self).create(vals)
+    @api.model_create_multi
+    def create(self, values_list):
+        invoice_res = super(account_move, self).create(values_list)
 
-        if invoice.move_type in ('out_refund', 'in_refund') and not invoice.journal_id.z_is_credit_note:
-            raise ValidationError(_('El diario seleccionado no ha sido marcado como nota crédito. Por favor verifique!'))
+        for invoice in invoice_res:
+            if invoice.move_type in ('out_refund', 'in_refund') and not invoice.journal_id.z_is_credit_note:
+                raise ValidationError(_('El diario seleccionado no ha sido marcado como nota crédito. Por favor verifique!'))
 
-        return invoice
+        return invoice_res

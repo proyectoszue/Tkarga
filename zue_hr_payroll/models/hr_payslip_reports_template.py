@@ -24,7 +24,11 @@ class hr_payslip_reports_template(models.Model):
     caption = fields.Text(string='Leyenda')
     notes = fields.Text(string='Notas')
     signature_prepared = fields.Boolean('Elaboró')
-    txt_signature_prepared = fields.Char(string='Contacto Elaboró')
+    z_signature_done = fields.Boolean('Estado Hecho', help="Generar reporte con empleado, sucursal y cargo de quien dejó la liquidación en estado hecho")
+    #txt_signature_prepared = fields.Many2one('hr.employee', string='Empleado Elaboró')
+    #z_branch_prepared = fields.Many2one(related='txt_signature_prepared.branch_id', string='Sucursal Elaboró', store=True)
+    z_txt_signature_prepared_contact = fields.Char(string='Contacto Elaboró')
+    z_txt_post_prepared = fields.Char(string='Cargo Elaboró')
     signature_reviewed = fields.Boolean('Revisó')
     txt_signature_reviewed = fields.Char(string='Contacto Revisó')
     signature_approved = fields.Boolean('Aprobó')
@@ -32,12 +36,15 @@ class hr_payslip_reports_template(models.Model):
     signature_employee = fields.Boolean('Empleado')
     txt_signature_employee = fields.Char(string='Contacto Empleado', help='Utilizar $_name_employee para que tome el nombre del empleado')
 
-    _sql_constraints = [
-        ('company_payslip_reports_template', 'UNIQUE (company_id,type_report)', 'Ya existe una configuración de plantilla de este tipo para esta compañía, por favor verificar')
-    ]
+    _company_payslip_reports_template = models.Constraint('UNIQUE (company_id,type_report)', 'Ya existe una configuración de plantilla de este tipo para esta compañía, por favor verificar')
 
-    def name_get(self):
-        result = []
+    @api.depends('type_report','company_id')
+    def _compute_display_name(self):
         for record in self:
-            result.append((record.id, "Plantilla Reporte {} de {}".format(record.type_report.upper(),record.company_id.name)))
-        return result
+            record.display_name = "Plantilla Reporte {} de {}".format(record.type_report.upper(),record.company_id.name)
+
+
+class ResUsers(models.Model):
+    _inherit = 'res.users'
+
+    branch_id = fields.Many2one('zue.res.branch', string="Sucursal")

@@ -8,14 +8,12 @@
             <field name="inherit_id" ref="base.res_partner_view_form_private"/>
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='name']" position="attributes">
-                    <attribute name="attrs">{}</attribute>
                     <attribute name="string">Apellidos-Nombres</attribute>                
                     <attribute name="required">1</attribute>
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/group[1]/group[1]" position="before">
                     <group>
-                        <field name="l10n_latam_identification_type_id" invisible="1"/>
-                        <field name="x_document_type" required="1"/>
+                        <field name="l10n_latam_identification_type_id" required="1"/>
                         <field name="vat" string="N° Identificación" required="1"/>
                         <field name="x_vat_expedition_date" string="Fecha de expedición documento"/>
                         <field name="x_first_name" required="1"/>
@@ -25,26 +23,10 @@
                     </group>
                 </xpath>
                 <xpath expr="//field[@name='street2']" position="attributes">
-                    <attribute name="attrs">{}</attribute>
                     <attribute name="invisible">1</attribute>
                 </xpath>
                 <xpath expr="//field[@name='city']" position="replace">
                     <xpath expr="//field[@name='country_id']" position="move"/>                    
-                </xpath>
-                <xpath expr="//field[@name='state_id']" position="after">
-                    <field name="x_city" placeholder="City" class="o_address_city" domain="[('state_id', '=', state_id)]"/>
-                    <field name="z_neighborhood" placeholder="Barrio" class="o_address_city"/>
-                </xpath>
-                <xpath expr="//field[@name='bank_ids']" position="replace">
-                    <field name="bank_ids">
-                        <tree editable="bottom">
-                            <field name="company_id"/>
-                            <field name="bank_id"/>
-                            <field name="type_account"/>
-                            <field name="acc_number"/>
-                            <field name="is_main"/>
-                        </tree>
-                    </field>
                 </xpath>
                 <xpath expr="//label[@for='street']" position="before">
                     <span class="o_form_label o_td_label">
@@ -55,7 +37,7 @@
                         <field name="z_country_issuance_id" placeholder="Pais" class="o_address_country"/>
                         <field name="z_department_issuance_id" placeholder="Departamento"
                                class="o_address_state" domain="[['country_id','=',z_country_issuance_id]]"/>
-                        <field name="z_city_issuance_id" placeholder="Ciudad" class="o_address_city"
+                        <field name="z_city_issuance_id_new" placeholder="Ciudad" class="o_address_city"
                                domain="[['state_id','=',z_department_issuance_id]]"/>
                     </div>
                 </xpath>

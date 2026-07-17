@@ -1,33 +1,33 @@
 <odoo>
     <data>
-        <record id="zue_action_zue_pivot_report_cxc" model="ir.actions.act_window">
+        <record id="zue_pivot_report_cxc_view" model="ir.actions.act_window">
             <field name="name">Reporte CXC - Recaudos</field>
             <field name="res_model">zue.pivot.report.cxc</field>
-            <field name="view_mode">tree,pivot</field>
-            <field name="context">{'search_default_group_mov_origin': 1}</field>
+            <field name="view_mode">list,pivot</field>
+<!--            <field name="context">{'search_default_group_mov_origin': 1}</field>-->
         </record>
 
-        <record id="zue_search_pivot_report_cxc" model="ir.ui.view">
-            <field name="name">Reporte CXC - Recaudos search</field>
-            <field name="model">zue.pivot.report.cxc</field>
-            <field name="arch" type="xml">
-                <search>
-                    <field name="mov_origin" filter_domain="[('mov_origin','ilike',self)]" string="Movimiento origen"/>
-                    <field name="journal_id" filter_domain="[('journal_id','ilike',self)]" string="Diario"/>
-                    <field name="mov_sequence" filter_domain="[('mov_sequence','ilike',self)]" string="Secuencia"/>
+<!--        <record id="zue_search_pivot_report_cxc" model="ir.ui.view">-->
+<!--            <field name="name">Reporte CXC - Recaudos search</field>-->
+<!--            <field name="model">zue.pivot.report.cxc</field>-->
+<!--            <field name="arch" type="xml">-->
+<!--                <search>-->
+<!--                    <field name="mov_origin" filter_domain="[('mov_origin','ilike',self)]" string="Movimiento origen"/>-->
+<!--                    <field name="journal_id" filter_domain="[('journal_id','ilike',self)]" string="Diario"/>-->
+<!--                    <field name="mov_sequence" filter_domain="[('mov_sequence','ilike',self)]" string="Secuencia"/>-->
 
-                    <group expand="1" string="Group By">
-                        <filter string="Movimiento origen" name="group_mov_origin" context="{'group_by':'mov_origin'}"/>
-                    </group>
-                </search>
-            </field>
-        </record>
+<!--                    <group expand="1" string="Group By">-->
+<!--                        <filter string="Movimiento origen" name="group_mov_origin" context="{'group_by':'mov_origin'}"/>-->
+<!--                    </group>-->
+<!--                </search>-->
+<!--            </field>-->
+<!--        </record>-->
 
         <record id="zue_tree_pivot_report_cxc" model="ir.ui.view">
             <field name="name">Reporte CXC - Recaudos tree</field>
             <field name="model">zue.pivot.report.cxc</field>
             <field name="arch" type="xml">
-                <tree editable="bottom" delete="false" create="false">
+                <list editable="bottom" delete="false" create="false">
                     <field name="mov_origin" readonly="1"/>
                     <field name="journal_id" optional="show" readonly="1"/>
                     <field name="mov_sequence" optional="show" readonly="1"/>
@@ -42,7 +42,7 @@
                     <field name="debit" sum='Total Débito' optional="show" readonly="1"/>
                     <field name="credit" sum='Total Crédito' optional="show" readonly="1"/>
                     <field name="balance" sum='Total Balance' readonly="1"/>
-                </tree>
+                </list>
             </field>
         </record>
 

@@ -23,5 +23,6 @@ class hr_leave_type(models.Model):
     # Portal web
     published_portal = fields.Boolean(string='Permitir uso en portal de autogestión')
 
-    _sql_constraints = [('hr_leave_type_code_uniq', 'unique(code)',
-                         'Ya existe este código de nómina, por favor verficar.')]
+    _hr_leave_type_code_uniq = models.Constraint('unique(code)',
+                                                        'Ya existe este código de nómina, por favor verficar.')
+

@@ -9,7 +9,7 @@
                 <xpath expr="//field[@name='bank_account_id']" position="after">
                     <field name="code" invisible="1"/>
                     <field name="is_payroll_spreader"/>
-                    <field name="plane_type" attrs="{'invisible': [('is_payroll_spreader', '=', False)]}"/>
+                    <field name="plane_type" invisible="not is_payroll_spreader"/>
                 </xpath>
             </field>
         </record>

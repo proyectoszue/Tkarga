@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import inspect
 from odoo import models, fields, api, _
 from odoo.exceptions import ValidationError
 from datetime import datetime, timedelta, date
@@ -11,6 +12,18 @@ class account_bank_statment(models.Model):
     z_reconciling_id = fields.Many2one('zue.reconciling.items.encab', 'Partida conciliatoria')
 
 
+class account_bank_statement_line(models.Model):
+    _inherit = "account.bank.statement.line"
+
+    z_reconciling_id = fields.Many2one(related='statement_id.z_reconciling_id', store=True, readonly=True, string='Partida conciliatoria')
+
+
+class account_move_reconciling(models.Model):
+    _inherit = "account.move"
+
+    z_reconciling_id = fields.Many2one('zue.reconciling.items.encab', 'Partida conciliatoria', copy=False, index=True)
+
+
 class zue_reconciling_items_encab(models.Model):
     _name = 'zue.reconciling.items.encab'
     _description = 'Encabezado partidas conciliatorias'
@@ -21,25 +34,103 @@ class zue_reconciling_items_encab(models.Model):
                               ('6', 'Junio'),('7', 'Julio'),('8', 'Agosto'),('9', 'Septiembre'),('10', 'Octubre'),
                               ('11', 'Noviembre'),('12', 'Diciembre')], string='Mes', required=True)
     z_reconciling_detail = fields.One2many('zue.reconciling.items.detail', 'z_reconciling_encab', string='Detalle partidas conciliatorias')
+    z_statement_ids = fields.One2many('account.bank.statement', 'z_reconciling_id', string='Extractos generados')
+    z_statement_line_ids = fields.One2many('account.bank.statement.line', 'z_reconciling_id', string='Registros generados')
+    z_move_ids = fields.One2many('account.move', 'z_reconciling_id', string='Asientos creados')
     state = fields.Selection([('draft','Borrador'),('processed','Procesado')], 'Estado', default='draft')
-    z_counter_extract = fields.Integer(compute='compute_counter_extract', string='Extractos')
+    z_counter_extract = fields.Integer(compute='_compute_generated_counters', string='Extractos')
+    z_counter_record = fields.Integer(compute='_compute_generated_counters', string='Registros')
+    z_counter_move = fields.Integer(compute='_compute_generated_counters', string='Asientos')
+    z_counter_opening_move = fields.Integer(compute='_compute_generated_counters', string='Apertura')
+    z_counter_closing_move = fields.Integer(compute='_compute_generated_counters', string='Cierre')
     z_search_all = fields.Boolean('Busqueda todos los meses anteriores')
 
-    def compute_counter_extract(self):
-        count = self.env['account.bank.statement'].search_count([('z_reconciling_id', '=', self.id)])
-        self.z_counter_extract = count
+    @api.depends('z_statement_ids', 'z_statement_line_ids', 'z_move_ids')
+    def _compute_generated_counters(self):
+        for record in self:
+            record.z_counter_extract = len(record.z_statement_ids)
+            record.z_counter_record = len(record.z_statement_line_ids)
+            record.z_counter_move = len(record.z_move_ids)
+            record.z_counter_opening_move = len(record.z_move_ids.filtered('statement_line_id'))
+            record.z_counter_closing_move = len(record.z_move_ids.filtered('reversed_entry_id'))
 
     def return_action_to_open(self):
+        self.ensure_one()
         res = {
             'name': 'Extractos bancarios',
             'type': 'ir.actions.act_window',
             'view_type': 'form',
-            'view_mode': 'tree,form',
+            'view_mode': 'list,form',
             'res_model': 'account.bank.statement',
             'target': 'current',
-            'domain': "[('z_reconciling_id','in',[" + str(self._ids[0]) + "])]"
+            'domain': [('id', 'in', self.z_statement_ids.ids)],
         }
         return res
+
+    def return_action_to_open_lines(self):
+        self.ensure_one()
+        return {
+            'name': 'Registros generados',
+            'type': 'ir.actions.act_window',
+            'view_mode': 'list,form',
+            'res_model': 'account.bank.statement.line',
+            'target': 'current',
+            'domain': [('id', 'in', self.z_statement_line_ids.ids)],
+        }
+
+    def return_action_to_open_moves(self):
+        self.ensure_one()
+        return {
+            'name': 'Asientos creados',
+            'type': 'ir.actions.act_window',
+            'view_mode': 'list,form',
+            'res_model': 'account.move',
+            'target': 'current',
+            'domain': [('id', 'in', self.z_move_ids.ids)],
+        }
+
+    def return_action_to_open_opening_moves(self):
+        self.ensure_one()
+        opening_moves = self.z_move_ids.filtered('statement_line_id')
+        return {
+            'name': 'Asientos apertura',
+            'type': 'ir.actions.act_window',
+            'view_mode': 'list,form',
+            'res_model': 'account.move',
+            'target': 'current',
+            'domain': [('id', 'in', opening_moves.ids)],
+        }
+
+    def return_action_to_open_closing_moves(self):
+        self.ensure_one()
+        closing_moves = self.z_move_ids.filtered('reversed_entry_id')
+        return {
+            'name': 'Asientos cierre',
+            'type': 'ir.actions.act_window',
+            'view_mode': 'list,form',
+            'res_model': 'account.move',
+            'target': 'current',
+            'domain': [('id', 'in', closing_moves.ids)],
+        }
+
+    def _reverse_closing_moves(self, move_commands, reverse_date, journal_id):
+        reversal = self.env['account.move.reversal'].create(
+            {
+                'move_ids': move_commands,
+                'date': reverse_date,
+                'reason': 'ZUE: Cierre partidas conciliatorias',
+                'journal_id': journal_id,
+                'company_id': self.env.company.id,
+            }
+        )
+        reversal.reverse_moves()
+        reversal.new_move_ids.write({'z_reconciling_id': self.id})
+        return reversal.new_move_ids.filtered(lambda move: move.state == 'draft')
+
+    def _create_closing_statement_lines(self, statement_line_vals):
+        statement_lines = self.env['account.bank.statement.line'].create(statement_line_vals)
+        statement_lines.move_id.write({'z_reconciling_id': self.id})
+        return statement_lines
 
     def search_reconciling_items(self):
         date_start = '01/' + str(self.z_month) + '/' + str(self.z_year)
@@ -51,49 +142,43 @@ class zue_reconciling_items_encab(models.Model):
         date_start = date_start.date()
         date_end = date_end.date()
 
-        if self.z_search_all:
-            statements = self.env['account.bank.statement'].search([('date', '<=', date_end), ('state', '!=', 'confirm')])
-        else:
-            statements = self.env['account.bank.statement'].search([('date', '>=', date_start), ('date', '<=', date_end), ('state', '!=', 'confirm')])
+        where_date = "B.date <= %(date_end)s" if self.z_search_all else "B.date >= %(date_start)s AND B.date <= %(date_end)s"
+        query = f'''
+                select B.date, A.payment_ref, A.partner_id, A.amount, A.statement_id, A.move_id, B.journal_id, A.id 
+                from account_bank_statement_line A
+                inner join account_move B on A.move_id = B.id and B.state = 'posted'
+                where A.company_id = %(company_id)s and A.is_reconciled IS NOT TRUE and {where_date}
+                order by B.journal_id, B.date, A.id
+            '''
 
-        if statements:
-            query = f'''
-                    select D.date, A.payment_ref, A.partner_id, A.amount, A.statement_id, A.move_id, C.journal_id, A.id 
-                    from account_bank_statement_line A
-                    inner join account_move B on A.move_id = B.id and B.state = 'posted' 
-                    inner join account_move_line C on B.id = C.move_id  
-                    inner join account_bank_statement D on A.statement_id = D.id and D.id in {tuple(statements.ids)}
-                    inner join account_account E on C.account_id = E.id and lower(E."name") like '%transitoria%'
-                    where not A.is_reconciled 
-                    order by C.journal_id, D.date 
-                '''
+        self.env.cr.execute(query, {'company_id': self.env.company.id,
+                                    'date_start': date_start,
+                                    'date_end': date_end
+                                    })
+        list_items = self.env.cr.dictfetchall()
 
-            self._cr.execute(query)
-            list_items = self._cr.dictfetchall()
+        reconciling_detail = []
+        self.z_reconciling_detail.unlink()
 
-            reconciling_detail = []
-            self.z_reconciling_detail.unlink()
+        for row in list_items:
+            reconciling_detail.append({'z_reconciling_encab': self.id,
+                                       'z_date': row['date'],
+                                       'z_payment_ref': row['payment_ref'],
+                                       'z_partner_id': row['partner_id'],
+                                       'z_amount': row['amount'],
+                                       'z_statement_id': row['statement_id'],
+                                       'z_move_id': row['move_id'],
+                                       'z_journal_id': row['journal_id'],
+                                       'z_bank_statement_line': row['id']})
 
-            for row in list_items:
-                reconciling_detail.append({'z_reconciling_encab': self.id,
-                                           'z_date': row['date'],
-                                           'z_payment_ref': row['payment_ref'],
-                                           'z_partner_id': row['partner_id'],
-                                           'z_amount': row['amount'],
-                                           'z_statement_id': row['statement_id'],
-                                           'z_move_id': row['move_id'],
-                                           'z_journal_id': row['journal_id'],
-                                           'z_bank_statement_line': row['id']})
-
+        if reconciling_detail:
             self.env['zue.reconciling.items.detail'].create(reconciling_detail)
         else:
-            raise ValidationError(_('No se encontraron extractos en el mes/año seleccionado. Por favor verifique!'))
+            raise ValidationError(_('No se encontraron partidas conciliatorias pendientes en el periodo seleccionado. Por favor verifique!'))
         return True
 
     def process(self):
-        list_moves = []
-        list_statement = []
-        moves_vals_list = []
+        reverse_moves_to_post = self.env['account.move']
 
         date_start = '01/' + str(self.z_month) + '/' + str(self.z_year)
         date_start = datetime.strptime(date_start, '%d/%m/%Y')
@@ -107,109 +192,70 @@ class zue_reconciling_items_encab(models.Model):
         if self.z_search_all:
             date_end_p = date.today()
 
-        tmp_journal_id = 0
-        tmp_currency_id = 0
-        row = 0
-        cant_row = len(self.z_reconciling_detail)
-        create_last = True
+        statement_date = date_start if self.z_search_all else date_end
+        current_journal = self.env['account.journal']
+        journal_items = self.env['zue.reconciling.items.detail']
 
-        # Reversión de movimientos contables
-        for item in self.z_reconciling_detail:
-            row += 1
-            if tmp_journal_id == 0:
-                tmp_currency_id = item.z_move_id.currency_id.id
-                tmp_journal_id = item.z_journal_id.id
-                obj_statement = self.env['account.bank.statement'].create(
-                    {
-                        'name': 'PARTIDAS CONCILIATORIAS ' + str(date_start) + ' al ' + str(date_end) + ' ' + item.z_move_id.journal_id.name,
-                        'journal_id': tmp_journal_id,
-                        # 'date': date_end,
-                        'date': date_start if self.z_search_all else date_end,
-                        'company_id': self.env.company.id,
-                        'z_reconciling_id': self.id
-                    }
-                )
+        def _process_journal_group(journal, items):
+            nonlocal reverse_moves_to_post
+            if not journal or not items:
+                return
 
-            if tmp_journal_id == item.z_journal_id.id:
-                list_moves.append((4, item.z_move_id.id))
-                list_statement.append({
-                    'date': date_start if self.z_search_all else date_end,
+            obj_statement = self.env['account.bank.statement'].create(
+                {
+                    'name': 'PARTIDAS CONCILIATORIAS ' + str(date_start) + ' al ' + str(date_end) + ' ' + journal.name,
+                    'journal_id': journal.id,
+                    'date': statement_date,
+                    'company_id': self.env.company.id,
+                    'z_reconciling_id': self.id
+                }
+            )
+
+            move_commands = [(4, move.id) for move in items.mapped('z_move_id')]
+            if move_commands:
+                reverse_moves_to_post |= self._reverse_closing_moves(move_commands, date_end_p, journal.id)
+
+            statement_vals = []
+            for item in items.sorted(lambda detail: (detail.z_date or statement_date, detail.id)):
+                payment_ref = item.z_payment_ref or item.z_move_id.payment_reference or item.z_move_id.ref or '/'
+                statement_vals.append({
+                    'date': statement_date,
                     'name': "/",
-                    'partner_id': item.z_move_id.partner_id.id,
-                    'amount': item.z_move_id.amount_total,
+                    'journal_id': journal.id,
+                    'partner_id': item.z_partner_id.id,
+                    'amount': item.z_amount,
                     'statement_id': obj_statement.id,
-                    'payment_ref': item.z_move_id.line_ids[0].name,
+                    'payment_ref': payment_ref,
                 })
 
-            if tmp_journal_id != item.z_journal_id.id or row == cant_row:
-                obj_reversal = self.env['account.move.reversal'].create(
-                                    {
-                                        'move_ids': list_moves,
-                                        'date_mode': 'custom',
-                                        'date': date_end_p,
-                                        # 'date': date.today(),
-                                        'reason': 'ZUE: Cierre partidas conciliatorias',
-                                        'journal_id': tmp_journal_id,
-                                        'company_id': self.env.company.id,
-                                    }
-                                )
-                obj_result = obj_reversal.reverse_moves()
-                self.env['account.bank.statement.line'].create(list_statement)
+            if statement_vals:
+                self._create_closing_statement_lines(statement_vals)
 
-                list_moves = []
-                list_statement = []
+        details = self.z_reconciling_detail.sorted(
+            lambda item: ((item.z_journal_id or item.z_move_id.journal_id).id, item.z_date or statement_date, item.id)
+        )
 
-                list_moves.append((4, item.z_move_id.id))
+        for item in details:
+            journal = item.z_journal_id or item.z_move_id.journal_id
+            if not journal:
+                raise ValidationError(_('No se encontró diario bancario para una de las partidas conciliatorias. Por favor verifique!'))
 
-                if tmp_journal_id != item.z_journal_id.id:
-                    obj_statement = self.env['account.bank.statement'].create(
-                        {
-                            'name': 'PARTIDAS CONCILIATORIAS ' + str(date_start) + ' al ' + str(date_end) + ' ' + item.z_move_id.journal_id.name,
-                            'journal_id': item.z_journal_id.id,
-                            'date': date_start if self.z_search_all else date_end,
-                            'company_id': self.env.company.id,
-                            'z_reconciling_id': self.id
-                        }
-                    )
-                else:
-                    if row == cant_row:
-                        create_last = False
+            if current_journal and journal != current_journal:
+                _process_journal_group(current_journal, journal_items)
+                journal_items = self.env['zue.reconciling.items.detail']
 
-                tmp_journal_id = item.z_journal_id.id
+            current_journal = journal
+            journal_items |= item
 
-                list_statement.append({
-                    'date': date_start if self.z_search_all else date_end,
-                    'name': "/",
-                    'partner_id': item.z_move_id.partner_id.id,
-                    'amount': item.z_move_id.amount_total,
-                    'statement_id': obj_statement.id,
-                    'payment_ref': item.z_move_id.line_ids[0].name,
-                })
-
-                if row != cant_row:
-                    obj_reversal = self.env['account.move.reversal'].create(
-                        {
-                            'move_ids': list_moves,
-                            'date_mode': 'custom',
-                            # 'date': date.today(),
-                            'date': date_end_p,
-                            'reason': 'ZUE: Cierre partidas conciliatorias',
-                            'journal_id': tmp_journal_id,
-                            'company_id': self.env.company.id,
-                        }
-                    )
-                    obj_result = obj_reversal.reverse_moves()
-                else:
-                    if create_last:
-                        self.env['account.bank.statement.line'].create(list_statement)
+        _process_journal_group(current_journal, journal_items)
 
         # Se marca la linea del extracto como conciliado
         self.z_reconciling_detail.z_bank_statement_line.write({'is_reconciled': True})
 
-        obj_reverse_moves = self.env['account.move'].search([('state', '=', 'draft'), ('ref', 'like', 'Reversión de:%'), ('date', '=', date_end_p)])
-        # obj_reverse_moves = self.env['account.move'].search([('state', '=', 'draft'), ('ref', 'like', 'Reversión de:%'), ('date', '=', date.today())])
-        for row in obj_reverse_moves:
-            row.action_post()
+        # Publicar las reversas creadas en este proceso sin depender del ref,
+        # ya que puede variar por idioma.
+        if reverse_moves_to_post:
+            reverse_moves_to_post.action_post()
 
         self.state = 'processed'
 
@@ -240,6 +286,20 @@ class SequenceMixin(models.AbstractModel):
     """
 
     _inherit = 'sequence.mixin'
+
+    def _get_last_sequence(self, relaxed=False, with_prefix=None, lock=True):
+        if not isinstance(self.id, int):
+            return False
+        parent = super()._get_last_sequence
+        sig = inspect.signature(parent)
+        kwargs = {}
+        if 'relaxed' in sig.parameters:
+            kwargs['relaxed'] = relaxed
+        if 'with_prefix' in sig.parameters:
+            kwargs['with_prefix'] = with_prefix
+        if 'lock' in sig.parameters:
+            kwargs['lock'] = lock
+        return parent(**kwargs)
 
     def _constrains_date_sequence(self):
         # Make it possible to bypass the constraint to allow edition of already messed up documents.

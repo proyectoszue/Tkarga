@@ -15,14 +15,15 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Human Resources',
-    "version": "15.0.1.0.0",
+    "version": "19.0.1.0.0",
+    'icon': '/zue_hr_payroll/static/description/icon.png',
 
     # any module necessary for this one to work correctly
-    'depends': ['base','hr','hr_payroll','hr_holidays','zue_erp','zue_hr_employee','account','web','mail'],
+    'depends': ['base','hr','resource','hr_payroll','hr_payroll_account','hr_holidays','hr_payroll_holidays','zue_erp','zue_hr_employee','account','web','mail'],
 
     # always loaded
     'data': [
-        'data/hr_type_tax_retention_data.xml',
+        # 'data/hr_type_tax_retention_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
         'security/ir.model.access.csv',
         'views/res_config_settings_views.xml',
         'views/actions_loans.xml',        
@@ -43,7 +44,6 @@
         'views/actions_hr_history_cesantias.xml',
         'views/actions_hr_history_prima.xml',
         'views/actions_hr_history_rtefte.xml',
-        'views/actions_hr_work_entry.xml',
         'views/actions_hr_report_leave_vs_work_entry.xml',
         'views/actions_hr_electronic_payroll.xml',
         'views/actions_hr_electronic_adjust_payroll.xml',
@@ -79,6 +79,11 @@
         'views/actions_work_income_and_pensions.xml',
         'views/menus.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'zue_hr_payroll/static/src/**/*',
+        ],
+    },
     'license': 'LGPL-3',
 }
 

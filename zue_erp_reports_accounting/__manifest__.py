@@ -18,19 +18,20 @@
 
     'author': "ZUE S.A.S",
     #'website': "http://www.zue.com.co",
+    'icon': '/zue_erp_reports_accounting/static/description/icon.png',
 
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Uncategorized',
-    "version": "15.0.1.0.0",    
+    "version": "19.0.1.0.0",
 
     # any module necessary for this one to work correctly
-    'depends': ['base','contacts','account','zue_account'],
+    'depends': ['base', 'contacts', 'account', 'account_accountant', 'zue_account', 'l10n_co_reports'],
 
     # always loaded
     'data': [
-        'security/ir.model.access.csv',       
+        'security/ir.model.access.csv',
         'views/reports_views.xml',
         'views/action_balance_report.xml',
         'views/actions_auxiliary_report.xml',
@@ -40,14 +41,18 @@
         'reports/balance_report_template.xml',
         'reports/consecutive_audit_report.xml',
         'reports/consecutive_audit_report_template.xml',
-        'reports/accounting_accrual_report_template.xml',
+        # 'reports/accounting_accrual_report_template.xml',
         'reports/report_accounting_receipt.xml',
         'reports/report_accounting_receipt_template.xml',
+        'reports/report_annex_thirdparty_account.xml',
+        'reports/report_annex_thirdparty_account_template.xml',
         'views/actions_balance_cxc_cxp_report.xml',
         'views/actions_pivot_cxc_report.xml',
-        'views/actions_tracking_activities.xml',
+        # 'views/actions_tracking_activities.xml',
         'views/actions_consecutive_audit_report.xml',
         'views/actions_co_cgn_inform.xml',
+        'views/l10n_co_reports.xml',
+        'views/actions_annex_thirdparty_account_report.xml',
         'views/menus.xml',
     ],
     'license': 'LGPL-3',

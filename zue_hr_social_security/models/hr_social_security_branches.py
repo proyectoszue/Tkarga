@@ -11,7 +11,7 @@ class hr_social_security_branches(models.Model):
     name = fields.Char('Nombre', required=True)
     company_id = fields.Many2one('res.company', string='Compañía', default=lambda self: self.env.company)
 
-    _sql_constraints = [('change_code_uniq', 'unique(code,company_id)', 'Ya existe una sucursal de seguridad social con este código para esta compañía, por favor verificar')]
+    _change_code_uniq = models.Constraint('unique(code,company_id)', 'Ya existe una sucursal de seguridad social con este código para esta compañía, por favor verificar')
 
 class hr_social_security_work_center(models.Model):
     _name = 'hr.social.security.work.center'
@@ -22,4 +22,4 @@ class hr_social_security_work_center(models.Model):
     branch_social_security_id = fields.Many2one('hr.social.security.branches', 'Sucursal seguridad social', required=True)
     company_id = fields.Many2one(related='branch_social_security_id.company_id', string='Compañía')
 
-    _sql_constraints = [('change_code_uniq', 'unique(code,branch_social_security_id)', 'Ya existe un centro de trabajo de seguridad social con este código para esta compañía, por favor verificar')]
+    _change_code_uniq = models.Constraint('unique(code,branch_social_security_id)', 'Ya existe un centro de trabajo de seguridad social con este código para esta compañía, por favor verificar')

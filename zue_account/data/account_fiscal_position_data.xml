@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="large_taxpayer" model="account.fiscal.position">
+            <field name="name">GRAN CONTRIBUYENTE</field>
+            <field name="country_id">49</field>
+        </record>
+
+        <record id="not_liable_for_vat" model="account.fiscal.position">
+            <field name="name">NO RESPONSABLE DE IVA</field>
+            <field name="country_id">49</field>
+        </record>
+
+        <record id="simple_taxation_regime" model="account.fiscal.position">
+            <field name="name">REGIMEN SIMPLE DE TRIBUTACION</field>
+            <field name="country_id">49</field>
+        </record>
+
+        <record id="self_retainer" model="account.fiscal.position">
+            <field name="name">AUTORRETENEDOR</field>
+            <field name="country_id">49</field>
+        </record>
+
+        <record id="foreign_company" model="account.fiscal.position">
+            <field name="name">EMPRESA DEL EXTERIOR</field>
+            <field name="country_id">49</field>
+        </record>
+
+        <record id="vat_manager" model="account.fiscal.position">
+            <field name="name">RESPONSABLE DE IVA</field>
+            <field name="country_id">49</field>
+        </record>
+
+    </data>
+</odoo>

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="01_customer" model="zue.type_thirdparty">
+            <field name="code">01</field>
+            <field name="name">Cliente</field>
+            <field name="types">1</field>
+            <field name="is_company">True</field>
+            <field name="is_individual">True</field>
+        </record>
+
+        <record id="02_contact" model="zue.type_thirdparty">
+            <field name="code">02</field>
+            <field name="name">Contacto</field>
+            <field name="types">2</field>
+            <field name="is_company">False</field>
+            <field name="is_individual">True</field>
+        </record>
+
+        <record id="03_supplier" model="zue.type_thirdparty">
+            <field name="code">03</field>
+            <field name="name">Proveedor</field>
+            <field name="types">3</field>
+            <field name="is_company">True</field>
+            <field name="is_individual">True</field>
+        </record>
+
+        <record id="04_official" model="zue.type_thirdparty">
+            <field name="code">04</field>
+            <field name="name">Funcionario</field>
+            <field name="types">4</field>
+            <field name="is_company">True</field>
+            <field name="is_individual">True</field>
+        </record>
+
+        <record id="05_candidate" model="zue.type_thirdparty">
+            <field name="code">05</field>
+            <field name="name">Candidato</field>
+            <field name="types">5</field>
+            <field name="is_company">True</field>
+            <field name="is_individual">True</field>
+        </record>
+
+    </data>
+</odoo>

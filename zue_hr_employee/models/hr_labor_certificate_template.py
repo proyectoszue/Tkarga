@@ -21,7 +21,7 @@ class hr_labor_certificate_template(models.Model):
     z_img_watermark_filename = fields.Char('Marca de agua filename')
 
     #Contenido
-    model_fields = fields.Many2many('ir.model.fields', domain="[('model', 'in', ('hr.employee','hr.contract')),('ttype','not in',['one2many','many2many'])]",
+    model_fields = fields.Many2many('ir.model.fields', domain="[('model', 'in', ('hr.employee','hr.version')),('ttype','not in',['one2many','many2many'])]",
                                     string='Campos de las tablas de empleado y contrato a utilizar')
     txt_model_fields = fields.Text(string='Nemotecnia de los campos',
                                    compute='_compute_txt_model_fields', store=False)
@@ -29,9 +29,7 @@ class hr_labor_certificate_template(models.Model):
     show_average_overtime = fields.Boolean('Mostrar promedio de horas extras de los ultimos 3 meses')
     z_show_total_rules = fields.Boolean('Mostrar total de reglas variables/fijas')
 
-    _sql_constraints = [
-        ('company_certificate_template', 'UNIQUE (company_id)', 'Ya existe una configuración de plantilla de certificado laboral para esta compañía, por favor verificar')
-    ]
+    _company_certificate_template = models.Constraint('unique(company_id)','Ya existe una configuración de plantilla de certificado laboral para esta compañía, por favor verificar.')
 
     def get_img_watermark(self):
         self.ensure_one()
@@ -39,11 +37,10 @@ class hr_labor_certificate_template(models.Model):
         url = f'{base_url}/web/image/hr.labor.certificate.template/{str(self.id)}/z_img_watermark_file'
         return url
 
-    def name_get(self):
-        result = []
+    @api.depends('company_id')
+    def _compute_display_name(self):
         for record in self:
-            result.append((record.id, "Plantilla certificado laboral de {}".format(record.company_id.name)))
-        return result
+            record.display_name = "Plantilla certificado laboral de {}".format(record.company_id.name)
 
     # Campos para el cuerpo del correo
     @api.depends('model_fields')
@@ -65,6 +62,7 @@ class hr_labor_certificate_template_detail(models.Model):
     last_month = fields.Boolean(string='Último mes')
     average_last_months = fields.Boolean(string='Promedio  de los ultimos 3 meses')
     z_value_contract = fields.Boolean(string="Valor contrato")
+    z_group_non_salary = fields.Boolean(string='Agrupación de reglas', help='Marcar si esta regla debe agruparse con otras reglas marcadas cuando el check principal está activo')
     # Es quincenal o mensual
     z_payment_frequency = fields.Selection([
                                     ('biweekly', 'Quincenal'),
@@ -75,7 +73,5 @@ class hr_labor_certificate_template_detail(models.Model):
                                              'Multiplicar valor contrato', default='1',
                                              required=True)
 
-    _sql_constraints = [
-        ('rule_certificate_template_detail', 'UNIQUE (certificate_template_id, rule_salary_id)',
-         'Ya existe esta regla para la configuración de certificado laboral, por favor verificar')
-    ]
+    _rule_certificate_template_detail = models.Constraint('unique(certificate_template_id, rule_salary_id)', 'Ya existe esta regla para la configuración de certificado laboral, por favor verificar.')
+

@@ -59,7 +59,6 @@ class ZuePayrollCurriculumVitaePortal(Controller):
                 'employee_id': obj_employee.id,
                 'name': post['field_name'],
                 'line_type_id': int(post['field_line_type_id']) if post['field_line_type_id'] != '0' else False,
-                'display_type': 'classic',
                 'date_start': post['field_date_start'] if post['field_date_start'] != '' else False,
                 'date_end': post['field_date_end'] if post['field_date_end'] != '' else False,
                 'description': post['field_description'],

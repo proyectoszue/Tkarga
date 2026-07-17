@@ -3,12 +3,43 @@ from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 
 #---------------------------Modelo RES-PARTNER / TERCEROS-------------------------------#
+
+class l10n_latam_identification_type(models.Model):
+    _inherit = 'l10n_latam.identification.type'
+
+    z_code_dian = fields.Char(string='Colombian Code DIAN')
+
 class ResPartnerBank(models.Model):
     _inherit = 'res.partner.bank'
 
     type_account = fields.Selection([('A', 'Ahorros'), ('C', 'Corriente')], 'Tipo de Cuenta', required=True, default='A')
     is_main = fields.Boolean('Es Principal')
-    
+
+class x_areas(models.Model):
+    _name = 'zue.areas'
+    _description = 'Áreas'
+    _order = 'code,name'
+
+    code = fields.Char(string='Código', required=True)
+    name = fields.Char(string='Nombre', required=True)
+
+class x_job_title(models.Model):
+    _name = 'zue.job_title'
+    _description = 'Cargos'
+    _order = 'area_id,code,name'
+
+    area_id = fields.Many2one('zue.areas', string='Área')
+    code = fields.Char(string='Código', required=True)
+    name = fields.Char(string='Nombre', required=True)
+
+
+class x_contact_types(models.Model):
+    _name = 'zue.contact_types'
+    _description = 'Tipos de contacto'
+
+    code = fields.Char(string='Código', required=True)
+    name = fields.Char(string='Nombre', required=True)
+
 class ResPartner(models.Model):
     _inherit = 'res.partner'
     _order = 'name'
@@ -18,6 +49,7 @@ class ResPartner(models.Model):
     street = fields.Char(tracking=True)
     country_id = fields.Many2one(tracking=True)
     state_id = fields.Many2one(tracking=True)
+    city_id = fields.Many2one(tracking=True, string="Ciudad")
     zip = fields.Char(tracking=True)
     phone = fields.Char(tracking=True)
     mobile = fields.Char(tracking=True)
@@ -30,28 +62,20 @@ class ResPartner(models.Model):
     name = fields.Char(tracking=True)
     city = fields.Char(string='Descripción ciudad')
 
+    x_contact_area = fields.Many2one('zue.areas', string='Área', tracking=True, ondelete='restrict')
+    x_contact_job_title = fields.Many2one('zue.job_title', string='Cargo', tracking=True, ondelete='restrict')
+    x_contact_type = fields.Many2many('zue.contact_types', string='Tipo de contacto', tracking=True, ondelete='restrict')
+    x_city_code = fields.Char(related='city_id.z_code_dian', string='Código ciudad DIAN TMP (No usar)')
+
     #INFORMACION BASICA
     same_vat_partner_id = fields.Many2one('res.partner', string='Partner with same Tax ID', compute='_compute_no_same_vat_partner_id', store=False)
-    x_type_thirdparty = fields.Many2many('zue.type_thirdparty',string='Tipo de tercero',required=True, tracking=True, ondelete='restrict', domain="['|',('is_company','=',is_company),('is_individual','!=',is_company)]") 
-    x_document_type = fields.Selection([
-                                        ('11', 'Registro civil de nacimiento'),
-                                        ('12', 'Tarjeta de identidad'),
-                                        ('13', 'Cédula de ciudadanía'),
-                                        ('21', 'Tarjeta de extranjería'),
-                                        ('22', 'Cedula de extranjería'),
-                                        ('31', 'NIT'),
-                                        ('41', 'Pasaporte'),
-                                        ('42', 'Tipo de documento extranjero'),
-                                        ('43', 'Sin identificación del exterior o para uso definido por la DIAN'),
-                                        ('44', 'Documento de identificación extranjero persona jurídica'),
-                                        ('PE', 'Permiso especial de permanencia'),
-                                        ('PT', 'Permiso por Protección Temporal')
-                                    ], string='Tipo de documento', tracking=True, default='13')
+    x_type_thirdparty = fields.Many2many('zue.type_thirdparty',string='Tipo de tercero',required=True, tracking=True, ondelete='restrict')
     x_digit_verification = fields.Integer(string='Digito de verificación', tracking=True,compute='_compute_verification_digit', store=True)
     x_vat_expedition_date = fields.Date('Fecha de expedición documento')
     z_country_issuance_id = fields.Many2one('res.country', string='Pais de expedición documento')
     z_department_issuance_id = fields.Many2one('res.country.state', string='Departamento de expedición documento')
-    z_city_issuance_id = fields.Many2one('zue.city', string='Ciudad de expedición documento')
+    z_city_issuance_id = fields.Many2one('zue.city', string='Ciudad de expedición documento TMP V15') # TMP MIENTRAS MIGRACION a v19 DESPUES SE DEBE ELIMINAR
+    z_city_issuance_id_new = fields.Many2one('res.city', string='Ciudad de expedición documento')
     x_business_name = fields.Char(string='Nombre de negocio', tracking=True)
     x_first_name = fields.Char(string='Primer nombre', tracking=True)
     x_second_name = fields.Char(string='Segundo nombre', tracking=True)
@@ -59,8 +83,8 @@ class ResPartner(models.Model):
     x_second_lastname = fields.Char(string='Segundo apellido', tracking=True)
     
     #UBICACIÓN PRINCIPAL
-    x_city = fields.Many2one('zue.city', string='Ciudad ZUE', tracking=True, ondelete='restrict')
-    x_city_code = fields.Char(related='x_city.code', string='Código ciudad zue')
+    x_city = fields.Many2one('zue.city', string='Ciudad ZUE TMP V15', tracking=True, ondelete='restrict') # TMP MIENTRAS MIGRACION a v19 DESPUES SE DEBE ELIMINAR
+    z_city_code = fields.Char(related='city_id.z_code_dian', string='Código ciudad DIAN')
     x_zip_id = fields.Many2one('zue.zip.code', string='Código postal', tracking=True, ondelete='restrict') #domain="[('code','like',x_city_code)]"
     z_neighborhood = fields.Char(string='Barrio', tracking=True)
 
@@ -71,18 +95,11 @@ class ResPartner(models.Model):
                                             ('4', 'Multilateral'),
                                             ('5', 'Gobierno'),
                                             ('6', 'ONG: Organización no Gubernamental')], string='Tipo de organización', tracking=True)
-    x_work_groups = fields.Many2many('zue.work_groups', string='Grupos de trabajo', tracking=True, ondelete='restrict')
-    x_sector_id = fields.Many2one('zue.sectors', string='Sector', tracking=True, ondelete='restrict')
     x_ciiu_activity = fields.Many2one('zue.ciiu', string='Códigos CIIU', tracking=True, ondelete='restrict')
 
     #GRUPO EMPRESARIAL
     x_is_business_group = fields.Boolean(string='¿Es un Grupo Empresarial?', tracking=True)
     x_name_business_group = fields.Char(string='Nombre Grupo Empresarial', tracking=True)
-
-    #VINCULACION 
-    x_active_vinculation = fields.Boolean(string='Estado de la vinculación', tracking=True)
-    x_date_vinculation = fields.Date(string="Fecha de vinculación", tracking=True)
-    x_type_vinculation = fields.Many2many('zue.vinculation_types', string='Tipo de vinculación', tracking=True, ondelete='restrict')
     #Campos Informativos
     x_acceptance_data_policy = fields.Boolean(string='Acepta política de tratamiento de datos', tracking=True)
     x_acceptance_date = fields.Date(string='Fecha de aceptación', tracking=True)
@@ -91,8 +108,6 @@ class ResPartner(models.Model):
     x_reason_desvinculation_text = fields.Text(string='Motivo desvinculación') 
     
     #INFORMACION FINANCIERA
-    x_asset_range = fields.Many2one('zue.asset_range', string='Rango de activos', tracking=True, ondelete='restrict')
-    x_date_update_asset = fields.Date(string='Fecha de última modificación', compute='_date_update_asset', store=True, tracking=True)
     x_company_size = fields.Selection([
                                         ('1', 'Mipyme'),
                                         ('2', 'Pyme'),
@@ -110,37 +125,6 @@ class ResPartner(models.Model):
                                         ('6', 'Otro')
                                     ], string='Origen de la cuenta', tracking=True)
     
-
-    #INFORMACIÓN CONTACTO
-    x_contact_type = fields.Many2many('zue.contact_types', string='Tipo de contacto', tracking=True, ondelete='restrict')
-    x_contact_job_title = fields.Many2one('zue.job_title', string='Cargo', tracking=True, ondelete='restrict')
-    x_contact_area = fields.Many2one('zue.areas', string='Área', tracking=True, ondelete='restrict')
-
-    #MANTENIMIENTO
-    #is_work_place = fields.Boolean('Is Work Place?')
-    @api.depends('street', 'zip', 'x_city', 'country_id')
-    def _compute_complete_address(self):
-        for record in self:
-            record.contact_address_complete = ''
-            if record.street:
-                record.contact_address_complete += record.street + ', '
-            if record.zip:
-                record.contact_address_complete += record.zip + ' '
-            if record.x_city:
-                record.contact_address_complete += record.x_city.name + ', '
-            if record.state_id:
-                record.contact_address_complete += record.state_id.name + ', '
-            if record.country_id:
-                record.contact_address_complete += record.country_id.name
-            record.contact_address_complete = record.contact_address_complete.strip().strip(',')
-
-    @api.onchange('x_city')
-    @api.depends('x_city')
-    def _city_update_zue(self):
-        for record in self:
-            if record.x_city:
-                record.city = record.x_city.name
-
     @api.onchange('x_zip_id')
     @api.depends('x_zip_id')
     def _zip_update_zue(self):
@@ -150,78 +134,71 @@ class ResPartner(models.Model):
 
     #Eliminar validaciones del VAT estandar
     @api.constrains('vat', 'country_id')
-    def check_vat(self):
+    def _check_vat(self, validation="error"):
         if self.sudo().env.ref('base.module_base_vat').state == 'installed':
-            # Si tiene el pais tiene marcado el check x_skip_validation no validar el check_vat
-            self = self.filtered(lambda partner: partner.country_id.x_skip_validation == False)
-            return super(ResPartner, self).check_vat()
+            # Si tiene el pais tiene marcado el check z_skip_validation no validar el check_vat
+            self = self.filtered(lambda partner: partner.country_id.z_skip_validation == False)
+            return super(ResPartner, self)._check_vat()
         else:
             return True
-
-    @api.depends('x_asset_range')
-    def _date_update_asset(self):
-        for record in self:
-            record.x_date_update_asset = fields.Date.today()
 
     @api.depends('vat')
     def _compute_no_same_vat_partner_id(self):
         for partner in self:
             partner.same_vat_partner_id = ""
 
-    @api.depends('vat','x_document_type')
+    @api.depends('vat','l10n_latam_identification_type_id','country_id')
     def _compute_verification_digit(self, return_digit=0):
         # Logica para calcular digito de verificación
         multiplication_factors = [71, 67, 59, 53, 47, 43, 41, 37, 29, 23, 19, 17, 13, 7, 3]
         digit = 0
 
         for partner in self:
-            if (partner.vat and partner.x_document_type == '31' and len(partner.vat) <= len(
-                    multiplication_factors)) or return_digit:
-                number = 0
-                padded_vat = partner.vat
+            identification_type = partner.l10n_latam_identification_type_id
+            has_co_document_code = (
+                    identification_type
+                    and 'l10n_co_document_code' in identification_type._fields
+            )
+            if has_co_document_code:
+                if (partner.vat and partner.l10n_latam_identification_type_id.l10n_co_document_code == 'rut' and len(partner.vat) <= len(
+                        multiplication_factors)) or return_digit:
+                    number = 0
+                    padded_vat = partner.vat.split('-')[0]
 
-                while len(padded_vat) < len(multiplication_factors):
-                    padded_vat = '0' + padded_vat
+                    while len(padded_vat) < len(multiplication_factors):
+                        padded_vat = '0' + padded_vat
 
-                # if there is a single non-integer in vat the verification code should be False
-                try:
-                    for index, vat_number in enumerate(padded_vat):
-                        number += int(vat_number) * multiplication_factors[index]
+                    # if there is a single non-integer in vat the verification code should be False
+                    try:
+                        for index, vat_number in enumerate(padded_vat):
+                            number += int(vat_number) * multiplication_factors[index]
 
-                    number %= 11
+                        number %= 11
 
-                    if number < 2:
-                        digit = number
-                    else:
-                        digit = 11 - number
+                        if number < 2:
+                            digit = number
+                        else:
+                            digit = 11 - number
 
-                    if not return_digit:
-                        partner.x_digit_verification = digit
-                    else:
-                        return digit
+                        if not return_digit:
+                            partner.x_digit_verification = digit
+                        else:
+                            return digit
 
-                except ValueError:
+                    except ValueError:
+                        partner.x_digit_verification = False
+                else:
                     partner.x_digit_verification = False
             else:
                 partner.x_digit_verification = False
 
     @api.model
     def _run_vat_test(self, vat_number, default_country, partner_is_company=True):
-        if default_country.x_skip_validation:
+        if default_country.z_skip_validation:
             return True
         else:
             res = super(ResPartner, self)._run_vat_test(vat_number, default_country, partner_is_company)
             return res
-
-    #---------------Search
-    @api.model
-    def name_search(self, name='', args=None, operator='ilike', limit=100):
-        if self._context.get('search_by_vat', False):
-            if name:
-                args = args if args else []
-                args.extend(['|', ['name', 'ilike', name], ['vat', 'ilike', name]])
-                name = ''
-        return super(ResPartner, self).name_search(name=name, args=args, operator=operator, limit=limit)
 
     #Onchange
     # @api.onchange('x_type_thirdparty')
@@ -241,48 +218,43 @@ class ResPartner(models.Model):
                     self.email = False
                     raise UserError(_('El correo digitado no es valido, por favor verificar.'))
 
-    @api.onchange('vat')
+    @api.onchange('vat', 'country_id', 'company_id', 'l10n_latam_identification_type_id')
     def _onchange_vatnumber(self):
         for record in self:
             if record.vat:
                 lst_character = ['.',',','*','@','-','_','°','!','|','"','#','$','%','&','/','(',')','=','?','¡','¿','{','}','<','>','^','+','[',']','~']
                 for character in lst_character:
                     if character in record.vat:
-                        raise UserError(_('El campo número de documento no debe contener caracteres especiales.'))                    
-                if record.x_document_type == '31' and len(record.vat) > 9:
+                        raise UserError(_('El campo número de documento no debe contener caracteres especiales.'))
+
+                identification_type = record.l10n_latam_identification_type_id
+                has_co_document_code = (
+                        identification_type
+                        and 'l10n_co_document_code' in identification_type._fields
+                )
+                if has_co_document_code and record.l10n_latam_identification_type_id.l10n_co_document_code == 'rut' and len(record.vat) > 9:
                     raise UserError(_('El campo número de documento no debe tener mas de 9 dígitos cuando el tipo de documento es NIT.'))   
 
-                obj = self.search([('x_type_thirdparty','in',[1,3]),('vat','=',record.vat)])
+                company_id = record.company_id.id or self.env.company.id
+                domain = [
+                    ('x_type_thirdparty', 'in', [1, 3]),
+                    ('vat', '=', record.vat),
+                    '|', ('company_id', '=', False),
+                    ('company_id', '=', company_id),
+                    ('id', '!=', record.id),
+                ]
+
+                obj = self.search(domain, limit=1)
                 if obj:
-                    self.vat = ""
+                    record.vat = ""
                     raise UserError(_('Ya existe un Cliente con este número de NIT.'))                    
-                objArchivado = self.search([('x_type_thirdparty','in',[1,3]),('vat','=',record.vat),('active','=',False)])
+                objArchivado = self.with_context(active_test=False).search(domain + [('active', '=', False)], limit=1)
                 if objArchivado:
-                    self.vat = ""
+                    record.vat = ""
                     raise UserError(_('Ya existe un Cliente con este número de NIT pero se encuentra archivado.')) 
     
     #-----------Validaciones
 
-    @api.depends('x_document_type')
-    @api.onchange('x_document_type')
-    def assign_identification_type(self):
-        if self.x_document_type:
-            label = ''
-            kay_val_dict = dict(self._fields['x_document_type'].selection)
-            for key, val in kay_val_dict.items():
-                if key == self.x_document_type:
-                    label = val
-                    break
-
-            obj_identification = self.env['l10n_latam.identification.type'].search([('name', '=', label)], limit=1)
-
-            if obj_identification:
-                self.l10n_latam_identification_type_id = obj_identification.id
-            else:
-                obj_identification = self.env['l10n_latam.identification.type'].search([('name', '=', 'NIT')], limit=1)
-                self.l10n_latam_identification_type_id = obj_identification.id
-
-    #Se elimina el campo vat de los commercial_fields cuando es un contacto hijo para que no herede la identificacion del padre
     @api.model
     def _commercial_fields(self):
         res = super(ResPartner, self)._commercial_fields()
@@ -300,40 +272,41 @@ class ResPartner(models.Model):
             name_tercer =  ''
             user_create = ''
             if record.vat:
-                obj = self.search([('is_company', '=', True),('vat','=',record.vat)])
+                company_id = record.company_id.id or self.env.company.id
+                company_domain = ['|', ('company_id', '=', False), ('company_id', '=', company_id)]
+                obj = self.search([('is_company', '=', True), ('vat', '=', record.vat)] + company_domain)
                 if obj:
                     for tercer in obj:
                         cant_vat = cant_vat + 1
                         if tercer.id != record.id:
-                            name_tercer = tercer.name
-                            user_create = tercer.create_uid.name
+                            name_tercer = tercer.name or ''
+                            user_create = tercer.create_uid.name or ''
 
-                objArchivado = self.search([('is_company', '=', True),('vat','=',record.vat),('active','=',False)])
+                objArchivado = self.search([('is_company', '=', True), ('vat', '=', record.vat), ('active', '=', False)] + company_domain)
                 if objArchivado:
                     for tercer in objArchivado:
                         cant_vat_archivado = cant_vat_archivado + 1
                         if tercer.id != record.id:
-                            name_tercer = tercer.name
-                            user_create = tercer.create_uid.name
+                            name_tercer = tercer.name or ''
+                            user_create = tercer.create_uid.name or ''
 
-                obj_ind = self.search([('is_company', '=', False),('vat','=',record.vat)])
+                obj_ind = self.search([('is_company', '=', False), ('vat', '=', record.vat)] + company_domain)
                 if obj_ind:
                     for tercer in obj_ind:
-                        if tercer.parent_id:
-                            if tercer.parent_id.vat != record.vat:
-                                cant_vat_ind = cant_vat_ind + 1
-                                if tercer.id != record.id:
-                                    name_tercer = tercer.name
-                                    user_create = tercer.create_uid.name
+                        if tercer.parent_id.vat != record.vat:
+                            cant_vat_ind = cant_vat_ind + 1
+                            if tercer.id != record.id:
+                                name_tercer = tercer.name or ''
+                                user_create = tercer.create_uid.name or ''
 
-                objArchivado_ind = self.search([('is_company', '=', False),('vat','=',record.vat),('active','=',False)])
+                objArchivado_ind = self.search([('is_company', '=', False), ('vat', '=', record.vat), ('active', '=', False)] + company_domain)
                 if objArchivado_ind:
                     for tercer in objArchivado_ind:
                         if tercer.parent_id.vat != record.vat:
                             cant_vat_archivado_ind = cant_vat_archivado_ind + 1
                             if tercer.id != record.id:
-                                name_tercer = tercer.name
-                                user_create = tercer.create_uid.name
+                                name_tercer = tercer.name or ''
+                                user_create = tercer.create_uid.name or ''
             if cant_vat > 1:
                 raise ValidationError(_('Ya existe un Cliente ('+name_tercer+') con este número de NIT creado por '+user_create+'.'))                
             if cant_vat_archivado > 1:
@@ -353,7 +326,7 @@ class ResPartner(models.Model):
                 if count_main > 1:
                     raise ValidationError(_('No puede tener más de una cuenta principal, por favor verificar.'))
 
-    @api.constrains('x_type_thirdparty','name','x_document_type','vat','street','state_id','country_id','x_city','phone','mobile','email')
+    @api.constrains('x_type_thirdparty','name','vat','street','state_id','country_id','phone','mobile','email')
     def _check_fields_required(self):
         # Verificar que el usuario este logueado
         public_user = self.env.user._is_public()
@@ -378,6 +351,9 @@ class ResPartner(models.Model):
                         record.validate_check_fields_required()
 
     def validate_check_fields_required(self):
+        if self.env.context.get('from_multicash'):
+            return True
+
         for record in self:
             responsable = 'tercero'
             if len(record.x_type_thirdparty) == 0:
@@ -388,7 +364,7 @@ class ResPartner(models.Model):
                 responsable = 'contacto' + name
 
             if not record.parent_id:
-                if not record.x_document_type:
+                if not record.l10n_latam_identification_type_id:
                     raise ValidationError(_('Debe seleccionar el tipo de documento del ' + responsable + ', por favor verificar.'))
                 if not record.vat:
                     raise ValidationError(_('Debe digitar el número de documento del ' + responsable + ', por favor verificar.'))
@@ -401,7 +377,7 @@ class ResPartner(models.Model):
                 raise ValidationError(_('Debe digitar la dirección del ' + responsable + ', por favor verificar.'))
             if not record.state_id:
                 raise ValidationError(_('Debe digitar el departamento del ' + responsable + ', por favor verificar.'))
-            if not record.x_city:
+            if not record.city_id:
                 raise ValidationError(_('Debe digitar la ciudad del ' + responsable + ', por favor verificar.'))
             if not record.country_id:
                 raise ValidationError(_('Debe digitar el país del ' + responsable + ', por favor verificar.'))
@@ -419,6 +395,12 @@ class ResPartner(models.Model):
                     if not return_value:
                         raise ValidationError(_('El campo ' + field.field_description + ' es obligatorio para el tipo de tercero '+ type_thirdparty.name +', por favor verificar.'))
         return True
+
+    @api.depends('city_id')
+    @api.onchange('city_id')
+    def _onchange_city_id(self):
+        for record in self:
+            record.city = record.city_id.name
 
     @api.onchange('x_first_name','x_second_name','x_first_lastname','x_second_lastname')
     def _onchange_info_names(self):
@@ -446,24 +428,25 @@ class ResPartner(models.Model):
         for record in self:            
             record.name = record.name.upper() if record.name else False
 
-    @api.model
-    def create(self, vals):
-        if vals.get('name',False):
-            vals['name'] = vals.get('name',False).upper()
-        if vals.get('x_first_name',False):
-            vals['x_first_name'] = vals.get('x_first_name',False).upper()
-        if vals.get('x_second_name', False):
-            vals['x_second_name'] = vals.get('x_second_name', False).upper()
-        if vals.get('x_first_lastname', False):
-            vals['x_first_lastname'] = vals.get('x_first_lastname', False).upper()
-        if vals.get('x_second_lastname', False):
-            vals['x_second_lastname'] = vals.get('x_second_lastname', False).upper()
-        if vals.get('x_type_thirdparty',False) == False:
-            ids_type_thirdparty_contact = self.env['zue.type_thirdparty'].search([('types', 'in', ['2'])]).ids
-            vals['x_type_thirdparty'] = ids_type_thirdparty_contact
+    @api.model_create_multi
+    def create(self, values_list):
+        for vals in values_list:
+            if vals.get('name',False):
+                vals['name'] = vals.get('name',False).upper()
+            if vals.get('x_first_name',False):
+                vals['x_first_name'] = vals.get('x_first_name',False).upper()
+            if vals.get('x_second_name', False):
+                vals['x_second_name'] = vals.get('x_second_name', False).upper()
+            if vals.get('x_first_lastname', False):
+                vals['x_first_lastname'] = vals.get('x_first_lastname', False).upper()
+            if vals.get('x_second_lastname', False):
+                vals['x_second_lastname'] = vals.get('x_second_lastname', False).upper()
+            if vals.get('x_type_thirdparty',False) == False:
+                ids_type_thirdparty_contact = self.env['zue.type_thirdparty'].search([('types', 'in', ['2'])]).ids
+                vals['x_type_thirdparty'] = ids_type_thirdparty_contact
 
         self = self.with_context(no_vat_validation=True)
-        res = super(ResPartner, self).create(vals)
+        res = super(ResPartner, self).create(values_list)
         res.validate_fields_mandatory_type_thirdparty()
         return res
 

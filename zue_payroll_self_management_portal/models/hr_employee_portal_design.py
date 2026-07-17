@@ -50,6 +50,4 @@ class zue_hr_employee_portal_design(models.Model):
                                ('Trattatello, fantasy', 'Trattatello')],
                                 string='Fuente')
 
-    _sql_constraints = [
-        ('company_unique', 'UNIQUE(z_company_design_id)', 'Ya existe una configuración para el portal de esta compañía')
-    ]
+    _company_unique = models.Constraint('UNIQUE(z_company_design_id)', 'Ya existe una configuración para el portal de esta compañía')
