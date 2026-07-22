@@ -8,42 +8,46 @@
                         <t t-set="template" t-value="emp.get_report_print_badge_template()"/>
                         <t t-call="web.basic_layout">
                             <t t-if="template.orientation == 'vertical'">
-                                <div style="width:5.5cm !important;height:8.6cm !important;border:none;margin-left:-15px;">
+                                <!-- Coordenadas calibradas sobre plantilla limpia Tkarga (5.5cm x 8.6cm).
+                                     Solo valores: las etiquetas ya vienen en la imagen de fondo. -->
+                                <div style="width:5.5cm !important;height:8.6cm !important;border:none;margin-left:-15px;position:relative;overflow:hidden;font-family:Arial, Helvetica, sans-serif;color:#D4AF37;">
                                     <img t-att-src="image_data_uri(template.img_header_file)"
-                                         style="width:5.5cm;height:8.6cm;position: absolute;"/>
-                                    <div class="row"
-                                         style="width:5.5cm !important;height:8.6cm !important;margin:0px auto;padding:100px 0px 0px 50px;position:absolute;">
-                                        <div style="height: 1.8cm;width: 3.5cm;float: left;">
-                                            <img t-att-src="image_data_uri(emp.image_1920)"
-                                                 style="height:110px !important;width:110px !important;margin:0px 0px 0px 30x;position: absolute;"
-                                                 alt="Employee Image"/>
-                                        </div>
+                                         style="width:5.5cm;height:8.6cm;position:absolute;top:0;left:0;z-index:0;"/>
+
+                                    <!-- Foto dentro del marco dorado (interior medido: 0.46, 3.07, 1.82 x 2.74) -->
+                                    <div style="position:absolute;z-index:1;top:3.07cm;left:0.49cm;width:1.82cm;height:2.74cm;overflow:hidden;border-radius:0.18cm;">
+                                        <img t-if="emp.image_1920" t-att-src="image_data_uri(emp.image_1920)" style="width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:0.25cm;" alt="Employee Image"/>
                                     </div>
-                                    <div class="row"
-                                         style="width:5.5cm !important;height:8.6cm !important;margin:0px auto;padding:220px 0px 0px 10px;position:absolute;">
-                                        <div style="height: 3cm;width: 5cm;text-align:center;font-size: xx-small">
-                                            <t t-if="template.with_extra_space == True">
-                                                <br/><br/>
-                                            </t>
-                                            <b>
-                                                <t t-esc="emp.address_home_id.x_first_lastname"/>
-                                                <t t-esc="emp.address_home_id.x_second_lastname"/>
-                                                <br/>
-                                                <t t-esc="emp.address_home_id.x_first_name"/>
-                                                <t t-esc="emp.address_home_id.x_second_name"/>
-                                            </b>
-                                            <br/>
-                                            <t t-esc="str(emp.job_id.name).upper()"/>
-                                            <br/>
-                                            <t t-esc="emp.get_name_type_document()"/>:
-                                            <t t-esc="emp.partner_encab_id.vat"/>
-                                            <br/>
-                                            RH.
-                                            <t t-esc="emp.get_name_rh()"/>&#160;&#160;&#160;&#160;&#160;&#160;
-                                            <t t-esc="emp.contract_id.date_start"/>
-                                            <br/>
-                                            <t t-esc="emp.branch_id.name"/>
-                                        </div>
+
+                                    <!-- Nombre: debajo de NOMBRE COMPLETO, sobre la línea del recuadro -->
+                                    <div style="position:absolute;z-index:1;top:3.50cm;left:2.55cm;width:2.55cm;height:0.55cm;font-size:6.5px;font-weight:bold;line-height:1.15;overflow:hidden;text-transform:uppercase;">
+                                        <t t-set="badge_name" t-value="' '.join([p for p in [emp.address_home_id.x_first_name, emp.address_home_id.x_second_name, emp.address_home_id.x_first_lastname, emp.address_home_id.x_second_lastname] if p])"/>
+                                        <t t-esc="badge_name or emp.name or ''"/>
+                                    </div>
+
+                                    <!-- Cargo: debajo de CARGO / POSICIÓN, sobre la línea -->
+                                    <div style="position:absolute;z-index:1;top:4.60cm;left:2.55cm;width:2.55cm;height:0.32cm;font-size:6px;font-weight:bold;line-height:1.1;overflow:hidden;text-transform:uppercase;">
+                                        <t t-esc="(emp.job_id.name or '').upper()"/>
+                                    </div>
+
+                                    <!-- Documento: debajo de Cédula de ciudadanía, sobre la línea -->
+                                    <div style="position:absolute;z-index:1;top:5.50cm;left:3.15cm;width:2.40cm;height:0.30cm;font-size:7px;font-weight:bold;overflow:hidden;">
+                                        <t t-esc="emp.partner_encab_id.vat or emp.identification_id or ''"/>
+                                    </div>
+
+                                    <!-- RH: a la derecha de RH:, sobre la línea corta -->
+                                    <div style="position:absolute;z-index:1;top:6.15cm;left:1.60cm;width:1.20cm;height:0.28cm;font-size:7px;font-weight:bold;overflow:hidden;">
+                                        <t t-esc="emp.get_name_rh()"/>
+                                    </div>
+
+                                    <!-- Fecha: a la derecha de Fecha de ingreso:, sobre la línea -->
+                                    <div style="position:absolute;z-index:1;top:6.75cm;left:2.60cm;width:2.00cm;height:0.28cm;font-size:7px;font-weight:bold;overflow:hidden;">
+                                        <t t-esc="emp.contract_id.date_start or ''"/>
+                                    </div>
+
+                                    <!-- Área: debajo de ÁREA / DEPENDENCIA, sobre la línea del banner -->
+                                    <div style="position:absolute;z-index:1;top:7.95cm;left:0.55cm;width:4.40cm;height:0.32cm;font-size:7px;font-weight:bold;text-align:center;overflow:hidden;text-transform:uppercase;color:#1a1a1a;">
+                                        <t t-esc="(emp.department_id.name or emp.branch_id.name or '').upper()"/>
                                     </div>
                                 </div>
                             </t>
