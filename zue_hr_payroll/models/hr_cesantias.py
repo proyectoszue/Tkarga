@@ -204,7 +204,7 @@ class Hr_payslip(models.Model):
                     else:
                         acumulados_promedio = 0
                     #Salario - Se toma el salario correspondiente a la fecha de liquidación
-                    wage,auxtransporte,auxtransporte_tope = 0,0,0
+                    wage,auxtransporte,auxtransporte_tope,auxtransporte_prorated = 0,0,0,False
                     if version.subcontract_type not in ('obra_parcial','obra_integral'):
                         wage = 0
                         obj_wage = self.env['hr.contract.change.wage'].search([('version_id','=',version.id),('date_start','<',self.date_to)])
@@ -245,6 +245,39 @@ class Hr_payslip(models.Model):
                         #Auxilio de transporte
                         auxtransporte = annual_parameters.transportation_assistance_monthly
                         auxtransporte_tope = annual_parameters.top_max_transportation_assistance
+                        if version.z_not_pay_auxtransportation:
+                            auxtransporte = 0
+                        # Si el auxilio esta como concepto base de cesantias, no adicionar el valor fijo (ya viene en acumulados)
+                        obj_salary_rule_aux = localdict['payslip'].get_salary_rule('AUX000', employee.type_employee.id)
+                        if obj_salary_rule_aux and obj_salary_rule_aux.base_cesantias:
+                            auxtransporte = 0
+                        # Prorratea el auxilio de transporte segun los dias con derecho (misma logica de Prima)
+                        if cesantias_salary_take and auxtransporte != 0:
+                            period_start_date = self.date_cesantias if inherit_contrato != 0 else self.date_from
+                            period_end_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
+                            obj_wage_period = self.env['hr.contract.change.wage'].search([
+                                ('version_id', '=', version.id),
+                                ('date_start', '>=', period_start_date),
+                                ('date_start', '<=', period_end_date)])
+                            if len(obj_wage_period) > 0:
+                                auxtransporte_average = 0
+                                initial_process_date = period_start_date
+                                end_process_date = period_end_date
+                                while initial_process_date <= end_process_date:
+                                    if initial_process_date.day != 31:
+                                        if version.get_wage_in_date(initial_process_date) <= auxtransporte_tope:  # Solo cuenta los dias en que tuvo derecho al auxilio
+                                            if initial_process_date.month == 2 and initial_process_date.day == 28 and (initial_process_date + timedelta(days=1)).day != 29:
+                                                auxtransporte_average += (auxtransporte / 30) * 3
+                                            elif initial_process_date.month == 2 and initial_process_date.day == 29:
+                                                auxtransporte_average += (auxtransporte / 30) * 2
+                                            else:
+                                                auxtransporte_average += auxtransporte / 30
+                                    initial_process_date = initial_process_date + timedelta(days=1)
+                                if dias_trabajados != 0:
+                                    auxtransporte = 0 if auxtransporte_average == 0 else (auxtransporte_average / dias_trabajados) * 30
+                                else:
+                                    auxtransporte = 0
+                                auxtransporte_prorated = True
                     #Calculo base
                     value_rules_base_auxtransporte_tope = localdict['payslip'].get_accumulated_cesantias(self.date_from, self.date_to, 1)
                     if inherit_contrato != 0:
@@ -253,7 +286,8 @@ class Hr_payslip(models.Model):
                         value_rules_base_auxtransporte_tope = (value_rules_base_auxtransporte_tope / dias_trabajados) * 30  # dias_liquidacion // HISTORIA: Promedio de la base variable no tome ausentismos
                     else:
                         value_rules_base_auxtransporte_tope = 0
-                    if (wage+value_rules_base_auxtransporte_tope) <= auxtransporte_tope:
+                    # Si el auxilio ya fue prorrateado por dias con derecho, se incluye ese valor (el tope ya se evaluo dia a dia)
+                    if auxtransporte_prorated or (wage + value_rules_base_auxtransporte_tope) <= auxtransporte_tope:
                         amount_base = round(wage + auxtransporte + acumulados_promedio, 0) if round_payroll == False else wage + auxtransporte + acumulados_promedio
                     else:
                         amount_base = round(wage + acumulados_promedio, 0) if round_payroll == False else wage + acumulados_promedio
