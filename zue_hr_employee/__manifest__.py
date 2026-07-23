@@ -54,6 +54,13 @@
         'reports/report_retirement_severance_pay_template.xml',
         'views/menus.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'zue_hr_employee/static/src/js/badge_layout_editor.js',
+            'zue_hr_employee/static/src/js/badge_layout_editor.xml',
+            'zue_hr_employee/static/src/js/badge_layout_editor.scss',
+        ],
+    },
     'installable': True,
     'license': 'LGPL-3',
 }

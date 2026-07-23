@@ -2,6 +2,7 @@
 from odoo import models, fields, api, _
 from odoo.exceptions import UserError, ValidationError
 from datetime import date
+import json
 
 class hr_tipo_cotizante(models.Model):
     _name = 'hr.tipo.cotizante'
@@ -585,6 +586,149 @@ class report_print_badge_template(models.Model):
     imgback_header_filename = fields.Char('Plantilla del identificación filename respaldo')
     orientation = fields.Selection([('horizontal', 'Horizontal'),
                                     ('vertical', 'Vertical')], string='Orientación', default="horizontal")
+    z_area_source = fields.Selection([('department', 'Departamento'), ('branch', 'Sucursal')], string='Área', default='department', required=True, help='Define si el carnet muestra el departamento o la sucursal del empleado.')
+    z_layout_json = fields.Text(string='Layout carnet', default='{}')
 
     _company_report_print_badge_template = models.Constraint('unique(company_id)','Ya existe una configuración de plantilla de identificación para esta compañía, por favor verificar')
+
+    @api.onchange('orientation')
+    def onchangeOrientation(self):
+        self.z_layout_json = json.dumps(self.getDefaultLayout())
+
+    def getDefaultLayout(self):
+        """Posiciones por defecto (cm) según orientación."""
+        self.ensure_one()
+        text = {
+            'font_size': 5.5,
+            'color': '#000000',
+        }
+        if self.orientation == 'vertical':
+            return {
+                'photo': {'top': 3.07, 'left': 0.49, 'width': 1.82, 'height': 2.74},
+                'name': {'top': 3.45, 'left': 2.45, 'width': 2.75, 'height': 0.70, **text},
+                'job': {'top': 4.50, 'left': 2.45, 'width': 2.75, 'height': 0.55, **text},
+                'vat': {'top': 5.45, 'left': 2.85, 'width': 2.35, 'height': 0.35, **text},
+                'rh': {'top': 6.15, 'left': 1.60, 'width': 1.20, 'height': 0.28, **text},
+                'date': {'top': 6.75, 'left': 2.60, 'width': 2.00, 'height': 0.28, **text},
+                'area': {'top': 7.90, 'left': 0.40, 'width': 4.70, 'height': 0.40, **text},
+            }
+        return {
+            'photo': {'top': 2.40, 'left': 0.55, 'width': 2.90, 'height': 2.90},
+            'name': {'top': 2.50, 'left': 3.80, 'width': 6.40, 'height': 0.80, **text},
+            'job': {'top': 3.40, 'left': 3.80, 'width': 6.40, 'height': 0.55, **text},
+            'vat': {'top': 4.00, 'left': 3.80, 'width': 6.40, 'height': 0.40, **text},
+            'rh': {'top': 4.55, 'left': 3.80, 'width': 2.50, 'height': 0.35, **text},
+            'date': {'top': 4.55, 'left': 6.50, 'width': 3.50, 'height': 0.35, **text},
+            'area': {'top': 5.20, 'left': 3.80, 'width': 6.40, 'height': 0.40, **text},
+        }
+
+    def getLayout(self):
+        """Layout guardado fusionado con defaults."""
+        self.ensure_one()
+        defaults = self.getDefaultLayout()
+        try:
+            saved = json.loads(self.z_layout_json or '{}') or {}
+        except (TypeError, ValueError, json.JSONDecodeError):
+            saved = {}
+        layout = {}
+        for key, default_box in defaults.items():
+            box = dict(default_box)
+            if isinstance(saved.get(key), dict):
+                for attr in ('top', 'left', 'width', 'height', 'font_size'):
+                    if attr in saved[key]:
+                        try:
+                            box[attr] = float(saved[key][attr])
+                        except (TypeError, ValueError):
+                            pass
+                if saved[key].get('color'):
+                    box['color'] = str(saved[key]['color'])
+            layout[key] = box
+        return layout
+
+    def getFitFontSize(self, text, width_cm, height_cm, max_pt=7.0, min_pt=3.5, allow_wrap=True):
+        """Reduce la fuente hasta que el texto quepa en el recuadro."""
+        text = ' '.join((text or '').split()).upper()
+        if not text:
+            return max_pt
+        width_pt = max(width_cm, 0.2) * 28.35
+        height_pt = max(height_cm, 0.2) * 28.35
+        size = max_pt
+        while size >= min_pt:
+            avg = size * 0.55  # ancho aproximado de mayúscula bold
+            # 1) Intentar una sola línea
+            if len(text) * avg <= width_pt and size * 1.05 <= height_pt:
+                return round(size, 1)
+            size -= 0.25
+        if not allow_wrap:
+            return min_pt
+        # 2) Permitir varias líneas
+        size = max_pt
+        while size >= min_pt:
+            avg = size * 0.55
+            words = text.split()
+            lines = 1
+            line_w = 0.0
+            fits = True
+            for word in words:
+                word_w = len(word) * avg
+                gap = avg if line_w else 0.0
+                if line_w + gap + word_w <= width_pt:
+                    line_w += gap + word_w
+                else:
+                    lines += 1
+                    line_w = word_w
+                    if word_w > width_pt:
+                        fits = False
+                        break
+            if fits and lines * size * 1.08 <= height_pt:
+                return round(size, 1)
+            size -= 0.25
+        return min_pt
+
+    def getElementStyle(self, element, text=''):
+        """CSS absoluto para un elemento del carnet (reporte)."""
+        self.ensure_one()
+        box = self.getLayout().get(element) or self.getDefaultLayout()[element]
+        style = (
+            f"position:absolute;z-index:1;"
+            f"top:{box['top']}cm;left:{box['left']}cm;"
+            f"width:{box['width']}cm;height:{box['height']}cm;"
+            f"overflow:hidden;letter-spacing:normal;word-spacing:normal;"
+        )
+        if element == 'photo':
+            style += 'border-radius:0.18cm;'
+            return style
+
+        max_pt = float(box.get('font_size') or 5.5)
+        color = box.get('color') or '#000000'
+        font_size = self.getFitFontSize(
+            text,
+            box['width'],
+            box['height'],
+            max_pt=max_pt,
+            min_pt=min(3.2, max_pt),
+            allow_wrap=element in ('name', 'job'),
+        )
+        if element in ('name', 'job'):
+            style += (
+                f'font-size:{font_size}pt;font-weight:bold;line-height:1.05;'
+                f'white-space:normal;word-break:break-word;color:{color};'
+            )
+        elif element == 'area':
+            style += (
+                f'font-size:{font_size}pt;font-weight:bold;text-align:center;'
+                f'white-space:nowrap;color:{color};'
+            )
+        else:
+            style += (
+                f'font-size:{font_size}pt;font-weight:bold;line-height:1.1;'
+                f'white-space:nowrap;color:{color};'
+            )
+        return style
+
+    def actionResetLayout(self):
+        """Restablece posiciones a los valores por defecto de la orientación."""
+        for record in self:
+            record.z_layout_json = json.dumps(record.getDefaultLayout())
+        return True
 

@@ -6,82 +6,68 @@
                 <t t-name="hr.print_employee_badge">
                     <t t-foreach="inside_foreach_docs or docs" t-as="emp">
                         <t t-set="template" t-value="emp.get_report_print_badge_template()"/>
+                        <t t-set="badge_name" t-value="' '.join([p for p in [emp.work_contact_id.x_first_name, emp.work_contact_id.x_second_name, emp.work_contact_id.x_first_lastname, emp.work_contact_id.x_second_lastname] if p]) or (emp.name or '')"/>
+                        <t t-set="badge_job" t-value="(emp.job_id.name or '').upper()"/>
+                        <t t-set="badge_vat" t-value="emp.partner_encab_id.vat or emp.identification_id or ''"/>
+                        <t t-set="badge_rh" t-value="emp.get_name_rh() or ''"/>
+                        <t t-set="badge_date" t-value="str(emp.version_id.contract_date_start or emp.version_id.date_start or '')"/>
+                        <t t-set="badge_area" t-value="(emp.branch_id.name if template.z_area_source == 'branch' else emp.department_id.name or '').upper()"/>
                         <t t-call="web.basic_layout">
                             <t t-if="template.orientation == 'vertical'">
-                                <div style="width:5.5cm !important;height:8.6cm !important;border:none;margin-left:-15px;">
+                                <div style="width:5.5cm !important;height:8.6cm !important;border:none;margin-left:-15px;position:relative;overflow:hidden;font-family:Arial, Helvetica, sans-serif;color:#D4AF37;">
                                     <img t-att-src="image_data_uri(template.img_header_file)"
                                          style="width:5.5cm;height:8.6cm;position: absolute;"/>
-                                    <div class="row"
-                                         style="width:5.5cm !important;height:8.6cm !important;margin:0px auto;padding:100px 0px 0px 50px;position:absolute;">
-                                        <div style="height: 1.8cm;width: 3.5cm;float: left;">
-                                            <img t-att-src="image_data_uri(emp.image_1920)"
-                                                 style="height:110px !important;width:110px !important;margin:0px 0px 0px 30x;position: absolute;"
-                                                 alt="Employee Image"/>
-                                        </div>
+                                    <div t-att-style="template.getElementStyle('photo')">
+                                        <img t-if="emp.image_1920" t-att-src="image_data_uri(emp.image_1920)"
+                                             style="width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:0.25cm;"
+                                             alt="Employee Image"/>
                                     </div>
-                                    <div class="row"
-                                         style="width:5.5cm !important;height:8.6cm !important;margin:0px auto;padding:220px 0px 0px 10px;position:absolute;">
-                                        <div style="height: 3cm;width: 5cm;text-align:center;font-size: xx-small">
-                                            <t t-if="template.with_extra_space == True">
-                                                <br/><br/>
-                                            </t>
-                                            <b>
-                                                <t t-esc="emp.work_contact_id.x_first_lastname"/>
-                                                <t t-esc="emp.work_contact_id.x_second_lastname"/>
-                                                <br/>
-                                                <t t-esc="emp.work_contact_id.x_first_name"/>
-                                                <t t-esc="emp.work_contact_id.x_second_name"/>
-                                            </b>
-                                            <br/>
-                                            <t t-esc="str(emp.job_id.name).upper()"/>
-                                            <br/>
-                                            <t t-esc="emp.get_name_type_document()"/>:
-                                            <t t-esc="emp.partner_encab_id.vat"/>
-                                            <br/>
-                                            RH.
-                                            <t t-esc="emp.get_name_rh()"/>&#160;&#160;&#160;&#160;&#160;&#160;
-                                            <t t-esc="emp.version_id.date_start"/>
-                                            <br/>
-                                            <t t-esc="emp.branch_id.name"/>
-                                        </div>
+                                    <div t-att-style="template.getElementStyle('name', badge_name)">
+                                        <t t-esc="badge_name"/>
+                                    </div>
+                                    <div t-att-style="template.getElementStyle('job', badge_job)">
+                                        <t t-esc="badge_job"/>
+                                    </div>
+                                    <div t-att-style="template.getElementStyle('vat', badge_vat)">
+                                        <t t-esc="badge_vat"/>
+                                    </div>
+                                    <div t-att-style="template.getElementStyle('rh', badge_rh)">
+                                        <t t-esc="badge_rh"/>
+                                    </div>
+                                    <div t-att-style="template.getElementStyle('date', badge_date)">
+                                        <t t-esc="badge_date"/>
+                                    </div>
+                                    <div t-att-style="template.getElementStyle('area', badge_area)">
+                                        <t t-esc="badge_area"/>
                                     </div>
                                 </div>
                             </t>
                             <t t-else="">
-                                <div style="width:10.8cm !important;height:7cm !important;border:none;margin-left:-15px;">
+                                <div style="width:10.8cm !important;height:7cm !important;border:none;margin-left:-15px;position:relative;overflow:hidden;font-family:Arial, Helvetica, sans-serif;color:#D4AF37;">
                                     <img t-att-src="image_data_uri(template.img_header_file)"
                                          style="width:10.8cm;height:7cm;position: absolute;"/>
-                                    <div class="row"
-                                         style="width:10.8cm !important;height:5.2cm !important;margin:0px 0px 0px 0px;padding:90px 0px 0px 0px;position:absolute;">
-                                        <div style="height: 4.5cm;width: 3.5cm;float: left;">
-                                            <img t-att-src="image_data_uri(emp.image_1920)"
-                                                 style="height:110px !important;width:110px !important;margin:0px 0px 0px 20px;position: absolute;"
-                                                 alt="Employee Image"/>
-                                        </div>
-                                        <div style="height: 4.5cm;width: 7cm;text-align:center;font-size: 80%;">
-                                            <t t-if="template.with_extra_space == True">
-                                                <br/><br/>
-                                            </t>
-                                            <b>
-                                                <t t-esc="emp.work_contact_id.x_first_name"/>
-                                            </b>
-                                            <b>
-                                                <t t-esc="emp.work_contact_id.x_second_name"/>
-                                            </b>
-                                            <br/>
-                                            <t t-esc="emp.work_contact_id.x_first_lastname"/>
-                                            <t t-esc="emp.work_contact_id.x_second_lastname"/>
-                                            <br/>
-                                            <t t-esc="emp.get_name_type_document()"/>:
-                                            <t t-esc="emp.partner_encab_id.vat"/>
-                                            <br/>
-                                            RH.
-                                            <t t-esc="emp.get_name_rh()"/>
-                                            <br/>
-                                            <b style="line-height:0;">
-                                                <t t-esc="str(emp.job_id.name).upper()"/>
-                                            </b>
-                                        </div>
+                                    <div t-att-style="template.getElementStyle('photo')">
+                                        <img t-if="emp.image_1920" t-att-src="image_data_uri(emp.image_1920)"
+                                             style="width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:0.25cm;"
+                                             alt="Employee Image"/>
+                                    </div>
+                                    <div t-att-style="template.getElementStyle('name', badge_name)">
+                                        <t t-esc="badge_name"/>
+                                    </div>
+                                    <div t-att-style="template.getElementStyle('job', badge_job)">
+                                        <t t-esc="badge_job"/>
+                                    </div>
+                                    <div t-att-style="template.getElementStyle('vat', badge_vat)">
+                                        <t t-esc="badge_vat"/>
+                                    </div>
+                                    <div t-att-style="template.getElementStyle('rh', badge_rh)">
+                                        <t t-esc="badge_rh"/>
+                                    </div>
+                                    <div t-att-style="template.getElementStyle('date', badge_date)">
+                                        <t t-esc="badge_date"/>
+                                    </div>
+                                    <div t-att-style="template.getElementStyle('area', badge_area)">
+                                        <t t-esc="badge_area"/>
                                     </div>
                                 </div>
                             </t>
@@ -105,6 +91,5 @@
                 </t>
             </field>
         </record>
-
     </data>
 </odoo>
