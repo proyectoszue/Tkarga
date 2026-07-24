@@ -1256,6 +1256,9 @@ class hr_payroll_social_security(models.Model):
         self.env.cr.execute(query_verify)
         result_query_verify = self.env.cr.fetchall()
 
+        if employee_id == 0 and not result_query_verify and not self.executing_social_security_ids and not self.errors_social_security_ids:
+            raise ValidationError(_('No hay liquidaciones en estado hecho para el periodo %s-%s, por favor verifique.') % (self.month, self.year))
+
         if employee_id == 0 and len(self.executing_social_security_ids.employee_id.ids) >= len(result_query_verify):
             self.time_process = "El proceso se demoro {:.2f} minutos.".format(time_process)
             self.state = 'done'
