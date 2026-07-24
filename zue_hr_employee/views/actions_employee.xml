@@ -327,6 +327,7 @@
                                 <field name="with_extra_space"/>
                                 <field name="orientation"/>
                                 <field name="z_area_source" widget="radio"/>
+                                <field name="z_name_order" widget="radio"/>
                             </group>
                             <group>
                                 <field name="z_layout_json" widget="z_badge_layout_editor" nolabel="1" colspan="2"/>

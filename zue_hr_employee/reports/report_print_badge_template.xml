@@ -6,85 +6,47 @@
                 <t t-name="hr.print_employee_badge">
                     <t t-foreach="inside_foreach_docs or docs" t-as="emp">
                         <t t-set="template" t-value="emp.get_report_print_badge_template()"/>
-                        <t t-set="badge_name" t-value="' '.join([p for p in [emp.work_contact_id.x_first_name, emp.work_contact_id.x_second_name, emp.work_contact_id.x_first_lastname, emp.work_contact_id.x_second_lastname] if p]) or (emp.name or '')"/>
+                        <t t-set="badge_name" t-value="template.getBadgeName(emp)"/>
                         <t t-set="badge_job" t-value="(emp.job_id.name or '').upper()"/>
                         <t t-set="badge_vat" t-value="emp.partner_encab_id.vat or emp.identification_id or ''"/>
                         <t t-set="badge_rh" t-value="emp.get_name_rh() or ''"/>
                         <t t-set="badge_date" t-value="str(emp.version_id.contract_date_start or emp.version_id.date_start or '')"/>
                         <t t-set="badge_area" t-value="(emp.branch_id.name if template.z_area_source == 'branch' else emp.department_id.name or '').upper()"/>
                         <t t-call="web.basic_layout">
-                            <t t-if="template.orientation == 'vertical'">
-                                <div style="width:5.5cm !important;height:8.6cm !important;border:none;margin-left:-15px;position:relative;overflow:hidden;font-family:Arial, Helvetica, sans-serif;color:#D4AF37;">
-                                    <img t-att-src="image_data_uri(template.img_header_file)"
-                                         style="width:5.5cm;height:8.6cm;position: absolute;"/>
-                                    <div t-att-style="template.getElementStyle('photo')">
-                                        <img t-if="emp.image_1920" t-att-src="image_data_uri(emp.image_1920)"
-                                             style="width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:0.25cm;"
-                                             alt="Employee Image"/>
-                                    </div>
-                                    <div t-att-style="template.getElementStyle('name', badge_name)">
-                                        <t t-esc="badge_name"/>
-                                    </div>
-                                    <div t-att-style="template.getElementStyle('job', badge_job)">
-                                        <t t-esc="badge_job"/>
-                                    </div>
-                                    <div t-att-style="template.getElementStyle('vat', badge_vat)">
-                                        <t t-esc="badge_vat"/>
-                                    </div>
-                                    <div t-att-style="template.getElementStyle('rh', badge_rh)">
-                                        <t t-esc="badge_rh"/>
-                                    </div>
-                                    <div t-att-style="template.getElementStyle('date', badge_date)">
-                                        <t t-esc="badge_date"/>
-                                    </div>
-                                    <div t-att-style="template.getElementStyle('area', badge_area)">
-                                        <t t-esc="badge_area"/>
-                                    </div>
+                            <div t-att-style="template.getCardStyle()">
+                                <img t-if="template.img_header_file"
+                                     t-att-src="image_data_uri(template.img_header_file)"
+                                     t-att-style="template.getCardBackgroundStyle()"/>
+                                <div t-att-style="template.getElementStyle('photo')">
+                                    <img t-if="emp.image_1920" t-att-src="image_data_uri(emp.image_1920)"
+                                         style="width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:0.25cm;"
+                                         alt="Employee Image"/>
                                 </div>
-                            </t>
-                            <t t-else="">
-                                <div style="width:10.8cm !important;height:7cm !important;border:none;margin-left:-15px;position:relative;overflow:hidden;font-family:Arial, Helvetica, sans-serif;color:#D4AF37;">
-                                    <img t-att-src="image_data_uri(template.img_header_file)"
-                                         style="width:10.8cm;height:7cm;position: absolute;"/>
-                                    <div t-att-style="template.getElementStyle('photo')">
-                                        <img t-if="emp.image_1920" t-att-src="image_data_uri(emp.image_1920)"
-                                             style="width:100%;height:100%;object-fit:cover;object-position:center top;border-radius:0.25cm;"
-                                             alt="Employee Image"/>
-                                    </div>
-                                    <div t-att-style="template.getElementStyle('name', badge_name)">
-                                        <t t-esc="badge_name"/>
-                                    </div>
-                                    <div t-att-style="template.getElementStyle('job', badge_job)">
-                                        <t t-esc="badge_job"/>
-                                    </div>
-                                    <div t-att-style="template.getElementStyle('vat', badge_vat)">
-                                        <t t-esc="badge_vat"/>
-                                    </div>
-                                    <div t-att-style="template.getElementStyle('rh', badge_rh)">
-                                        <t t-esc="badge_rh"/>
-                                    </div>
-                                    <div t-att-style="template.getElementStyle('date', badge_date)">
-                                        <t t-esc="badge_date"/>
-                                    </div>
-                                    <div t-att-style="template.getElementStyle('area', badge_area)">
-                                        <t t-esc="badge_area"/>
-                                    </div>
+                                <div t-att-style="template.getElementStyle('name', badge_name)">
+                                    <t t-esc="badge_name"/>
                                 </div>
-                            </t>
+                                <div t-att-style="template.getElementStyle('job', badge_job)">
+                                    <t t-esc="badge_job"/>
+                                </div>
+                                <div t-att-style="template.getElementStyle('vat', badge_vat)">
+                                    <t t-esc="badge_vat"/>
+                                </div>
+                                <div t-att-style="template.getElementStyle('rh', badge_rh)">
+                                    <t t-esc="badge_rh"/>
+                                </div>
+                                <div t-att-style="template.getElementStyle('date', badge_date)">
+                                    <t t-esc="badge_date"/>
+                                </div>
+                                <div t-att-style="template.getElementStyle('area', badge_area)">
+                                    <t t-esc="badge_area"/>
+                                </div>
+                            </div>
                             <t t-if="template.imgback_header_file">
                                 <div style="page-break-after: always;"/>
-                                <t t-if="template.orientation == 'vertical'">
-                                    <div style="width:5.5cm !important;height:8.6cm !important;border:none;margin-left:-15px;">
-                                        <img t-att-src="image_data_uri(template.imgback_header_file)"
-                                             style="width:5.5cm;height:8.6cm;position: absolute;"/>
-                                    </div>
-                                </t>
-                                <t t-else="">
-                                    <div style="width:10.8cm !important;height:7cm !important;border:none;margin-left:-15px;">
-                                        <img t-att-src="image_data_uri(template.imgback_header_file)"
-                                             style="width:10.8cm;height:7cm;position: absolute;"/>
-                                    </div>
-                                </t>
+                                <div t-att-style="template.getCardStyle()">
+                                    <img t-att-src="image_data_uri(template.imgback_header_file)"
+                                         t-att-style="template.getCardBackgroundStyle()"/>
+                                </div>
                             </t>
                         </t>
                     </t>

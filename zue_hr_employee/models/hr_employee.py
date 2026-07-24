@@ -587,6 +587,7 @@ class report_print_badge_template(models.Model):
     orientation = fields.Selection([('horizontal', 'Horizontal'),
                                     ('vertical', 'Vertical')], string='Orientación', default="horizontal")
     z_area_source = fields.Selection([('department', 'Departamento'), ('branch', 'Sucursal')], string='Área', default='department', required=True, help='Define si el carnet muestra el departamento o la sucursal del empleado.')
+    z_name_order = fields.Selection([('first_last', 'Nombres y apellidos'), ('last_first', 'Apellidos y nombres')], string='Orden del nombre', default='first_last', required=True, help='Orden en que se muestran nombres y apellidos en el carnet.')
     z_layout_json = fields.Text(string='Layout carnet', default='{}')
 
     _company_report_print_badge_template = models.Constraint('unique(company_id)','Ya existe una configuración de plantilla de identificación para esta compañía, por favor verificar')
@@ -594,6 +595,44 @@ class report_print_badge_template(models.Model):
     @api.onchange('orientation')
     def onchangeOrientation(self):
         self.z_layout_json = json.dumps(self.getDefaultLayout())
+
+    def getBadgeName(self, employee):
+        """Arma el nombre del empleado según el orden configurado."""
+        self.ensure_one()
+        partner = employee.work_contact_id
+        first_names = [p for p in [partner.x_first_name, partner.x_second_name] if p]
+        last_names = [p for p in [partner.x_first_lastname, partner.x_second_lastname] if p]
+        if self.z_name_order == 'last_first':
+            parts = last_names + first_names
+        else:
+            parts = first_names + last_names
+        return ' '.join(parts) or (employee.name or '')
+
+    def getCardSize(self):
+        """Ancho y alto del carnet en cm según orientación."""
+        self.ensure_one()
+        if self.orientation == 'vertical':
+            return (5.5, 8.6)
+        return (10.8, 7.0)
+
+    def getCardStyle(self):
+        """CSS del contenedor del carnet, centrado en la página."""
+        self.ensure_one()
+        width_cm, height_cm = self.getCardSize()
+        return (
+            f'width:{width_cm}cm;height:{height_cm}cm;margin:0 auto;'
+            f'position:relative;overflow:hidden;'
+            f'font-family:Arial, Helvetica, sans-serif;'
+        )
+
+    def getCardBackgroundStyle(self):
+        """CSS de la imagen de fondo del carnet."""
+        self.ensure_one()
+        width_cm, height_cm = self.getCardSize()
+        return (
+            f'width:{width_cm}cm;height:{height_cm}cm;'
+            f'position:absolute;top:0;left:0;z-index:0;'
+        )
 
     def getDefaultLayout(self):
         """Posiciones por defecto (cm) según orientación."""
@@ -731,4 +770,21 @@ class report_print_badge_template(models.Model):
         for record in self:
             record.z_layout_json = json.dumps(record.getDefaultLayout())
         return True
+
+
+class IrActionsReport(models.Model):
+    _inherit = 'ir.actions.report'
+
+    # standard Odoo version "19"
+    def get_paperformat(self):
+        if self.report_name == 'hr.print_employee_badge':
+            template = self.env['report.print.badge.template'].search(
+                [('company_id', '=', self.env.company.id)], limit=1,
+            )
+            if template.orientation == 'horizontal':
+                return self.env.ref(
+                    'zue_hr_employee.hr_employee_print_badge_paperformat_horizontal'
+                )
+            return self.env.ref('zue_hr_employee.hr_employee_print_badge_paperformat')
+        return super().get_paperformat()
 
