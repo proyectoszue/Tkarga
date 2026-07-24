@@ -504,7 +504,11 @@ class hr_version(models.Model):
     def getCertificateConceptPhrase(self, rule_detail=None, certificate_template_detail_ids=None):
         if rule_detail:
             if rule_detail.z_value_contract:
-                return 'auxilio no salarial de %s de' % rule_detail.rule_salary_id.name
+                # Usar solo el nombre del concepto
+                rule_name = (rule_detail.rule_salary_id.name or '').strip()
+                if rule_name:
+                    return '%s de' % (rule_name[:1].lower() + rule_name[1:])
+                return 'auxilio no salarial de'
             if rule_detail.average_last_months:
                 return 'salario variable promedio de los últimos tres (3) meses de'
             return 'salario variable de'

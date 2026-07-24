@@ -210,7 +210,7 @@
                                     </t>
                                     <t t-if="promedio_heyrec and cp.show_average_overtime">),</t>
                                     <t t-elif="cp.z_show_total_rules and certificate_rules_total">)</t>
-                                    <t t-else="">).</t>
+                                    <t t-else="">)</t>
                                     <t t-if="promedio_heyrec and cp.show_average_overtime">
                                         y un promedio de horas extras mensual en los últimos tres meses de&#160;
                                         <b>
