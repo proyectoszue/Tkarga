@@ -47,7 +47,7 @@
 
                                     <!-- Área: debajo de ÁREA / DEPENDENCIA, sobre la línea del banner -->
                                     <div style="position:absolute;z-index:1;top:7.95cm;left:0.55cm;width:4.40cm;height:0.32cm;font-size:7px;font-weight:bold;text-align:center;overflow:hidden;text-transform:uppercase;color:#1a1a1a;">
-                                        <t t-esc="(emp.department_id.name or emp.branch_id.name or '').upper()"/>
+                                        <t t-esc="(emp.branch_id.name or '').upper()"/>
                                     </div>
                                 </div>
                             </t>
