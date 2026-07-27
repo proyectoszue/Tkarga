@@ -326,7 +326,7 @@ class ResPartner(models.Model):
                 if count_main > 1:
                     raise ValidationError(_('No puede tener más de una cuenta principal, por favor verificar.'))
 
-    @api.constrains('x_type_thirdparty','name','vat','street','state_id','country_id','phone','mobile','email')
+    @api.constrains('x_type_thirdparty','name','vat','street','state_id','country_id','phone','mobile','email','company_id')
     def _check_fields_required(self):
         # Verificar que el usuario este logueado
         public_user = self.env.user._is_public()
@@ -383,6 +383,8 @@ class ResPartner(models.Model):
                 raise ValidationError(_('Debe digitar el país del ' + responsable + ', por favor verificar.'))
             if not record.email:
                 raise ValidationError(_('Debe digitar el correo electrónico del ' + responsable + ', por favor verificar.'))
+            if any(type_thirdparty.types == '4' for type_thirdparty in record.x_type_thirdparty) and not record.company_id:
+                raise ValidationError(_('Debe seleccionar la compañía del ' + responsable + ' cuando el tipo de tercero es Funcionario, por favor verificar.'))
         return True
 
     def validate_fields_mandatory_type_thirdparty(self):
