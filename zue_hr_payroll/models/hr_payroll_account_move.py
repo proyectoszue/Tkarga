@@ -388,7 +388,7 @@ class Hr_payslip(models.Model):
                         if settings_batch_account == '1':
                             # Add accounting lines in the move
                             move_dict['line_ids'] = [(0, 0, line_vals) for line_vals in line_ids]
-                            move = self.env['account.move'].create(move_dict)
+                            move = self.env['account.move'].with_context(default_state='draft').create(move_dict)
                             move.hr_accounting_public_employees()
                             slip.write({'move_id': move.id, 'date': date})
 
@@ -452,7 +452,7 @@ class Hr_payslip(models.Model):
                             adjust_debit['debit'] = final_credit - final_debit
                     # Add accounting lines in the move
                     move_dict['line_ids'] = [(0, 0, line_vals) for line_vals in line_ids]
-                    move = self.env['account.move'].create(move_dict)
+                    move = self.env['account.move'].with_context(default_state='draft').create(move_dict)
                     for slip in slip_mapped_data[journal_id][slip_date]:
                         slip.write({'move_id': move.id, 'date': date})
         return True

@@ -299,7 +299,10 @@ class HrPayslipRun(models.Model):
     def assign_status_validated(self):
         for record in self:
             if len(record.slip_ids) > 0:
-                record.write({'state': '02_close'})
+                # Evitar que el state del lote (01_ready) llegue como default_state a account.move
+                ctx = dict(record.env.context)
+                ctx.pop('default_state', None)
+                record.with_context(ctx).action_validate()
             else:
                 raise ValidationError(_("No existen nóminas asociadas a este lote, no es posible pasar a estado verificar."))
 
@@ -311,6 +314,7 @@ class HrPayslipRun(models.Model):
             slips = slips_original.filtered(lambda x: len(x.move_id) == 0 or x.move_id == False)[0:200]
         else:
             slips = slips_original
+        slips.filtered(lambda slip: slip.state == 'draft').compute_sheet()
         slips.action_payslip_done()
         if len(slips_original.filtered(lambda x: len(x.move_id) == 0 or x.move_id == False)) == 0:
             self.action_confirm()

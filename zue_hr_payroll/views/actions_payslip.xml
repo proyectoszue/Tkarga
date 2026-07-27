@@ -192,9 +192,8 @@
                 <xpath expr="//button[@name='action_validate']" position="attributes">
                     <attribute name="invisible">1</attribute>
                 </xpath>
-                <xpath expr="//button[@name='action_paid']" position="attributes">
-                    <attribute name="invisible">1</attribute>
-                </xpath>
+                <!-- Ocultar Marcar como pagado (action_paid) del menú kanban estándar hr.payslip.run.kanban -->
+                <xpath expr="//button[@name='action_paid']" position="replace"/>
                 <xpath expr="//button[@name='unlink']" position="after">
                     <button name="assign_status_validated" type="object" string="Verificar" invisible="state != '01_ready'"/>
                     <button name="restart_payroll_batch" type="object" string="Reiniciar" invisible="state not in ['02_close', '01_ready']"/>
