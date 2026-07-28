@@ -142,28 +142,38 @@ class HrPayrollReportZueFilter(models.TransientModel):
         max_date = max_date.strftime('%Y-%m-%d')
 
         query_novedades = '''
-            Select d.identification_id as "Identificación", c.name as "Empleado", COALESCE(a.private_name,COALESCE(COALESCE(b."name"->>'es_ES',b."name"->>'en_US'),'')) as "Novedad",
-                    Case When row_number() over(partition by d.identification_id) = max_item Then 1 else 0 end as "EsUltimo"
+            Select emp_pay.identification_id as "Identificación", c.name as "Empleado", COALESCE(a.private_name,COALESCE(COALESCE(b."name"->>'es_ES',b."name"->>'en_US'),'')) as "Novedad",
+                    Case When row_number() over(partition by emp_pay.identification_id) = max_item Then 1 else 0 end as "EsUltimo"
             From hr_leave as a
             Inner Join hr_leave_type as b on a.holiday_status_id = b.id
             Inner Join hr_employee as c on a.employee_id = c.id
-            Inner join hr_version as d on a.id = a.employee_id
+            Inner Join (
+                Select distinct p.employee_id, hv.identification_id
+                From hr_payslip p
+                Inner Join hr_version hv on p.version_id = hv.id
+                Where p.id in (%s)
+            ) as emp_pay on emp_pay.employee_id = c.id
             Inner Join (Select max(item) as max_item,identification_id
                         From (
-                            Select row_number() over(partition by d.identification_id) as item,
-                                d.identification_id, COALESCE(a.private_name,COALESCE(COALESCE(b."name"->>'es_ES',b."name"->>'en_US'),'')) as novedad
+                            Select row_number() over(partition by emp_pay.identification_id) as item,
+                                emp_pay.identification_id, COALESCE(a.private_name,COALESCE(COALESCE(b."name"->>'es_ES',b."name"->>'en_US'),'')) as novedad
                             From hr_leave as a
                             Inner Join hr_leave_type as b on a.holiday_status_id = b.id
                             Inner Join hr_employee as c on a.employee_id = c.id
-                            Inner join hr_version as d on a.id = a.employee_id
-                            Where a.state='validate' 
+                            Inner Join (
+                                Select distinct p.employee_id, hv.identification_id
+                                From hr_payslip p
+                                Inner Join hr_version hv on p.version_id = hv.id
+                                Where p.id in (%s)
+                            ) as emp_pay on emp_pay.employee_id = c.id
+                            Where a.state='validate'
                                     and ((a.request_date_from >= '%s' and a.request_date_from <= '%s') or (a.request_date_to >= '%s' and a.request_date_to <= '%s'))
                         )as A
                         group by identification_id
-                    ) as max_nov on d.identification_id = max_nov.identification_id
-            Where a.state='validate' 
+                    ) as max_nov on emp_pay.identification_id = max_nov.identification_id
+            Where a.state='validate'
                   and ((a.request_date_from >= '%s' and a.request_date_from <= '%s') or (a.request_date_to >= '%s' and a.request_date_to <= '%s'))
-        ''' % (min_date,max_date,min_date,max_date,min_date,max_date,min_date,max_date)
+        ''' % (str_ids, str_ids, min_date, max_date, min_date, max_date, min_date, max_date, min_date, max_date)
 
         query_days = '''
                     Select  c.item as "Item",
