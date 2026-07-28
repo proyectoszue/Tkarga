@@ -162,9 +162,7 @@
                                         <span t-esc="o.employee_id.name"/>,
                                     </b>
                                     <span t-if="employee_gender in ('female', 'femenino')">identificada</span><span t-else="">identificado</span> con cédula de ciudadanía número
-                                    <span
-                                            t-esc="str('{:20,.0f}'.format(int(o.employee_id.identification_id))).replace(',','.')"/>
-                                    ,
+                                    <span t-esc="str('{:20,.0f}'.format(int(o.employee_id.identification_id))).replace(',','.')"/>,
                                     <t t-if="o.contract_date_end == True">
                                         laboró en nuestra compañía desde el
                                         <span t-esc="o.get_date_text(o.contract_date_start)"/>
