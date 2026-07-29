@@ -398,7 +398,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
 
         text_liquidation += ' | ' + text_generate
         #Obtener info
-        cant_filas = pivot_report.shape[0]+3 # + 3 de los registros pertenencientes al encabezado
+        cant_filas = pivot_report.shape[0]+4 # + 4 filas de encabezado (3 niveles de columnas + fila con los nombres del índice)
         cant_columnas = pivot_report.shape[1]+len(columns_index) # + las columnas fijas
         #Obtener tamaño de las columnas que se crearon con el pivot
         for c in pivot_report.columns:
