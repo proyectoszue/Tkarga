@@ -48,10 +48,6 @@
                     <field name="is_company" invisible="1"/>
                     <field name="z_identification_readonly" invisible="1"/>
                     <field name="x_type_thirdparty" widget="many2many_checkboxes" required="0"/>
-                    <field name="l10n_latam_identification_type_id"
-                           options="{'no_open': True, 'no_create': True}"
-                           placeholder="Tipo" class="oe_inline" required="1"
-                           readonly="parent_id or z_identification_readonly"/>
                     <xpath expr="//field[@name='vat']" position="move"/>
                     <field name="x_digit_verification"/>
                     <field name="x_business_name" invisible="not is_company"/>

@@ -428,14 +428,30 @@ class ResPartner(models.Model):
             record.name = record.name.upper() if record.name else False
 
 
-    @api.depends('vat', 'l10n_latam_identification_type_id')
+    def _zue_identification_should_lock(self):
+        """Bloquea tipo/número solo si el contacto ya existe y tiene datos obligatorios completos."""
+        self.ensure_one()
+        if not self.vat or not self.l10n_latam_identification_type_id:
+            return False
+        if not self.email or not self.street:
+            return False
+        if not self.phone and not self.mobile:
+            return False
+        if not self.is_company and (not self.x_first_name or not self.x_first_lastname):
+            return False
+        return True
+
+    @api.depends(
+        'vat', 'l10n_latam_identification_type_id', 'email', 'street',
+        'phone', 'mobile', 'x_first_name', 'x_first_lastname', 'is_company',
+    )
     def _compute_z_identification_readonly(self):
         for partner in self:
             partner_id = partner.id if isinstance(partner.id, int) else (
                 partner._origin.id if partner._origin and isinstance(partner._origin.id, int) else False
             )
             partner.z_identification_readonly = bool(
-                partner_id and partner.vat and partner.l10n_latam_identification_type_id
+                partner_id and partner._zue_identification_should_lock()
             )
 
     def _zue_check_identification_lock(self, vals):
@@ -446,21 +462,25 @@ class ResPartner(models.Model):
         for partner in self:
             if not isinstance(partner.id, int):
                 continue
-            if 'vat' in vals and partner.vat:
+            if not partner._zue_identification_should_lock():
+                continue
+
+            if 'vat' in vals:
                 new_vat = vals.get('vat') or False
                 if isinstance(new_vat, str):
                     new_vat = new_vat.strip() or False
-                if new_vat and new_vat != (partner.vat or '').strip():
+                if (new_vat or '') != (partner.vat or '').strip():
                     raise ValidationError(_(
                         'El tipo o número de identificación no puede ser modificado una vez creado el contacto.'
                     ))
-            if 'l10n_latam_identification_type_id' in vals and partner.l10n_latam_identification_type_id:
+            if 'l10n_latam_identification_type_id' in vals:
                 new_type = vals.get('l10n_latam_identification_type_id')
                 if isinstance(new_type, models.BaseModel):
                     new_type = new_type.id
                 elif isinstance(new_type, (list, tuple)) and new_type:
                     new_type = new_type[1] if len(new_type) > 1 and not isinstance(new_type[0], int) else new_type[0]
-                if new_type and int(new_type) != partner.l10n_latam_identification_type_id.id:
+                current_type = partner.l10n_latam_identification_type_id.id
+                if (int(new_type) if new_type else False) != current_type:
                     raise ValidationError(_(
                         'El tipo o número de identificación no puede ser modificado una vez creado el contacto.'
                     ))
