@@ -81,7 +81,17 @@ class ResPartner(models.Model):
     x_second_name = fields.Char(string='Segundo nombre', tracking=True)
     x_first_lastname = fields.Char(string='Primer apellido', tracking=True)
     x_second_lastname = fields.Char(string='Segundo apellido', tracking=True)
-    
+    z_identification_readonly = fields.Boolean(string='Identificación bloqueada', compute='_compute_z_identification_readonly')
+
+    @api.model
+    def _get_view(self, view_id=None, view_type='form', **options):
+        arch, view = super()._get_view(view_id, view_type, **options)
+        if view_type == 'form':
+            for node in arch.xpath("//field[@name='vat' or @name='l10n_latam_identification_type_id']"):
+                node.set('readonly', 'parent_id or z_identification_readonly')
+        return arch, view
+
+
     #UBICACIÓN PRINCIPAL
     x_city = fields.Many2one('zue.city', string='Ciudad ZUE TMP V15', tracking=True, ondelete='restrict') # TMP MIENTRAS MIGRACION a v19 DESPUES SE DEBE ELIMINAR
     z_city_code = fields.Char(related='city_id.z_code_dian', string='Código ciudad DIAN')
@@ -147,47 +157,34 @@ class ResPartner(models.Model):
         for partner in self:
             partner.same_vat_partner_id = ""
 
-    @api.depends('vat','l10n_latam_identification_type_id','country_id')
+    @api.depends('vat', 'l10n_latam_identification_type_id', 'country_id')
     def _compute_verification_digit(self, return_digit=0):
-        # Logica para calcular digito de verificación
         multiplication_factors = [71, 67, 59, 53, 47, 43, 41, 37, 29, 23, 19, 17, 13, 7, 3]
-        digit = 0
 
         for partner in self:
             identification_type = partner.l10n_latam_identification_type_id
             has_co_document_code = (
-                    identification_type
-                    and 'l10n_co_document_code' in identification_type._fields
+                identification_type and 'l10n_co_document_code' in identification_type._fields
             )
-            if has_co_document_code:
-                if (partner.vat and partner.l10n_latam_identification_type_id.l10n_co_document_code == 'rut' and len(partner.vat) <= len(
-                        multiplication_factors)) or return_digit:
-                    number = 0
-                    padded_vat = partner.vat.split('-')[0]
-
-                    while len(padded_vat) < len(multiplication_factors):
-                        padded_vat = '0' + padded_vat
-
-                    # if there is a single non-integer in vat the verification code should be False
-                    try:
-                        for index, vat_number in enumerate(padded_vat):
-                            number += int(vat_number) * multiplication_factors[index]
-
-                        number %= 11
-
-                        if number < 2:
-                            digit = number
-                        else:
-                            digit = 11 - number
-
-                        if not return_digit:
-                            partner.x_digit_verification = digit
-                        else:
-                            return digit
-
-                    except ValueError:
-                        partner.x_digit_verification = False
-                else:
+            vat_digits = ''.join(c for c in (partner.vat or '').split('-')[0] if c.isdigit())
+            if (
+                has_co_document_code
+                and identification_type.l10n_co_document_code == 'rut'
+                and vat_digits
+                and len(vat_digits) <= len(multiplication_factors)
+            ) or return_digit:
+                try:
+                    padded_vat = vat_digits.zfill(len(multiplication_factors))
+                    number = sum(
+                        int(digit) * multiplication_factors[index]
+                        for index, digit in enumerate(padded_vat)
+                    )
+                    number %= 11
+                    digit = number if number < 2 else 11 - number
+                    if return_digit:
+                        return digit
+                    partner.x_digit_verification = digit
+                except ValueError:
                     partner.x_digit_verification = False
             else:
                 partner.x_digit_verification = False
@@ -430,6 +427,44 @@ class ResPartner(models.Model):
         for record in self:            
             record.name = record.name.upper() if record.name else False
 
+
+    @api.depends('vat', 'l10n_latam_identification_type_id')
+    def _compute_z_identification_readonly(self):
+        for partner in self:
+            partner_id = partner.id if isinstance(partner.id, int) else (
+                partner._origin.id if partner._origin and isinstance(partner._origin.id, int) else False
+            )
+            partner.z_identification_readonly = bool(
+                partner_id and partner.vat and partner.l10n_latam_identification_type_id
+            )
+
+    def _zue_check_identification_lock(self, vals):
+        if self.env.context.get('allow_partner_identification_update') or self.env.su:
+            return
+        if 'vat' not in vals and 'l10n_latam_identification_type_id' not in vals:
+            return
+        for partner in self:
+            if not isinstance(partner.id, int):
+                continue
+            if 'vat' in vals and partner.vat:
+                new_vat = vals.get('vat') or False
+                if isinstance(new_vat, str):
+                    new_vat = new_vat.strip() or False
+                if new_vat and new_vat != (partner.vat or '').strip():
+                    raise ValidationError(_(
+                        'El tipo o número de identificación no puede ser modificado una vez creado el contacto.'
+                    ))
+            if 'l10n_latam_identification_type_id' in vals and partner.l10n_latam_identification_type_id:
+                new_type = vals.get('l10n_latam_identification_type_id')
+                if isinstance(new_type, models.BaseModel):
+                    new_type = new_type.id
+                elif isinstance(new_type, (list, tuple)) and new_type:
+                    new_type = new_type[1] if len(new_type) > 1 and not isinstance(new_type[0], int) else new_type[0]
+                if new_type and int(new_type) != partner.l10n_latam_identification_type_id.id:
+                    raise ValidationError(_(
+                        'El tipo o número de identificación no puede ser modificado una vez creado el contacto.'
+                    ))
+
     @api.model_create_multi
     def create(self, values_list):
         for vals in values_list:
@@ -453,6 +488,7 @@ class ResPartner(models.Model):
         return res
 
     def write(self, vals):
+        self._zue_check_identification_lock(vals)
         if vals.get('name', False):
             vals['name'] = vals.get('name', False).upper()
         if vals.get('x_first_name', False):

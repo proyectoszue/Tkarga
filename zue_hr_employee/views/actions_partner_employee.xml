@@ -13,8 +13,9 @@
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/group[1]/group[1]" position="before">
                     <group>
-                        <field name="l10n_latam_identification_type_id" required="1"/>
-                        <field name="vat" string="N° Identificación" required="1"/>
+                        <field name="z_identification_readonly" invisible="1"/>
+                        <field name="l10n_latam_identification_type_id" required="1" readonly="z_identification_readonly"/>
+                        <field name="vat" string="N° Identificación" required="1" readonly="z_identification_readonly"/>
                         <field name="x_vat_expedition_date" string="Fecha de expedición documento"/>
                         <field name="x_first_name" required="1"/>
                         <field name="x_second_name"/>
