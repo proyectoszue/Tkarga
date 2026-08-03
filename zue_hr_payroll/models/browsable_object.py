@@ -333,9 +333,11 @@ class Payslips(BrowsableObject):
 
     #Retorna reglas tributarias del empleado asignadas en el contrato
     def get_contract_deductions_rtf(self, version_id,to_date,code):
-        #,('date_start', '>=', to_date),('date_end', '<=', to_date)
-        res = self.env['hr.contract.deductions.rtf'].search([('version_id', '=', version_id),('input_id.code','=',code)])
-        return res and res[0] or 0.0
+        res = self.env['hr.contract.deductions.rtf'].search([
+            ('version_id', '=', version_id), ('input_id.code', '=', code),
+            '|', ('date_start', '=', False), ('date_start', '<=', to_date),
+            '|', ('date_end', '=', False), ('date_end', '>=', to_date)], limit=1)
+        return res or self.env['hr.contract.deductions.rtf']
 
     #Retorna el objeto para el calculo de la retención en la fuente
     def get_deduction_retention(self, employee_id,to_date,type_tax,localdict):
