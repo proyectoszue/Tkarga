@@ -3,108 +3,99 @@
     <template id="report_retirement_severance_pay_document">
         <t t-call="web.html_container">
             <t t-foreach="inside_foreach_docs or docs" t-as="o">
-                <t t-call="web.basic_layout">
+                <t t-call="web.external_layout">
                     <t t-set="company" t-value="o.z_version_id.employee_id.company_id"/>
-                    <div class="page">
-                        <div class="mb-3">
-                            <img t-if="company.logo" class="o_company_logo_small" t-att-src="image_data_uri(company.logo)" alt="Logo"/>
-                            <div t-field="company.company_details"/>
-                            <div t-if="company.vat">
-                                <t t-esc="company.country_id.vat_label or 'NIT'"/>: <span t-esc="company.vat"/>
-                            </div>
+                    <t t-if="o.z_withdrawal_type == 'termination'">
+                        <p><span class="o_force_ltr" t-esc="company.partner_id.city"/>,&#160;
+                            <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%d de %B del %Y')"/>
+                        </p>
+                        <br/>
+                        <p>Señores</p>
+                        <br/>
+                        <p>
+                            <span t-field="o.z_directed_to"/>
+                        </p>
+                        <br/>
+                        <p>
+                            <span t-field="o.z_directed_to.partner_id.city"/>
+                        </p>
+                        <br/>
+                        <p>Ref. Autorización de retiro de cesantías por terminación de contrato</p>
+                        <br/>
+                        <p style="text-align:justify">
+                            Por medio de la presente la compañia
+                            <span t-field="o.z_version_id.employee_id.company_id.partner_id.name"/>&#160;
+                            identificada con Nit:
+                            <span t-field="o.z_version_id.employee_id.company_id.partner_id.vat"/>
+                            , comunica
+                            que el señor&#160;<span t-field="o.z_version_id.employee_id.name"/>, identificado con <span t-field="o.z_version_id.employee_id.partner_encab_id.l10n_latam_identification_type_id"/> N°
+                            <span t-esc="str('{:20,.0f}'.format(int(o.z_version_id.employee_id.identification_id))).replace(',','.')"/>
+                            estuvo vinculado como&#160;<span t-field="o.z_version_id.job_id.name"/>, hasta el dia de&#160;
+                            <span t-field="o.z_version_id.retirement_date"/>
+                            , lo anterior se informa con el fin de hacer entrega del total de las cesantías consignadas al
+                            fondo, por concepto de&#160;<span t-field="o.z_withdrawal_concept_total"/>
+                        </p>
+                        <br/>
+                        <div class="col-md-12">
+                            <p style="text-align:justify">Cordialmente,</p>
+                            <t t-set="autorizado" t-value="o.z_version_id.get_signature_certification()"/>
+                            <img t-if="autorizado.get('firma')" t-att-src="image_data_uri(autorizado.get('firma'))"/>
+                            <br/><br/>
                         </div>
+                    </t>
 
-                        <t t-if="o.z_withdrawal_type == 'termination'">
-                            <p><span class="o_force_ltr" t-esc="company.partner_id.city"/>,&#160;
-                                <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%d de %B del %Y')"/>
-                            </p>
-                            <br/>
-                            <p>Señores</p>
-                            <br/>
-                            <p>
-                                <span t-field="o.z_directed_to"/>
-                            </p>
-                            <br/>
-                            <p>
-                                <span t-field="o.z_directed_to.partner_id.city"/>
-                            </p>
-                            <br/>
-                            <p>Ref. Autorización de retiro de cesantías por terminación de contrato</p>
-                            <br/>
-                            <p style="text-align:justify">
-                                Por medio de la presente la compañia
-                                <span t-field="o.z_version_id.employee_id.company_id.partner_id.name"/>&#160;
-                                identificada con Nit:
-                                <span t-field="o.z_version_id.employee_id.company_id.partner_id.vat"/>
-                                , comunica
-                                que el señor&#160;<span t-field="o.z_version_id.employee_id.name"/>, identificado con <span t-field="o.z_version_id.employee_id.partner_encab_id.l10n_latam_identification_type_id"/> N°
-                                <span t-esc="str('{:20,.0f}'.format(int(o.z_version_id.employee_id.identification_id))).replace(',','.')"/>
-                                estuvo vinculado como&#160;<span t-field="o.z_version_id.job_id.name"/>, hasta el dia de&#160;
-                                <span t-field="o.z_version_id.retirement_date"/>
-                                , lo anterior se informa con el fin de hacer entrega del total de las cesantías consignadas al
-                                fondo, por concepto de&#160;<span t-field="o.z_withdrawal_concept_total"/>
-                            </p>
-                            <br/>
-                            <div class="col-md-12">
-                                <p style="text-align:justify">Cordialmente,</p>
-                                <t t-set="autorizado" t-value="o.z_version_id.get_signature_certification()"/>
-                                <img t-if="autorizado.get('firma')" t-att-src="image_data_uri(autorizado.get('firma'))"/>
-                                <br/><br/>
-                            </div>
-                        </t>
+                    <t t-else="">
+                        <p><span class="o_force_ltr" t-esc="company.partner_id.city"/>,&#160;
+                            <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')"/>
+                        </p>
+                        <br/>
+                        <p>Señores</p>
+                        <br/>
+                        <p>
+                            <span t-field="o.z_directed_to"/>
+                        </p>
+                        <br/>
+                        <p>
+                            <span t-field="o.z_directed_to.partner_id.city"/>
+                        </p>
+                        <br/>
+                        <p>Ref. Autorización para retiro parcial de cesantías</p>
+                        <br/>
+                        <p style="text-align:justify">
+                            Según lo dispuesto en el artículo 21 de la ley 1429 de 2010 (que modifico el Art. 256 del
+                            código
+                            sustantivo del trabajo) y la aclaración contenida en la carta circular 011 del 07 de febrero
+                            de 2011
+                            del Ministerio de Protección Social, nos permitimos informarles que hemos autorizado el
+                            retiro de
+                            las cesantías por <span t-field="o.z_withdrawal_concept_partial"/>, del funcionario señalado
+                            más adelante, en las siguientes condiciones:
+                        </p>
+                        <br/>
+                        <p>NOMBRE DEL FUNCIONARIO:&#160;
+                            <span t-field="o.z_version_id.employee_id.name"/>
+                        </p>
+                        <p>IDENTIFICACIÓN:&#160;
+                            <span t-esc="str('{:20,.0f}'.format(int(o.z_version_id.employee_id.identification_id))).replace(',','.')"/>
+                        </p>
+                        <p>VALOR DEL RETIRO:&#160;
+                            <span t-field="o.z_withdrawal_value"  t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.z_version_id.company_id.currency_id}"/>
+                        </p>
+                        <p>CONCEPTO DEL RETIRO:&#160;
+                            <span t-field="o.z_withdrawal_concept_partial"/>
+                        </p>
+                        <p>PARA SER GIRADO A:&#160;
+                            <span t-field="o.z_version_id.employee_id.name"/>
+                        </p>
+                        <br/>
+                        <div class="col-md-12">
+                            <p style="text-align:justify">Cordialmente,</p>
+                            <t t-set="autorizado" t-value="o.z_version_id.get_signature_certification()"/>
+                            <img t-if="autorizado.get('firma')" t-att-src="image_data_uri(autorizado.get('firma'))"/>
+                            <br/><br/>
+                        </div>
+                    </t>
 
-                        <t t-else="">
-                            <p><span class="o_force_ltr" t-esc="company.partner_id.city"/>,&#160;
-                                <span t-esc="context_timestamp(datetime.datetime.now()).strftime('%Y-%m-%d')"/>
-                            </p>
-                            <br/>
-                            <p>Señores</p>
-                            <br/>
-                            <p>
-                                <span t-field="o.z_directed_to"/>
-                            </p>
-                            <br/>
-                            <p>
-                                <span t-field="o.z_directed_to.partner_id.city"/>
-                            </p>
-                            <br/>
-                            <p>Ref. Autorización para retiro parcial de cesantías</p>
-                            <br/>
-                            <p style="text-align:justify">
-                                Según lo dispuesto en el artículo 21 de la ley 1429 de 2010 (que modifico el Art. 256 del
-                                código
-                                sustantivo del trabajo) y la aclaración contenida en la carta circular 011 del 07 de febrero
-                                de 2011
-                                del Ministerio de Protección Social, nos permitimos informarles que hemos autorizado el
-                                retiro de
-                                las cesantías por <span t-field="o.z_withdrawal_concept_partial"/>, del funcionario señalado
-                                más adelante, en las siguientes condiciones:
-                            </p>
-                            <br/>
-                            <p>NOMBRE DEL FUNCIONARIO:&#160;
-                                <span t-field="o.z_version_id.employee_id.name"/>
-                            </p>
-                            <p>IDENTIFICACIÓN:&#160;
-                                <span t-esc="str('{:20,.0f}'.format(int(o.z_version_id.employee_id.identification_id))).replace(',','.')"/>
-                            </p>
-                            <p>VALOR DEL RETIRO:&#160;
-                                <span t-field="o.z_withdrawal_value"  t-options="{'widget': 'monetary', 'precision': 0, 'display_currency': o.z_version_id.company_id.currency_id}"/>
-                            </p>
-                            <p>CONCEPTO DEL RETIRO:&#160;
-                                <span t-field="o.z_withdrawal_concept_partial"/>
-                            </p>
-                            <p>PARA SER GIRADO A:&#160;
-                                <span t-field="o.z_version_id.employee_id.name"/>
-                            </p>
-                            <br/>
-                            <div class="col-md-12">
-                                <p style="text-align:justify">Cordialmente,</p>
-                                <t t-set="autorizado" t-value="o.z_version_id.get_signature_certification()"/>
-                                <img t-if="autorizado.get('firma')" t-att-src="image_data_uri(autorizado.get('firma'))"/>
-                                <br/><br/>
-                            </div>
-                        </t>
-                    </div>
                 </t>
             </t>
         </t>
