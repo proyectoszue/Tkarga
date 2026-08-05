@@ -208,7 +208,8 @@ class Hr_payslip(models.Model):
                 leave_number_of_days = leave.leave_id.number_of_days
 
                 leaves['IDLEAVE'] = leave.leave_id.id
-                leaves[leave.work_entry_type_id.code] = leave_number_of_days
+                # Día 31 no se paga: quantity = hábiles + festivos (sin days_31_*)
+                leaves[leave.work_entry_type_id.code] = leave_business_days + leave_holidays
                 leaves['HOLIDAYS'+leave.work_entry_type_id.code] = leave_holidays
                 leaves['BUSINESS'+leave.work_entry_type_id.code] = leave_business_days
 
@@ -244,9 +245,10 @@ class Hr_payslip(models.Model):
                     leaves['ORIGINAL_'+leave.work_entry_type_id.code] = leave_number_of_days
                     leaves['ORIGINAL_HOLIDAYS' + leave.work_entry_type_id.code] = leaves['HOLIDAYS' + leave.work_entry_type_id.code]
                     leaves['ORIGINAL_BUSINESS' + leave.work_entry_type_id.code] = leaves['BUSINESS' + leave.work_entry_type_id.code]
-                    leaves[leave.work_entry_type_id.code] = vac_days_in_payslip
-                    leaves['HOLIDAYS' + leave.work_entry_type_id.code] = holidays
-                    leaves['BUSINESS' + leave.work_entry_type_id.code] = business_days
+                    # Día 31 no se paga
+                    leaves[leave.work_entry_type_id.code] = (business_days - days_31_b) + (holidays - days_31_h)
+                    leaves['HOLIDAYS' + leave.work_entry_type_id.code] = holidays - days_31_h
+                    leaves['BUSINESS' + leave.work_entry_type_id.code] = business_days - days_31_b
                     leaves['31HOLIDAYS' + leave.work_entry_type_id.code] = days_31_h
                     leaves['31BUSINESS' + leave.work_entry_type_id.code] = days_31_b
 
@@ -341,6 +343,8 @@ class Hr_payslip(models.Model):
 
                         localdict.update({'leaves':  BrowsableObject(employee.id, leaves, self.env)})
                         amount, qty, rate = rule._compute_rule(localdict)
+                        # Día 31 no se paga: cantidad = hábiles + festivos (sin days_31_*)
+                        qty = float(days_vacations_business or 0) + float(days_vacations_holidays or 0)
                         amount = round(amount,0) if round_payroll == False else round(amount, 2)#Se redondean los decimales de todas las reglas
                         #check if there is already a rule computed with that code
                         previous_amount = rule.code in localdict and localdict[rule.code] or 0.0

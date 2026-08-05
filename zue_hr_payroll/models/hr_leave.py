@@ -201,9 +201,8 @@ class HolidaysRequest(models.Model):
                 record.days_31_business = days_31_b
                 record.days_31_holidays = days_31_h
                 record.request_date_to = date_to
-                days_31 = days_31_b+days_31_h
-                # record.number_of_days = (business_days + holidays) - days_31
-                # record.number_of_days = (business_days + holidays) - days_31
+                # Día 31 no se paga: number_of_days = hábiles + festivos
+                record.number_of_days = record.business_days + record.holidays
                 #Verficar alerta
                 obj_version = self.env['hr.version'].search(
                     [('employee_id', '=', record.employee_id.id), ('contract_date_start', '<=', record.date_to), ('contract_date_end', '=', False)])
