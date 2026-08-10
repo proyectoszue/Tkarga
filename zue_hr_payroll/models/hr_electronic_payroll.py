@@ -590,11 +590,11 @@ class hr_electronic_payroll(models.Model):
         for employee in obj_employee:
             obj_contracts = self.env['hr.contract']
             # Obtener contrato activo
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'open'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id), ('date_start','<=',date_end)])
+            obj_contracts |= self.env['hr.contract'].search([('state', '=', 'open'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id), ('date_start','<=',date_end)])
             # Obtener contratos finalizados en el mes
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id), ('retirement_date', '>=', date_start), ('retirement_date', '<=', date_end + relativedelta(months=1))])
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'finished'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id),('date_end', '>=', date_start), ('date_end', '<=', date_end + relativedelta(months=1))])
-            obj_contracts += self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id.tipo_coti_id.code', '!=', 23), ('contract_type','=','aprendizaje'), ('employee_id', '=', employee.id), ('date_end', '>=', date_start),('date_end', '<=', date_end + relativedelta(months=1))])
+            obj_contracts |= self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id), ('retirement_date', '>=', date_start), ('retirement_date', '<=', date_end + relativedelta(months=1))])
+            obj_contracts |= self.env['hr.contract'].search([('state', '=', 'finished'), ('employee_id.tipo_coti_id.code', '!=', 23), ('employee_id', '=', employee.id),('date_end', '>=', date_start), ('date_end', '<=', date_end + relativedelta(months=1))])
+            obj_contracts |= self.env['hr.contract'].search([('state', '=', 'close'), ('employee_id.tipo_coti_id.code', '!=', 23), ('contract_type','=','aprendizaje'), ('employee_id', '=', employee.id), ('date_end', '>=', date_start),('date_end', '<=', date_end + relativedelta(months=1))])
 
             for obj_contract in obj_contracts:
                 item += 1
