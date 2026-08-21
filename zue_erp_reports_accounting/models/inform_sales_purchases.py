@@ -56,19 +56,19 @@ class zue_inform_sales_purchases(models.TransientModel):
                                 end
                             end as tipo_movimento,
                         a.invoice_date as periodo, a."date" as fecha_contable, b.code as codigo_corto, a.name as voucher,a.invoice_date as fecha_em, 
-                        case when a.invoice_payment_term_id = null then a.invoice_date + h.days
+                        case when a.invoice_payment_term_id = null then a.invoice_date + h.nb_days
                         else a.invoice_date_due
                         end as fecha_ven, a.name as serie, 
-                        case when c.x_document_type = '11' then '11 - Registro civil de nacimiento'
-                            else case when c.x_document_type = '12' then '12 - Tarjeta de identidad'
-                                else case when c.x_document_type = '13' then '13 - Cédula de ciudadania'
-                                    else case when c.x_document_type = '21' then '21 - Tarjeta de extranjeria'
-                                        else case when c.x_document_type = '22' then '22 - Cédula de extranjeria'
-                                            else case when c.x_document_type = '31' then '31 - NIT'
-                                                else case when c.x_document_type = '41' then '41 - Pasaporte'
-                                                    else case when c.x_document_type = '42' then '42 - Tipo de documento extranjero'
-                                                        else case when c.x_document_type = '43' then '43 - Sin indetificación del exterior o para uso definido por la DIAN'
-                                                            else case when c.x_document_type = '44' then '44 - Documento de identificación extranjero persona juridica'
+                        case when it.z_code_dian = '11' then '11 - Registro civil de nacimiento'
+                            else case when it.z_code_dian = '12' then '12 - Tarjeta de identidad'
+                                else case when it.z_code_dian = '13' then '13 - Cédula de ciudadania'
+                                    else case when it.z_code_dian = '21' then '21 - Tarjeta de extranjeria'
+                                        else case when it.z_code_dian = '22' then '22 - Cédula de extranjeria'
+                                            else case when it.z_code_dian = '31' then '31 - NIT'
+                                                else case when it.z_code_dian = '41' then '41 - Pasaporte'
+                                                    else case when it.z_code_dian = '42' then '42 - Tipo de documento extranjero'
+                                                        else case when it.z_code_dian = '43' then '43 - Sin indetificación del exterior o para uso definido por la DIAN'
+                                                            else case when it.z_code_dian = '44' then '44 - Documento de identificación extranjero persona juridica'
                                                                 else ''
                                                                 end
                                                             end
@@ -87,26 +87,26 @@ class zue_inform_sales_purchases(models.TransientModel):
                                 case when a.move_type = 'out_refund'
                                 then
                                     case when sum(debit) > 0 
-                                        then abs(sum(case when (aml."name" like '%%IVA%%' or aa."name" like '%%IVA%%') then abs(balance) else 0 end)) * -1
-                                        else abs(sum(case when (aml."name" like '%%IVA%%' or aa."name" like '%%IVA%%') then abs(balance) else 0 end)) 
+                                        then abs(sum(case when (aml."name" like '%%IVA%%' or aa."name"->>'en_US' like '%%IVA%%') then abs(balance) else 0 end)) * -1
+                                        else abs(sum(case when (aml."name" like '%%IVA%%' or aa."name"->>'en_US' like '%%IVA%%') then abs(balance) else 0 end)) 
                                     end
                                 else
                                     case when sum(debit) > 0 
-                                        then abs(sum(case when (aml."name" like '%%IVA%%' or aa."name" like '%%IVA%%') then abs(balance) else 0 end)) * -1
-                                        else abs(sum(case when (aml."name" like '%%IVA%%' or aa."name" like '%%IVA%%') then abs(balance) else 0 end))
+                                        then abs(sum(case when (aml."name" like '%%IVA%%' or aa."name"->>'en_US' like '%%IVA%%') then abs(balance) else 0 end)) * -1
+                                        else abs(sum(case when (aml."name" like '%%IVA%%' or aa."name"->>'en_US' like '%%IVA%%') then abs(balance) else 0 end))
                                     end
                                 end
                             else 
                                 case when a.move_type = 'in_refund'
                                 then
                                     case when sum(debit) > 0 
-                                        then abs(sum(case when (aml."name" like '%%IVA%%' or aa."name" like '%%IVA%%') then abs(balance) else 0 end))
-                                        else abs(sum(case when (aml."name" like '%%IVA%%' or aa."name" like '%%IVA%%') then abs(balance) else 0 end)) * -1 
+                                        then abs(sum(case when (aml."name" like '%%IVA%%' or aa."name"->>'en_US' like '%%IVA%%') then abs(balance) else 0 end))
+                                        else abs(sum(case when (aml."name" like '%%IVA%%' or aa."name"->>'en_US' like '%%IVA%%') then abs(balance) else 0 end)) * -1 
                                     end
                                 else
                                     case when sum(debit) > 0 
-                                        then abs(sum(case when (aml."name" like '%%IVA%%' or aa."name" like '%%IVA%%') then abs(balance) else 0 end)) 
-                                        else abs(sum(case when (aml."name" like '%%IVA%%' or aa."name" like '%%IVA%%') then abs(balance) else 0 end)) * -1
+                                        then abs(sum(case when (aml."name" like '%%IVA%%' or aa."name"->>'en_US' like '%%IVA%%') then abs(balance) else 0 end)) 
+                                        else abs(sum(case when (aml."name" like '%%IVA%%' or aa."name"->>'en_US' like '%%IVA%%') then abs(balance) else 0 end)) * -1
                                     end
                                 end
                         end as iva,
@@ -115,26 +115,26 @@ class zue_inform_sales_purchases(models.TransientModel):
                                 case when a.move_type = 'out_refund'
                                 then
                                     case when sum(debit) > 0 
-                                        then abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name" like '%%RteIVA%%') then abs(balance) else 0 end)) * -1
-                                        else abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name" like '%%RteIVA%%') then abs(balance) else 0 end)) 
+                                        then abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name"->>'en_US' like '%%RteIVA%%') then abs(balance) else 0 end)) * -1
+                                        else abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name"->>'en_US' like '%%RteIVA%%') then abs(balance) else 0 end)) 
                                     end
                                 else
                                     case when sum(debit) > 0 
-                                        then abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name" like '%%RteIVA%%') then abs(balance) else 0 end)) * -1
-                                        else abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name" like '%%RteIVA%%') then abs(balance) else 0 end))
+                                        then abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name"->>'en_US' like '%%RteIVA%%') then abs(balance) else 0 end)) * -1
+                                        else abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name"->>'en_US' like '%%RteIVA%%') then abs(balance) else 0 end))
                                     end
                                 end
                             else 
                                 case when a.move_type = 'in_refund'
                                 then
                                     case when sum(debit) > 0 
-                                        then abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name" like '%%RteIVA%%') then abs(balance) else 0 end)) 
-                                        else abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name" like '%%RteIVA%%') then abs(balance) else 0 end)) * -1
+                                        then abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name"->>'en_US' like '%%RteIVA%%') then abs(balance) else 0 end)) 
+                                        else abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name"->>'en_US' like '%%RteIVA%%') then abs(balance) else 0 end)) * -1
                                     end
                                 else
                                     case when sum(debit) > 0 
-                                        then abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name" like '%%RteIVA%%') then abs(balance) else 0 end)) 
-                                        else abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name" like '%%RteIVA%%') then abs(balance) else 0 end)) * -1
+                                        then abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name"->>'en_US' like '%%RteIVA%%') then abs(balance) else 0 end)) 
+                                        else abs(sum(case when (aml."name" like '%%RteIVA%%' or aa."name"->>'en_US' like '%%RteIVA%%') then abs(balance) else 0 end)) * -1
                                     end
                                 end
                         end as reteiva,
@@ -143,26 +143,26 @@ class zue_inform_sales_purchases(models.TransientModel):
                                 case when a.move_type = 'out_refund'
                                 then
                                     case when sum(debit) > 0 
-                                        then abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name" like '%%RteFte%%') then abs(balance) else 0 end)) * -1
-                                        else abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name" like '%%RteFte%%') then abs(balance) else 0 end)) 
+                                        then abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name"->>'en_US' like '%%RteFte%%') then abs(balance) else 0 end)) * -1
+                                        else abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name"->>'en_US' like '%%RteFte%%') then abs(balance) else 0 end)) 
                                     end
                                 else
                                     case when sum(debit) > 0
-                                        then abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name" like '%%RteFte%%') then abs(balance) else 0 end)) * -1
-                                        else abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name" like '%%RteFte%%') then abs(balance) else 0 end))
+                                        then abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name"->>'en_US' like '%%RteFte%%') then abs(balance) else 0 end)) * -1
+                                        else abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name"->>'en_US' like '%%RteFte%%') then abs(balance) else 0 end))
                                     end
                                 end
                             else 
                                 case when a.move_type = 'in_refund'
                                 then
                                     case when sum(debit) > 0 
-                                        then abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name" like '%%RteFte%%') then abs(balance) else 0 end)) 
-                                        else abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name" like '%%RteFte%%') then abs(balance) else 0 end)) * -1
+                                        then abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name"->>'en_US' like '%%RteFte%%') then abs(balance) else 0 end)) 
+                                        else abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name"->>'en_US' like '%%RteFte%%') then abs(balance) else 0 end)) * -1
                                     end
                                 else
                                     case when sum(debit) > 0
-                                        then abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name" like '%%RteFte%%') then abs(balance) else 0 end)) 
-                                        else abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name" like '%%RteFte%%') then abs(balance) else 0 end)) * -1
+                                        then abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name"->>'en_US' like '%%RteFte%%') then abs(balance) else 0 end)) 
+                                        else abs(sum(case when (aml."name" like '%%RteFte%%' or aa."name"->>'en_US' like '%%RteFte%%') then abs(balance) else 0 end)) * -1
                                     end
                                 end
                         end as reterenta,
@@ -171,26 +171,26 @@ class zue_inform_sales_purchases(models.TransientModel):
                                 case when a.move_type = 'out_refund'
                                 then
                                     case when sum(debit) > 0 
-                                        then abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name" like '%%RteICA%%') then abs(balance) else 0 end)) * -1
-                                        else abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name" like '%%RteICA%%') then abs(balance) else 0 end)) 
+                                        then abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name"->>'en_US' like '%%RteICA%%') then abs(balance) else 0 end)) * -1
+                                        else abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name"->>'en_US' like '%%RteICA%%') then abs(balance) else 0 end)) 
                                     end
                                 else
                                     case when sum(debit) > 0
-                                        then abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name" like '%%RteICA%%') then abs(balance) else 0 end)) * -1
-                                        else abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name" like '%%RteICA%%') then abs(balance) else 0 end))
+                                        then abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name"->>'en_US' like '%%RteICA%%') then abs(balance) else 0 end)) * -1
+                                        else abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name"->>'en_US' like '%%RteICA%%') then abs(balance) else 0 end))
                                     end
                                 end
                             else 
                                 case when a.move_type = 'in_refund'
                                 then
                                     case when sum(debit) > 0 
-                                        then abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name" like '%%RteICA%%') then abs(balance) else 0 end)) 
-                                        else abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name" like '%%RteICA%%') then abs(balance) else 0 end)) * -1
+                                        then abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name"->>'en_US' like '%%RteICA%%') then abs(balance) else 0 end)) 
+                                        else abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name"->>'en_US' like '%%RteICA%%') then abs(balance) else 0 end)) * -1
                                     end
                                 else
                                     case when sum(debit) > 0
-                                        then abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name" like '%%RteICA%%') then abs(balance) else 0 end)) 
-                                        else abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name" like '%%RteICA%%') then abs(balance) else 0 end)) * -1
+                                        then abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name"->>'en_US' like '%%RteICA%%') then abs(balance) else 0 end)) 
+                                        else abs(sum(case when (aml."name" like '%%RteICA%%' or aa."name"->>'en_US' like '%%RteICA%%') then abs(balance) else 0 end)) * -1
                                     end
                                 end
                         end as reteica,   
@@ -198,25 +198,25 @@ class zue_inform_sales_purchases(models.TransientModel):
                         case when '%s' = 'sales' 
                             then
                                 case when a.move_type = 'out_refund'
-                                    then sum(case when (aml."name" like '%%Autorretención%%' or aa."name" like '%%Autorretención%%') then abs(credit) else 0 end) * -1
-                                    else sum(case when (aml."name" like '%%Autorretención%%' or aa."name" like '%%Autorretención%%') then abs(credit) else 0 end)
+                                    then sum(case when (aml."name" like '%%Autorretención%%' or aa."name"->>'en_US' like '%%Autorretención%%') then abs(credit) else 0 end) * -1
+                                    else sum(case when (aml."name" like '%%Autorretención%%' or aa."name"->>'en_US' like '%%Autorretención%%') then abs(credit) else 0 end)
                                 end
                             else
                                 case when a.move_type = 'in_refund'
-                                    then sum(case when (aml."name" like '%%Autorretención%%' or aa."name" like '%%Autorretención%%') then abs(credit) else 0 end) 
-                                    else sum(case when (aml."name" like '%%Autorretención%%' or aa."name" like '%%Autorretención%%') then abs(credit) else 0 end) * -1
+                                    then sum(case when (aml."name" like '%%Autorretención%%' or aa."name"->>'en_US' like '%%Autorretención%%') then abs(credit) else 0 end) 
+                                    else sum(case when (aml."name" like '%%Autorretención%%' or aa."name"->>'en_US' like '%%Autorretención%%') then abs(credit) else 0 end) * -1
                                 end
                         end as autorenta_cd,
                         case when '%s' = 'sales' 
                             then
                                 case when a.move_type = 'out_refund'
-                                    then sum(case when (aml."name" like '%%Autorretención%%' or aa."name" like '%%Autorretención%%') then abs(debit) else 0 end) 
-                                    else sum(case when (aml."name" like '%%Autorretención%%' or aa."name" like '%%Autorretención%%') then abs(debit) else 0 end) * -1
+                                    then sum(case when (aml."name" like '%%Autorretención%%' or aa."name"->>'en_US' like '%%Autorretención%%') then abs(debit) else 0 end) 
+                                    else sum(case when (aml."name" like '%%Autorretención%%' or aa."name"->>'en_US' like '%%Autorretención%%') then abs(debit) else 0 end) * -1
                                 end
                             else
                                 case when a.move_type = 'in_refund'
-                                    then sum(case when (aml."name" like '%%Autorretención%%' or aa."name" like '%%Autorretención%%') then abs(debit) else 0 end) * -1
-                                    else sum(case when (aml."name" like '%%Autorretención%%' or aa."name" like '%%Autorretención%%') then abs(debit) else 0 end) 
+                                    then sum(case when (aml."name" like '%%Autorretención%%' or aa."name"->>'en_US' like '%%Autorretención%%') then abs(debit) else 0 end) * -1
+                                    else sum(case when (aml."name" like '%%Autorretención%%' or aa."name"->>'en_US' like '%%Autorretención%%') then abs(debit) else 0 end) 
                                 end
                         end as autorenta_db,
                         e."name" as divisa, 
@@ -227,13 +227,14 @@ class zue_inform_sales_purchases(models.TransientModel):
                         inner join account_move as a on aml.move_id = a.id and a.state = 'posted'
                         inner join account_journal as b on a.journal_id = b.id
                         inner join res_partner as c on a.partner_id = c.id
+                        inner join l10n_latam_identification_type as it on c.l10n_latam_identification_type_id = it.id
                         inner join res_currency as e on a.currency_id = e.id
                         inner join res_company as f on aml.company_id = f.id
                         inner join account_account as aa on aml.account_id = aa.id
                         left join account_payment_term as g on a.invoice_payment_term_id = g.id
                         left join account_payment_term_line as h on g.id = h.payment_id
                         %s
-                        group by f."name",a.move_type,a.invoice_date,a."date",b.code,a.name,a.invoice_payment_term_id,a.invoice_date_due,a.invoice_date,h.days,c.x_document_type,c.vat,
+                        group by f."name",a.move_type,a.invoice_date,a."date",b.code,a.name,a.invoice_payment_term_id,a.invoice_date_due,a.invoice_date,h.nb_days,it.z_code_dian,c.vat,
                         c.x_digit_verification,c."name",a.amount_untaxed_signed,a.amount_total_signed,e."name",a.amount_total_in_currency_signed,
                         a."ref",a.supplier_invoice_number,aa."name"
                     ) as a  
@@ -243,8 +244,8 @@ class zue_inform_sales_purchases(models.TransientModel):
         # Ajuste TRM de PGM
         # a.amount_negotiated_trm as trm -- linea 86
         # a.amount_negotiated_trm -- linea 98
-        self._cr.execute(query_report)
-        result_query = self._cr.dictfetchall()
+        self.env.cr.execute(query_report)
+        result_query = self.env.cr.dictfetchall()
 
         # Generar EXCEL
         filename = 'Informe Ventas y Compras'

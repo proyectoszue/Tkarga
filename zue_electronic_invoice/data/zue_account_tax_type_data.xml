@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+
+        <record id="IVA_id" model="account.tax.type">
+            <field name="code">01</field>
+            <field name="name">IVA</field>
+            <field name="retention">False</field>
+        </record>
+
+        <record id="IC_id" model="account.tax.type">
+            <field name="code">02</field>
+            <field name="name">IC</field>
+            <field name="retention">False</field>
+        </record>
+
+        <record id="ICA_id" model="account.tax.type">
+            <field name="code">03</field>
+            <field name="name">ICA</field>
+            <field name="retention">False</field>
+        </record>
+
+        <record id="INC_id" model="account.tax.type">
+            <field name="code">04</field>
+            <field name="name">INC</field>
+            <field name="retention">False</field>
+        </record>
+
+        <record id="ReteIVA_id" model="account.tax.type">
+            <field name="code">05</field>
+            <field name="name">ReteIVA</field>
+            <field name="retention">True</field>
+        </record>
+
+        <record id="ReteRenta_id" model="account.tax.type">
+            <field name="code">06</field>
+            <field name="name">ReteRenta</field>
+            <field name="retention">True</field>
+        </record>
+
+        <record id="ReteICA_id" model="account.tax.type">
+            <field name="code">07</field>
+            <field name="name">ReteICA</field>
+            <field name="retention">True</field>
+        </record>
+
+        <record id="FtoHorticultura_id" model="account.tax.type">
+            <field name="code">20</field>
+            <field name="name">FtoHorticultura</field>
+            <field name="retention">False</field>
+        </record>
+
+        <record id="Timbre_id" model="account.tax.type">
+            <field name="code">21</field>
+            <field name="name">Timbre</field>
+            <field name="retention">False</field>
+        </record>
+
+        <record id="Bolsas_id" model="account.tax.type">
+            <field name="code">22</field>
+            <field name="name">Bolsas</field>
+            <field name="retention">False</field>
+        </record>
+
+        <record id="INCarbono_id" model="account.tax.type">
+            <field name="code">23</field>
+            <field name="name">INCarbono</field>
+            <field name="retention">False</field>
+        </record>
+
+        <record id="INCombustibles_id" model="account.tax.type">
+            <field name="code">24</field>
+            <field name="name">INCombustibles</field>
+            <field name="retention">False</field>
+        </record>
+
+        <record id="Sobretasa_Combustibles_id" model="account.tax.type">
+            <field name="code">25</field>
+            <field name="name">Sobretasa Combustibles</field>
+            <field name="retention">False</field>
+        </record>
+
+        <record id="Sordicom_id" model="account.tax.type">
+            <field name="code">26</field>
+            <field name="name">Sordicom</field>
+            <field name="retention">False</field>
+        </record>
+
+        <record id="No_causa_id" model="account.tax.type">
+            <field name="code">ZY</field>
+            <field name="name">No causa</field>
+            <field name="retention">False</field>
+        </record>
+
+        <record id="Nombre_de_la_figura_tributaria_id" model="account.tax.type">
+            <field name="code">ZZ</field>
+            <field name="name">Nombre de la figura tributaria</field>
+            <field name="retention">False</field>
+        </record>
+
+        <record id="IC_Porcentual_id" model="account.tax.type">
+            <field name="code">08</field>
+            <field name="name">IC Porcentual</field>
+            <field name="retention">False</field>
+        </record>
+
+        <record id="IC_Datos_id" model="account.tax.type">
+            <field name="code">30</field>
+            <field name="name">IC Datos</field>
+            <field name="retention">False</field>
+        </record>
+
+        <record id="AutoRenta_id" model="account.tax.type">
+            <field name="code">AR</field>
+            <field name="name">AutoRenta</field>
+            <field name="retention">True</field>
+        </record>
+
+    </data>
+</odoo>

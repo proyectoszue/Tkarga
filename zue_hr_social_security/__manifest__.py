@@ -15,7 +15,8 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Human Resources',
-    "version": "15.0.1.0.0",
+    "version": "19.0.1.0.0",
+    'icon': '/zue_hr_social_security/static/description/icon.png',
 
     # any module necessary for this one to work correctly
     'depends': ['base','hr','hr_payroll','hr_holidays','zue_erp','zue_hr_employee','zue_hr_payroll','account','mail'],
@@ -31,6 +32,7 @@
         'views/actions_hr_entities_reports.xml',
         'views/actions_hr_report_expenses_employee.xml',
         'views/actions_vacation_book_reports.xml',
+        'views/actions_hr_electronic_payroll.xml',
         'views/menus.xml',
         'reports/social_security_report_template.xml',
         'reports/social_security_report.xml',              

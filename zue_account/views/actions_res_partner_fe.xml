@@ -11,20 +11,8 @@
                 <xpath expr="//field[@name='acc_number']" position="after">
                     <field name="type_account"/>
                 </xpath>
-            </field>
-        </record>
-
-        <record id="view_partner_zue_account_fe_form" model="ir.ui.view">
-            <field name="name">res.partner.zue.account.fe.form.inherit</field>
-            <field name="model">res.partner</field>
-            <field name="priority">50</field>
-            <field name="inherit_id" ref="account.view_partner_property_form"/>
-            <field name="arch" type="xml">
                 <xpath expr="//field[@name='bank_id']" position="after">
-                    <field name="type_account"/>
-                </xpath>
-                <xpath expr="//field[@name='acc_number']" position="after">
-                    <field name="is_main"/>
+                    <field name="z_partner_id"/>
                 </xpath>
             </field>
         </record>
@@ -37,12 +25,16 @@
             <field name="arch" type="xml">
                 <xpath expr="//group[@name='social_media']" position="after">
                     <group string="Notas Facturación Electrónica">
-                        <field name="note_id" nolabel="1">
-                            <tree editable="bottom">
+                        <field name="note_id" nolabel="1" colspan="2">
+                            <list editable="bottom">
                                 <field name="note"/>
-                                <field name="company_id" invisible="1"/>
-                            </tree>
+                                <field name="company_id" column_invisible="1"/>
+                            </list>
                         </field>
+                    </group>
+                    <group string="Conciliacion bancaria">
+                        <field name="z_bank_auto_reconcile_receivable_payable_only"/>
+                        <field name="z_bank_auto_reconcile_exact_match_only"/>
                     </group>
                 </xpath>
             </field>
@@ -65,38 +57,5 @@
             </field>
         </record>
 
-        <!--        <record model="ir.actions.act_window"  id="res_company_note_action">-->
-        <!--			<field name="name">Notas</field>-->
-        <!--			<field name="res_model">res.company.note</field>-->
-        <!--			<field name="view_mode">tree,form</field>-->
-        <!--		</record>-->
-
-        <!--        <record model="ir.ui.view" id="zue_account.list_res_company_note_action">-->
-        <!--			<field name="name">zue list Notas</field>-->
-        <!--			<field name="model">res.company.note</field>-->
-        <!--			<field name="arch" type="xml">-->
-        <!--				<tree>-->
-        <!--					<field name="note"/>-->
-        <!--					<field name="company_id" invisible="1"/>-->
-        <!--				</tree>-->
-        <!--			</field>-->
-        <!--		</record>-->
-
-        <!--        <record model="ir.ui.view" id="zue_account.form_res_company_note_action">-->
-        <!--			<field name="name">zue form Notas</field>-->
-        <!--			<field name="model">res.company.note</field>-->
-        <!--			<field name="arch" type="xml">-->
-        <!--				<form>-->
-        <!--                    <sheet>-->
-        <!--						<group>-->
-        <!--							<group>-->
-        <!--								<field name="note"/>-->
-        <!--					            <field name="company_id" invisible="1"/>-->
-        <!--							</group>-->
-        <!--						</group>-->
-        <!--                    </sheet>-->
-        <!--                </form>-->
-        <!--			</field>-->
-        <!--		</record>-->
     </data>
 </odoo>

@@ -4,20 +4,20 @@
 		<record model="ir.actions.act_window"  id="account_tax_type_action">
 			<field name="name">Tipo de Impuestos</field>
 			<field name="res_model">account.tax.type</field>
-			<field name="view_mode">tree,form</field>
+			<field name="view_mode">list,form</field>
 		</record>
 
         <record model="ir.ui.view" id="zue_electronic_invoice.list_account_tax_type_action">
 			<field name="name">zue list account tax type</field>
 			<field name="model">account.tax.type</field>
 			<field name="arch" type="xml">
-				<tree>
+				<list>
 					<field name="code"/>
 					<field name="name"/>
 					<field name="retention"/>
 					<field name="is_aiu"/>
 					<field name="not_iclude"/>
-				</tree>
+				</list>
 			</field>
 		</record>
 

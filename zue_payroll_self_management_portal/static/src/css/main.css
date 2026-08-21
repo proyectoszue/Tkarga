@@ -1,40 +1,5 @@
-:root {
-    --gray: #EAEBF3;
-    --dark-gray: #6c757d;
-    --title: #6c757d;
-    --black: #000000;
-    --cyan: #0dcaf0;
-    --blue-primary :#0d6efd;
-    --text-sm: 10px;
-    --text-md: 12px;
-    --text-lg: 14px;
-}
-
-.text-sm {
-    font-size: var(--text-sm);
-    text-align: center;
-    margin: 0;
-}
-
-.text-md {
-    font-size: var(--text-md);
-    text-align: center;
-    margin: 0;
-}
-
-.text-lg {
-    font-size: var(--text-lg);
-    text-align: center;
-    margin: 0;
-}
-
 .custom-file-input ~ .custom-file-label::after{
     content: "Cargar";
-}
-
-body{
-    color: var(--black);
-    font-family: var(--bs-font-sans-serif);
 }
 
 .center {
@@ -44,11 +9,6 @@ body{
 
 .control-edit{
     margin: 20px 10px;
-}
-
-.title{
-    margin: 25px 0px;
-    color: var(--title);
 }
 
 .form-update-data{

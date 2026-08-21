@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>  
     <template id="report_liquidacion_cesantias_prima_document">      
-        <t t-set="o" t-value="o.with_context(lang=o.employee_id.address_home_id.lang or o.env.lang)"/>
+        <t t-set="o" t-value="o.with_context(lang=o.employee_id.work_contact_id.lang or o.env.lang)"/>
             <div class="row">       
                 <t t-if="o.struct_id.process == 'prima'">                                     
                     <div class="col-md-12 text-center"><strong>LIQUIDACION DE PRIMA</strong></div>
@@ -20,16 +20,16 @@
                         <table style="width:100%;">
                             <tr style="border: 1px solid black;">
                                 <td>
-                                <p style="line-height:15px;margin:10px;font-size: 100%;"><b>Referencia</b>           :<span t-field="o.number"/></p>
+                                <p style="line-height:15px;margin:10px;font-size: 100%;"><b>Referencia</b>           :<span t-field="o.name"/></p>
                                 <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Identidad</b>           :<span t-field="o.employee_id.identification_id"/></p>
                                 <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Empleado</b>            :<span t-field="o.employee_id.name"/></p>
                                 <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Cargo</b>               :<span t-field="o.employee_id.job_id.name"/></p>
                                 </td>
                                 <td>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Tipo contrato</b>       :<span t-field="o.contract_id.contract_type"/></p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ingreso</b>       :<span t-field="o.contract_id.date_start"/></p>
+                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Tipo contrato</b>       :<span t-field="o.version_id.contract_type"/></p>
+                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Fecha Ingreso</b>       :<span t-field="o.version_id.contract_date_start"/></p>
                                 <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Sucursal</b>            :<span t-field="o.employee_id.branch_id.name"/></p>
-                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Salario basico</b>      :<span t-field="o.contract_id.wage"/></p>
+                                <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Salario basico</b>      :<span t-field="o.version_id.wage"/></p>
                                 </td>
                                 <td>
                                 <p style= "line-height:15px;margin:10px;font-size: 100%;"><b>Desde</b>            :<span t-field="o.date_from"/></p>
@@ -90,7 +90,7 @@
                                         </tr>
                                         <tr>
                                             <td class="text-justify" colspan="2">
-                                                    <span t-esc="o.contract_id.get_amount_text(value_neto).lower().capitalize()"/> pesos
+                                                    <span t-esc="o.version_id.get_amount_text(value_neto).lower().capitalize()"/> pesos
                                             </td>
                                         </tr>
                                     </table>
@@ -105,7 +105,7 @@
     <template id="report_liquidacion_cesantias_prima">
          <t t-foreach="docs" t-as="o">
             <t t-set="inside_foreach_docs" t-value="o"/>
-            <t t-call="zue_hr_payroll.report_liquidacion_cesantias_prima_document" t-lang="o.employee_id.address_home_id.lang"/>
+            <t t-call="zue_hr_payroll.report_liquidacion_cesantias_prima_document" t-lang="o.employee_id.work_contact_id.lang"/>
         </t>
     </template>
 

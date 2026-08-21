@@ -86,35 +86,37 @@ class hr_entities_reports(models.TransientModel):
         query_report = f'''
                         select * from
                         (
-                            select a."name" as empleado,rc."name" as compania,b.date_change as fecha_ingreso,rb."name"  as sucursal,aaa."name" as cuenta_analitica,c."name" as tipo_entidad,e."name" as entidad,
+                            select a."name" as empleado,rc."name" as compania,b.date_change as fecha_ingreso,rb."name"  as sucursal,coalesce(aaa."name"->>'en_US', '') as cuenta_analitica,c."name" as tipo_entidad,e."name" as entidad,
                                     hssb."name" as sucusal_seguridad_social,hsswc."name" as centro_trabajo_seguridad_social,
                                     true as es_actual,coalesce(f."name",'') as nivel_riesgo, false as es_traslado
                             from hr_employee as a
-                            inner join hr_contract as hc on a.id = hc.employee_id and hc.active = true							
+                            inner join hr_version as hc on a.id = hc.employee_id and hc.active = true							
                             inner join hr_contract_setting as b on a.id = b.employee_id 
                             inner join hr_contribution_register as c on b.contrib_id = c.id 
                             inner join hr_employee_entities as d on b.partner_id = d.id 
                             inner join res_partner as e on d.partner_id = e.id
                             left join hr_contract_risk as f on hc.risk_id = f.id 
                             left join zue_res_branch as rb on a.branch_id = rb.id
-                            left join account_analytic_account as aaa on hc.analytic_account_id = aaa.id 
+                            --left join account_analytic_account as aaa on hc.analytic_account_id = aaa.id 
+                            left join account_analytic_account as aaa on hc.analytic_distribution = to_jsonb(json_build_object(aaa.id, 100))
                             left join res_company as rc on rc.id = a.company_id
                             left join hr_social_security_branches as hssb on a.branch_social_security_id = hssb.id
                             left join hr_social_security_work_center as hsswc on a.work_center_social_security_id = hsswc.id
                             %s
                             union
-                            select a."name" as empleado,rc."name" as compania,b.date_change as fecha_ingreso,rb."name"  as sucursal,aaa."name" as cuenta_analitica,c."name" as tipo_entidad,e."name" as entidad,
+                            select a."name" as empleado,rc."name" as compania,b.date_change as fecha_ingreso,rb."name"  as sucursal,coalesce(aaa."name"->>'en_US', '') as cuenta_analitica,c."name" as tipo_entidad,e."name" as entidad,
                                     hssb."name" as sucusal_seguridad_social,hsswc."name" as centro_trabajo_seguridad_social,
                                     false as es_actual,coalesce(f."name",'') as nivel_riesgo,b.is_transfer as es_traslado
                             from hr_employee as a
-                            inner join hr_contract as hc on a.id = hc.employee_id and hc.active = true	
+                            inner join hr_version as hc on a.id = hc.employee_id and hc.active = true	
                             inner join hr_contract_setting_history as b on a.id = b.employee_id 
                             inner join hr_contribution_register as c on b.contrib_id = c.id 
                             inner join hr_employee_entities as d on b.partner_id = d.id 
                             inner join res_partner as e on d.partner_id = e.id
                             left join hr_contract_risk as f on hc.risk_id = f.id 
                             left join zue_res_branch as rb on a.branch_id = rb.id
-                            left join account_analytic_account as aaa on hc.analytic_account_id = aaa.id 
+                            --left join account_analytic_account as aaa on hc.analytic_account_id = aaa.id 
+                            left join account_analytic_account as aaa on hc.analytic_distribution = to_jsonb(json_build_object(aaa.id, 100))
                             left join res_company as rc on rc.id = a.company_id
                             left join hr_social_security_branches as hssb on a.branch_social_security_id = hssb.id
                             left join hr_social_security_work_center as hsswc on a.work_center_social_security_id = hsswc.id
@@ -124,8 +126,10 @@ class hr_entities_reports(models.TransientModel):
                         order by a.empleado,a.tipo_entidad
                         ''' % (query_where,query_where,query_where_show_history)
 
-        self._cr.execute(query_report)
-        result_query = self._cr.dictfetchall()
+        self.env.cr.execute(query_report)
+        result_query = self.env.cr.dictfetchall()
+        if not result_query:
+            raise ValidationError('No se encontró información con los filtros deseados. Por favor, verifique')
         df_report = pd.DataFrame(result_query)
         pt_report = pd.pivot_table(df_report, values='empleado', index=['tipo_entidad', 'entidad'], aggfunc='count',
                                    margins=True, margins_name='Total', fill_value=0)

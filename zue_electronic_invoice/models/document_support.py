@@ -87,7 +87,7 @@ class sending_support_document_datail(models.Model):
         self.xml_file_name = ''
 
         filename = f'DS_{str(date.today().year)}_{str(self.document_support_id.id)}_{str(self.id)}.xml'
-        self.xml_file = base64.encodestring(xml)
+        self.xml_file = base64.encodebytes(xml)
         self.xml_file_name = filename
         self.state = 'xml'
 
@@ -194,6 +194,10 @@ class sending_support_document_datail(models.Model):
                     error_msg = obj_result[error_position:obj_result.find('</message>')]
                 else:
                     error_msg = 'No fue posible identificar el error. Contacte con el administrador!'
+
+                if '</messageError>' in obj_result:
+                    error_position = obj_result.find('<messageError xsi:type="xsd:string">') + len('<messageError xsi:type="xsd:string">')
+                    error_msg = obj_result[error_position:obj_result.find('</messageError>')]
 
                 if method == 'CHECK_FE':
                     self.status = 'REJECTED'
@@ -501,5 +505,7 @@ class sending_support_document_datail(models.Model):
         # Salvar proceso
         lst_moves_finally = group_moves_df.to_dict(orient='records')
         for dict_move in lst_moves_finally:
+            if 'concept' in dict_move:
+                del dict_move['concept']
             # Se guarda en la tabla detalle del proceso
             self.write(dict_move)

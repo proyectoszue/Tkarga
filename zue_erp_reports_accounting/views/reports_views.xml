@@ -21,9 +21,9 @@
                                 <field name="x_ano_filter" string="Año"/>
                                 <field name="x_month_filter" string="Mes"/>
                                 <field name="x_ano_filter_two" string="Año Final"
-                                       attrs="{'invisible':[('x_type_filter', '!=', '2')], 'required': [('x_type_filter', '=', '2')]}"/>
+                                       invisible="x_type_filter != '2'" required="x_type_filter == '2'"/>
                                 <field name="x_month_filter_two" string="Mes Final"
-                                       attrs="{'invisible':[('x_type_filter', '!=', '2')], 'required': [('x_type_filter', '=', '2')]}"/>
+                                       invisible="x_type_filter != '2'" required="x_type_filter == '2'"/>
                                 <field name="excluded_diaries_ids" string="Diarios excluidos" widget="many2many_tags"/>
                                 <field name="company_id" string="Compañia"/>
                             </group>
@@ -53,47 +53,41 @@
             <field name="model">account.auxiliar.filter</field>
             <field name="arch" type="xml">
                 <form string="Auxiliar">
-                    <group>
-                        <group>
-                            <group>
-                                <fieldset>
-                                    <legend>Escoger favorito</legend>
-                                    <field name="schema_favorite" string="Favoritos"/>
-                                    <button name="upload_favorite" string="Cargar favorito" type="object"
-                                            class="oe_highlight"/>
-                                </fieldset>
-                                <fieldset>
-                                    <legend>Filtros</legend>
-                                    Fecha Inicial:
-                                    <field name="date_initial" string="Fecha Inicial"/>
-                                    Fecha Final:
-                                    <field name="date_finally" string="Fecha Final"/>
-                                    Compañia:
-                                    <field name="company_id" string="Compañia"/>
-                                    Cliente:
-                                    <field name="partner_id" string="Cliente"/>
-                                    Cuenta 1:
-                                    <field name="account_one" string="Cuenta 1"/>
-                                    Cuenta 2:
-                                    <field name="account_two" string="Cuenta 2"/>
-                                    Cuenta 3:
-                                    <field name="account_three" string="Cuenta 3"/>
-                                </fieldset>
-                                <field name="save_favorite" string="¿Guardar como favorito?"
-                                       attrs="{'invisible': [('schema_favorite', '!=', False)]}"/>
-                                <field name="name_favorite" string="Nombre favorito"
-                                       attrs="{'invisible': ['|',('save_favorite', '=', False), ('schema_favorite', '!=', False)], 'required': [('save_favorite', '=', True)]}"/>
+                    <sheet>
+                        <group colspan="2">
+                            <group string="Escoger favorito">
+                                <field name="schema_favorite" string="Favoritos"/>
+                                <button name="upload_favorite" string="Cargar favorito" type="object"/>
                             </group>
-                            <div class="oe_grey" colspan="4">
-                                El Auxiliar por generar tomara como saldo inicial todos los movimientos realizados antes
-                                de la fecha inicial seleccionada y mostrara los movimientos realizados en el rango de
-                                fechas.
-                            </div>
+                            <group string="Filtros">
+                              <group>
+                                  <field name="date_initial" string="Fecha Inicial"/>
+                                  <field name="date_finally" string="Fecha Final"/>
+                                  <field name="company_id" string="Compañia"/>
+                                  <field name="partner_id" string="Cliente"/>
+                              </group>
+                              <group>
+                                  <field name="account_one" string="Cuenta 1"/>
+                                  <field name="account_two" string="Cuenta 2"/>
+                                  <field name="account_three" string="Cuenta 3"/>
+                              </group>
+                            </group>
+                            <group>
+                              <group>
+                                  <field name="save_favorite" string="¿Guardar como favorito?" invisible="schema_favorite"/>
+                                  <field name="name_favorite" string="Nombre favorito" invisible="not save_favorite or schema_favorite" required="save_favorite"/>
+                              </group>
+                            </group>
                         </group>
-                        <br></br>
+                        <div class="oe_grey" colspan="4">
+                            El Auxiliar por generar tomara como saldo inicial todos los movimientos realizados antes
+                            de la fecha inicial seleccionada y mostrara los movimientos realizados en el rango de
+                            fechas.
+                        </div>
+                        <br>
+                        </br>
                         <button name="open_pivot_view" string="Generar Auxiliar" type="object" class="oe_highlight"/>
-                    </group>
-                    <footer></footer>
+                    </sheet>
                 </form>
             </field>
         </record>
@@ -178,9 +172,9 @@
                                 <field name="x_ano_filter" string="Año"/>
                                 <field name="x_month_filter" string="Mes"/>
                                 <field name="x_ano_filter_two" string="Año Final"
-                                       attrs="{'invisible':[('x_type_filter', '!=', '2')], 'required': [('x_type_filter', '=', '2')]}"/>
+                                       invisible="x_type_filter != '2'" required="x_type_filter == '2'"/>
                                 <field name="x_month_filter_two" string="Mes Final"
-                                       attrs="{'invisible':[('x_type_filter', '!=', '2')], 'required': [('x_type_filter', '=', '2')]}"/>
+                                       invisible="x_type_filter != '2'" required="x_type_filter == '2'"/>
                                 <field name="company_id" string="Compañia"/>
                             </group>
                             <div class="oe_grey" colspan="4">
@@ -230,9 +224,9 @@
                                 <field name="x_ano_filter" string="Año"/>
                                 <field name="x_month_filter" string="Mes"/>
                                 <field name="x_ano_filter_two" string="Año Final"
-                                       attrs="{'invisible':[('x_type_filter', '!=', '2')], 'required': [('x_type_filter', '=', '2')]}"/>
+                                       invisible="x_type_filter != '2'" required="x_type_filter == '2'"/>
                                 <field name="x_month_filter_two" string="Mes Final"
-                                       attrs="{'invisible':[('x_type_filter', '!=', '2')], 'required': [('x_type_filter', '=', '2')]}"/>
+                                       invisible="x_type_filter != '2'" required="x_type_filter == '2'"/>
                                 <field name="company_id" string="Compañia"/>
                             </group>
                             <div class="oe_grey" colspan="4">
@@ -252,7 +246,7 @@
         <record id="action_zue_reports_account" model="ir.actions.act_window">
             <field name="name">Consultas</field>
             <field name="res_model">zue.reports.account</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
             <field name="target">current</field>
         </record>
 
@@ -260,10 +254,10 @@
             <field name="name">Consultas Account Zue tree</field>
             <field name="model">zue.reports.account</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="name"/>
                     <field name="description"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -291,12 +285,12 @@
                                 <field name="x_ano_finally"/>
                                 <field name="x_month_finally"/>
                             </group>
-                        </group>
-                        <group>
-                            <field name="name"/>
-                            <field name="description"/>
-                            <field name="columns"/>
-                            <field name="query" groups = "base.group_no_one" colspan="4"/>
+                            <group>
+                                <field name="name"/>
+                                <field name="description"/>
+                                <field name="columns"/>
+                                <field name="query" groups="base.group_no_one" colspan="3"/>
+                            </group>
                         </group>
                     </sheet>
                 </form>

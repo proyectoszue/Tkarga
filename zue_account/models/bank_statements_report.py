@@ -93,7 +93,7 @@ class zue_bank_statements_report(models.TransientModel):
             book.close()
 
             self.write({
-                'z_excel_origin': base64.encodestring(stream.getvalue()),
+                'z_excel_origin': base64.encodebytes(stream.getvalue()),
                 'z_excel_origin_filename': filename,
             })
 

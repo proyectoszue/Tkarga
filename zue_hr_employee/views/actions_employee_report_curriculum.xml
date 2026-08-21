@@ -38,16 +38,16 @@
                                 <field name="save_favorite"/>
                             </group>
                             <group>
-                                <field name="name" attrs="{'required': [('save_favorite', '=', True)],'invisible': [('save_favorite', '=', False)]}"/>
+                                <field name="name" required="save_favorite" invisible="not save_favorite"/>
                             </group>
                         </group>
                         <group string="Documentos">
                             <field name="document_ids" nolabel="1" can_create="false">
-                                <tree>
+                                <list>
                                     <field name="sequence" widget="handle"/>
                                     <field name="partner_id" readonly="1" force_save="1"/>
                                     <field name="document_id" readonly="1" force_save="1"/>
-                                </tree>
+                                </list>
                             </field>
                         </group>
                     </sheet>

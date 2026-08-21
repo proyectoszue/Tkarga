@@ -4,92 +4,127 @@ from odoo.exceptions import UserError, ValidationError
 class AccountReconcileModel(models.Model):
     _inherit = 'account.reconcile.model'
 
-    def _get_invoice_matching_rule_result(self, st_line, candidates, aml_ids_to_exclude, reconciled_amls_ids, partner):
-        new_reconciled_aml_ids = set()
-        new_treated_aml_ids = set()
-        candidates, priorities = self._filter_candidates(candidates, aml_ids_to_exclude, reconciled_amls_ids)
+    def _get_invoice_matching_amls_result(self, st_line, partner, candidate_vals):
+        def _create_result_dict(amls_values_list, status):
+            if 'rejected' in status:
+                return
+
+            result = {'amls': self.env['account.move.line']}
+            for aml_values in amls_values_list:
+                result['amls'] |= aml_values['aml']
+
+            if 'allow_write_off' in status and self.line_ids:
+                result['status'] = 'write_off'
+
+            if 'allow_auto_reconcile' in status and candidate_vals['allow_auto_reconcile'] and self.auto_reconcile:
+                result['auto_reconcile'] = True
+
+            return result
 
         st_line_currency = st_line.foreign_currency_id or st_line.currency_id
-        candidate_currencies = set(candidate['aml_currency_id'] for candidate in candidates)
-        kept_candidates = candidates
-        if candidate_currencies == {st_line_currency.id}:
-            kept_candidates = []
-            sum_kept_candidates = 0
-            for candidate in candidates:
-                candidate_residual = candidate['aml_amount_residual_currency']
+        st_line_amount = st_line._prepare_move_line_default_vals()[1]['amount_currency']
+        sign = 1 if st_line_amount > 0.0 else -1
 
-                if st_line_currency.compare_amounts(candidate_residual, -st_line.amount_residual) == 0:
+        amls = candidate_vals['amls']
+        amls_values_list = []
+        amls_with_epd_values_list = []
+        same_currency_mode = amls.currency_id == st_line_currency
+        for aml in amls:
+            aml_values = {
+                'aml': aml,
+                'amount_residual': aml.amount_residual,
+                'amount_residual_currency': aml.amount_residual_currency,
+            }
+
+            amls_values_list.append(aml_values)
+
+            # Manage the early payment discount.
+            if aml.move_id.invoice_payment_term_id:
+                last_discount_date = aml.move_id.invoice_payment_term_id._get_last_discount_date(aml.move_id.date)
+            else:
+                last_discount_date = False
+            if same_currency_mode \
+                    and aml.move_id.move_type in ('out_invoice', 'out_receipt', 'in_invoice', 'in_receipt') \
+                    and not aml.matched_debit_ids \
+                    and not aml.matched_credit_ids \
+                    and last_discount_date \
+                    and st_line.date <= last_discount_date:
+
+                rate = abs(aml.amount_currency) / abs(aml.balance) if aml.balance else 1.0
+                amls_with_epd_values_list.append({
+                    **aml_values,
+                    'amount_residual': st_line.company_currency_id.round(aml.discount_amount_currency / rate),
+                    'amount_residual_currency': aml.discount_amount_currency,
+                })
+            else:
+                amls_with_epd_values_list.append(aml_values)
+
+        def match_batch_amls(amls_values_list):
+            if not same_currency_mode:
+                return None, []
+
+            kepts_amls_values_list = []
+            sum_amount_residual_currency = 0.0
+            for aml_values in amls_values_list:
+
+                if st_line_currency.compare_amounts(st_line_amount, -aml_values['amount_residual_currency']) == 0:
                     # Special case: the amounts are the same, submit the line directly.
-                    kept_candidates = [candidate]
-                    break
+                    return 'perfect', [aml_values]
 
-                elif st_line_currency.compare_amounts(abs(sum_kept_candidates), abs(st_line.amount_residual)) < 0:
-                    # Candidates' and statement line's balances have the same sign, thanks to _get_invoice_matching_query.
-                    # We hence can compare their absolute value without any issue.
+                if st_line_currency.compare_amounts(sign * (st_line_amount + sum_amount_residual_currency), 0.0) > 0:
                     # Here, we still have room for other candidates ; so we add the current one to the list we keep.
                     # Then, we continue iterating, even if there is no room anymore, just in case one of the following candidates
                     # is an exact match, which would then be preferred on the current candidates.
-                    kept_candidates.append(candidate)
-                    sum_kept_candidates += candidate_residual
+                    kepts_amls_values_list.append(aml_values)
+                    sum_amount_residual_currency += aml_values['amount_residual_currency']
 
-        # It is possible kept_candidates now contain less different priorities; update them
-        kept_candidates_by_priority = self._sort_reconciliation_candidates_by_priority(kept_candidates, aml_ids_to_exclude, reconciled_amls_ids)
-        priorities = set(kept_candidates_by_priority.keys())
-
-        # We check the amount criteria of the reconciliation model, and select the
-        # kept_candidates if they pass the verification.
-        matched_candidates_values = self._process_matched_candidates_data(st_line, kept_candidates)
-        status = self._check_rule_propositions(matched_candidates_values)
-        if 'rejected' in status:
-            rslt = None
-        else:
-            rslt = {
-                'model': self,
-                'aml_ids': [candidate['aml_id'] for candidate in kept_candidates],
-            }
-            new_treated_aml_ids = set(rslt['aml_ids'])
-
-            # Create write-off lines (in company's currency).
-            if 'allow_write_off' in status:
-                residual_balance_after_rec = matched_candidates_values['residual_balance_curr'] + matched_candidates_values['candidates_balance_curr']
-                writeoff_vals_list = self._get_write_off_move_lines_dict(
-                    st_line,
-                    matched_candidates_values['balance_sign'] * residual_balance_after_rec,
-                    partner.id,
-                )
-                if writeoff_vals_list:
-                    rslt['status'] = 'write_off'
-                    rslt['write_off_vals'] = writeoff_vals_list
+            if st_line_currency.is_zero(sign * (st_line_amount + sum_amount_residual_currency)):
+                return 'perfect', kepts_amls_values_list
+            elif kepts_amls_values_list:
+                return 'partial', kepts_amls_values_list
             else:
-                writeoff_vals_list = []
+                return None, []
 
-            # Reconcile.
-            if 'allow_auto_reconcile' in status:
+        # Try to match a batch with the early payment feature. Only a perfect match is allowed.
+        match_type, kepts_amls_values_list = match_batch_amls(amls_with_epd_values_list)
+        if match_type != 'perfect':
+            kepts_amls_values_list = []
 
-                # Process auto-reconciliation. We only do that for the first two priorities, if they are not matched elsewhere.
-                aml_ids = [candidate['aml_id'] for candidate in kept_candidates]
-                lines_vals_list = [{'id': aml_id} for aml_id in aml_ids]
+        # Try to match the amls having the same currency as the statement line.
+        if not kepts_amls_values_list:
+            _match_type, kepts_amls_values_list = match_batch_amls(amls_values_list)
 
-                do_reconcile = False
+        # Try to match the whole candidates.
+        if not kepts_amls_values_list:
+            kepts_amls_values_list = amls_values_list
 
-                if len(kept_candidates) == 1 and self.match_partner:
-                    if kept_candidates[0]['aml_amount_residual_currency'] == st_line.amount_total:
-                        do_reconcile = True
+        # Try to match the amls having the same currency as the statement line.
+        if kepts_amls_values_list:
+            status = self._check_rule_propositions(st_line, kepts_amls_values_list)
 
-                if lines_vals_list and (priorities & {1, 3} or do_reconcile) and self.auto_reconcile:
+            # ===== INICIO Lógica ZUE - Perfect Match =====
+            # Fuerza auto-reconciliación cuando:
+            # - Hay un único AML,
+            # - La regla tiene 'allow_auto_reconcile' (como en v15),
+            # - El partner debe coincidir (self.match_partner),
+            # - El monto del extracto es exactamente el negativo del residual en moneda.
+            do_reconcile = False
+            if self.match_partner and len(kepts_amls_values_list) == 1:
+                aml_val = kepts_amls_values_list[0]
+                if st_line_currency.compare_amounts(st_line_amount, -aml_val['amount_residual_currency']) == 0:
+                    do_reconcile = True
 
-                    # Ensure this will not raise an error if case of missing account to create an open balance.
-                    dummy, open_balance_vals = st_line._prepare_reconciliation(lines_vals_list + writeoff_vals_list)
+            if do_reconcile and 'allow_auto_reconcile' in status and candidate_vals.get('allow_auto_reconcile') and self.auto_reconcile:
+                forced_result = {'amls': self.env['account.move.line']}
+                for v in kepts_amls_values_list:
+                    forced_result['amls'] |= v['aml']
+                forced_result['auto_reconcile'] = True
+                if 'allow_write_off' in status and self.line_ids:
+                    forced_result['status'] = 'write_off'
 
-                    if not open_balance_vals or open_balance_vals.get('account_id'):
+                return forced_result
+            # ===== FIN Lógica ZUE - Perfect Match =====
 
-                        if not st_line.partner_id and partner:
-                            st_line.partner_id = partner
-
-                        st_line.reconcile(lines_vals_list + writeoff_vals_list, allow_partial=True)
-
-                        rslt['status'] = 'reconciled'
-                        rslt['reconciled_lines'] = st_line.line_ids
-                        new_reconciled_aml_ids = new_treated_aml_ids
-
-        return rslt, new_reconciled_aml_ids, new_treated_aml_ids
+            result = _create_result_dict(kepts_amls_values_list, status)
+            if result:
+                return result

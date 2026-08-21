@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="zue_hr_employee.BadgeLayoutEditor">
+        <div class="z_badge_layout_editor">
+            <div class="mb-2 d-flex gap-2 align-items-center flex-wrap">
+                <small class="text-muted">
+                    Arrastra los recuadros sobre la plantilla. Ajusta tamaño en cm si lo necesitas.
+                </small>
+                <button t-if="!props.readonly" type="button" class="btn btn-secondary btn-sm"
+                        t-on-click="resetLayout">
+                    Restablecer posiciones
+                </button>
+            </div>
+
+            <div class="d-flex gap-3 flex-wrap">
+                <div class="z_badge_canvas border" t-att-style="canvasStyle">
+                    <img t-if="backgroundUrl" class="z_badge_bg" t-att-src="backgroundUrl" alt="Plantilla"/>
+                    <div t-else="" class="z_badge_bg_empty text-muted">
+                        Sube la plantilla para ver la vista previa
+                    </div>
+                    <t t-foreach="elements" t-as="el" t-key="el.key">
+                        <div class="z_badge_box"
+                             t-att-class="{'z_badge_box_active': state.activeKey === el.key}"
+                             t-att-style="boxStyle(el.key)"
+                             t-on-pointerdown="(ev) => this.onPointerDown(ev, el.key)"
+                             t-on-click="() => this.selectElement(el.key)">
+                            <span t-esc="el.label"/>
+                        </div>
+                    </t>
+                </div>
+
+                <div class="z_badge_size_panel" t-if="state.activeKey">
+                    <strong t-esc="activeLabel"/>
+                    <div class="mt-2">
+                        <label class="form-label mb-0">Ancho (cm)</label>
+                        <input type="number" step="0.05" min="0.2" class="form-control form-control-sm"
+                               t-att-value="state.layout[state.activeKey].width"
+                               t-att-disabled="props.readonly"
+                               t-on-change="(ev) => this.onSizeChange(state.activeKey, 'width', ev)"/>
+                    </div>
+                    <div class="mt-2">
+                        <label class="form-label mb-0">Alto (cm)</label>
+                        <input type="number" step="0.05" min="0.2" class="form-control form-control-sm"
+                               t-att-value="state.layout[state.activeKey].height"
+                               t-att-disabled="props.readonly"
+                               t-on-change="(ev) => this.onSizeChange(state.activeKey, 'height', ev)"/>
+                    </div>
+                    <t t-if="isTextElement">
+                        <div class="mt-2">
+                            <label class="form-label mb-0">Tamaño de fuente (pt)</label>
+                            <input type="number" step="0.1" min="2" class="form-control form-control-sm"
+                                   t-att-value="state.layout[state.activeKey].font_size"
+                                   t-att-disabled="props.readonly"
+                                   t-on-change="(ev) => this.onSizeChange(state.activeKey, 'font_size', ev)"/>
+                        </div>
+                        <div class="mt-2">
+                            <label class="form-label mb-0">Color</label>
+                            <input type="color" class="form-control form-control-color form-control-sm"
+                                   t-att-value="state.layout[state.activeKey].color or '#000000'"
+                                   t-att-disabled="props.readonly"
+                                   t-on-change="(ev) => this.onColorChange(state.activeKey, ev)"/>
+                        </div>
+                    </t>
+                    <div class="mt-2 text-muted small">
+                        top: <t t-esc="state.layout[state.activeKey].top"/> cm /
+                        left: <t t-esc="state.layout[state.activeKey].left"/> cm
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+</templates>

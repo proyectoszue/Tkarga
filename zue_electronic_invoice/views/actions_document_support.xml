@@ -12,12 +12,12 @@
 <!--                    <button name="download_pdf" type="object" string="PDF" attrs="{'invisible': [('pdf_file', '=', False)]}"/>-->
 <!--                </xpath>-->
                 <xpath expr="//button[@name='consecutive_assignment']" position="after">
-                    <button name="get_xmls" type="object" string="Generar Archivo" class="oe_highlight" states="ac"/>
-                    <button name="upload_ds" type="object" string="Enviar Archivo" class="oe_highlight" states="xml"/>
-                    <button name="check_document_status_ds" type="object" string="Comprobar Estado Envio" class="oe_highlight" states="ws"/>
-                    <button name="download_pdf_ds" type="object" string="Generar PDF" class="oe_highlight" states="ws"/>
-                    <button name="get_xmls_rejected" type="object" string="GENERAR XML RECHAZADOS" class="oe_link" states="ws"/>
-                    <button name="upload_ds_rejected" type="object" string="ENVIAR XML RECHAZADOS" class="oe_link" states="ws"/>
+                    <button name="get_xmls" type="object" string="Generar Archivo" class="oe_highlight" invisible="state != 'ac'"/>
+                    <button name="upload_ds" type="object" string="Enviar Archivo" class="oe_highlight" invisible="state != 'xml'"/>
+                    <button name="check_document_status_ds" type="object" string="Comprobar Estado Envio" class="oe_highlight" invisible="state != 'ws'"/>
+                    <button name="download_pdf_ds" type="object" string="Generar PDF" class="oe_highlight" invisible="state != 'ws'"/>
+                    <button name="get_xmls_rejected" type="object" string="GENERAR XML RECHAZADOS" class="oe_link" invisible="state != 'ws'"/>
+                    <button name="upload_ds_rejected" type="object" string="ENVIAR XML RECHAZADOS" class="oe_link" invisible="state != 'ws'"/>
                 </xpath>
             </field>
         </record>
@@ -32,11 +32,11 @@
                     <header>
                         <field name="state" invisible="1"/>
                         <field name="status" invisible="1"/>
-                        <button name="update_data_move" type="object" string="Actualizar Datos" class="oe_highlight" attrs="{'invisible': [('status', '=', 'ACCEPTED')]}"/>
-                        <button name="get_xml" type="object" string="Generar Archivo" class="oe_highlight" attrs="{'invisible': [('status', '=', 'ACCEPTED')]}"/>
-                        <button name="consume_web_service_send_xml" type="object" string="Enviar Archivo" class="oe_highlight" attrs="{'invisible': [('status', '=', 'ACCEPTED')]}"/>
-                        <button name="consume_web_service_status_document" type="object" string="Comprobar Estado Envio" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'ws')]}"/>
-                        <button name="consume_web_service_download_files" type="object" string="Generar PDF" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'ws')]}"/>
+                        <button name="update_data_move" type="object" string="Actualizar Datos" class="oe_highlight" invisible="status == 'ACCEPTED'"/>
+                        <button name="get_xml" type="object" string="Generar Archivo" class="oe_highlight" invisible="status == 'ACCEPTED'"/>
+                        <button name="consume_web_service_send_xml" type="object" string="Enviar Archivo" class="oe_highlight" invisible="status == 'ACCEPTED'"/>
+                        <button name="consume_web_service_status_document" type="object" string="Comprobar Estado Envio" class="oe_highlight" invisible="state != 'ws'"/>
+                        <button name="consume_web_service_download_files" type="object" string="Generar PDF" class="oe_highlight" invisible="state != 'ws'"/>
                     </header>
                 </xpath>
                 <xpath expr="//field[@name='result_status']" position="after">
@@ -44,10 +44,10 @@
                         <field name="xml_file" invisible="1"/>
                         <field name="pdf_file" invisible="1"/>
                         <group>
-                            <button name="download_xml" type="object" string="XML" attrs="{'invisible': [('xml_file', '=', False)]}"/>
+                            <button name="download_xml" type="object" string="XML" invisible="not xml_file"/>
                         </group>
                         <group>
-                            <button name="download_pdf" type="object" string="PDF" attrs="{'invisible': [('pdf_file', '=', False)]}"/>
+                            <button name="download_pdf" type="object" string="PDF" invisible="not pdf_file"/>
                         </group>
                     </group>
                 </xpath>
@@ -67,12 +67,12 @@
 <!--                    <button name="download_pdf" type="object" string="PDF" attrs="{'invisible': [('pdf_file', '=', False)]}"/>-->
 <!--                </xpath>-->
                 <xpath expr="//button[@name='consecutive_assignment']" position="after">
-                    <button name="get_xmls" type="object" string="Generar Archivo" class="oe_highlight" states="ac"/>
-                    <button name="upload_ds" type="object" string="Enviar Archivo" class="oe_highlight" states="xml"/>
-                    <button name="check_document_status_ds" type="object" string="Comprobar Estado Envio" class="oe_highlight" states="ws"/>
-                    <button name="download_pdf_ds" type="object" string="Generar PDF" class="oe_highlight" states="ws"/>
-                    <button name="get_xmls_rejected" type="object" string="GENERAR XML RECHAZADOS" class="oe_link" states="ws"/>
-                    <button name="upload_ds_rejected" type="object" string="ENVIAR XML RECHAZADOS" class="oe_link" states="ws"/>
+                    <button name="get_xmls" type="object" string="Generar Archivo" class="oe_highlight" invisible="state != 'ac'"/>
+                    <button name="upload_ds" type="object" string="Enviar Archivo" class="oe_highlight" invisible="state != 'xml'"/>
+                    <button name="check_document_status_ds" type="object" string="Comprobar Estado Envio" class="oe_highlight" invisible="state != 'ws'"/>
+                    <button name="download_pdf_ds" type="object" string="Generar PDF" class="oe_highlight" invisible="state != 'ws'"/>
+                    <button name="get_xmls_rejected" type="object" string="GENERAR XML RECHAZADOS" class="oe_link" invisible="state != 'ws'"/>
+                    <button name="upload_ds_rejected" type="object" string="ENVIAR XML RECHAZADOS" class="oe_link" invisible="state != 'ws'"/>
                 </xpath>
             </field>
         </record>
@@ -87,11 +87,11 @@
                     <header>
                         <field name="state" invisible="1"/>
                         <field name="status" invisible="1"/>
-                        <button name="update_data_move" type="object" string="Actualizar Datos" class="oe_highlight" attrs="{'invisible': [('status', '=', 'ACCEPTED')]}"/>
-                        <button name="get_xml" type="object" string="Generar Archivo" class="oe_highlight" attrs="{'invisible': [('status', '=', 'ACCEPTED')]}"/>
-                        <button name="consume_web_service_send_xml" type="object" string="Enviar Archivo" class="oe_highlight" attrs="{'invisible': [('status', '=', 'ACCEPTED')]}"/>
-                        <button name="consume_web_service_status_document" type="object" string="Comprobar Estado Envio" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'ws')]}"/>
-                        <button name="consume_web_service_download_files" type="object" string="Generar PDF" class="oe_highlight" attrs="{'invisible': [('state', '!=', 'ws')]}"/>
+                        <button name="update_data_move" type="object" string="Actualizar Datos" class="oe_highlight" invisible="status == 'ACCEPTED'"/>
+                        <button name="get_xml" type="object" string="Generar Archivo" class="oe_highlight" invisible="status == 'ACCEPTED'"/>
+                        <button name="consume_web_service_send_xml" type="object" string="Enviar Archivo" class="oe_highlight" invisible="status == 'ACCEPTED'"/>
+                        <button name="consume_web_service_status_document" type="object" string="Comprobar Estado Envio" class="oe_highlight" invisible="state != 'ws'"/>
+                        <button name="consume_web_service_download_files" type="object" string="Generar PDF" class="oe_highlight" invisible="state != 'ws'"/>
                     </header>
                 </xpath>
                 <xpath expr="//field[@name='result_status']" position="after">
@@ -99,10 +99,10 @@
                         <field name="xml_file" invisible="1"/>
                         <field name="pdf_file" invisible="1"/>
                         <group>
-                            <button name="download_xml" type="object" string="XML" attrs="{'invisible': [('xml_file', '=', False)]}"/>
+                            <button name="download_xml" type="object" string="XML" invisible="not xml_file"/>
                         </group>
                         <group>
-                            <button name="download_pdf" type="object" string="PDF" attrs="{'invisible': [('pdf_file', '=', False)]}"/>
+                            <button name="download_pdf" type="object" string="PDF" invisible="not pdf_file"/>
                         </group>
                     </group>
                 </xpath>

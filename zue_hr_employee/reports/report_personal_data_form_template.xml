@@ -29,7 +29,7 @@
                                 <tr>
                                     <td>Tipo Documento:</td>
                                     <td>
-                                        <span t-field="o.partner_encab_id.x_document_type"/>
+                                        <span t-field="o.partner_encab_id.l10n_latam_identification_type_id"/>
                                     </td>
                                     <td>Documento:</td>
                                     <td>
@@ -69,7 +69,7 @@
                                 <tr>
                                     <td>Genero:</td>
                                     <td>
-                                        <span t-field="o.gender"/>
+                                        <span t-field="o.sex"/>
                                     </td>
                                     <td>Estado Civil:</td>
                                     <td>
@@ -79,21 +79,21 @@
                                 <tr>
                                     <td>Celular:</td>
                                     <td>
-                                        <span t-field="o.address_home_id.mobile"/>
+                                        <span t-field="o.private_phone"/>
                                     </td>
                                     <td>Fecha de ingreso:</td>
                                     <td>
-                                        <span t-field="o.get_info_contract().date_start"/>
+                                        <span t-field="o.get_info_version().date_start"/>
                                     </td>
                                 </tr>
                                 <tr>
                                     <td>Ciudad de residencia:</td>
                                     <td>
-                                        <span t-field="o.address_home_id.x_city"/>
+                                        <span t-field="o.work_contact_id.city"/>
                                     </td>
                                     <td>Direccion de residencia:</td>
                                     <td>
-                                        <span t-field="o.address_home_id.street"/>
+                                        <span t-field="o.work_contact_id.street"/>
                                     </td>
                                 </tr>
                                 <tr>

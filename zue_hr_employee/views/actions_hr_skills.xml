@@ -7,7 +7,7 @@
             <field name="priority">20</field>
             <field name="inherit_id" ref="hr_skills.hr_employee_skill_type_view_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//form[1]/sheet[1]/group[1]/field[@name='skill_ids']/tree[1]/field[@name='name']"
+                <xpath expr="//form[1]/sheet[1]/field[@name='skill_ids']/list[1]/field[@name='name']"
                        position="after">
                     <field name="is_other" optional="show"/>
                 </xpath>
@@ -23,7 +23,7 @@
             <field name="arch" type="xml">
                 <xpath expr="//field[@name='skill_id']" position="after">
                     <field name="is_other" invisible="1"/>
-                    <field name="which_is" attrs="{'invisible':[('is_other', '=', False)],'required':[('is_other', '=', True)]}"/>
+                    <field name="which_is" invisible="is_other == False" required="is_other == True"/>
                 </xpath>
             </field>
         </record>

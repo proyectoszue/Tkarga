@@ -1,0 +1,41 @@
+<odoo>
+    <data>
+         <!-- Menu Informe Anexo cuenta tercero -->
+        <record id="action_zue_annex_thridparty_account" model="ir.actions.act_window">
+            <field name="name">Anexo cuenta tercero</field>
+            <field name="res_model">zue.annex.thirdparty.account</field>
+            <field name="view_mode">form</field>
+            <field name="target">new</field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_annex_thridparty_account_form">
+            <field name="name">Anexo cuenta tercero form</field>
+            <field name="model">zue.annex.thirdparty.account</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group string="Periodo">
+                            <group>
+                                <field name="z_initial_date"/>
+                            </group>
+                            <group>
+                                <field name="z_final_date"/>
+                            </group>
+                        </group>
+                        <group>
+                            <field name="z_concept_id"/>
+                        </group>
+                        <footer>
+                            <button
+                                name="generate_pdf"
+                                string="GENERAR PDF"
+                                type="object"
+                                class="oe_highlight"/>
+                        </footer>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+    </data>
+</odoo>

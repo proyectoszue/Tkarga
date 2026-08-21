@@ -91,7 +91,7 @@ class sending_notes_document_support_detail(models.Model):
         filename = f'DS_{str(date.today().year)}_{str(self.document_support_id.id)}_{str(self.id)}.xml'
         self.write({
             # 'xml_file': base64.b64encode(xml).decode('ascii'),
-            'xml_file': base64.encodestring(xml),
+            'xml_file': base64.encodebytes(xml),
             'xml_file_name': filename,
             'state': 'xml'
         })
@@ -196,15 +196,17 @@ class sending_notes_document_support_detail(models.Model):
 
             if status_code >= 400:
                 if '</error>' in obj_result:
-                    error_position = obj_result.find('<error xsi:type="xsd:string">') + len(
-                        '<error xsi:type="xsd:string">')
+                    error_position = obj_result.find('<error xsi:type="xsd:string">') + len('<error xsi:type="xsd:string">')
                     error_msg = obj_result[error_position:obj_result.find('</error>')]
                 elif '</message>' in obj_result:
-                    error_position = obj_result.find('<message xsi:type="xsd:string">') + len(
-                        '<message xsi:type="xsd:string">')
+                    error_position = obj_result.find('<message xsi:type="xsd:string">') + len('<message xsi:type="xsd:string">')
                     error_msg = obj_result[error_position:obj_result.find('</message>')]
                 else:
                     error_msg = 'No fue posible identificar el error. Contacte con el administrador!'
+
+                if '</messageError>' in obj_result:
+                    error_position = obj_result.find('<messageError xsi:type="xsd:string">') + len('<messageError xsi:type="xsd:string">')
+                    error_msg = obj_result[error_position:obj_result.find('</messageError>')]
 
                 if method == 'CHECK_FE':
                     self.write({'status': 'REJECTED'})
@@ -218,13 +220,13 @@ class sending_notes_document_support_detail(models.Model):
                     if tmp_transaction_id == '':
                         self.write({'status': 'ERROR AL ENVIAR XML'})
                     else:
-                        self.write({'status': 'XML ENVIADO',
-                                    'transaction_id': tmp_transaction_id})
+                        if 'Ya existe un comprobante con ese mismo tipo' not in obj_result:
+                            self.write({'status': 'XML ENVIADO',
+                                        'transaction_id': tmp_transaction_id})
                         error_msg = 'El comprobante  ya ha sido firmado previamente.'
                 elif method == 'GET_PDF':
                     if '<messageError xsi:type="xsd:string">' in obj_result:
-                        error_position = obj_result.find('<messageError xsi:type="xsd:string">') + len(
-                            '<messageError xsi:type="xsd:string">')
+                        error_position = obj_result.find('<messageError xsi:type="xsd:string">') + len('<messageError xsi:type="xsd:string">')
                         error_msg = obj_result[error_position:obj_result.find('</messageError>')]
 
                     if not error_msg:
@@ -237,16 +239,15 @@ class sending_notes_document_support_detail(models.Model):
                 return error_msg
 
             if status_code in (200, 201, 202, 203):
-                error_position = obj_result.find('<message xsi:type="xsd:string">') + len(
-                    '<message xsi:type="xsd:string">')
+                error_position = obj_result.find('<message xsi:type="xsd:string">') + len('<message xsi:type="xsd:string">')
                 error_msg = obj_result[error_position:obj_result.find('</message>')]
 
-                self.write({'result_upload_xml': error_msg})
+                self.write({'result_upload_xml': error_msg,
+                            'result_status': error_msg})
 
                 if method == 'CHECK_FE':
                     if '<message xsi:type="xsd:string">' in obj_result:
-                        state_position = obj_result.find('<message xsi:type="xsd:string">') + len(
-                            '<message xsi:type="xsd:string">')
+                        state_position = obj_result.find('<message xsi:type="xsd:string">') + len('<message xsi:type="xsd:string">')
                         state = obj_result[state_position:obj_result.find('</message>')]
 
                         if 'ha sido autorizado' in state:
@@ -254,8 +255,7 @@ class sending_notes_document_support_detail(models.Model):
                                         'result_status': state})
                             return 'ACCEPTED'
                     elif '<messageError xsi:type="xsd:string">' in obj_result:
-                        state_position = obj_result.find('<messageError xsi:type="xsd:string">') + len(
-                            '<messageError xsi:type="xsd:string">')
+                        state_position = obj_result.find('<messageError xsi:type="xsd:string">') + len('<messageError xsi:type="xsd:string">')
                         state = obj_result[state_position:obj_result.find('</messageError>')]
 
                         self.write({'status': 'REJECTED',
@@ -266,6 +266,9 @@ class sending_notes_document_support_detail(models.Model):
                         return 'PROCESSED'
 
                 if method == 'SEND_FE':
+                    to_search = ''
+                    error_to_search = ''
+
                     if '<transaccionID xsi:type="xsd:string">' in obj_result:
                         transaction_position = obj_result.find('<transaccionID xsi:type="xsd:string">') + len(
                             '<transaccionID xsi:type="xsd:string">')
@@ -288,8 +291,7 @@ class sending_notes_document_support_detail(models.Model):
 
                 if method == 'GET_PDF':
                     if '<documentBase64 xsi:type="xsd:string">' in obj_result:
-                        error_position = obj_result.find('<documentBase64 xsi:type="xsd:string">') + len(
-                            '<documentBase64 xsi:type="xsd:string">')
+                        error_position = obj_result.find('<documentBase64 xsi:type="xsd:string">') + len('<documentBase64 xsi:type="xsd:string">')
                         error_msg = obj_result[error_position:obj_result.find('</documentBase64>')]
 
                         filename = 'DS_' + str(self.partner_id.vat) + '_' + str(self.document_support_id.id) + '.pdf'
@@ -307,8 +309,7 @@ class sending_notes_document_support_detail(models.Model):
                             })
 
                 if method == 'GET_CUFE':
-                    cufe_position = obj_result.find('<resourceData xsi:type="xsd:string">') + len(
-                        '<resourceData xsi:type="xsd:string">')
+                    cufe_position = obj_result.find('<resourceData xsi:type="xsd:string">') + len('<resourceData xsi:type="xsd:string">')
                     cufe = obj_result[cufe_position:obj_result.find('</resourceData>')]
 
                     if error_msg:
@@ -507,5 +508,7 @@ class sending_notes_document_support_detail(models.Model):
         # Salvar proceso
         lst_moves_finally = group_moves_df.to_dict(orient='records')
         for dict_move in lst_moves_finally:
+            if 'concept' in dict_move:
+                del dict_move['concept']
             # Se guarda en la tabla detalle del proceso
             self.write(dict_move)

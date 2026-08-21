@@ -46,23 +46,22 @@ class AccountBalancePartnerFilter(models.TransientModel):
                                     ], string='Mes 2')
     excluded_diaries_ids = fields.Many2many('account.journal', string="Diarios Excluidos")
     company_id = fields.Many2one('res.company', string='Compañia')
-    
-    def name_get(self):
-        result = []
+
+    @api.depends('x_type_filter', 'x_ano_filter', 'x_month_filter','x_ano_filter_two','x_month_filter_two')
+    def _compute_display_name(self):
         for record in self:
-            type = ''
             if record.x_type_filter == '1':
-                type = 'Periodo'
+                ttype = 'Periodo'
             elif record.x_type_filter == '2':
-                type = 'Rango de periodos'
+                ttype = 'Rango de periodos'
             else:
-                type = 'Anual'
+                ttype = 'Anual'
             
             if record.x_type_filter == '2':
-                result.append((record.id, "{} - Inicial: {}-{} | Final: {}-{} ".format(type,record.x_ano_filter,record.x_month_filter,record.x_ano_filter_two,record.x_month_filter_two)))
+                record.display_name = "{} - Inicial: {}-{} | Final: {}-{} ".format(ttype,record.x_ano_filter,record.x_month_filter,record.x_ano_filter_two,record.x_month_filter_two)
             else:
-                result.append((record.id, "{} - Año: {} | Mes: {}".format(type,record.x_ano_filter,record.x_month_filter)))
-        return result
+                record.display_name = "{} - Año: {} | Mes: {}".format(ttype,record.x_ano_filter,record.x_month_filter)
+
     
     def open_pivot_view(self):
         
@@ -121,14 +120,14 @@ class AccountBalancePartnerReport(models.Model):
     def _select(self,date_filter):
         return '''
             SELECT
-                Row_Number() Over(Order By G.id,D.Cuenta_Nivel_1,D.Cuenta_Nivel_2,D.Cuenta_Nivel_3,D.Cuenta_Nivel_4,D.Cuenta_Nivel_5,C.display_name) as id,
+                Row_Number() Over(Order By G.id,D.Cuenta_Nivel_1,D.Cuenta_Nivel_2,D.Cuenta_Nivel_3,D.Cuenta_Nivel_4,D.Cuenta_Nivel_5,C.name) as id,
                 G.id as company_id,                
                 D.Cuenta_Nivel_1 as account_level_one,
                 D.Cuenta_Nivel_2 as account_level_two,
                 D.Cuenta_Nivel_3 as account_level_three,
                 D.Cuenta_Nivel_4 as account_level_four,
                 D.Cuenta_Nivel_5 as account_level_five,                
-                COALESCE(C.vat || ' | ' || C.display_name,'Tercero Vacio') as partner,
+                COALESCE(C.vat || ' | ' || C.name,'Tercero Vacio') as partner,
                 COALESCE(E.saldo_ant,0) as initial_balance,
                 SUM(case when B."date" >= '%s' then B.debit else 0 end) as debit,
                 SUM(case when B."date" >= '%s' then B.credit else 0 end) as credit,
@@ -154,13 +153,13 @@ class AccountBalancePartnerReport(models.Model):
                             From
                             (
                             SELECT 
-                            COALESCE(e.code_prefix_start,substring(a.code for 1)) as Cuenta_Nivel_1,
-                            COALESCE(d.code_prefix_start,coalesce(c.code_prefix_start,coalesce(b.code_prefix_start,substring(a.code for 1)))) || ' - ' || coalesce(d."name",coalesce(c."name",coalesce(b."name",a."name")))  as Cuenta_Nivel_2,
-                            COALESCE(c.code_prefix_start,coalesce(b.code_prefix_start,substring(a.code for 1))) || ' - ' || coalesce(c."name",coalesce(b."name",a."name")) as Cuenta_Nivel_3,
-                            COALESCE(b.code_prefix_start,substring(a.code for 1)) || ' - ' || COALESCE(b."name",a."name") as Cuenta_Nivel_4,
-                            a.code || ' - ' || a."name" as Cuenta_Nivel_5,a.id 
+                            COALESCE(e.code_prefix_start,substring(a.code_store->>'%s' for 1)) as Cuenta_Nivel_1,
+                            COALESCE(d.code_prefix_start,coalesce(c.code_prefix_start,coalesce(b.code_prefix_start,substring(a.code_store->>'%s' for 1)))) || ' - ' || coalesce(d."name"->>'en_US',coalesce(c."name"->>'en_US',coalesce(b."name"->>'en_US','')))  as Cuenta_Nivel_2,
+                            COALESCE(c.code_prefix_start,coalesce(b.code_prefix_start,substring(a.code_store->>'%s' for 1))) || ' - ' || coalesce(c."name"->>'en_US',coalesce(b."name"->>'en_US','')) as Cuenta_Nivel_3,
+                            COALESCE(b.code_prefix_start,substring(a.code_store->>'%s' for 1)) || ' - ' || COALESCE(b."name"->>'en_US',a."name"->>'en_US') as Cuenta_Nivel_4,
+                            a.code_store->>'%s' || ' - ' || a."name" as Cuenta_Nivel_5,a.id 
                             FROM account_account a
-                            LEFT JOIN account_group b on a.group_id = b.id
+                            LEFT JOIN account_group b on b.code_prefix_start <= LEFT(a.code_store->>'%s', char_length(b.code_prefix_start)) AND b.code_prefix_end >= LEFT(a.code_store->>'%s', char_length(b.code_prefix_end)) AND b.company_id = %s
                             LEFT JOIN account_group c on b.parent_id = c.id
                             LEFT JOIN account_group d on c.parent_id = d.id
                             LEFT JOIN account_group e on d.parent_id = e.id
@@ -178,7 +177,7 @@ class AccountBalancePartnerReport(models.Model):
                                 %s
                         group by b.partner_id,b.account_id
                       ) as E on COALESCE(B.partner_id,0) = COALESCE(E.partner_id,0) and D.id = E.account_id
-        ''' % (date_filter,company_id, company_id, filter_diaries)
+        ''' % (company_id,company_id,company_id,company_id,company_id,company_id,company_id,company_id, date_filter,company_id, company_id, filter_diaries)
 
     @api.model
     def _where(self,date_filter,company_id,excluded_diaries_ids):
@@ -205,7 +204,7 @@ class AccountBalancePartnerReport(models.Model):
                 D.Cuenta_Nivel_4,
                 D.Cuenta_Nivel_5,
                 C.vat,
-                C.display_name,
+                C.name,
                 E.saldo_ant
         '''
     

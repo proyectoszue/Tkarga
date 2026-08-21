@@ -4,21 +4,21 @@
         <record model="ir.actions.act_window"  id="action_zue_payroll_flat_file_backup">
 				<field name="name">Archivo plano de pago de nómina - Copia de seguridad</field>
 				<field name="res_model">zue.payroll.flat.file.backup</field>
-				<field name="view_mode">tree,form</field>
+				<field name="view_mode">list,form</field>
 		</record>
 
         <record id="zue_payroll_flat_file_backup_tree" model="ir.ui.view">
             <field name="name">Archivo plano de pago de nómina tree - Copia de seguridad</field>
             <field name="model">zue.payroll.flat.file.backup</field>
             <field name="arch" type="xml">
-                <tree string="Archivo plano de pago de nómina - Copia de seguridad" create="false">
+                <list string="Archivo plano de pago de nómina - Copia de seguridad" create="false">
                     <field name="generation_date" />
                     <field name="company_id" />
                     <field name="payslip_id" />
                     <field name="transmission_date" />
                     <field name="application_date" />
                     <field name="description" />
-                </tree>
+                </list>
             </field>
         </record>
 

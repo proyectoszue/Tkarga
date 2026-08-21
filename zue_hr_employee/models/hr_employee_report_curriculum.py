@@ -8,20 +8,20 @@ import os
 import io
 import base64
 
-class hr_employee(models.Model):
-    _inherit = 'hr.employee'
-
-    def open_hr_employee_report_curriculum(self):
-        return {
-            'name': 'Informe configurable hoja de vida',
-            'type': 'ir.actions.act_window',
-            'res_model': 'hr.employee.report.curriculum',
-            'view_mode': 'form',
-            'target': 'new',
-            'context': {
-                'default_employee_ids': self.ids,
-            }
-        }
+# class hr_employee(models.Model):
+#     _inherit = 'hr.employee'
+#
+#     def open_hr_employee_report_curriculum(self):
+#         return {
+#             'name': 'Informe configurable hoja de vida',
+#             'type': 'ir.actions.act_window',
+#             'res_model': '.report.curriculum',
+#             'view_mode': 'form',
+#             'target': 'new',
+#             'context': {
+#                 'default_employee_ids': self.ids,
+#             }
+#         }
 
 class hr_employee_report_curriculum(models.TransientModel):
     _name = 'hr.employee.report.curriculum'
@@ -38,18 +38,16 @@ class hr_employee_report_curriculum(models.TransientModel):
     pdf_file = fields.Binary('PDF file')
     pdf_file_name = fields.Char('PDF name')
 
-    def name_get(self):
-        result = []
+    def _compute_display_name(self):
         for record in self:
-            result.append((record.id, "Informe configurable hoja de vida"))
-        return result
+            record.display_name = "Informe configurable hoja de vida"
 
     @api.onchange('domain_documents','order_fields')
     def load_documents(self):
         for record in self:
             record.document_ids = False
             domain = []
-            domain_documents_obligatory = str([['partner_id', 'in', record.employee_ids.address_home_id.ids], ['mimetype', 'like', 'pdf']])
+            domain_documents_obligatory = str([['partner_id', 'in', record.employee_ids.work_contact_id.ids], ['mimetype', 'like', 'pdf']])
             domain += safe_eval(domain_documents_obligatory)
             if record.domain_documents:
                 domain += safe_eval(record.domain_documents)
@@ -92,7 +90,7 @@ class hr_employee_report_curriculum(models.TransientModel):
                 pdf_content, content_type = report_personal_data._render_qweb_pdf(employee.id)
                 files_to_merge.append((employee.name,'Formato Datos Personales',pdf_content))
             #Obtener PDFs
-            for item in sorted(self.document_ids.filtered(lambda x: x.partner_id.id == employee.address_home_id.id), key=lambda x: x.sequence):
+            for item in sorted(self.document_ids.filtered(lambda x: x.partner_id.id == employee.work_contact_id.id), key=lambda x: x.sequence):
                 document = item.document_id
                 if document.mimetype.find('pdf') == -1:
                     raise ValidationError(_("Ahí un archivo que que no es formato PDF, por favor verificar."))
@@ -155,5 +153,4 @@ class hr_employee_report_curriculum_favorites(models.Model):
     name = fields.Char(string='Nombre')
     domain_documents = fields.Char(string='Filtro documentos')
 
-    _sql_constraints = [('curriculum_favorites_uniq', 'unique(name)',
-                         'Ya existe un favorito con este nombre, por favor verificar.')]
+    _curriculum_favorites_uniq = models.Constraint('unique(name)', 'Ya existe un favorito con este nombre, por favor verificar.')

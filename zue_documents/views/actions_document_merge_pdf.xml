@@ -24,18 +24,18 @@
                                 <field name="save_favorite"/>
                             </group>
                             <group>
-                                <field name="name" attrs="{'required': [('save_favorite', '=', True)],'invisible': [('save_favorite', '=', False)]}"/>
+                                <field name="name" required="save_favorite == True" invisible="save_favorite == False"/>
                             </group>
                         </group>
-                        <group string="Documentos">
-                            <field name="document_ids" nolabel="1" can_create="false">
-                                <tree>
+                        <group string="Documentos" colspan="2">
+                            <field name="document_ids" nolabel="1" can_create="false" colspan="2">
+                                <list>
                                     <field name="sequence" widget="handle"/>
                                     <field name="partner_id" readonly="1" force_save="1"/>
                                     <field name="document_id" readonly="1" force_save="1"/>
                                     <field name="folder_id" readonly="1" force_save="1"/>
                                     <field name="tag_ids" readonly="1" force_save="1" widget="many2many_tags"/>
-                                </tree>
+                                </list>
                             </field>
                         </group>
                     </sheet>
@@ -49,7 +49,7 @@
         <record id="action_document_merge_pdf_favorites" model="ir.actions.act_window">
             <field name="name">Reporte documentos - Unir PDFs - Favoritos</field>
             <field name="res_model">document.report.merge.pdf.favorites</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
             <field name="target">current</field>
         </record>
 
@@ -57,10 +57,10 @@
             <field name="name">tree document_report_merge_pdf_favorites</field>
             <field name="model">document.report.merge.pdf.favorites</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="name"/>
                     <field name="domain_documents"/>
-                </tree>
+                </list>
             </field>
         </record>
 

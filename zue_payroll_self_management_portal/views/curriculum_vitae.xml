@@ -16,10 +16,10 @@
                             </center>
                         </div>
                         <div class="col-md-1 d-flex justify-content-center align-items-lg-center">
-                            <button type="button" class="btn btn-outline-primary" data-toggle="modal"
+                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
                                     t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
                                     ';color:'+str(portal_design.z_primary_color)+';'"
-                                    data-target="#modalCurriculum">
+                                    data-bs-target="#modalCurriculum">
                                 <span class="fa fa-plus fa-1x fa-lg" title="Agregar"/>
                             </button>
                         </div>
@@ -32,7 +32,7 @@
                                  t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
                                 <div class="modal-header">
                                     <h5 class="modal-title" id="modalCurriculum">Experiencia</h5>
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                                     </button>
                                 </div>
                                 <form class="form-update-data"
@@ -74,7 +74,7 @@
                                         </div>
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
                                                 t-att-style="'border-color:'+str(portal_design.z_background_color)+';background-color:'+str(portal_design.z_background_color)+
                                                 ';color:'+str(portal_design.z_primary_color)+';'">
                                             Descartar
@@ -139,9 +139,9 @@
                                             </div>
                                         </td>
                                         <td>
-                                            <button type="button" class="btn btn-outline" data-toggle="modal"
+                                            <button type="button" class="btn btn-outline" data-bs-toggle="modal"
                                                     t-att-style="'margin-top: 20;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'"
-                                                    t-att-data-target="'#delete_Modal'+str(cr.get('id',0))">
+                                                    t-att-data-bs-target="'#delete_Modal'+str(cr.get('id',0))">
                                                 <span class="fa fa-trash" title="Eliminar"/>
                                             </button>
                                             <!-- Modal -->
@@ -158,7 +158,7 @@
                                                         <div class="modal-footer">
                                                             <button type="button" class="btn"
                                                                     t-att-style="'background-color:'+str(portal_design.z_background_color)+';color:'+str(portal_design.z_primary_color)+';'"
-                                                                    data-dismiss="modal">Descartar
+                                                                    data-bs-dismiss="modal">Descartar
                                                             </button>
                                                             <a class="btn"
                                                                t-attf-href="/zue_payroll_self_management_portal/delete_curriculum_employee_save/{{cr.get('id',0)}}"
@@ -187,6 +187,7 @@
         <template id="skills_data" name="Habilidades">
             <body t-att-style="'background-color:'+str(portal_design.z_background_color)+';color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
             <t t-call="web.basic_layout">
+                <script src="https://code.jquery.com/jquery-3.6.0.min.js"/>
                 <script type="text/javascript" src="/zue_payroll_self_management_portal/static/src/js/employee_skills.js"/>
                 <div t-att-style="'color:'+str(portal_design.z_primary_color)+';'">
                     <br/>
@@ -198,14 +199,14 @@
                                 </h1>
                             </center>
                         </div>
-<!--                        <div class="col-md-1 d-flex justify-content-center align-items-lg-center">-->
-<!--                            <button type="button" class="btn btn-outline-primary" data-toggle="modal"-->
-<!--                                    t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+-->
-<!--                                    ';color:'+str(portal_design.z_primary_color)+';'"-->
-<!--                                    data-target="#modalSkill">-->
-<!--&lt;!&ndash;                                <span class="fa fa-plus fa-1x fa-lg" title="Agregar"/>&ndash;&gt;-->
-<!--                            </button>-->
-<!--                        </div>-->
+                        <div class="col-md-1 d-flex justify-content-center align-items-lg-center">
+                            <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal"
+                                    t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
+                                    ';color:'+str(portal_design.z_primary_color)+';'"
+                                    data-bs-target="#modalSkill">
+                                <span class="fa fa-plus fa-1x fa-lg" title="Agregar"/>
+                            </button>
+                        </div>
                     </div>
                     <!-- Modal -->
                     <div class="modal fade" id="modalSkill" tabindex="-1" role="dialog"
@@ -215,7 +216,7 @@
                                  t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
                                 <div class="modal-header">
                                     <h5 class="modal-title" id="modalSkill  ">Habilidades</h5>
-                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                    <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
                                     </button>
                                 </div>
                                 <form class="form-update-data"
@@ -255,7 +256,7 @@
                                         </select>
                                     </div>
                                     <div class="modal-footer">
-                                        <button type="button" class="btn btn-secondary" data-dismiss="modal"
+                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
                                                 t-att-style="'border-color:'+str(portal_design.z_background_color)+';background-color:'+str(portal_design.z_background_color)+
                                                 ';color:'+str(portal_design.z_primary_color)+';'">
                                             Descartar
@@ -304,12 +305,12 @@
                                         </div>
                                     </td>
                                     <td>
-<!--                                        <button type="button" class="btn btn-outline-danger" data-toggle="modal"-->
-<!--                                                t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+-->
-<!--                                                ';color:'+str(portal_design.z_primary_color)+';'"-->
-<!--                                                t-att-data-target="'#delete_Modal'+str(sk.get('id',0))">-->
-<!--                                            <span class="fa fa-trash" title="Eliminar"/>-->
-<!--                                        </button>-->
+                                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal"
+                                                t-att-style="'border-color:'+str(portal_design.z_secondary_color)+';background-color:'+str(portal_design.z_secondary_color)+
+                                                ';color:'+str(portal_design.z_primary_color)+';'"
+                                                t-att-data-bs-target="'#delete_Modal'+str(sk.get('id',0))">
+                                            <span class="fa fa-trash" title="Eliminar"/>
+                                        </button>
                                         <!-- Modal -->
                                         <div class="modal fade" t-att-id="'delete_Modal'+str(sk.get('id',0))"
                                              tabindex="-1" role="dialog"
@@ -325,7 +326,7 @@
                                                         <button type="button" class="btn btn-secondary"
                                                                 t-att-style="'border-color:'+str(portal_design.z_background_color)+';background-color:'+str(portal_design.z_background_color)+
                                                                 ';color:'+str(portal_design.z_primary_color)+';'"
-                                                                data-dismiss="modal">Descartar
+                                                                data-bs-dismiss="modal">Descartar
                                                         </button>
                                                         <a class="btn btn-danger"
                                                            t-attf-href="/zue_payroll_self_management_portal/delete_skill_employee_save/{{sk.get('id',0)}}"

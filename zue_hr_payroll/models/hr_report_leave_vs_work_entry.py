@@ -20,16 +20,16 @@ class zue_hr_report_leave_vs_work_entry(models.Model):
                     SELECT
                         rc."name" AS company,
                         he."name" AS employee,
-                        hlt."name" AS type_leave,
+                        coalesce(coalesce(hlt."name"->>'es_ES', hlt."name"->>'en_US'),'') AS type_leave,
                         hl.request_date_from,
                         hl.request_date_to,
                         COUNT(hwe.date_start) / 2 AS qty_days_without_leave,
-                        hc.id as id_contract
+                        hc.id as id_version
                     FROM
                         hr_leave hl
                     INNER JOIN hr_leave_type hlt ON hl.holiday_status_id = hlt.id
                     INNER JOIN hr_employee he ON hl.employee_id = he.id
-                    INNER JOIN hr_contract hc ON he.contract_id = hc.id AND hc.state = 'open'
+                    INNER JOIN hr_version hc ON he.version_id = hc.id AND hc.contract_date_end is null
                     INNER JOIN res_company rc ON he.company_id = rc.id and rc.id = {self.env.company.id}
                     LEFT JOIN hr_work_entry hwe ON hl.employee_id = hwe.employee_id
                                                 AND DATE(hwe.date_start) >= hl.request_date_from
@@ -46,8 +46,8 @@ class zue_hr_report_leave_vs_work_entry(models.Model):
                         rc."name", hl.request_date_from DESC, he."name"
                     '''
 
-        self._cr.execute(query_report)
-        result_query = self._cr.dictfetchall()
+        self.env.cr.execute(query_report)
+        result_query = self.env.cr.dictfetchall()
         return result_query
 
     def download_excel(self):
@@ -114,17 +114,3 @@ class zue_hr_report_leave_vs_work_entry(models.Model):
             'target': 'self',
         }
         return action
-
-    def solution_report(self):
-        try:
-            result_query = self.get_query()
-
-            for query in result_query:
-                obj_work_entry_refresh = self.env['hr.work.entry.refresh']
-                res = obj_work_entry_refresh.create({'date_start':query['request_date_from'],
-                                               'date_stop':query['request_date_to'],
-                                               'contract_ids':[query['id_contract']]})
-                res.refresh_work_entry()
-            return True
-        except:
-            raise ValidationError('Error en el proceso.')

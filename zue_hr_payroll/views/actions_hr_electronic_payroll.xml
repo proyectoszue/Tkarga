@@ -4,7 +4,7 @@
         <record model="ir.actions.act_window" id="action_hr_electronic_payroll">
             <field name="name">Nómina Electrónica</field>
             <field name="res_model">hr.electronic.payroll</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <!-- Crear record rule para filtrar las compañias-->
@@ -18,12 +18,12 @@
             <field name="name">hr electronic payroll list</field>
             <field name="model">hr.electronic.payroll</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="year"/>
                     <field name="month"/>
                     <field name="company_id"/>
                     <field name="observations"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -33,14 +33,14 @@
             <field name="arch" type="xml">
                 <form>
                     <header>
-                        <button name="executing_electronic_payroll" type="object" string="Crear XML" class="oe_highlight" states="draft"/>
-                        <button name="consume_ws" type="object" string="Enviar a WS" class="oe_highlight" states="xml"/>
-                        <button name="cancel_process" type="object" string="Cancelar" states="xml"/>
-                        <button name="consume_web_service_status_document_all" type="object" string="Actualizar estado DIAN" class="oe_highlight" states="ws"/>
-                        <button name="executing_electronic_payroll_failed" type="object" string="Actualizar XML (Fallidos)" states="ws"/>
-                        <button name="consume_ws_failed" type="object" string="Enviar a WS (Fallidos)" states="ws"/>
-                        <button name="consume_web_service_get_cune_all" type="object" string="Obtener CUNEs" states="close"/>
-                        <button name="convert_result_send_xml_all" type="object" string="Actualizar resultado envío" states="ws" invisible="1"/>
+                        <button name="executing_electronic_payroll" type="object" string="Crear XML" class="oe_highlight" invisible="state != 'draft'"/>
+                        <button name="consume_ws" type="object" string="Enviar a WS" class="oe_highlight" invisible="state != 'xml'"/>
+                        <button name="cancel_process" type="object" string="Cancelar" invisible="state != 'xml'"/>
+                        <button name="consume_web_service_status_document_all" type="object" string="Actualizar estado DIAN" class="oe_highlight" invisible="state != 'ws'"/>
+                        <button name="executing_electronic_payroll_failed" type="object" string="Actualizar XML (Fallidos)" invisible="state != 'ws'"/>
+                        <button name="consume_ws_failed" type="object" string="Enviar a WS (Fallidos)" invisible="state != 'ws'"/>
+                        <button name="consume_web_service_get_cune_all" type="object" string="Obtener CUNEs" invisible="state != 'close'"/>
+                        <button name="convert_result_send_xml_all" type="object" string="Actualizar resultado envío" invisible="state != 'ws'"/>
                         <field name="state" widget="statusbar"/>
                     </header>
                     <sheet>
@@ -66,21 +66,21 @@
                                     <field name="qty_done" readonly="1"/>
                                 </group>
                                 <field name="executing_electronic_payroll_ids" nolabel="1">
-                                    <tree>
+                                    <list>
                                         <field name="employee_id" optional="show"/>
                                         <field name="sequence" optional="show"/>
                                         <field name="status" optional="show"/>
                                         <field name="payslip_ids" optional="show" widget="many2many_tags"/>
-                                    </tree>
+                                    </list>
                                     <form>
                                         <sheet>
                                             <group>
-                                                <field name="employee_id" attrs="{'readonly':[('status', '=', 'ACCEPTED')]}"/>
-                                                <field name="contract_id" attrs="{'readonly': [('status', '=', 'ACCEPTED')]}"/>
-                                                <field name="item" attrs="{'readonly': [('status', '=', 'ACCEPTED')]}"/>
-                                                <field name="sequence" attrs="{'readonly': [('status', '=', 'ACCEPTED')]}"/>
-                                                <field name="nonce" attrs="{'readonly': [('status', '=', 'ACCEPTED')]}"/>
-                                                <field name="payslip_ids" widget="many2many_tags" force_save="1" attrs="{'readonly': [('status', '=', 'ACCEPTED')]}"/>
+                                                <field name="employee_id" readonly="status == 'ACCEPTED'"/>
+                                                <field name="version_id" readonly="status == 'ACCEPTED'"/>
+                                                <field name="item" readonly="status == 'ACCEPTED'"/>
+                                                <field name="sequence" readonly="status == 'ACCEPTED'"/>
+                                                <field name="nonce" readonly="status == 'ACCEPTED'"/>
+                                                <field name="payslip_ids" widget="many2many_tags" force_save="1" readonly="status == 'ACCEPTED'"/>
                                                 <field name="result_upload_xml" readonly="1"/>
                                                 <field name="status" readonly="1"/>
                                                 <field name="result_status" readonly="1"/>
@@ -88,19 +88,19 @@
                                                 <field name="cune" readonly="1"/>
                                             </group>
                                             <group string="Procesos">
-                                                <group string="XML" attrs="{'invisible':[('status', '=', 'ACCEPTED')]}">
+                                                <group string="XML" invisible="status == 'ACCEPTED'">
                                                     <button name="get_xml" type="object" string="Crear/Actualizar XML"/>
                                                     <button name="download_xml" type="object" string="Descargar XML"/>
                                                     <br/><br/>
                                                     <button name="convert_result_send_xml" type="object" string="Actualizar respuesta envío xml" invisible="1"/>
                                                 </group>
-                                                <group string="XML" attrs="{'invisible':[('status', '!=', 'ACCEPTED')]}">
+                                                <group string="XML" invisible="status != 'ACCEPTED'">
                                                     <button name="download_xml" type="object" string="Descargar XML"/>
                                                 </group>
                                                 <group string="WS">
-                                                    <button name="consume_web_service_send_xml" type="object" string="Enviar XML" attrs="{'invisible':[('status', '=', 'ACCEPTED')]}"/>
-                                                    <button name="consume_web_service_status_document" type="object" string="Consultar Estado" attrs="{'invisible':[('status', '=', 'ACCEPTED')]}"/>
-                                                    <button name="consume_web_service_get_cune" type="object" string="Obtener CUNE" attrs="{'invisible':[('status', '!=', 'ACCEPTED')]}"/>
+                                                    <button name="consume_web_service_send_xml" type="object" string="Enviar XML" invisible="status == 'ACCEPTED'"/>
+                                                    <button name="consume_web_service_status_document" type="object" string="Consultar Estado" invisible="status == 'ACCEPTED'"/>
+                                                    <button name="consume_web_service_get_cune" type="object" string="Obtener CUNE" invisible="status != 'ACCEPTED'"/>
                                                     <br/><br/>
                                                     <field name="resource_type_document"/>
                                                     <button name="consume_web_service_download_files" type="object" string="Descargar archivo"/>
@@ -112,11 +112,6 @@
                             </page>
                         </notebook>
                     </sheet>
-                    <div class="oe_chatter">
-                        <field name="message_follower_ids" widget="mail_followers" groups="base.group_user"/>
-                        <field name="activity_ids" widget="mail_activity"/>
-                        <field name="message_ids" widget="mail_thread"/>
-                    </div>
                 </form>
             </field>
         </record>
@@ -125,22 +120,22 @@
         <record model="ir.actions.act_window" id="action_hr_electronic_payroll_detail">
             <field name="name">Nómina Electrónica Detalle</field>
             <field name="res_model">hr.electronic.payroll.detail</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <record model="ir.ui.view" id="hr_electronic_payroll_detail_list">
             <field name="name">hr electronic payroll detail list</field>
             <field name="model">hr.electronic.payroll.detail</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="employee_id"/>
-                    <field name="contract_id"/>
+                    <field name="version_id"/>
                     <field name="item"/>
                     <field name="sequence"/>
                     <field name="status"/>
                     <field name="transaction_id"/>
                     <field name="payslip_ids" widget="many2many_tags"/>
-                </tree>
+                </list>
             </field>
         </record>
 

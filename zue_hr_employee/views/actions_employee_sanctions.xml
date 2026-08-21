@@ -4,7 +4,7 @@
         <record model="ir.actions.act_window" id="hr_employee_sanctions_action">
             <field name="name">Sanciones empleados</field>
             <field name="res_model">hr.employee.sanctions</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <!-- Crear record rule para filtrar las compañias-->
@@ -26,13 +26,13 @@
             <field name="name">Sanciones vista tree</field>
             <field name="model">hr.employee.sanctions</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="employee_id"/>
                     <field name="type_fault_id"/>
                     <field name="registration_date"/>
                     <field name="name" optional="show"/>
                     <field name="stage" optional="show"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -46,10 +46,10 @@
                             <group>
                                 <field name="employee_id" options="{'no_create': True}" required="1"/>
                                 <field name="company_id" readonly="1"/>
-                                <field name="address_home_id" invisible="1"/>
+                                <field name="work_contact_id" invisible="1"/>
                                 <field name="name" required="1"/>
                                 <field name="absence_id" options="{'no_create': True}" domain="[('employee_id','=',employee_id)]"/>
-                                <field name="document_id" options="{'no_create': True}" domain="[('partner_id','=',address_home_id)]"/>
+                                <field name="document_id" options="{'no_create': True}" domain="[('partner_id','=',work_contact_id)]"/>
                             </group>
                             <group>
                                 <field name="type_fault_id" options="{'no_create': True}" required="1"/>

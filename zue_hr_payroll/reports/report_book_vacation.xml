@@ -18,11 +18,11 @@
         
         <record id="report_book_vacation_action" model="ir.actions.report">
            <field name="name">Libro de Vacaciones</field>
-           <field name="model">hr.contract</field>
+           <field name="model">hr.version</field>
            <field name="report_type">qweb-pdf</field>
            <field name="report_name">zue_hr_payroll.report_book_vacation</field>
            <field name="report_file">zue_hr_payroll.report_book_vacation</field>
-           <field name="binding_model_id" ref="model_hr_contract"/>
+           <field name="binding_model_id" ref="model_hr_version"/>
         </record>
 
         <record id="report_book_vacation_action" model="ir.actions.report">

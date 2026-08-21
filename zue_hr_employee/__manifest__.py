@@ -15,19 +15,21 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Human Resources',
-    "version": "15.0.1.0.0",
+    "version": "19.0.1.0.0",
+    'icon': '/zue_hr_employee/static/description/icon.png',
 
     # any module necessary for this one to work correctly
-    'depends': ['base','zue_erp','hr','hr_skills','hr_payroll','hr_contract','hr_holidays','hr_payroll_account','zue_resource'],
+    'depends': ['base','hr','hr_skills','hr_payroll','hr_holidays','hr_payroll_account','l10n_latam_base','documents'],
 
     # always loaded
     'data': [
-        'data/hr_tipos_cotizante_data.xml',
-        'data/hr_indicador_especial_pensiones_data.xml',
+        # 'data/hr_tipos_cotizante_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
+        # 'data/hr_indicador_especial_pensiones_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
         'security/ir.model.access.csv',        
         'views/actions_entities.xml',
         'views/actions_employee.xml',
-        'views/actions_partner_employee.xml',
+        'views/actions_salary_attachment.xml',
+        #'views/actions_partner_employee.xml',
         'views/actions_parametrization.xml',
         'views/actions_salary_rule.xml',
         'views/actions_contract.xml',
@@ -52,6 +54,13 @@
         'reports/report_retirement_severance_pay_template.xml',
         'views/menus.xml',
     ],
+    'assets': {
+        'web.assets_backend': [
+            'zue_hr_employee/static/src/js/badge_layout_editor.js',
+            'zue_hr_employee/static/src/js/badge_layout_editor.xml',
+            'zue_hr_employee/static/src/js/badge_layout_editor.scss',
+        ],
+    },
     'installable': True,
     'license': 'LGPL-3',
 }

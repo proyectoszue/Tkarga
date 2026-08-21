@@ -1,0 +1,33 @@
+<odoo>
+    <data>
+        <record id="annex_thirdparty_account" model="report.paperformat">
+            <field name="name">Anexo cuenta tercero</field>
+            <field name="default" eval="True"/>
+            <field name="format">Letter</field>
+            <field name="page_height">0</field>
+            <field name="page_width">0</field>
+            <field name="orientation">Portrait</field>
+            <field name="margin_top">10</field>
+            <field name="margin_bottom">10</field>
+            <field name="margin_left">5</field>
+            <field name="margin_right">5</field>
+            <field name="header_line" eval="False"/>
+            <field name="header_spacing">0</field>
+            <field name="dpi">90</field>
+        </record>
+
+        <record id="annex_thirdparty_account_actions" model="ir.actions.report">
+            <field name="name">Anexo cuenta tercero</field>
+            <field name="model">zue.annex.thirdparty.account</field>
+            <field name="report_type">qweb-pdf</field>
+            <field name="report_name">zue_erp_reports_accounting.annex_thirdparty_account_id</field>
+            <field name="report_file">zue_erp_reports_accounting.annex_thirdparty_account_id</field>
+            <field name="binding_model_id" ref="model_zue_annex_thirdparty_account"/>
+        </record>
+
+        <record id="annex_thirdparty_account_actions" model="ir.actions.report">
+            <field name="paperformat_id" ref="zue_erp_reports_accounting.annex_thirdparty_account"/>
+        </record>
+
+    </data>
+</odoo>

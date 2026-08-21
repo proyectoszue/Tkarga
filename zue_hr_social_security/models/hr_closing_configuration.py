@@ -41,12 +41,11 @@ class hr_closing_configuration_header(models.Model):
     debit_account_difference = fields.Many2one('account.account', string='Cuenta débito diferencia', company_dependent=True)
     credit_account_difference = fields.Many2one('account.account', string='Cuenta crédito diferencia', company_dependent=True)
 
-    _sql_constraints = [('closing_process_uniq', 'unique(process)',
-                         'El proceso seleccionado ya esta registrado, por favor verificar.')]
+    _closing_process_uniq = models.Constraint('unique(process)',
+                         'El proceso seleccionado ya esta registrado, por favor verificar.')
 
-    def name_get(self):
-        result = []
+    @api.depends('process')
+    def _compute_display_name(self):
         for record in self:
             process_str = dict(self._fields['process'].selection).get(record.process)
-            result.append((record.id, "{}".format(process_str)))
-        return result
+            record.display_name = process_str

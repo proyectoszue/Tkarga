@@ -1,3 +1,4 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_zue_request_parameters_ws,zue.request.parameters.ws,model_zue_request_parameters_ws,,1,1,1,1
-access_zue_request_ws,zue.request.ws,model_zue_request_ws,,1,1,1,1
+access_zue_request_parameters_ws,zue.request.parameters.ws,model_zue_request_parameters_ws,base.group_user,1,1,1,1
+access_zue_request_ws,zue.request.ws,model_zue_request_ws,base.group_user,1,1,1,1
+access_zue_request_headers_ws,zue.request.headers.ws,model_zue_request_headers_ws,base.group_user,1,1,1,1

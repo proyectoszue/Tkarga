@@ -27,7 +27,7 @@ class hr_report_absenteeism_history(models.TransientModel):
                                                            ('request_date_from','<=',self.date_end)],order='employee_id asc')
 
         if self.state:
-            obj_absenteeism = obj_absenteeism.filtered(lambda x: x.employee_id.contract_id.state == 'open')
+            obj_absenteeism = obj_absenteeism.filtered(lambda x: x.employee_id.version_id.contract_date_end == False)
 
         if len(self.branch) > 0:
             obj_absenteeism = obj_absenteeism.filtered(lambda x: x.employee_id.branch_id.id in self.branch.ids)

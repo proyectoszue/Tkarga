@@ -1,0 +1,62 @@
+<odoo>
+    <data>
+        <!-- Vistas Menu concepto de cuentas -->
+        <record id="action_zue_concept_account" model="ir.actions.act_window">
+            <field name="name">Configuracion concepto de cuentas</field>
+            <field name="res_model">zue.concept.accounts</field>
+            <field name="view_mode">list,form</field>
+            <field name="target">current</field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_concept_account_tree">
+            <field name="name">Configuracion concepto de cuentas tree</field>
+            <field name="model">zue.concept.accounts</field>
+            <field name="arch" type="xml">
+                <list>
+                    <field name="z_concept"/>
+                    <field name="z_type_account"/>
+                    <field name="z_company_id"/>
+                </list>
+            </field>
+        </record>
+
+        <record model="ir.ui.view" id="zue_concept_account_form">
+            <field name="name">Configuracion concepto de cuentas form</field>
+            <field name="model">zue.concept.accounts</field>
+            <field name="arch" type="xml">
+                <form>
+                    <sheet>
+                        <group>
+                            <field name="z_concept"/>
+                            <field name="z_type_account"/>
+                        </group>
+                        <group>
+                            <field name="z_company_id"/>
+                        </group>
+                        <notebook>
+                            <page string="Cuentas">
+                                <field name="z_accounting_details_ids">
+                                    <list>
+                                        <field name="code"/>
+                                        <field name="name"/>
+                                    </list>
+                                </field>
+                            </page>
+                            <page string="Tercero Excluidos">
+                                <field name="z_excluded_thirdparty_ids"/>
+                            </page>
+                        </notebook>
+                    </sheet>
+                </form>
+            </field>
+        </record>
+
+        <record id="rule_zue_concept_account_multicompany" model="ir.rule">
+            <field name="name">Agrupacion concepto de cuentas - Multicompañía</field>
+            <field name="model_id" ref="model_zue_concept_accounts"/>
+            <field name="domain_force">['|',('z_company_id','=',False),('z_company_id', 'in',company_ids)]
+            </field>
+        </record>
+
+    </data>
+</odoo>

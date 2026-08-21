@@ -1,31 +1,21 @@
 <odoo>
     <data>
-        <!-- Top menu item -->    
-        <menuitem name="ZUE" id="zue_erp.menu_root"/>        
-            <!-- menu city -->    
-            <menuitem name="Ciudades" id="zue_erp.menu_city" sequence="1" parent="zue_erp.menu_root" action="zue_menu_action_city"/>
-            <!-- menu Sucursales -->    
-            <menuitem name="Sucursales" id="zue_erp.menu_branch" parent="zue_erp.menu_root"  sequence="1" action="zue_menu_action_branch"/>    
-            <!-- menu ciiu -->    
-            <menuitem name="CIIU" id="zue_erp.menu_ciiu" parent="zue_erp.menu_root"  sequence="2" action="action_hierarchy_ciiu"/>    
-            <!-- menu categories --> 
-            <menuitem name="Parametrización" id="zue_erp.menus_parameterization" sequence="3" parent="zue_erp.menu_root"/>
-                <menuitem name="Tipos de tercero" id="zue_erp.menu_type_thirdparty" parent="zue_erp.menus_parameterization"  sequence="0" action="zue_menu_action_type_thirdparty"/>
-                <menuitem name="Sectores" id="zue_erp.menu_sectors" parent="zue_erp.menus_parameterization"  sequence="1" action="zue_menu_action_sectors"/>
-                <menuitem name="Tipos de vinculación" id="zue_erp.menu_vinculation_types" parent="zue_erp.menus_parameterization"  sequence="2" action="zue_menu_action_vinculation_types"/>    
-                <menuitem name="Tipos de contacto" id="zue_erp.menu_contact_types" parent="zue_erp.menus_parameterization"  sequence="3" action="zue_menu_action_contact_types"/>    
-                <menuitem name="Áreas" id="zue_erp.menu_areas" parent="zue_erp.menus_parameterization"  sequence="4" action="zue_menu_action_areas"/>    
-                <menuitem name="Cargos" id="zue_erp.menu_job_title" parent="zue_erp.menus_parameterization"  sequence="5" action="zue_menu_action_job_title"/>    
-                <menuitem name="Días festivos" id="zue_erp.menu_holidays" parent="zue_erp.menus_parameterization"  sequence="6" action="zue_menu_action_holidays"/>
-                <menuitem name="Código postal" id="zue_erp.menu_zip_postal" parent="zue_erp.menus_parameterization"  sequence="6" action="zue_menu_action_zip_code"/>
-                <menuitem name="Grupos de trabajo" id="zue_erp.menu_work_groups" parent="zue_erp.menus_parameterization"  sequence="6" action="zue_menu_action_work_groups"/>
-                <menuitem name="Grupos presupuestales" id="zue_erp.menu_budget_group" parent="zue_erp.menus_parameterization"  sequence="8" action="zue_menu_action_budget_group"/>    
-                <menuitem name="Rango de activos" id="zue_erp.menu_asset_range" parent="zue_erp.menus_parameterization"  sequence="9" action="zue_menu_action_asset_range"/>
-                <menuitem name="Fechas conmemorativas" id="zue_erp.menu_dates_commemorated" parent="zue_erp.menus_parameterization"  sequence="10" action="zue_menu_action_dates_commemorated"/>
-                <menuitem name="Categoría proveedores" id="zue_erp.menu_suppliers_category" parent="zue_erp.menus_parameterization"  sequence="11" action="zue_menu_action_suppliers_category"/>
-            <!-- menu Reportes -->        
-            <menuitem name="Reportes" id="zue_erp.menus_reports" sequence="4" parent="zue_erp.menu_root" action="zue_menu_action_reports"/>                
-            <!-- menu Alertas -->        
-            <menuitem name="Alertas" id="zue_erp.menus_custom_alerts" sequence="5" parent="zue_erp.menu_root" action="zue_erp_action_alerts"/>
+        <!-- menu Sucursales -->
+        <menuitem name="Sucursales" id="zue_erp.menu_branch" parent="contacts.res_partner_menu_config" sequence="4"
+                  action="zue_menu_action_branch"/>
+        <!-- menu ciiu -->
+        <menuitem name="CIIU" id="zue_erp.menu_ciiu" parent="contacts.res_partner_menu_config" sequence="4"
+                  action="action_hierarchy_ciiu"/>
+        <menuitem name="Días festivos" id="zue_erp.menu_holidays" parent="contacts.res_partner_menu_config"  sequence="5" action="zue_menu_action_holidays"/>
+        <!-- menu categories -->
+        <menuitem name="Tipos de tercero" id="zue_erp.menu_type_thirdparty" parent="contacts.res_partner_menu_config"
+                  sequence="7" action="zue_menu_action_type_thirdparty"/>
+        <menuitem name="Código postal" id="zue_erp.menu_zip_postal" parent="contacts.menu_localisation" sequence="6"
+                  action="zue_menu_action_zip_code"/>
+        <menuitem name="Categoría proveedores" id="zue_erp.menu_suppliers_category"
+                  parent="contacts.res_partner_menu_config" sequence="11" action="zue_menu_action_suppliers_category"/>
+        <!-- menu Reportes -->
+        <menuitem name="Reportes" id="zue_erp.menus_reports" sequence="10" parent="base.menu_automation"
+                  action="zue_menu_action_reports"/>
     </data>
 </odoo>

@@ -12,7 +12,7 @@ class hr_payroll_posting_account_move(models.Model):
 
     payroll_posting = fields.Many2one('hr.payroll.posting',string='Contabilización', required=True)
     journal_id = fields.Many2one('account.journal', string='Diario', domain=[('is_payroll_spreader', '=', True)])
-    move_id = fields.Many2one('account.move', string='Movimiento Contable', readonly=True)
+    move_id = fields.Many2one('account.move', string='Movimiento Contable')
 
 class hr_payroll_posting_distribution(models.Model):
     _name = 'hr.payroll.posting.distribution'
@@ -27,20 +27,21 @@ class hr_payroll_posting(models.Model):
     _description = 'Pago contabilización de nomina'
     _rec_name = 'description'
 
-    payment_type = fields.Selection([('225', 'Pago de Nómina')], string='Tipo de pago', required=True, default='225', readonly=True)
+    payment_type = fields.Selection([('225', 'Pago de Nómina')], string='Tipo de pago', required=True, default='225')
     journal_id = fields.Many2one('account.journal', string='Diario', domain=[('is_payroll_spreader', '=', True)])
     company_id = fields.Many2one('res.company',string='Compañia', required=True, default=lambda self: self.env.company)
-    vat_payer = fields.Char(string='NIT Pagador', readonly=True, related='company_id.partner_id.vat')
+    vat_payer = fields.Char(string='NIT Pagador', related='company_id.partner_id.vat')
     payslip_id = fields.Many2one('hr.payslip.run',string='Lote de nómina')
     description = fields.Char(string='Descripción', required=True) 
     state = fields.Selection([('draft', 'Borrador'),('done', 'Hecho')], string='Estado', default='draft')
+    move_id = fields.Many2one('account.move', string='Movimiento Contable TMP V13')
     source_information = fields.Selection([('lote', 'Por lote'),
                                           ('liquidacion', 'Por liquidaciones')],'Origen información', default='lote') 
     liquidations_ids= fields.Many2many('hr.payslip', string='Liquidaciones')
     payroll_posting_distribution_ids = fields.One2many('hr.payroll.posting.distribution', 'payroll_posting',string='Distribución')
     payroll_posting_account_move_ids = fields.One2many('hr.payroll.posting.account.move', 'payroll_posting',string='Movimientos Contables')
     disaggregate_counterparty = fields.Boolean(string='¿Desea desagregar la contrapartida?')
-    #_sql_constraints = [('change_payslip_id_uniq', 'unique(payslip_id,liquidations_ids)', 'Ya existe un pago de contabilización para este lote/liquidación, por favor verificar')]
+    #_change_payslip_id_uniq = models.Constraint('unique(payslip_id,liquidations_ids)', 'Ya existe un pago de contabilización para este lote/liquidación, por favor verificar')
     #Realizar validacion
 
     def payroll_posting(self):
@@ -87,7 +88,7 @@ class hr_payroll_posting(models.Model):
                     # Filtro por diario / Cuenta bancaria dispersora nómina
                     for payslip in obj_payslip_tmp:
                         count_bank_main = 0
-                        for bank in payslip.employee_id.address_home_id.bank_ids:
+                        for bank in payslip.employee_id.work_contact_id.bank_ids:
                             if bank.is_main == True:
                                 count_bank_main += 1
                                 if bank.payroll_dispersion_account.id == self.journal_id.id:
@@ -133,7 +134,7 @@ class hr_payroll_posting(models.Model):
                                 for diff in payslip.line_ids.filtered(lambda line: line.salary_rule_id.z_account_id_cxp):
                                     lst_diff_account_debit.append({
                                         'name': self.description + ' | ' + payslip.employee_id.name + ' | '+ diff.salary_rule_id.name,
-                                        'partner_id': payslip.employee_id.address_home_id.id,
+                                        'partner_id': payslip.employee_id.work_contact_id.id,
                                         'account_id': diff.salary_rule_id.z_account_id_cxp.id,
                                         'journal_id': self.journal_id.id,
                                         'date': fields.Date.today(),
@@ -147,11 +148,11 @@ class hr_payroll_posting(models.Model):
                                 #else:
                                 #    value = abs(value - value_diff_account)
                                 #    debit_account_id = z_account_id_cxp.id
-                            if not payslip.employee_id.address_home_id.id:
+                            if not payslip.employee_id.work_contact_id.id:
                                 raise ValidationError(_('El empleado '+payslip.employee_id.name+' no tiene un tercero asociado, por favor verificar.'))
                             line_debit = {
                                 'name': self.description + ' | ' + payslip.employee_id.name,
-                                'partner_id': payslip.employee_id.address_home_id.id,
+                                'partner_id': payslip.employee_id.work_contact_id.id,
                                 'account_id': debit_account_id,
                                 'journal_id': self.journal_id.id,
                                 'date': fields.Date.today(),
@@ -162,7 +163,7 @@ class hr_payroll_posting(models.Model):
                             if value_not_include > 0:
                                 line_debit_not_include = {
                                     'name': self.description + ' | ' + payslip.employee_id.name,
-                                    'partner_id': payslip.employee_id.address_home_id.id,
+                                    'partner_id': payslip.employee_id.work_contact_id.id,
                                     'account_id': self.company_id.payroll_peoplepass_debit_account_id.id,
                                     'journal_id': self.company_id.payroll_peoplepass_journal_id.id,
                                     'date': fields.Date.today(),

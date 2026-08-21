@@ -57,15 +57,15 @@ class ZuePayrollVouchersPortal(Controller):
         report_name = 'Nómina'
 
         obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)], limit=1)
-        payslips = request.env['hr.payslip.public'].search([('state','=','done'),('employee_id','=',obj_employee.id),('date_from','>=',date_start),('date_to','<=',date_end)])
+        payslips = request.env['hr.payslip.public'].search([('state','=','validated'),('employee_id','=',obj_employee.id),('date_from','>=',date_start),('date_to','<=',date_end)])
         
         pdf_writer = PdfFileWriter()
 
         for payslip in payslips:
             report_name = payslip.struct_id.name + ' del ' + str(year) + '-' +  str(month)
-            report = request.env.ref('zue_payroll_self_management_portal.report_payslip_portal_action', False)
-            pdf_content, _ = report._render_qweb_pdf(payslip.id)
-            reader = PdfFileReader(io.BytesIO(pdf_content), strict=False, overwriteWarnings=False)
+            # report = request.env.ref('zue_payroll_self_management_portal.report_payslip_portal_action', False)
+            pdf_content, _ = request.env['ir.actions.report'].sudo()._render_qweb_pdf('zue_payroll_self_management_portal.report_payslip_portal_action', [payslip.id])
+            reader = PdfFileReader(io.BytesIO(pdf_content), strict=False)
 
             for page in range(reader.getNumPages()):
                 pdf_writer.addPage(reader.getPage(page))
