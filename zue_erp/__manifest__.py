@@ -23,7 +23,7 @@
         'security/ir.model.access.csv',
         # 'data/zue_ciiu_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
         # 'data/zue_zip_code_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
-        # 'data/zue_third_party_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
+        # 'data/zue_third_party_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN-
         'views/views_contact_form.xml',
         'views/report_execute_query.xml',
         'views/general_actions.xml',
