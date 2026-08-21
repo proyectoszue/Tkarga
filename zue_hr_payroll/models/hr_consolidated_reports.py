@@ -102,7 +102,7 @@ class hr_consolidated_reports(models.TransientModel):
     def generate_excel_vacaciones(self):
         # ----------------------------------Ejecutar consulta
         query_report = f'''
-                select distinct a."name",a.identification_id, b.date_start, 0 as days_service, coalesce(c.days_unpaid_absences,0)+coalesce(d.days_unpaid_absences,0) as days_unpaid_absences,
+                select distinct a."name",b.identification_id, b.contract_date_start, 0 as days_service, coalesce(c.days_unpaid_absences,0)+coalesce(d.days_unpaid_absences,0) as days_unpaid_absences,
                             0 as days_service_real,0 as vacation_days_right,coalesce(e.days_vacations,0) as vacation_days_paid,0 as vacations_days_pending,
                             coalesce(f.amount,0) as total_provision,coalesce(f.value_payments,0) as pagos_realizados,coalesce(f.current_payable_value,0) as valor_pagar_actual,
                             coalesce(g.amount,0) as valor_provision_acumulada,coalesce(f.value_balance,0) as valor_provision_mes,            
@@ -110,10 +110,11 @@ class hr_consolidated_reports(models.TransientModel):
                             coalesce(i.total,0) as total_vacations_last,coalesce(i.departure_date,'1900-01-01') as departure_date_last,
                             coalesce(i.return_date,'1900-01-01') as return_date_last,coalesce(i.days,0) as days_last
                 from hr_employee as a
-                inner join hr_contract as b on a.id = b.employee_id and b.active = true {self.query_filter_period('and','b.date_start')}
-                                                and (b.state = 'open' or (({self.query_filter_period('','b.retirement_date',1)} {self.query_filter_period('and','b.retirement_date')}) or ({self.query_filter_period('','b.retirement_date',0,'>=')})))                                                
+                inner join hr_version as b on a.id = b.employee_id and b.active = true {self.query_filter_period('and','b.contract_date_start')}
+                                                and (contract_date_end is null or (({self.query_filter_period('','b.retirement_date',1)} {self.query_filter_period('and','b.retirement_date')}) or ({self.query_filter_period('','b.retirement_date',0,'>=')})))                                                
                 left join zue_res_branch as rb on a.branch_id = rb.id
-                left join account_analytic_account as aaa on b.analytic_account_id = aaa.id 
+                --left join account_analytic_account as aaa on b.analytic_account_id = aaa.id 
+                left join account_analytic_account as aaa on b.analytic_distribution = to_jsonb(json_build_object(aaa.id, 100))
                 left join (select a.employee_id,sum(a.days) as days_unpaid_absences 
                             from hr_absence_history as a
                             inner join hr_leave_type as b on a.leave_type_id = b.id and b.unpaid_absences = true
@@ -124,10 +125,10 @@ class hr_consolidated_reports(models.TransientModel):
                             inner join hr_leave_type as b on a.holiday_status_id = b.id and b.unpaid_absences = true
                             where a.state = 'validate' {self.query_filter_period('and','a.request_date_to')}
                             group by a.employee_id) as d on a.id = d.employee_id
-                left join (select a.employee_id,a.contract_id,sum(coalesce(a.business_units,0))+sum(coalesce(units_of_money,0)) as days_vacations 
+                left join (select a.employee_id,a.version_id,sum(coalesce(a.business_units,0))+sum(coalesce(units_of_money,0)) as days_vacations 
                             from hr_vacation as a		
                             {self.query_filter_period('where','a.return_date')}	
-                            group by a.employee_id,a.contract_id) as e on a.id = e.employee_id and b.id = e.contract_id
+                            group by a.employee_id,a.version_id) as e on a.id = e.employee_id and b.id = e.version_id
                 left join (select a.*
                             from hr_executing_provisions_details as a 
                             inner join hr_executing_provisions as b on a.executing_provisions_id = b.id 
@@ -141,22 +142,22 @@ class hr_consolidated_reports(models.TransientModel):
                                         and b."month" = '{str(int(self.month)-1) if str(self.month) != '1' else '12'}'
                             where a.provision = 'vacaciones'
                             ) as g on a.id = g.employee_id
-                left join (select employee_id,contract_id,max(final_accrual_date) as final_accrual_date 
+                left join (select employee_id,version_id,max(final_accrual_date) as final_accrual_date 
                             from hr_vacation as a 
                             {self.query_filter_period('where','a.return_date')}
-                            group by employee_id,contract_id                            
-                            ) as h on a.id = h.employee_id and b.id = h.contract_id
-                left join (select employee_id,contract_id,final_accrual_date,departure_date,return_date,sum(total) as total,
+                            group by employee_id,version_id                            
+                            ) as h on a.id = h.employee_id and b.id = h.version_id
+                left join (select employee_id,version_id,final_accrual_date,departure_date,return_date,sum(total) as total,
                             sum(coalesce(business_units,0))+sum(coalesce(units_of_money,0)) as days 
                             from hr_vacation as a
                             {self.query_filter_period('where','a.return_date')}
-                            group by employee_id,contract_id,
-                            final_accrual_date,departure_date,return_date) as i on a.id = i.employee_id and b.id = i.contract_id and h.final_accrual_date = i.final_accrual_date
+                            group by employee_id,version_id,
+                            final_accrual_date,departure_date,return_date) as i on a.id = i.employee_id and b.id = i.version_id and h.final_accrual_date = i.final_accrual_date
                 {self.query_where_filters()}      
             '''
 
-        self._cr.execute(query_report)
-        result_query = self._cr.dictfetchall()
+        self.env.cr.execute(query_report)
+        result_query = self.env.cr.dictfetchall()
 
         # Generar EXCEL
         filename = 'Reporte Consolidados de Vacaciones'
@@ -262,17 +263,18 @@ class hr_consolidated_reports(models.TransientModel):
 
         # ----------------------------------Ejecutar consulta
         query_report = f'''
-                select distinct a."name",a.identification_id,b.date_start,
-                    case when b.date_start >= '{str(self.create_date_initial_process())}' then b.date_start else '{str(self.create_date_initial_process())}' end as date_initial_process,
+                select distinct a."name",b.identification_id,b.contract_date_start,
+                    case when b.contract_date_start >= '{str(self.create_date_initial_process())}' then b.contract_date_start else '{str(self.create_date_initial_process())}' end as date_initial_process,
                     0 as days_service,coalesce(c.days_unpaid_absences,0)+coalesce(d.days_unpaid_absences,0) as days_unpaid_absences,0 as days_real,
                     coalesce(f.value_wage,0) as value_wage,coalesce(f.value_base,0) as value_base,coalesce(f.amount,0) as amount,
                     coalesce(h.amount,0) as intamount,coalesce(pf.value_payments,0) as value_payments,coalesce(ph.value_payments,0) as intvalue_payments,
                     coalesce(f.current_payable_value,0) as current_payable_value,coalesce(h.current_payable_value,0) as intcurrent_payable_value
                 from hr_employee as a
-                inner join hr_contract as b on a.id = b.employee_id and b.active = true {self.query_filter_period('and','b.date_start')}
-                                                and (b.state = 'open' or (({self.query_filter_period('','b.retirement_date',1)} {self.query_filter_period('and','b.retirement_date')}) or ({self.query_filter_period('','b.retirement_date',0,'>=')})))
+                inner join hr_version as b on a.id = b.employee_id and b.active = true {self.query_filter_period('and','b.contract_date_start')}
+                                                and (b.contract_date_end is null or (({self.query_filter_period('','b.retirement_date',1)} {self.query_filter_period('and','b.retirement_date')}) or ({self.query_filter_period('','b.retirement_date',0,'>=')})))
                 left join zue_res_branch as rb on a.branch_id = rb.id
-                left join account_analytic_account as aaa on b.analytic_account_id = aaa.id 
+                --left join account_analytic_account as aaa on b.analytic_account_id = aaa.id 
+                left join account_analytic_account as aaa on b.analytic_distribution = to_jsonb(json_build_object(aaa.id, 100))
                 left join (select a.employee_id,sum(a.days) as days_unpaid_absences 
                             from hr_absence_history as a
                             inner join hr_leave_type as b on a.leave_type_id = b.id and b.unpaid_absences = true
@@ -283,33 +285,33 @@ class hr_consolidated_reports(models.TransientModel):
                             inner join hr_leave_type as b on a.holiday_status_id = b.id and b.unpaid_absences = true
                             where a.state = 'validate' and a.request_date_from <= '{str(self.create_closing_date())}' and a.request_date_to >= '{str(self.create_date_initial_process())}' 
                             group by a.employee_id) as d on a.id = d.employee_id
-                left join (select a.employee_id,a.contract_id,max(a.id) as max_id 
+                left join (select a.employee_id,a.version_id,max(a.id) as max_id 
                             from hr_executing_provisions_details as a
                             inner join hr_executing_provisions as b on a.executing_provisions_id = b.id {self.query_filter_period('and','b.date_end')}
                             where a.provision = 'cesantias'
-                            group by a.employee_id,a.contract_id) as e on a.id = e.employee_id and b.id = e.contract_id
+                            group by a.employee_id,a.version_id) as e on a.id = e.employee_id and b.id = e.version_id
                 left join hr_executing_provisions_details as f on e.max_id = f.id 
-                left join (select a.employee_id,a.contract_id,sum(coalesce(a.value_payments,0)) as value_payments 
+                left join (select a.employee_id,a.version_id,sum(coalesce(a.value_payments,0)) as value_payments 
                             from hr_executing_provisions_details as a 
                             inner join hr_executing_provisions as b on a.executing_provisions_id = b.id {self.query_filter_period('and','b.date_end')}
                             where a.provision = 'cesantias'
-                            group by a.employee_id,a.contract_id) as pf on a.id = pf.employee_id and b.id = pf.contract_id	
-                left join (select a.employee_id,a.contract_id,max(a.id) as max_id 
+                            group by a.employee_id,a.version_id) as pf on a.id = pf.employee_id and b.id = pf.version_id	
+                left join (select a.employee_id,a.version_id,max(a.id) as max_id 
                             from hr_executing_provisions_details as a
                             inner join hr_executing_provisions as b on a.executing_provisions_id = b.id {self.query_filter_period('and','b.date_end')}
                             where a.provision = 'intcesantias'
-                            group by a.employee_id,a.contract_id) as g on a.id = g.employee_id and b.id = g.contract_id
+                            group by a.employee_id,a.version_id) as g on a.id = g.employee_id and b.id = g.version_id
                 left join hr_executing_provisions_details as h on g.max_id = h.id
-                left join (select a.employee_id,a.contract_id,sum(coalesce(a.value_payments,0)) as value_payments 
+                left join (select a.employee_id,a.version_id,sum(coalesce(a.value_payments,0)) as value_payments 
                             from hr_executing_provisions_details  as a
                             inner join hr_executing_provisions as b on a.executing_provisions_id = b.id {self.query_filter_period('and','b.date_end')}
                             where a.provision = 'intcesantias'
-                            group by a.employee_id,a.contract_id) as ph on a.id = ph.employee_id and b.id = ph.contract_id               
+                            group by a.employee_id,a.version_id) as ph on a.id = ph.employee_id and b.id = ph.version_id               
                 {self.query_where_filters()}   
             '''
 
-        self._cr.execute(query_report)
-        result_query = self._cr.dictfetchall()
+        self.env.cr.execute(query_report)
+        result_query = self.env.cr.dictfetchall()
 
         # Generar EXCEL
         filename = 'Reporte Consolidados de Cesantías'
@@ -406,16 +408,17 @@ class hr_consolidated_reports(models.TransientModel):
 
         # ----------------------------------Ejecutar consulta
         query_report = f'''
-                select distinct a."name",a.identification_id,b.date_start,
-                case when b.date_start >= '{str(self.create_date_initial_process())}' then b.date_start else '{str(self.create_date_initial_process())}' end as date_initial_process,
+                select distinct a."name",b.identification_id,b.contract_date_start,
+                case when b.contract_date_start >= '{str(self.create_date_initial_process())}' then b.contract_date_start else '{str(self.create_date_initial_process())}' end as date_initial_process,
                 0 as days_service,coalesce(c.days_unpaid_absences,0)+coalesce(d.days_unpaid_absences,0) as days_unpaid_absences,0 as days_real,
                 coalesce(f.value_wage,0) as value_wage,coalesce(f.value_base,0) as value_base,coalesce(f.amount,0) as amount,
                 coalesce(pf.value_payments,0) as value_payments,coalesce(f.current_payable_value,0) as current_payable_value
                 from hr_employee as a
-                inner join hr_contract as b on a.id = b.employee_id and b.active = true {self.query_filter_period('and','b.date_start')}
-                                                and (b.state = 'open' or (({self.query_filter_period('','b.retirement_date',1)} {self.query_filter_period('and','b.retirement_date')}) or ({self.query_filter_period('','b.retirement_date',0,'>=')})))
+                inner join hr_version as b on a.id = b.employee_id and b.active = true {self.query_filter_period('and','b.contract_date_start')}
+                                                and (b.contract_date_end is null or (({self.query_filter_period('','b.retirement_date',1)} {self.query_filter_period('and','b.retirement_date')}) or ({self.query_filter_period('','b.retirement_date',0,'>=')})))
                 left join zue_res_branch as rb on a.branch_id = rb.id
-                left join account_analytic_account as aaa on b.analytic_account_id = aaa.id 
+                --left join account_analytic_account as aaa on b.analytic_account_id = aaa.id 
+                left join account_analytic_account as aaa on b.analytic_distribution = to_jsonb(json_build_object(aaa.id, 100))
                 left join (select a.employee_id,sum(a.days) as days_unpaid_absences 
                             from hr_absence_history as a
                             inner join hr_leave_type as b on a.leave_type_id = b.id and b.unpaid_absences = true
@@ -426,22 +429,22 @@ class hr_consolidated_reports(models.TransientModel):
                             inner join hr_leave_type as b on a.holiday_status_id = b.id and b.unpaid_absences = true
                             where a.state = 'validate' and a.request_date_from <= '{str(self.create_closing_date())}' and a.request_date_to >= '{str(self.create_date_initial_process())}'
                             group by a.employee_id) as d on a.id = d.employee_id
-                left join (select a.employee_id,a.contract_id,max(a.id) as max_id 
+                left join (select a.employee_id,a.version_id,max(a.id) as max_id 
                             from hr_executing_provisions_details as a
                             inner join hr_executing_provisions as b on a.executing_provisions_id = b.id {self.query_filter_period('and','b.date_end')}
                             where a.provision = 'prima'
-                            group by a.employee_id,a.contract_id) as e on a.id = e.employee_id and b.id = e.contract_id
+                            group by a.employee_id,a.version_id) as e on a.id = e.employee_id and b.id = e.version_id
                 left join hr_executing_provisions_details as f on e.max_id = f.id 
-                left join (select a.employee_id,a.contract_id,sum(coalesce(a.value_payments,0)) as value_payments 
+                left join (select a.employee_id,a.version_id,sum(coalesce(a.value_payments,0)) as value_payments 
                             from hr_executing_provisions_details as a 
                             inner join hr_executing_provisions as b on a.executing_provisions_id = b.id {self.query_filter_period('and','b.date_end')}
                             where a.provision = 'prima'
-                            group by a.employee_id,a.contract_id) as pf on a.id = pf.employee_id and b.id = pf.contract_id
+                            group by a.employee_id,a.version_id) as pf on a.id = pf.employee_id and b.id = pf.version_id
                 {self.query_where_filters()}     
             '''
 
-        self._cr.execute(query_report)
-        result_query = self._cr.dictfetchall()
+        self.env.cr.execute(query_report)
+        result_query = self.env.cr.dictfetchall()
 
         # Generar EXCEL
         filename = 'Reporte Consolidados de Prima'

@@ -4,7 +4,7 @@
         <record id="action_hr_tipo_cotizante" model="ir.actions.act_window">
             <field name="name">Tipos de cotizante</field>
             <field name="res_model">hr.tipo.cotizante</field>
-            <field name="view_mode">tree</field>
+            <field name="view_mode">list</field>
             <field name="domain">[]</field>
             <field name="help" type="html">
                 <p class="oe_view_nocontent_create">Crear Tipo de cotizante
@@ -16,10 +16,10 @@
             <field name="name">list hr tipo cotizante</field>
             <field name="model">hr.tipo.cotizante</field>
             <field name="arch" type="xml">
-                <tree editable="bottom">
+                <list editable="bottom">
                     <field name="code"/>
                     <field name="name"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -27,7 +27,7 @@
         <record id="action_hr_subtipo_cotizante" model="ir.actions.act_window">
             <field name="name">SubTipos de cotizante</field>
             <field name="res_model">hr.subtipo.cotizante</field>
-            <field name="view_mode">tree</field>
+            <field name="view_mode">list</field>
             <field name="domain">[]</field>
             <field name="help" type="html">
                 <p class="oe_view_nocontent_create">Crear SubTipo de cotizante
@@ -39,11 +39,11 @@
             <field name="name">list hr subtipo cotizante</field>
             <field name="model">hr.subtipo.cotizante</field>
             <field name="arch" type="xml">
-                <tree editable="bottom">
+                <list editable="bottom">
                     <field name="code"/>
                     <field name="name"/>
                     <field name="not_contribute_pension"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -51,7 +51,7 @@
         <record id="action_hr_type_faults" model="ir.actions.act_window">
             <field name="name">Tipos de faltas</field>
             <field name="res_model">hr.types.faults</field>
-            <field name="view_mode">tree</field>
+            <field name="view_mode">list</field>
             <field name="domain">[]</field>
             <field name="help" type="html">
                 <p class="oe_view_nocontent_create">Crear Tipo de de falta
@@ -63,10 +63,10 @@
             <field name="name">list hr type faults</field>
             <field name="model">hr.types.faults</field>
             <field name="arch" type="xml">
-                <tree editable="bottom">
+                <list editable="bottom">
                     <field name="name" required="1"/>
                     <field name="description" required="1"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -74,17 +74,17 @@
         <record model="ir.actions.act_window" id="action_hr_parameterization_of_contributors">
             <field name="name">Parametrización Cotizantes</field>
             <field name="res_model">hr.parameterization.of.contributors</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <record model="ir.ui.view" id="hr_parameterization_of_contributors_list">
             <field name="name">hr parameterization of contributors list</field>
             <field name="model">hr.parameterization.of.contributors</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="type_of_contributor"/>
                     <field name="contributor_subtype"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -100,27 +100,27 @@
                         </group>
                         <group>
                             <group>
-                                <p>Requiere entidad EPS:</p>
-                                <field name="liquidates_eps_company"/>
-                                <field name="liquidated_eps_employee"/>
-                                <br/><br/>
-                                <p>Requiere entidad pensión:</p>
-                                <field name="liquidated_company_pension"/>
-                                <field name="liquidate_employee_pension"/>
-                                <field name="liquidates_solidarity_fund"/>
+                                <group string="Requiere entidad EPS / ARL:">
+                                    <field name="liquidates_eps_company"/>
+                                    <field name="liquidated_eps_employee"/>
+                                    <field name="liquidated_arl"/>
+                                </group>
+                                <group string="Requiere entidad pensión:">
+                                    <field name="liquidated_company_pension"/>
+                                    <field name="liquidate_employee_pension"/>
+                                    <field name="liquidates_solidarity_fund"/>
+                                </group>
                             </group>
                             <group>
-                                <p>Requiere entidad ARL:</p>
-                                <field name="liquidated_arl"/>
-                                <br/><br/>
-                                <p>Requiere entidad caja de compensación:</p>
-                                <field name="liquidated_compensation_fund"/>
-                                <br/><br/>
-                                <p>Las entidades se toman de forma automática en caso de ser necesario:</p>
-                                <field name="liquidated_aux_transport"/>
-                                <field name="liquidated_sena"/>
-                                <field name="liquidated_icbf"/>
-                                <field name="liquidated_provisions"/>
+                                <group string="Las entidades se toman de forma automática en caso de ser necesario:">
+                                    <field name="liquidated_aux_transport"/>
+                                    <field name="liquidated_sena"/>
+                                    <field name="liquidated_icbf"/>
+                                    <field name="liquidated_provisions"/>
+                                </group>
+                                <group string="Requiere entidad caja de compensación:">
+                                    <field name="liquidated_compensation_fund"/>
+                                </group>
                             </group>
                         </group>
                     </sheet>

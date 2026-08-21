@@ -59,19 +59,19 @@
                                     </td>
                                     <td>
                                         <t t-if="ab.get('state','') == 'Por enviar'">
-                                            <span class="badge badge-pill badge-info" t-esc="ab.get('state','')"/>
+                                            <span class="badge badge-pill bg-info" t-esc="ab.get('state','')"/>
                                         </t>
                                         <t t-elif="ab.get('state','') == 'Por aprobar'">
-                                            <span class="badge badge-pill badge-warning" t-esc="ab.get('state','')"/>
+                                            <span class="badge badge-pill bg-warning" t-esc="ab.get('state','')"/>
                                         </t>
                                         <t t-elif="ab.get('state','') == 'Rechazado'">
-                                            <span class="badge badge-pill badge-light" t-esc="ab.get('state','')"/>
+                                            <span class="badge badge-pill bg-danger" t-esc="ab.get('state','')"/>
                                         </t>
                                         <t t-elif="ab.get('state','') == 'Segunda aprobación'">
-                                            <span class="badge badge-pill badge-warning" t-esc="ab.get('state','')"/>
+                                            <span class="badge badge-pill bg-warning" t-esc="ab.get('state','')"/>
                                         </t>
                                         <t t-else="">
-                                            <span class="badge badge-pill badge-success" t-esc="ab.get('state','')"/>
+                                            <span class="badge badge-pill bg-success" t-esc="ab.get('state','')"/>
                                         </t>
                                     </td>
                                 </tr>

@@ -1,0 +1,409 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="get_cufe_fe" model="zue.request.ws">
+            <field name="name">get_cufe_fe</field>
+            <field name="server_url">https://ws.facturatech.co/v2/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="body">&lt;soapenv:Envelope
+            xmlns:tem=&apos;http://tempuri.org/&apos;
+            xmlns:soapenv=&apos;http://schemas.xmlsoap.org/soap/envelope/&apos;&gt;
+            &lt;soapenv:Body&gt;
+                &lt;pro:FtechAction.getCUFEFile&gt;
+                    &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                    &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                    &lt;prefijo xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/prefijo&gt;
+                    &lt;folio xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/folio&gt;
+                &lt;/pro:FtechAction.getCUFEFile&gt;
+            &lt;/soapenv:Body&gt;
+        &lt;/soapenv:Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="upload_file_fe" model="zue.request.ws">
+            <field name="name">upload_file_fe</field>
+            <field name="server_url">https://ws.facturatech.co/v2/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="body">&lt;soapenv:Envelope
+            xmlns:tem=&apos;http://tempuri.org/&apos;
+            xmlns:soapenv=&apos;http://schemas.xmlsoap.org/soap/envelope/&apos;&gt;
+            &lt;soapenv:Body&gt;
+                &lt;pro:FtechAction.uploadInvoiceFile&gt;
+                    &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                    &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                    &lt;xmlBase64 xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/xmlBase64&gt;
+                &lt;/pro:FtechAction.uploadInvoiceFile&gt;
+            &lt;/soapenv:Body&gt;
+        &lt;/soapenv:Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="check_status_fe" model="zue.request.ws">
+            <field name="name">check_status_fe</field>
+            <field name="server_url">https://ws.facturatech.co/v2/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="body">&lt;soapenv:Envelope
+            xmlns:tem=&apos;http://tempuri.org/&apos;
+            xmlns:soapenv=&apos;http://schemas.xmlsoap.org/soap/envelope/&apos;&gt;
+            &lt;soapenv:Body&gt;
+                &lt;pro:FtechAction.documentStatusFile&gt;
+                    &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                    &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                    &lt;transaccionID xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/transaccionID&gt;
+                &lt;/pro:FtechAction.documentStatusFile&gt;
+            &lt;/soapenv:Body&gt;
+        &lt;/soapenv:Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="download_pdf_fe" model="zue.request.ws">
+            <field name="name">download_pdf_fe</field>
+            <field name="server_url">https://ws.facturatech.co/v2/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="body">&lt;soapenv:Envelope
+            xmlns:tem=&apos;http://tempuri.org/&apos;
+            xmlns:soapenv=&apos;http://schemas.xmlsoap.org/soap/envelope/&apos;&gt;
+            &lt;soapenv:Body&gt;
+                &lt;pro:FtechAction.downloadPDFFile&gt;
+                    &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                    &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                    &lt;prefijo xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/prefijo&gt;
+                    &lt;folio xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/folio&gt;
+                &lt;/pro:FtechAction.downloadPDFFile&gt;
+            &lt;/soapenv:Body&gt;
+        &lt;/soapenv:Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="ftech_ds_get_cuds" model="zue.request.ws">
+            <field name="name">ftech_ds_get_cuds</field>
+            <field name="server_url">https://ws-dse.facturatech.co/v1/pro/?wsdl</field>
+            <field name="active">True</field>
+            <field name="body">&lt;Envelope xmlns=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
+            &lt;Body&gt;
+                &lt;getCUFEFile xmlns=&quot;urn:https://ws-dse.facturatech.co/v1/pro/&quot;&gt;
+                &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                &lt;prefijo xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/prefijo&gt;
+                &lt;folio xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/folio&gt;
+                &lt;/getCUFEFile&gt;
+            &lt;/Body&gt;
+        &lt;/Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="ftech_ds_download_file_document" model="zue.request.ws">
+            <field name="name">ftech_ds_download_file_document</field>
+            <field name="server_url">https://ws-dse.facturatech.co/v1/pro/?wsdl</field>
+            <field name="active">True</field>
+            <field name="body">&lt;Envelope xmlns=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
+            &lt;Body&gt;
+                &lt;downloadPDF xmlns=&quot;urn:https://ws-dse.facturatech.co/v1/pro/&quot;&gt;
+                &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                &lt;prefijo xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/prefijo&gt;
+                &lt;folio xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/folio&gt;
+                &lt;/downloadPDF&gt;
+            &lt;/Body&gt;
+        &lt;/Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="ftech_ds_status_document" model="zue.request.ws">
+            <field name="name">ftech_ds_status_document</field>
+            <field name="server_url">https://ws-dse.facturatech.co/v1/pro/?wsdl</field>
+            <field name="active">True</field>
+            <field name="body">&lt;Envelope xmlns=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
+            &lt;Body&gt;
+                &lt;documentStatus xmlns=&quot;urn:https://ws-dse.facturatech.co/v1/pro/&quot;&gt;
+                &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                &lt;transaccionID xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/transaccionID&gt;
+                &lt;/documentStatus&gt;
+            &lt;/Body&gt;
+        &lt;/Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="ftech_ds_upload_xml" model="zue.request.ws">
+            <field name="name">ftech_ds_upload_xml</field>
+            <field name="server_url">https://ws-dse.facturatech.co/v1/pro/?wsdl</field>
+            <field name="active">True</field>
+            <field name="body">&lt;Envelope xmlns=&quot;http://schemas.xmlsoap.org/soap/envelope/&quot;&gt;
+            &lt;Body&gt;
+                &lt;uploadDocument xmlns=&quot;urn:https://ws-dse.facturatech.co/v1/pro/&quot;&gt;
+                &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                &lt;xmlBase64 xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/xmlBase64&gt;
+                &lt;/uploadDocument&gt;
+            &lt;/Body&gt;
+        &lt;/Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="documentcufepos" model="zue.request.ws">
+            <field name="name">documentcufepos</field>
+            <field name="server_url">https://ws-pos.facturatech.co/v1/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="content_type">text/xml</field>
+            <field name="body">&lt;soapenv:Envelope
+            xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+            xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;
+            xmlns:pro=&quot;urn:https://ws-pos.facturatech.co/v1/pro/&quot;&gt;
+            &lt;soapenv:Body&gt;
+                &lt;pro:downloadCUFE&gt;
+                    &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                    &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                    &lt;prefix xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/prefix&gt;
+                    &lt;number xsi:type=&quot;xsd:integer&quot;&gt;ZUE_PARAMETER&lt;/number&gt;
+                &lt;/pro:downloadCUFE&gt;
+            &lt;/soapenv:Body&gt;
+        &lt;/soapenv:Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="documentpdfpos" model="zue.request.ws">
+            <field name="name">documentpdfpos</field>
+            <field name="server_url">https://ws-pos.facturatech.co/v1/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="content_type">text/xml</field>
+            <field name="body">&lt;soapenv:Envelope
+            xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+            xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;
+            xmlns:pro=&quot;urn:https://ws-pos.facturatech.co/v1/pro/&quot;&gt;
+            &lt;soapenv:Body&gt;
+                &lt;pro:downloadPDF&gt;
+                    &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                    &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                    &lt;prefix xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/prefix&gt;
+                    &lt;number xsi:type=&quot;xsd:integer&quot;&gt;ZUE_PARAMETER&lt;/number&gt;
+                &lt;/pro:downloadPDF&gt;
+            &lt;/soapenv:Body&gt;
+        &lt;/soapenv:Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="documentxmlpos" model="zue.request.ws">
+            <field name="name">documentxmlpos</field>
+            <field name="server_url">https://ws-pos.facturatech.co/v1/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="content_type">text/xml</field>
+            <field name="body">&lt;soapenv:Envelope
+            xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+            xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;
+            xmlns:pro=&quot;urn:https://ws-pos.facturatech.co/v1/pro/&quot;&gt;
+            &lt;soapenv:Body&gt;
+                &lt;pro:downloadXML&gt;
+                    &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                    &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                    &lt;prefix xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/prefix&gt;
+                    &lt;number xsi:type=&quot;xsd:integer&quot;&gt;ZUE_PARAMETER&lt;/number&gt;
+                &lt;/pro:downloadXML&gt;
+            &lt;/soapenv:Body&gt;
+        &lt;/soapenv:Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="documentStatuspos" model="zue.request.ws">
+            <field name="name">documentStatuspos</field>
+            <field name="server_url">https://ws-pos.facturatech.co/v1/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="content_type">text/xml</field>
+            <field name="body">&lt;soapenv:Envelope
+            xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+            xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;
+            xmlns:pro=&quot;urn:https://ws-pos.facturatech.co/v1/pro/&quot;&gt;
+            &lt;soapenv:Body&gt;
+                &lt;pro:documentStatus&gt;
+                    &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                    &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                    &lt;transaccionID xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/transaccionID&gt;
+                &lt;/pro:documentStatus&gt;
+            &lt;/soapenv:Body&gt;
+        &lt;/soapenv:Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="uploadDocumentpos" model="zue.request.ws">
+            <field name="name">uploadDocumentpos</field>
+            <field name="server_url">https://ws-pos.facturatech.co/v1/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="content_type">text/xml</field>
+            <field name="body">&lt;soapenv:Envelope
+            xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+            xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;
+            xmlns:pro=&quot;urn:https://ws-pos.facturatech.co/v1/pro/&quot;&gt;
+            &lt;soapenv:Body&gt;
+                &lt;pro:uploadDocument&gt;
+                    &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                    &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                    &lt;xmlBase64 xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/xmlBase64&gt;
+                &lt;/pro:uploadDocument&gt;
+            &lt;/soapenv:Body&gt;
+        &lt;/soapenv:Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+
+
+        <record id="FacturaTech_ne_upload_xml" model="zue.request.ws">
+            <field name="name">FacturaTech_ne_upload_xml</field>
+            <field name="server_url">https://ws-nomina.facturatech.co/v1/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="body">
+                &lt;Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+                    &lt;Body&gt;
+                        &lt;FtechAction.uploadDocument xmlns="urn:https://ws-nomina.facturatech.co/v1/pro/"&gt;
+                            &lt;username&gt;ZUE_PARAMETER&lt;/username&gt;
+                            &lt;password&gt;ZUE_PARAMETER&lt;/password&gt;
+                            &lt;xmlBase64&gt;ZUE_PARAMETER&lt;/xmlBase64&gt;
+                        &lt;/FtechAction.uploadDocument&gt;
+                    &lt;/Body&gt;
+                &lt;/Envelope&gt;
+            </field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="FacturaTech_ne_status_document" model="zue.request.ws">
+            <field name="name">FacturaTech_ne_status_document</field>
+            <field name="server_url">https://ws-nomina.facturatech.co/v1/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="body">
+                &lt;Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+                    &lt;Body&gt;
+                        &lt;FtechAction.documentStatus xmlns="urn:https://ws-nomina.facturatech.co/v1/pro/"&gt;
+                            &lt;username&gt;ZUE_PARAMETER&lt;/username&gt;
+                            &lt;password&gt;ZUE_PARAMETER&lt;/password&gt;
+                            &lt;transaccionID&gt;ZUE_PARAMETER&lt;/transaccionID&gt;
+                        &lt;/FtechAction.documentStatus&gt;
+                    &lt;/Body&gt;
+                &lt;/Envelope&gt;
+            </field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="FacturaTech_ne_download_file_document" model="zue.request.ws">
+            <field name="name">FacturaTech_ne_download_file_document</field>
+            <field name="server_url">https://ws-nomina.facturatech.co/v1/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="body">
+                &lt;Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+                    &lt;Body&gt;
+                        &lt;FtechAction.downloadPDF xmlns="urn:https://ws-nomina.facturatech.co/v1/pro/"&gt;
+                            &lt;username&gt;ZUE_PARAMETER&lt;/username&gt;
+                            &lt;password&gt;ZUE_PARAMETER&lt;/password&gt;
+                            &lt;prefix&gt;ZUE_PARAMETER&lt;/prefix&gt;
+                            &lt;number&gt;ZUE_PARAMETER&lt;/number&gt;
+                        &lt;/FtechAction.downloadPDF&gt;
+                    &lt;/Body&gt;
+                &lt;/Envelope&gt;
+            </field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="FacturaTech_ne_get_cune" model="zue.request.ws">
+            <field name="name">FacturaTech_ne_get_cune</field>
+            <field name="server_url">https://ws-nomina.facturatech.co/v1/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="body">
+                &lt;Envelope xmlns="http://schemas.xmlsoap.org/soap/envelope/"&gt;
+                    &lt;Body&gt;
+                        &lt;FtechAction.downloadCUNE xmlns="urn:https://ws-nomina.facturatech.co/v1/pro/"&gt;
+                            &lt;username&gt;ZUE_PARAMETER&lt;/username&gt;
+                            &lt;password&gt;ZUE_PARAMETER&lt;/password&gt;
+                            &lt;prefix&gt;ZUE_PARAMETER&lt;/prefix&gt;
+                            &lt;number&gt;ZUE_PARAMETER&lt;/number&gt;
+                        &lt;/FtechAction.downloadCUNE&gt;
+                    &lt;/Body&gt;
+                &lt;/Envelope&gt;
+            </field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="FacturaTech_ne_upload_xml_username" model="zue.request.parameters.ws">
+            <field name="parameter_name">username</field>
+            <field name="parameter_value">ZUE_PARAMETER</field>
+            <field name="without_name">False</field>
+            <field name="ws_id" ref="FacturaTech_ne_upload_xml"/>
+        </record>
+        <record id="FacturaTech_ne_upload_xml_password" model="zue.request.parameters.ws">
+                    <field name="parameter_name">password</field>
+                    <field name="parameter_value">ZUE_PARAMETER</field>
+                    <field name="without_name">False</field>
+                    <field name="ws_id" ref="FacturaTech_ne_upload_xml"/>
+        </record>
+        <record id="FacturaTech_ne_upload_xml_xmlBase64" model="zue.request.parameters.ws">
+                    <field name="parameter_name">xmlBase64</field>
+                    <field name="parameter_value">ZUE_PARAMETER</field>
+                    <field name="without_name">False</field>
+                    <field name="ws_id" ref="FacturaTech_ne_upload_xml"/>
+        </record>
+        <record id="FacturaTech_ne_status_document_username" model="zue.request.parameters.ws">
+                    <field name="parameter_name">username</field>
+                    <field name="parameter_value">ZUE_PARAMETER</field>
+                    <field name="without_name">False</field>
+                    <field name="ws_id" ref="FacturaTech_ne_status_document"/>
+        </record>
+        <record id="FacturaTech_ne_status_document_password" model="zue.request.parameters.ws">
+                    <field name="parameter_name">password</field>
+                    <field name="parameter_value">ZUE_PARAMETER</field>
+                    <field name="without_name">False</field>
+                    <field name="ws_id" ref="FacturaTech_ne_status_document"/>
+        </record>
+        <record id="FacturaTech_ne_status_document_transaccionID" model="zue.request.parameters.ws">
+                    <field name="parameter_name">transaccionID</field>
+                    <field name="parameter_value">ZUE_PARAMETER</field>
+                    <field name="without_name">False</field>
+                    <field name="ws_id" ref="FacturaTech_ne_status_document"/>
+        </record>
+        <record id="FacturaTech_ne_download_file_document_username" model="zue.request.parameters.ws">
+                    <field name="parameter_name">username</field>
+                    <field name="parameter_value">ZUE_PARAMETER</field>
+                    <field name="without_name">False</field>
+                    <field name="ws_id" ref="FacturaTech_ne_download_file_document"/>
+        </record>
+        <record id="FacturaTech_ne_download_file_document_password" model="zue.request.parameters.ws">
+                    <field name="parameter_name">password</field>
+                    <field name="parameter_value">ZUE_PARAMETER</field>
+                    <field name="without_name">False</field>
+                    <field name="ws_id" ref="FacturaTech_ne_download_file_document"/>
+        </record>
+        <record id="FacturaTech_ne_download_file_document_prefix" model="zue.request.parameters.ws">
+                    <field name="parameter_name">prefix</field>
+                    <field name="parameter_value">ZUE_PARAMETER</field>
+                    <field name="without_name">False</field>
+                    <field name="ws_id" ref="FacturaTech_ne_download_file_document"/>
+        </record>
+        <record id="FacturaTech_ne_download_file_document_number" model="zue.request.parameters.ws">
+                    <field name="parameter_name">number</field>
+                    <field name="parameter_value">ZUE_PARAMETER</field>
+                    <field name="without_name">False</field>
+                    <field name="ws_id" ref="FacturaTech_ne_download_file_document"/>
+        </record>
+        <record id="FacturaTech_ne_get_cune_username" model="zue.request.parameters.ws">
+                    <field name="parameter_name">username</field>
+                    <field name="parameter_value">ZUE_PARAMETER</field>
+                    <field name="without_name">False</field>
+                    <field name="ws_id" ref="FacturaTech_ne_get_cune"/>
+        </record>
+        <record id="FacturaTech_ne_get_cune_password" model="zue.request.parameters.ws">
+                    <field name="parameter_name">password</field>
+                    <field name="parameter_value">ZUE_PARAMETER</field>
+                    <field name="without_name">False</field>
+                    <field name="ws_id" ref="FacturaTech_ne_get_cune"/>
+        </record>
+        <record id="FacturaTech_ne_get_cune_prefix" model="zue.request.parameters.ws">
+                    <field name="parameter_name">prefix</field>
+                    <field name="parameter_value">ZUE_PARAMETER</field>
+                    <field name="without_name">False</field>
+                    <field name="ws_id" ref="FacturaTech_ne_get_cune"/>
+        </record>
+        <record id="FacturaTech_ne_get_cune_number" model="zue.request.parameters.ws">
+                    <field name="parameter_name">number</field>
+                    <field name="parameter_value">ZUE_PARAMETER</field>
+                    <field name="without_name">False</field>
+                    <field name="ws_id" ref="FacturaTech_ne_get_cune"/>
+        </record>
+
+    </data>
+</odoo>

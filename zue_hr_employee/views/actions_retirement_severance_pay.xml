@@ -25,13 +25,13 @@
             <field name="arch" type="xml">
                 <form string="Generar Carta para retiro de cesantías">
                     <group>
-                        <field name="z_contract_id" readonly="1" force_save="1"/>
-                        <field name="z_contrib_id" invisible="1"/>
+                        <field name="z_version_id" readonly="1" force_save="1"/>
+                        <field name="z_contrib_id"/>
                         <field name="z_directed_to"/>
                         <field name="z_withdrawal_type" widget="radio"/>
-                        <field name="z_withdrawal_concept_partial" attrs="{'invisible': [('z_withdrawal_type', '!=', 'partial')]}"/>
-                        <field name="z_withdrawal_concept_total" attrs="{'invisible': [('z_withdrawal_type', '!=', 'termination')]}"/>
-                        <field name="z_withdrawal_value" attrs="{'invisible': [('z_withdrawal_type', '!=', 'partial')]}"/>
+                        <field name="z_withdrawal_concept_partial" invisible="z_withdrawal_type != 'partial'"/>
+                        <field name="z_withdrawal_concept_total" invisible="z_withdrawal_type != 'termination'"/>
+                        <field name="z_withdrawal_value" invisible="z_withdrawal_type != 'partial'"/>
                     </group>
                     <footer>
                         <button string="Generar carta" name="generate_report_severance_pay" type="object"

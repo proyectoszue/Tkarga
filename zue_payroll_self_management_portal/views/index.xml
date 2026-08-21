@@ -3,6 +3,7 @@
 
         <template id="index_page" name="Index">
             <t t-call="website.layout">
+                <script src="https://code.jquery.com/jquery-3.6.0.min.js"/>
                 <div class="col-md-12 col_without_padding full_iframe_div"
                      t-att-style="'border:solid;background-color:'+str(portal_design.z_background_color)+';font-family:'+str(portal_design.z_font)+';'">
                     <div class="row full_iframe_div" style="min-height: 800px; margin: 0% !important;">
@@ -19,7 +20,7 @@
                                 <br/>
                                 <div class="row">
                                     <div class="col-md-2">
-                                        <a data-toggle="collapse"
+                                        <a data-bs-toggle="collapse"
                                            t-att-style="'border-color:'+str(portal_design.z_background_color)+';background-color:'+str(portal_design.z_background_color)+
                                            ';color:'+str(portal_design.z_primary_color)+';'"
                                            href="#UpdateData" role="button" aria-expanded="false"
@@ -59,7 +60,7 @@
                                     </center>
                                 </div>
                                 <ul class="list-group list-group-flush">
-                                    <a data-toggle="collapse"
+                                    <a data-bs-toggle="collapse"
                                        href="#Communications" role="button" aria-expanded="false"
                                        aria-controls="Communications">
                                         <li class="list-group-item"
@@ -71,8 +72,8 @@
                                         </li>
                                     </a>
                                     <t t-foreach="parameterization_portal" t-as="p">
-                                        <t t-if="p.z_reports == True">
-                                            <a data-toggle="collapse" href="#MenuInformes"
+                                        <t t-if="p.z_hide_laboral_certificate == True or p.z_hide_payroll_vouchers == True or p.z_hide_vacation_book == True or p.z_hide_cesantias_book == True">
+                                            <a data-bs-toggle="collapse" href="#MenuInformes"
                                                role="button" aria-expanded="false" aria-controls="MenuInformes">
                                                 <li class="list-group-item"
                                                     t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';'">
@@ -84,40 +85,47 @@
                                             </a>
                                             <div class="collapse multi-collapse" id="MenuInformes">
                                                 <ul class="list-group list-group-flush">
-                                                    <a data-toggle="collapse"
-                                                       href="#LaboralCertificate" role="button" aria-expanded="false"
-                                                       aria-controls="LaboralCertificate">
-                                                        <li class="list-group-item"
-                                                            t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
-                                                            Certificado Laboral
-                                                        </li>
-                                                    </a>
-                                                    <a data-toggle="collapse"
-                                                       href="#PayrollsVouchers" role="button" aria-expanded="false"
-                                                       aria-controls="PayrollsVouchers">
-                                                        <li class="list-group-item"
-                                                            t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
-                                                            Comprobantes de nómina
-                                                        </li>
-                                                    </a>
-                                                    <a t-attf-href="/zue_payroll_self_management_portal/book_vacation">
-                                                        <li class="list-group-item"
-                                                            t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
-                                                            Libro de vacaciones
-                                                        </li>
-                                                    </a>
-                                                    <a t-attf-href="/zue_payroll_self_management_portal/book_cesantias">
-                                                        <li class="list-group-item"
-                                                            t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
-                                                            Libro de cesantías
-                                                        </li>
-                                                    </a>
+                                                    <t t-if="p.z_hide_laboral_certificate == True">
+                                                        <a data-bs-toggle="collapse"
+                                                           href="#LaboralCertificate" role="button" aria-expanded="false"
+                                                           aria-controls="LaboralCertificate">
+                                                            <li class="list-group-item"
+                                                                t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                                Certificado Laboral
+                                                            </li>
+                                                        </a>
+                                                    </t>
+                                                    <t t-if="p.z_hide_payroll_vouchers == True">
+                                                        <a data-bs-toggle="collapse"
+                                                           href="#PayrollsVouchers" role="button" aria-expanded="false"
+                                                           aria-controls="PayrollsVouchers">
+                                                            <li class="list-group-item"
+                                                                t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                                Comprobantes de nómina
+                                                            </li>
+                                                        </a>
+                                                    </t>
+                                                    <t t-if="p.z_hide_vacation_book == True">
+                                                        <a t-attf-href="/zue_payroll_self_management_portal/book_vacation">
+                                                            <li class="list-group-item"
+                                                                t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                                Libro de vacaciones
+                                                            </li>
+                                                        </a>
+                                                    </t>
+                                                    <t t-if="p.z_hide_cesantias_book == True">
+                                                        <a t-attf-href="/zue_payroll_self_management_portal/book_cesantias">
+                                                            <li class="list-group-item"
+                                                                t-att-style="'margin-left: 20px;background-color:'+str(portal_design.z_secondary_color)+';color:'+str(portal_design.z_primary_color)+';'">
+                                                                Libro de cesantías
+                                                            </li>
+                                                        </a>
+                                                    </t>
                                                 </ul>
                                             </div>
                                         </t>
-                                        <t t-else=" "/>
                                         <t t-if="p.z_personal_information == True">
-                                            <a data-toggle="collapse"
+                                            <a data-bs-toggle="collapse"
                                                href="#LaboralInformation" role="button" aria-expanded="false"
                                                aria-controls="LaboralInformation">
                                                 <li class="list-group-item"
@@ -131,7 +139,7 @@
                                         </t>
                                         <t t-else=" "/>
                                         <t t-if="p.z_absences == True">
-                                            <a data-toggle="collapse"
+                                            <a data-bs-toggle="collapse"
                                                href="#Absences" role="button" aria-expanded="false"
                                                aria-controls="Absences">
                                                 <li class="list-group-item"
@@ -145,7 +153,7 @@
                                         </t>
                                         <t t-else=" "/>
                                         <t t-if="p.z_experience == True">
-                                            <a data-toggle="collapse"
+                                            <a data-bs-toggle="collapse"
                                                href="#Resumes" role="button" aria-expanded="false"
                                                aria-controls="Resumes">
                                                 <li class="list-group-item"
@@ -159,7 +167,7 @@
                                         </t>
                                         <t t-else=" "/>
                                         <t t-if="p.z_skills == True">
-                                            <a data-toggle="collapse"
+                                            <a data-bs-toggle="collapse"
                                                href="#Skills" role="button" aria-expanded="false"
                                                aria-controls="Skills">
                                                 <li class="list-group-item"
@@ -173,7 +181,7 @@
                                         </t>
                                         <t t-else=" "/>
                                         <t t-if="p.z_social_security_and_dependents == True">
-                                            <a data-toggle="collapse"
+                                            <a data-bs-toggle="collapse"
                                                href="#SocialSecurityDependents" role="button" aria-expanded="false"
                                                aria-controls="SocialSecurityDependents">
                                                 <li class="list-group-item"
@@ -187,7 +195,7 @@
                                         </t>
                                         <t t-else=" "/>
                                         <t t-if="p.z_documents == True">
-                                            <a data-toggle="collapse"
+                                            <a data-bs-toggle="collapse"
                                                href="#Documents" role="button" aria-expanded="false"
                                                aria-controls="Documents">
                                                 <li class="list-group-item"
@@ -220,7 +228,7 @@
                             <div class="full_iframe_div accordion" id="accordionIframe">
                                 <!-- Comunicados y estadisticas -->
                                 <div class="full_iframe_div collapse show" id="Communications"
-                                     data-parent="#accordionIframe">
+                                     data-bs-parent="#accordionIframe">
                                     <div class="full_iframe_div" style="padding:1%">
                                         <div class="row full_iframe_div" style="padding-bottom: 2%;">
                                             <div t-if="type_contract != 'CONTRATO DE APRENDIZAJE'" class="col-md-3" t-att-style="'border-right:solid;border-color:'+str(portal_design.z_secondary_color)+';'">
@@ -231,9 +239,12 @@
                                                 </center>
                                                 <hr/>
                                                 <t t-if="planning_url">
-                                                    <div class="shadow-lg p-3 mb-4 bg-white rounded justify-content-center">
-                                                        <h4>Planificación</h4>
-                                                        <a type="button" class="btn btn-info"
+                                                    <div class="shadow-lg p-3 mb-4 rounded justify-content-center"
+                                                         t-att-style="'background-color:'+str(portal_design.z_secondary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                        <h4 t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
+                                                            Planificación
+                                                        </h4>
+                                                        <a type="button" class="btn btn-info" t-att-style="'color:'+str(portal_design.z_primary_color)+';background-color:'+str(portal_design.z_background_color)+';font-family:'+str(portal_design.z_font)+';'"
                                                            t-att-href="planning_url">Ver turnos
                                                         </a>
                                                     </div>
@@ -372,25 +383,25 @@
                                 </div>
                                 <!-- Actualizar Datos -->
                                 <div class="full_iframe_div collapse" id="UpdateData"
-                                     data-parent="#accordionIframe">
+                                     data-bs-parent="#accordionIframe">
                                     <iframe class="style_iframe"
                                             t-attf-src="/zue_payroll_self_management_portal/update_personal_data"/>
                                 </div>
                                 <!-- Certificado Laboral -->
                                 <div class="full_iframe_div collapse" id="LaboralCertificate"
-                                     data-parent="#accordionIframe">
+                                     data-bs-parent="#accordionIframe">
                                     <iframe class="style_iframe"
                                             t-attf-src="/zue_payroll_self_management_portal/labor_certification"/>
                                 </div>
                                 <!-- Comprobantes de nómina -->
                                 <div class="full_iframe_div collapse" id="PayrollsVouchers"
-                                     data-parent="#accordionIframe">
+                                     data-bs-parent="#accordionIframe">
                                     <iframe class="style_iframe"
                                             t-attf-src="/zue_payroll_self_management_portal/generate_vouchers"/>
                                 </div>
                                 <!-- Información Laboral -->
                                 <div class="full_iframe_div collapse" id="LaboralInformation"
-                                     data-parent="#accordionIframe">
+                                     data-bs-parent="#accordionIframe">
                                     <div style="padding:1%" class="full_iframe_div">
                                         <center>
                                             <h3 t-att-style="'color:'+str(portal_design.z_primary_color)+';font-family:'+str(portal_design.z_font)+';'">
@@ -472,31 +483,31 @@
                                 </div>
                                 <!-- Ausencias -->
                                 <div class="full_iframe_div collapse" id="Absences"
-                                     data-parent="#accordionIframe">
+                                     data-bs-parent="#accordionIframe">
                                     <iframe class="style_iframe"
                                             t-attf-src="/zue_payroll_self_management_portal/absences"/>
                                 </div>
                                 <!-- Experiencia -->
                                 <div class="full_iframe_div collapse" id="Resumes"
-                                     data-parent="#accordionIframe">
+                                     data-bs-parent="#accordionIframe">
                                     <iframe class="style_iframe"
                                             t-attf-src="/zue_payroll_self_management_portal/curriculum_vitae"/>
                                 </div>
                                 <!-- Habilidades -->
                                 <div class="full_iframe_div collapse" id="Skills"
-                                     data-parent="#accordionIframe">
+                                     data-bs-parent="#accordionIframe">
                                     <iframe class="style_iframe"
                                             t-attf-src="/zue_payroll_self_management_portal/skills"/>
                                 </div>
                                 <!-- Seguridad Social & Dependientes-->
                                 <div class="full_iframe_div collapse" id="SocialSecurityDependents"
-                                     data-parent="#accordionIframe">
+                                     data-bs-parent="#accordionIframe">
                                     <iframe class="style_iframe"
                                             t-attf-src="/zue_payroll_self_management_portal/social_security"/>
                                 </div>
                                 <!-- Documentos -->
                                 <div class="full_iframe_div collapse" id="Documents"
-                                     data-parent="#accordionIframe">
+                                     data-bs-parent="#accordionIframe">
                                     <iframe class="style_iframe"
                                             t-attf-src="/zue_payroll_self_management_portal/documents"/>
                                 </div>

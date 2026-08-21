@@ -14,19 +14,19 @@ class zue_report_cxc_cxp(models.TransientModel):
     z_company_id = fields.Many2one('res.company', string='Compañia', required=True,default=lambda self: self.env.company)
     z_cutoff_date = fields.Date(string='Fecha de corte')
     partner_id = fields.Many2one('res.partner', string='Tercero')
-    z_accounts = fields.Selection([('receivable', 'Cuentas CxC'),
-                                   ('payable', 'Cuentas CXP')
-                                  ],string='Tipo de cuenta', required=True, default='receivable')
+    z_accounts = fields.Selection([('asset_receivable', 'Cuentas CxC'),
+                                   ('liability_payable', 'Cuentas CXP')
+                                  ],string='Tipo de cuenta', required=True, default='asset_receivable')
     z_invoice_ids = fields.Many2many('account.move', string='Facturas', domain="['|',('move_type', 'ilike', 'out'),('move_type', 'ilike', 'in')]")
     z_only_earrings = fields.Boolean(string='Sólo pendientes')
-    z_accounting_account_ids = fields.Many2many('account.account', string='Cuenta', domain="[('user_type_id.type', '=', z_accounts)]")
+    z_accounting_account_ids = fields.Many2many('account.account', string='Cuenta', domain="[('account_type', '=', z_accounts)]")
 
     excel_file = fields.Binary('Excel')
     excel_file_name = fields.Char('Excel filename')
     def generate_excel(self):
         query_where = ''
         # Filtro de compañia
-        query_where = query_where + f"where c.id = {self.env.company.id} "
+        query_where = query_where + f"where c.id = {self.z_company_id.id} "
         #Filtro fechas
         if self.z_cutoff_date:
             query_where = query_where + f"and a.date <= '{str(self.z_cutoff_date)}' "
@@ -43,9 +43,9 @@ class zue_report_cxc_cxp(models.TransientModel):
         if str_ids_invoice != '':
             query_where = query_where + f"and b.id in ({str_ids_invoice}) "
         # Filtro venta y compras
-        if self.z_accounts == 'receivable':
+        if self.z_accounts == 'asset_receivable':
             query_where = query_where + f"and b.move_type like 'out_%'"
-        if self.z_accounts == 'payable':
+        if self.z_accounts == 'liability_payable':
             query_where = query_where + f"and b.move_type like 'in_%'"
         # Filtro cuentas
         str_ids_accounts = ''
@@ -62,13 +62,13 @@ class zue_report_cxc_cxp(models.TransientModel):
                         from (
                             select to_char(a."date",'yyyyMM') as periodo,a."date" as fecha_movimiento,
                                     d."name" as diario,a.move_name as secuencia,rc."name" as currency,
-                                    case when e.x_document_type = '13' then 'Cédula de ciudadania'
-                                    else case when e.x_document_type = '31' then 'NIT'
+                                    case when it.z_code_dian = '13' then 'Cédula de ciudadania'
+                                    else case when it.z_code_dian = '31' then 'NIT'
                                     else ''
                                     end 
                                     end as tipo_documento,e.vat as ruc,b.invoice_partner_display_name as partner,
                                     d."name" as td,b.supplier_invoice_number as no_factura_provedor,
-                                    a."date" as fecha_doc,concat(f.code,' ',f."name") as cuenta_contable,
+                                    a."date" as fecha_doc,concat(f.code_store->>'%s',' ',f."name") as cuenta_contable,
                                     sum(a.debit) as debito,sum(a.credit) as credito,sum(a.balance) as balance,
                                     b.amount_untaxed_signed, b.amount_total, b.amount_residual_signed
                             from account_move_line as a
@@ -77,21 +77,21 @@ class zue_report_cxc_cxp(models.TransientModel):
                             inner join res_company as c on a.company_id = c.id
                             inner join account_journal as d on a.journal_id = d.id
                             inner join res_partner as e on a.partner_id = e.id
-                            inner join account_account as f on a.account_id = f.id
-                            inner join account_account_type as g on f.user_type_id = g.id and g.type in ('receivable','payable')
+                            inner join l10n_latam_identification_type as it on e.l10n_latam_identification_type_id = it.id
+                            inner join account_account as f on a.account_id = f.id and f.account_type in ('asset_receivable','liability_payable')                            
                             %s
-                            group by a."date",rc."name",d."name",a.move_name,e.x_document_type,e.vat,b.invoice_partner_display_name,b.supplier_invoice_number,f.code,f."name",
+                            group by a."date",rc."name",d."name",a.move_name,it.z_code_dian,e.vat,b.invoice_partner_display_name,b.supplier_invoice_number,f.code_store,f."name",
 			                        b.amount_untaxed_signed, b.amount_total, b.amount_residual_signed
 			                Union
 			                select to_char(a."date",'yyyyMM') as periodo,a."date" as fecha_movimiento,
                                     d."name" as diario,a.move_name as secuencia,rc."name" as currency,
-                                    case when e.x_document_type = '13' then 'Cédula de ciudadania'
-                                    else case when e.x_document_type = '31' then 'NIT'
+                                    case when it.z_code_dian = '13' then 'Cédula de ciudadania'
+                                    else case when it.z_code_dian = '31' then 'NIT'
                                     else ''
                                     end 
                                     end as tipo_documento,e.vat as ruc,b.invoice_partner_display_name as partner,
                                     d."name" as td,b.supplier_invoice_number as no_factura_provedor,
-                                    a."date" as fecha_doc,concat(f.code,' ',f."name") as cuenta_contable,
+                                    a."date" as fecha_doc,concat(f.code_store->>'%s',' ',f."name") as cuenta_contable,
                                     sum(coalesce(i.debit,a.debit)) as debito,sum(coalesce(coalesce(h.credit_amount_currency,i.credit),a.credit)) as credito,
                                     sum(coalesce(i.debit,a.debit))-sum(coalesce(coalesce(h.credit_amount_currency,i.credit),a.credit)) as balance, 
                                     --sum(coalesce(i.balance,a.balance)) as balance,
@@ -102,8 +102,8 @@ class zue_report_cxc_cxp(models.TransientModel):
                             inner join res_company as c on a.company_id = c.id
                             inner join account_journal as d on a.journal_id = d.id
                             inner join res_partner as e on a.partner_id = e.id
-                            inner join account_account as f on a.account_id = f.id
-                            inner join account_account_type as g on f.user_type_id = g.id and g.type in ('receivable','payable')
+                            inner join l10n_latam_identification_type as it on e.l10n_latam_identification_type_id = it.id
+                            inner join account_account as f on a.account_id = f.id and f.account_type in ('asset_receivable','liability_payable')                            
                             inner join account_partial_reconcile as h on a.id = h.debit_move_id  
                             inner join account_move_line as i on h.credit_move_id = i.id --or a.id = i.id  
                             inner join account_move as j on i.move_id = j.id and j.state = 'posted'
@@ -113,15 +113,15 @@ class zue_report_cxc_cxp(models.TransientModel):
                             inner join res_partner as m on i.partner_id = m.id
                             inner join account_account as n on i.account_id = n.id 
                             %s
-                            group by a."date",rc."name",d."name",a.move_name,e.x_document_type,e.vat,b.invoice_partner_display_name,b.supplier_invoice_number,f.code,f."name",
+                            group by a."date",rc."name",d."name",a.move_name,it.z_code_dian,e.vat,b.invoice_partner_display_name,b.supplier_invoice_number,f.code_store,f."name",
                                     b.amount_untaxed_signed, b.amount_total, b.amount_residual_signed
                         ) as a
                         group by periodo,fecha_movimiento,diario,secuencia,currency,tipo_documento,ruc,partner,td,no_factura_provedor,fecha_doc,cuenta_contable
                         order by secuencia,fecha_movimiento
-                            ''' % (query_where,query_where)
+                            ''' % (self.z_company_id.id,query_where,self.z_company_id.id,query_where)
 
-        self._cr.execute(query_report)
-        result_query_acumulado = self._cr.dictfetchall()
+        self.env.cr.execute(query_report)
+        result_query_acumulado = self.env.cr.dictfetchall()
 
         #Consulta sql detalle
         query_report = f'''
@@ -130,13 +130,13 @@ class zue_report_cxc_cxp(models.TransientModel):
                     select to_char(a."date",'yyyyMM') as periodo,a."date" as fecha_movimiento,
                             d."name" as diario,a.move_name as secuencia, a.move_name as mov_original,
                             rc."name" as currency,
-                            case when e.x_document_type = '13' then 'Cédula de ciudadania'
-                            else case when e.x_document_type = '31' then 'NIT'
+                            case when it.z_code_dian = '13' then 'Cédula de ciudadania'
+                            else case when it.z_code_dian = '31' then 'NIT'
                             else ''
                             end 
                             end as tipo_documento,e.vat as ruc,b.invoice_partner_display_name as partner,
                             d."name" as td,b.supplier_invoice_number as no_factura_provedor,
-                            a."date" as fecha_doc,concat(f.code,' ',f."name") as cuenta_contable,
+                            a."date" as fecha_doc,concat(f.code_store->>'%s',' ',f."name") as cuenta_contable,
                             a.debit as debito,a.credit as credito	
                     from account_move_line as a
                     inner join account_move as b on a.move_id = b.id and b.state = 'posted'
@@ -144,21 +144,21 @@ class zue_report_cxc_cxp(models.TransientModel):
                     inner join res_company as c on a.company_id = c.id
                     inner join account_journal as d on a.journal_id = d.id
                     inner join res_partner as e on a.partner_id = e.id
-                    inner join account_account as f on a.account_id = f.id
-                    inner join account_account_type as g on f.user_type_id = g.id and g.type in ('receivable','payable')
+                    inner join l10n_latam_identification_type as it on e.l10n_latam_identification_type_id = it.id
+                    inner join account_account as f on a.account_id = f.id and f.account_type in ('asset_receivable','liability_payable')                    
                     %s
                 Union
                     -- PAGOS
                     select to_char(coalesce(i."date",a."date"),'yyyyMM') as periodo,coalesce(i."date",a."date") as fecha_movimiento,
                             coalesce(l."name",d."name") as diario,coalesce(i.move_name,a.move_name) as secuencia, a.move_name as mov_original,
                             coalesce(rcc."name",rc."name") as currency,
-                            case when coalesce(m.x_document_type,e.x_document_type) = '13' then 'Cédula de ciudadania'
-                            else case when coalesce(m.x_document_type,e.x_document_type) = '31' then 'NIT'
+                            case when coalesce(itm.z_code_dian,it.z_code_dian) = '13' then 'Cédula de ciudadania'
+                            else case when coalesce(itm.z_code_dian,it.z_code_dian) = '31' then 'NIT'
                             else ''
                             end 
                             end as tipo_documento,coalesce(m.vat,e.vat) as ruc,coalesce(j.invoice_partner_display_name,b.invoice_partner_display_name) as partner,
                             coalesce(l."name",d."name") as td,coalesce(j.supplier_invoice_number,b.supplier_invoice_number) as no_factura_provedor,
-                            coalesce(i."date",a."date") as fecha_doc,concat(coalesce(n.code,f.code),' ',coalesce(n."name",f."name")) as cuenta_contable,
+                            coalesce(i."date",a."date") as fecha_doc,concat(coalesce(n.code_store->>'%s',f.code_store->>'%s'),' ',coalesce(n."name",f."name")) as cuenta_contable,
                             coalesce(i.debit,a.debit) as debito,coalesce(coalesce(h.credit_amount_currency,i.credit),a.credit) as credito		
                     from account_move_line as a
                     inner join account_move as b on a.move_id = b.id and b.state = 'posted'
@@ -166,8 +166,8 @@ class zue_report_cxc_cxp(models.TransientModel):
                     inner join res_company as c on a.company_id = c.id
                     inner join account_journal as d on a.journal_id = d.id
                     inner join res_partner as e on a.partner_id = e.id
-                    inner join account_account as f on a.account_id = f.id
-                    inner join account_account_type as g on f.user_type_id = g.id and g.type in ('receivable','payable')
+                    inner join l10n_latam_identification_type as it on e.l10n_latam_identification_type_id = it.id
+                    inner join account_account as f on a.account_id = f.id and f.account_type in ('asset_receivable','liability_payable')                    
                     inner join account_partial_reconcile as h on a.id = h.debit_move_id  
                     inner join account_move_line as i on h.credit_move_id = i.id --or a.id = i.id  
                     inner join account_move as j on i.move_id = j.id and j.state = 'posted'
@@ -175,14 +175,15 @@ class zue_report_cxc_cxp(models.TransientModel):
                     inner join res_company as k on i.company_id = k.id
                     inner join account_journal as l on i.journal_id = l.id
                     inner join res_partner as m on i.partner_id = m.id
+                    inner join l10n_latam_identification_type as itm on m.l10n_latam_identification_type_id = itm.id
                     inner join account_account as n on i.account_id = n.id 
                     %s     
                 ) as a           
                 order by mov_original,fecha_movimiento
-                    ''' % (query_where,query_where)
+                    ''' % (self.z_company_id.id,query_where,self.z_company_id.id,self.z_company_id.id,query_where)
 
-        self._cr.execute(query_report)
-        result_query = self._cr.dictfetchall()
+        self.env.cr.execute(query_report)
+        result_query = self.env.cr.dictfetchall()
 
         # Generar EXCEL
         filename = 'Reporte Saldos CxC y CxP'
@@ -210,11 +211,14 @@ class zue_report_cxc_cxp(models.TransientModel):
         aument_rows = 1
         for query in result_query_acumulado:
             for row in query.values():
-                width = len(str(row)) + 10
-                if str(type(row)).find('date') > -1:
-                    sheet_acumulado.write_datetime(aument_rows, aument_columns, row, date_format)
+                value = row
+                if isinstance(value, dict):
+                    value = str(value)
+                width = len(str(value)) + 10
+                if str(type(value)).find('date') > -1:
+                    sheet_acumulado.write_datetime(aument_rows, aument_columns, value, date_format)
                 else:
-                    sheet_acumulado.write(aument_rows, aument_columns, row)
+                    sheet_acumulado.write(aument_rows, aument_columns, value)
                 # Ajustar tamaño columna
                 sheet_acumulado.set_column(aument_columns, aument_columns, width)
                 aument_columns = aument_columns + 1
@@ -224,8 +228,8 @@ class zue_report_cxc_cxp(models.TransientModel):
         # Convertir en tabla
         array_header_table = []
         for i in columns:
-            dict = {'header': i}
-            array_header_table.append(dict)
+            header_dict = {'header': i}
+            array_header_table.append(header_dict)
 
         sheet_acumulado.add_table(0, 0, aument_rows - 1, len(columns) - 1,
                         {'style': 'Table Style Medium 2', 'columns': array_header_table})
@@ -251,11 +255,14 @@ class zue_report_cxc_cxp(models.TransientModel):
         aument_rows = 1
         for query in result_query:
             for row in query.values():
-                width = len(str(row)) + 10
-                if str(type(row)).find('date') > -1:
-                    sheet.write_datetime(aument_rows, aument_columns, row, date_format)
+                value = row
+                if isinstance(value, dict):
+                    value = str(value)
+                width = len(str(value)) + 10
+                if str(type(value)).find('date') > -1:
+                    sheet.write_datetime(aument_rows, aument_columns, value, date_format)
                 else:
-                    sheet.write(aument_rows, aument_columns, row)
+                    sheet.write(aument_rows, aument_columns, value)
                 # Ajustar tamaño columna
                 sheet.set_column(aument_columns, aument_columns, width)
                 aument_columns = aument_columns + 1
@@ -265,8 +272,8 @@ class zue_report_cxc_cxp(models.TransientModel):
         # Convertir en tabla
         array_header_table = []
         for i in columns:
-            dict = {'header': i}
-            array_header_table.append(dict)
+            header_dict = {'header': i}
+            array_header_table.append(header_dict)
 
         sheet.add_table(0, 0, aument_rows-1, len(columns)-1, {'style': 'Table Style Medium 2', 'columns': array_header_table})
 

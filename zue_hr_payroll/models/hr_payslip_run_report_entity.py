@@ -30,8 +30,8 @@ class HrPayslipRun(models.Model):
                 where a.id = {self.id}
         '''
 
-        self._cr.execute(query_report)
-        result_query = self._cr.dictfetchall()
+        self.env.cr.execute(query_report)
+        result_query = self.env.cr.dictfetchall()
 
         # Generar EXCEL
         filename = f'Reporte por fondos {self.name}'

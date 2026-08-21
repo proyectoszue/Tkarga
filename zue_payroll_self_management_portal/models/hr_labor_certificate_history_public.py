@@ -7,7 +7,7 @@ class hr_labor_certificate_history_public(models.Model):
     _auto = False
     _log_access = True
 
-    contract_id = fields.Many2one('hr.contract.public', 'Contrato')
+    version_id = fields.Many2one('hr.version.public', 'Contrato')
     sequence = fields.Char(string="Secuencia")
     date_generation = fields.Date('Fecha generación')
     info_to = fields.Char(string='Dirigido a')

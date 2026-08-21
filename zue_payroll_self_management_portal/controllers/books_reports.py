@@ -18,32 +18,32 @@ class ZuePayrollBooksReportsPortal(Controller):
             return request.not_found()
 
         obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)], limit=1)
-        obj_contract = request.env['hr.contract.public'].search([('employee_id','=',obj_employee.id),('state','=','open')], limit=1)                           
+        obj_version = request.env['hr.version.public'].search([('employee_id','=',obj_employee.id),('contract_date_end','=',False)], limit=1)
 
         pdf_writer = PdfFileWriter()
 
-        for contract in obj_contract:
-            report = request.env.ref('zue_payroll_self_management_portal.report_book_vacation_portal_action', False)
-            pdf_content, _ = report._render_qweb_pdf(contract.id)
-            reader = PdfFileReader(io.BytesIO(pdf_content), strict=False, overwriteWarnings=False)
+        for contract in obj_version:
+            # report = request.env.ref('zue_payroll_self_management_portal.report_book_vacation_portal_action', False)
+            pdf_content, _ = request.env['ir.actions.report'].sudo()._render_qweb_pdf('zue_payroll_self_management_portal.report_book_vacation_portal_action', [contract.id])
+            # reader = PdfFileReader(io.BytesIO(pdf_content), strict=False)
+            #
+            # for page in range(reader.getNumPages()):
+            #     pdf_writer.addPage(reader.getPage(page))
 
-            for page in range(reader.getNumPages()):
-                pdf_writer.addPage(reader.getPage(page))
-
-        _buffer = io.BytesIO()
-        pdf_writer.write(_buffer)
-        merged_pdf = _buffer.getvalue()
-        _buffer.close()
+        # _buffer = io.BytesIO()
+        # pdf_writer.write(_buffer)
+        # merged_pdf = _buffer.getvalue()
+        # _buffer.close()
         
-        report_name = "Libro de vacaciones"
+            report_name = "Libro de vacaciones"
 
-        pdfhttpheaders = [
-            ('Content-Type', 'application/pdf'),
-            ('Content-Length', len(merged_pdf)),
-            ('Content-Disposition', 'attachment; filename=' + report_name + '.pdf;')
-        ]
+            pdfhttpheaders = [
+                ('Content-Type', 'application/pdf'),
+                ('Content-Length', len(pdf_content)),
+                ('Content-Disposition', 'attachment; filename=' + report_name + '.pdf;')
+            ]
 
-        return request.make_response(merged_pdf, headers=pdfhttpheaders)
+            return request.make_response(pdf_content, headers=pdfhttpheaders)
 
     @route(["/zue_payroll_self_management_portal/book_cesantias"], type='http', auth='user')
     def get_book_cesantias(self, **post):
@@ -51,29 +51,29 @@ class ZuePayrollBooksReportsPortal(Controller):
             return request.not_found()
 
         obj_employee = request.env['hr.employee.public'].search([('user_id','=',request.env.user.id)], limit=1)
-        obj_contract = request.env['hr.contract.public'].search([('employee_id','=',obj_employee.id),('state','=','open')], limit=1)                           
+        obj_version = request.env['hr.version.public'].search([('employee_id','=',obj_employee.id),('contract_date_end','=',False)], limit=1)
 
         pdf_writer = PdfFileWriter()
 
-        for contract in obj_contract:
-            report = request.env.ref('zue_payroll_self_management_portal.report_book_cesantias_portal_action', False)
-            pdf_content, _ = report._render_qweb_pdf(contract.id)
-            reader = PdfFileReader(io.BytesIO(pdf_content), strict=False, overwriteWarnings=False)
+        for version in obj_version:
+            # report = request.env.ref('zue_payroll_self_management_portal.report_book_cesantias_portal_action', False)
+            pdf_content, _ = request.env['ir.actions.report'].sudo()._render_qweb_pdf('zue_payroll_self_management_portal.report_book_cesantias_portal_action', [version.id])
+            # reader = PdfFileReader(io.BytesIO(pdf_content), strict=False)
+            #
+            # for page in range(reader.getNumPages()):
+            #     pdf_writer.addPage(reader.getPage(page))
 
-            for page in range(reader.getNumPages()):
-                pdf_writer.addPage(reader.getPage(page))
-
-        _buffer = io.BytesIO()
-        pdf_writer.write(_buffer)
-        merged_pdf = _buffer.getvalue()
-        _buffer.close()
+        # _buffer = io.BytesIO()
+        # pdf_writer.write(_buffer)
+        # merged_pdf = _buffer.getvalue()
+        # _buffer.close()
         
-        report_name = "Libro de cesantías"
+            report_name = "Libro de cesantías"
 
-        pdfhttpheaders = [
-            ('Content-Type', 'application/pdf'),
-            ('Content-Length', len(merged_pdf)),
-            ('Content-Disposition', 'attachment; filename=' + report_name + '.pdf;')
-        ]
+            pdfhttpheaders = [
+                ('Content-Type', 'application/pdf'),
+                ('Content-Length', len(pdf_content)),
+                ('Content-Disposition', 'attachment; filename=' + report_name + '.pdf;')
+            ]
 
-        return request.make_response(merged_pdf, headers=pdfhttpheaders)
+            return request.make_response(pdf_content, headers=pdfhttpheaders)

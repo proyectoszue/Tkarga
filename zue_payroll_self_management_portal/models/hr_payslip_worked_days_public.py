@@ -7,7 +7,6 @@ class HrPayslipWorkedDaysPublic(models.Model):
     _auto = False
     _log_access = True
 
-    id = fields.Integer(string='id')
     payslip_id = fields.Many2one('hr.payslip',string='Nomina')
     sequence = fields.Char(string='secuencia')
     work_entry_type_id = fields.Many2one('hr.work.entry.type',string='Concepto')

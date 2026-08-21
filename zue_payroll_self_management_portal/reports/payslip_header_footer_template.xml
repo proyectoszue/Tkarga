@@ -31,7 +31,11 @@
                                         <tr class="text-center">
                                         <td style="width: 30%" t-if="cp_template.signature_prepared == True">
                                             ELABORÓ <br/>
-                                            <span t-if="cp_template.txt_signature_prepared" t-esc="cp_template.txt_signature_prepared"/>
+                                            <span t-if="cp_template.z_txt_signature_prepared_contact" t-esc="cp_template.z_txt_signature_prepared_contact"/>
+                                            <t t-if="cp_template.z_txt_post_prepared">
+                                                <br/>
+                                                <span t-esc="cp_template.z_txt_post_prepared"/>
+                                            </t>
                                         </td>
                                         <td style="width: 30%" t-if="cp_template.signature_reviewed == True">
                                             REVISÓ <br/>
@@ -80,7 +84,11 @@
                                         <tr class="text-center">
                                         <td style="width: 30%" t-if="cp_template.signature_prepared == True">
                                             ELABORÓ <br/>
-                                            <span t-if="cp_template.txt_signature_prepared" t-esc="cp_template.txt_signature_prepared"/>
+                                            <span t-if="cp_template.z_txt_signature_prepared_contact" t-esc="cp_template.z_txt_signature_prepared_contact"/>
+                                            <t t-if="cp_template.z_txt_post_prepared">
+                                                <br/>
+                                                <span t-esc="cp_template.z_txt_post_prepared"/>
+                                            </t>
                                         </td>
                                         <td style="width: 30%" t-if="cp_template.signature_reviewed == True">
                                             REVISÓ <br/>
@@ -108,7 +116,7 @@
         <template id="reports_payslip_header_footer_template_final">
              <t t-foreach="docs" t-as="o">
                 <t t-set="inside_foreach_docs" t-value="o"/>
-                <t t-call="zue_payroll_self_management_portal.payslip_header_footer_template" t-lang="o.employee_id.address_home_id.lang"/>
+                <t t-call="zue_payroll_self_management_portal.payslip_header_footer_template" t-lang="o.employee_id.work_contact_id.lang if o.employee_id.work_contact_id else o.env.lang"/>
             </t>
         </template>
 

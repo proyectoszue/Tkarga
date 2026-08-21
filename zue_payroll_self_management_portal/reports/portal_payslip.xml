@@ -2,7 +2,7 @@
     <data>
         <template id="zue_payroll_self_management_portal.report_payslip_portal">
                 <t t-name="zue_payroll_self_management_portal.report_payslip_portal">
-                    <t t-set="o" t-value="o.with_context(lang=o.employee_id.address_home_id.lang or o.env.lang)"/>
+                    <t t-set="o" t-value="o.with_context(lang=(o.employee_id.work_contact_id.lang if o.employee_id.work_contact_id else o.env.lang))"/>
                     <div class="page" style="font-style: normal; font-size: 12px;">
                         <h6 style="text-align:center;">
                             <b>DESPRENDIBLE DE NÓMINA</b>
@@ -20,7 +20,10 @@
                                     <b>Tipo de contrato:</b>
                                 </td>
                                 <td style="border:none;">
-                                    <span t-esc="o.contract_id.get_contract_type()"/>
+                                    <t t-if="o.version_id">
+                                        <t t-set="z_hr_version_contract" t-value="o.env['hr.version'].sudo().browse(o.version_id.id)"/>
+                                        <span t-if="z_hr_version_contract.contract_type" t-esc="(dict(z_hr_version_contract._fields['contract_type'].selection).get(z_hr_version_contract.contract_type) or '').upper()"/>
+                                    </t>
                                 </td>
                                 <td style="border:none;">
                                     <b>Fecha inicial:</b>
@@ -40,7 +43,9 @@
                                     <b>Cuenta:</b>
                                 </td>
                                 <td style="border:none;">
-                                    <span t-esc="o.employee_id.address_home_id.bank_ids.filtered(lambda bank: bank.is_main == True and bank.company_id == o.employee_id.company_id).acc_number"/>
+                                    <t t-if="o.employee_id.work_contact_id">
+                                        <span t-esc="o.employee_id.work_contact_id.bank_ids.filtered(lambda bank: bank.is_main == True and bank.company_id == o.employee_id.company_id).acc_number"/>
+                                    </t>
                                 </td>
                                 <td style="border:none;">
                                     <b>Fecha final:</b>
@@ -54,14 +59,16 @@
                                     <b>Fecha ingreso:</b>
                                 </td>
                                 <td style="border:none;">
-                                    <span t-field="o.contract_id.date_start"/>
+                                    <span t-field="o.version_id.contract_date_start"/>
                                 </td>
                                 <td style="border:none;">
                                     <b>Salario básico:</b>
                                 </td>
                                 <td style="border:none;">
-                                    <span t-esc="o.employee_id.contract_id.filtered(lambda contract: contract.state == 'open').wage"
-                                          t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
+                                    <t t-if="o.version_id">
+                                        <span t-esc="o.version_id.wage"
+                                              t-options="{'widget': 'monetary', 'display_currency': o.company_id.currency_id}"/>
+                                    </t>
                                 </td>
                                 <td style="border:none;">
                                     <b>Sucursal:</b>
@@ -75,13 +82,18 @@
                                     <b>Cargo:</b>
                                 </td>
                                 <td style="border:none;">
-                                    <span t-field="o.employee_id.sudo().job_id"/>
+                                    <t t-if="o.version_id and o.version_id.job_id">
+                                        <span t-field="o.version_id.job_id"/>
+                                    </t>
+                                    <t t-else="">
+                                        <span t-field="o.employee_id.job_id"/>
+                                    </t>
                                 </td>
                                 <td style="border:none;">
                                     <b>Referencia:</b>
                                 </td>
                                 <td style="border:none;">
-                                    <span t-field="o.number"/>
+                                    <span t-field="o.name"/>
                                 </td>
                                 <td style="border:none;"/>
                                 <td style="border:none;"/>
@@ -254,7 +266,9 @@
                                         </tr>
                                         <tr>
                                             <td class="text-justify" colspan="2">
-                                                    <span t-esc="o.contract_id.get_amount_text(o.line_ids().filtered(lambda line: line.code == 'NET').total).lower().capitalize()"/>
+                                                <t t-if="o.version_id">
+                                                    <span t-esc="o.version_id.get_amount_text(o.line_ids().filtered(lambda line: line.code == 'NET').total).lower().capitalize()"/>
+                                                </t>
                                                  pesos
                                             </td>
                                         </tr>

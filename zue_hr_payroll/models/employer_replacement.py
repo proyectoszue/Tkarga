@@ -4,75 +4,482 @@ from odoo.exceptions import UserError, ValidationError
 
 class zue_employer_replacement(models.Model):
     _name = 'zue.employer.replacement'
-    _description = 'Sustitución patronal'
+    _description = 'Sustitución patronal empleado'
     _rec_name = 'z_employee_id'
 
     z_employee_id = fields.Many2one('hr.employee', 'Empleado', required=True)
     z_identification = fields.Char(related="z_employee_id.identification_id", store=True, string="Nº identificación")
-    z_contract = fields.Many2one(related="z_employee_id.contract_id", store=True, string="Contrato activo")
+    z_version_id = fields.Many2one(related="z_employee_id.version_id", store=True, string="Contrato activo")
     z_company_id = fields.Many2one(related='z_employee_id.company_id', store=True, string='Compañía actual')
     z_new_company_id = fields.Many2one('res.company', required=True, string='Compañía nueva')
     z_employer_replacement_date = fields.Date('Fecha de sustitución patronal')
     state = fields.Selection([('draft', 'Borrador'), ('done', 'Hecho')], string='Estado', default='draft')
+    z_bank_account_changed = fields.Boolean('Cuenta bancaria modificada', default=False, readonly=True)
+    # Campos actuales (información del empleado actual)
+    z_analytic_account_id = fields.Many2one('account.analytic.account', string='Cuenta analítica actual', compute='_compute_analytic_account', store=True, readonly=True)
+    z_department_id = fields.Many2one('hr.department', string='Departamento actual', related='z_employee_id.department_id', readonly=True)
+    z_job_id = fields.Many2one('hr.job', string='Puesto actual', related='z_employee_id.job_id', readonly=True)
+    z_bank_account_id = fields.Many2one( 'res.partner.bank', string='Cuenta bancaria actual', compute='_compute_main_bank_account', store=True, readonly=True)
+    # Campos nuevos (editables para la sustitución)
+    z_new_analytic_account_id = fields.Many2one('account.analytic.account', string='Cuenta analítica nueva', domain="['|', ('company_id', '=', False), ('company_id', '=', z_new_company_id)]", required=True)
+    z_new_department_id = fields.Many2one('hr.department', string='Departamento nuevo', domain="[('company_id', '=', z_new_company_id)]", required=True)
+    z_new_job_id = fields.Many2one('hr.job', string='Puesto nuevo', domain="['|', ('company_id', '=', False), ('company_id', '=', z_new_company_id)]", required=True)
+    z_new_bank_account_id = fields.Many2one('res.partner.bank', string='Cuenta bancaria nueva', domain="['|', ('company_id', '=', False), ('company_id', '=', z_new_company_id)]", required=True)
+
+    @api.depends('z_employee_id', 'z_employee_id.analytic_distribution')
+    def _compute_analytic_account(self):
+        for record in self:
+            distribution = record.z_employee_id.analytic_distribution if record.z_employee_id else False
+            if not distribution:
+                record.z_analytic_account_id = False
+                continue
+            best_analytic_id = False
+            best_percentage = None
+            for analytic_id, percentage in distribution.items():
+                try:
+                    analytic_id_int = int(analytic_id)
+                except Exception:
+                    continue
+                if best_percentage is None or (percentage or 0.0) > best_percentage:
+                    best_percentage = percentage or 0.0
+                    best_analytic_id = analytic_id_int
+            record.z_analytic_account_id = best_analytic_id or False
+
+    @api.depends('z_employee_id', 'z_employee_id.work_contact_id', 'z_employee_id.work_contact_id.bank_ids')
+    def _compute_main_bank_account(self):
+        """Obtiene la cuenta bancaria principal del empleado desde su contacto privado"""
+        for record in self:
+            if record.z_employee_id and record.z_employee_id.work_contact_id:
+                main_bank = record.z_employee_id.work_contact_id.bank_ids.filtered(lambda b: b.is_main)
+                record.z_bank_account_id = main_bank[0] if main_bank else False
+            else:
+                record.z_bank_account_id = False
+
+    @api.onchange('z_employee_id', 'z_new_company_id')
+    def onchange_update_bank_domain(self):
+        """Actualiza dominio y contexto de cuentas bancarias y analíticas según la nueva compañía."""
+        if self.z_new_company_id:
+            company = self.z_new_company_id.id
+            # Cuentas analíticas de la compañía destino (o sin compañía, uso compartido)
+            analytic_domain = [
+                '|',
+                ('company_id', '=', company),
+                ('company_id', '=', False),
+            ]
+            if self.z_new_analytic_account_id:
+                new_account = self.z_new_analytic_account_id
+                if new_account.company_id and new_account.company_id.id != company:
+                    self.z_new_analytic_account_id = False
+            return {
+                'domain': {
+                    'z_new_bank_account_id': [
+                        '|',
+                        ('company_id', '=', company),
+                        ('company_id', '=', False),
+                    ],
+                    'z_new_analytic_account_id': analytic_domain,
+                },
+                'context': {
+                    'default_company_id': company,
+                },
+            }
+        else:
+            return {
+                'domain': {
+                    'z_new_bank_account_id': [('id', '=', False)],
+                    'z_new_analytic_account_id': [('id', '=', False)],
+                },
+                'context': {},
+            }
 
     @api.constrains('z_new_company_id')
     def _check_company(self):
         for record in self:
             if record.z_company_id == record.z_new_company_id:
                 raise ValidationError('El empleado ya se encuentra en la empresa seleccionada. Por favor verifique')
-            
+
     def replace_employee_company(self):
+        #raise ValidationError("Esta funcionalidad aún no está disponible, se encuentra en etapa de desarrollo para Odoo 19.")
         if self.z_employee_id:
+            if not self.z_employer_replacement_date:
+                raise UserError(_('Debe indicar la fecha de sustitución patronal antes de continuar.'))
+            replacement_date = self.z_employer_replacement_date
             # DUPLICAR HOJA DE VIDA ASOCIADA A LA NUEVA COMPAÑÍA
             obj_employee = self.env['hr.employee'].browse(self.z_employee_id.id)
             new_cv_employee = obj_employee.with_company(self.z_new_company_id.id).copy_data()
             new_cv_employee[0]['company_id'] = self.z_new_company_id.id
+            # copy_data añade sufijo tipo " (COPIA)"; conservar el nombre del empleado original
+            new_cv_employee[0]['name'] = obj_employee.name
+            # Eliminar campos que se asignarán después con los valores de la sustitución para evitar errores de acceso por multicompañia
+            if 'work_contact_id' in new_cv_employee[0]:
+                del new_cv_employee[0]['work_contact_id']
+            if 'job_id' in new_cv_employee[0]:
+                del new_cv_employee[0]['job_id']
+            if 'department_id' in new_cv_employee[0]:
+                del new_cv_employee[0]['department_id']
+            # Eliminar campos relacionales que apuntan a empleados de la compañía original para evitar errores de acceso por multicompañia
+            if 'parent_id' in new_cv_employee[0]:
+                del new_cv_employee[0]['parent_id']
+            if 'leave_manager_id' in new_cv_employee[0]:
+                del new_cv_employee[0]['leave_manager_id']
+            if 'timesheet_manager_id' in new_cv_employee[0]:
+                del new_cv_employee[0]['timesheet_manager_id']
+            if 'coach_id' in new_cv_employee[0]:
+                del new_cv_employee[0]['coach_id']
+            # Eliminar campos Many2one a res.partner de la compañía original para evitar errores de acceso por multicompañia
+            if 'address_id' in new_cv_employee[0]:
+                del new_cv_employee[0]['address_id']
+            if 'partner_encab_id' in new_cv_employee[0]:
+                del new_cv_employee[0]['partner_encab_id']
+            # Eliminar seguidores del chatter del empleado origen para evitar errores de acceso por multicompañia (regla res.partner company)
+            if 'message_follower_ids' in new_cv_employee[0]:
+                del new_cv_employee[0]['message_follower_ids']
 
-            obj_new_employee = self.with_company(self.z_new_company_id.id).env['hr.employee'].create(new_cv_employee[0])
-            obj_new_employee.write({'name':str(obj_new_employee.name).replace(' (copia)','')})
-            # DUPLICAR EL CONTRATO ACTUAL ASOCIADO A LA NUEVA COMPAÑIA & PONER EN ESTADO EXPIRADO EL CONTRATO ACTUAL
-            current_contract = self.z_employee_id.contract_id
-            new_contract_employee = current_contract.with_company(self.z_new_company_id.id).copy_data()
-            new_contract_employee[0]['company_id'] = self.z_new_company_id.id
-            new_contract_employee[0]['employee_id'] = obj_new_employee.id
-            new_contract_employee[0]['state'] = 'open'
-            new_contract_employee[0]['z_employer_replacement_date'] = datetime.now()
+            # CREAR CONTACTO ANTES DEL EMPLEADO (para evitar error de constrains en identification_id)
+            new_contact_created = None
+            email = False
+            if self.z_employee_id.partner_encab_id or self.z_employee_id.work_contact_id:
+                # Copiar el contacto privado del empleado original
+                original_contact = self.z_employee_id.partner_encab_id or self.z_employee_id.work_contact_id
+                new_contact_data = original_contact.with_company(self.z_new_company_id.id).copy_data()[0]
+                new_contact_data['company_id'] = self.z_new_company_id.id
+                # copy_data añade sufijo tipo " (COPIA)" al contacto; conservar el nombre original
+                new_contact_data['name'] = original_contact.name
+                new_contact_data['l10n_latam_identification_type_id'] = original_contact.l10n_latam_identification_type_id.id
+                new_contact_data['email'] = original_contact.email
+                email = original_contact.email
+                # Excluir bank_ids del copy_data para evitar duplicados
+                if 'bank_ids' in new_contact_data:
+                    del new_contact_data['bank_ids']
+                new_contact = self.with_company(self.z_new_company_id.id).env['res.partner'].create(new_contact_data)
+                new_contact_created = new_contact
+                # Asignar el contacto al employee_data ANTES de crear el empleado
+                new_cv_employee[0]['work_contact_id'] = new_contact.id
+                new_cv_employee[0]['partner_encab_id'] = new_contact.id
+                #new_cv_employee[0]['email'] = new_contact.id
 
-            obj_new_contract = self.with_company(self.z_new_company_id.id).env['hr.contract'].create(new_contract_employee[0])
-            obj_new_contract.write({'name': str(obj_new_contract.name).replace(' (copia)', '')})
-            current_contract.write({'state':'close'})
+            # Contrato anterior: cierre con la fecha de hoy (ejecución del proceso)
+            old_contract_end_date = fields.Date.context_today(self)
+            current_version = self.z_employee_id.current_version_id
+            source_contract_start_date = current_version.date_start
+            source_contract_end_date = current_version.date_end
+            source_contract_date_start = current_version.contract_date_start
+            source_contract_date_end = current_version.contract_date_end
+            source_change_wage = max(current_version.change_wage_ids, key=lambda wage_change: wage_change.date_start or date.min) if current_version.change_wage_ids else False
+            source_contract_wage = source_change_wage.wage if source_change_wage else current_version.wage
+            source_contract_job_id = source_change_wage.job_id.id if source_change_wage and source_change_wage.job_id else (current_version.job_id.id if current_version.job_id else False)
+            current_version.write({'retirement_date': old_contract_end_date, 'date_end': old_contract_end_date})
+            # Nuevo empleado/contrato: la fecha de sustitución del asistente se guarda en el contrato (z_employer_replacement_date)
+            new_cv_employee[0]['date_version'] = replacement_date
+            # Conservar las fechas inicio/fin del contrato origen en el contrato creado cuando estén diligenciadas.
+            contract_start_date = source_contract_start_date or replacement_date
+            contract_end_date = source_contract_end_date
 
-            self.z_employer_replacement_date = datetime.now()
+            # Guardar concepts_ids válidos (sin state=cancel) ANTES de crear
+            concepts_to_write = []
+            if 'concepts_ids' in new_cv_employee[0]:
+                concepts_to_write = [
+                    cmd for cmd in new_cv_employee[0]['concepts_ids']
+                    if not (isinstance(cmd, (list, tuple)) and len(cmd) >= 3 and isinstance(cmd[2], dict) and cmd[
+                        2].get('state') == 'cancel')
+                ]
+                # Limpiar el campo para que no se ejecute durante el create
+                del new_cv_employee[0]['concepts_ids']
+
+            obj_new_employee = self.with_context(from_multicash=True).with_company(self.z_new_company_id.id).env['hr.employee'].create(new_cv_employee[0])
+            if obj_new_employee.current_version_id:
+                update_new_version_vals = {
+                    'z_employer_replacement_date': replacement_date,
+                }
+                if contract_start_date:
+                    update_new_version_vals['date_start'] = contract_start_date
+                    update_new_version_vals['contract_date_start'] = source_contract_date_start or contract_start_date
+                if contract_end_date:
+                    update_new_version_vals['date_end'] = contract_end_date
+                    update_new_version_vals['contract_date_end'] = source_contract_date_end or contract_end_date
+                obj_new_employee.current_version_id.write(update_new_version_vals)
+
+            # Escribir los concepts DESPUÉS de crear, evitando los métodos internos del create
+            if concepts_to_write:
+                obj_new_employee.with_context(from_multicash=True).write({'concepts_ids': concepts_to_write})
+
+            # ACTUALIZAR LOS CAMPOS ADICIONALES DEL NUEVO EMPLEADO
+            employee_update_vals = {
+                'department_id': self.z_new_department_id.id if self.z_new_department_id else False,
+                'job_id': self.z_new_job_id.id if self.z_new_job_id else False,
+            }
+            # Actualizar job_title con el nombre del nuevo puesto
+            if self.z_new_job_id:
+                employee_update_vals['job_title'] = self.z_new_job_id.name
+            obj_new_employee.write(employee_update_vals)
+
+            # COPIAR CUENTAS BANCARIAS DEL EMPLEADO ORIGINAL AL NUEVO
+            if self.z_employee_id.work_contact_id and obj_new_employee.work_contact_id:
+                original_banks = self.z_employee_id.work_contact_id.bank_ids
+                # Copiar cada cuenta bancaria al nuevo contacto con la nueva compañía
+                if original_banks:
+                    for bank in original_banks:
+                        # Verificar si ya existe una cuenta con este número y compañía
+                        existing_bank_global = self.env['res.partner.bank'].search([
+                            ('acc_number', '=', bank.acc_number),
+                            ('company_id', '=', self.z_new_company_id.id)
+                        ])
+
+                        # Si existe y pertenece al contacto original, reasignarla al nuevo contacto
+                        if existing_bank_global and existing_bank_global[0].partner_id.id == self.z_employee_id.work_contact_id.id:
+                            # La cuenta existe y pertenece al empleado original, reasignarla al nuevo contacto
+                            is_main_value = True if (self.z_new_bank_account_id and bank.id == self.z_new_bank_account_id.id) else False
+                            update_vals = {
+                                'partner_id': obj_new_employee.work_contact_id.id,
+                                'is_main': is_main_value
+                            }
+                            # Actualizar payroll_dispersion_account
+                            # Intentar primero buscar journal equivalente por nombre si la cuenta original lo tenía
+                            target_journal = None
+                            if bank.payroll_dispersion_account:
+                                target_journal = self.env['account.journal'].search([
+                                    ('company_id', '=', self.z_new_company_id.id),
+                                    ('is_payroll_spreader', '=', True),
+                                    ('name', '=', bank.payroll_dispersion_account.name)
+                                ], limit=1)
+                            # Si no encontró por nombre o no tenía, buscar cualquier journal de dispersión disponible
+                            if not target_journal:
+                                target_journal = self.env['account.journal'].search([
+                                    ('company_id', '=', self.z_new_company_id.id),
+                                    ('is_payroll_spreader', '=', True)
+                                ], limit=1)
+                            # Asignar el journal encontrado o False
+                            update_vals['payroll_dispersion_account'] = target_journal.id if target_journal else False
+                            existing_bank_global[0].write(update_vals)
+                        elif not existing_bank_global:
+                            # No existe ninguna cuenta con este número y compañía, crearla
+                            bank_data = bank.copy_data()[0]
+                            bank_data['partner_id'] = obj_new_employee.work_contact_id.id
+                            # Actualizar el company_id a la nueva compañía
+                            bank_data['company_id'] = self.z_new_company_id.id
+                            # Si esta es la cuenta seleccionada, marcarla como principal
+                            if self.z_new_bank_account_id and bank.id == self.z_new_bank_account_id.id:
+                                bank_data['is_main'] = True
+                            else:
+                                bank_data['is_main'] = False
+                            # Actualizar payroll_dispersion_account
+                            # Intentar primero buscar journal equivalente por nombre si la cuenta original lo tenía
+                            target_journal = None
+                            if bank.payroll_dispersion_account:
+                                target_journal = self.env['account.journal'].search([
+                                    ('company_id', '=', self.z_new_company_id.id),
+                                    ('is_payroll_spreader', '=', True),
+                                    ('name', '=', bank.payroll_dispersion_account.name)
+                                ], limit=1)
+                            # Si no encontró por nombre o no tenía, buscar cualquier journal de dispersión disponible
+                            if not target_journal:
+                                target_journal = self.env['account.journal'].search([
+                                    ('company_id', '=', self.z_new_company_id.id),
+                                    ('is_payroll_spreader', '=', True)
+                                ], limit=1)
+                            # Asignar el journal encontrado o False
+                            bank_data['payroll_dispersion_account'] = target_journal.id if target_journal else False
+                            new_bank = self.env['res.partner.bank'].create(bank_data)
+
+            # # DUPLICAR EL CONTRATO A LA NUEVA COMPAÑIA
+            # replacement_contract_date = fields.Date.context_today(self)
+            # current_version = self.z_employee_id.version_id
+            # current_version.write({'retirement_date': replacement_contract_date})
+            # new_version_employee = current_version.with_company(self.z_new_company_id.id).copy_data()
+            # new_version_employee[0]['company_id'] = self.z_new_company_id.id
+            # new_version_employee[0]['employee_id'] = obj_new_employee.id
+            # new_version_employee[0]['retirement_date'] = False
+            # new_version_employee[0]['z_employer_replacement_date'] = replacement_contract_date
+            #
+            # obj_new_version = self.with_company(self.z_new_company_id.id).env['hr.version'].create(new_version_employee[0])
+            # obj_new_version.write({'name': str(obj_new_version.name).replace(' (copia)', '')})
+            #
+            # # ACTUALIZAR LOS CAMPOS ADICIONALES DEL NUEVO CONTRATO
+            # version_extra_vals = {
+            #     'job_id': self.z_new_job_id.id if self.z_new_job_id else False,
+            # }
+            # if self.z_new_analytic_account_id:
+            #     version_extra_vals['analytic_distribution'] = {
+            #         str(self.z_new_analytic_account_id.id): 100.0,
+            #     }
+            # else:
+            #     version_extra_vals['analytic_distribution'] = False
+            # obj_new_version.write(version_extra_vals)
+            #
+            # # ACTUALIZAR job_id EN change_wage_ids DEL NUEVO CONTRATO
+            # if self.z_new_job_id and obj_new_version.change_wage_ids:
+            #     for wage_change in obj_new_version.change_wage_ids:
+            #         wage_change.write({'job_id': self.z_new_job_id.id})
+
+            create_objects = []
+            payslip_map = {}
+            leave_map = {}
 
             # DUPLICAR LAS LIQUIDACIONES DE ULTIMO AÑO
-            date_start_payslips = '01/01/'+str(datetime.now().date().year - 1)
-            obj_payslips = self.env['hr.payslip'].search([('contract_id','=',current_contract.id),
+            date_start_payslips = str(datetime.now().date().year - 1)+'-01-01'
+            obj_payslips = self.env['hr.payslip'].search([('version_id','=',current_version.id),
                                                           ('date_from', '>=', date_start_payslips),
                                                           ('date_from','<=',datetime.now().date())])
             for payslips in obj_payslips:
                 new_payslips = payslips.with_company(self.z_new_company_id.id).copy_data()
                 new_payslips[0]['employee_id'] = obj_new_employee.id
-                new_payslips[0]['contract_id'] = obj_new_contract.id
-                new_payslips[0]['state'] = 'done'
+                new_payslips[0]['version_id'] = obj_new_employee.current_version_id.id
+                new_payslips[0]['state'] = 'validated'
 
-                self.with_company(self.z_new_company_id.id).env['hr.payslip'].create(new_payslips[0])
+                cr_payslip = self.with_company(self.z_new_company_id.id).env['hr.payslip'].create(new_payslips[0])
+                cr_payslip.write({'employee_id': obj_new_employee.id, 'version_id': obj_new_employee.current_version_id.id})
+                payslip_map[payslips.id] = cr_payslip.id
+                create_objects.append(cr_payslip)
 
-            # DUPLICAR HISTORICOS DE CESANTIAS Y LIQUIDACIONES
-            obj_history_vacations = self.env['hr.vacation'].search([('contract_id', '=', current_contract.id)])
+            # DUPLICAR AUSENCIAS ASOCIADAS AL EMPLEADO
+            obj_history_vacations = self.env['hr.vacation'].search([('version_id', '=', current_version.id)])
+            referenced_leave_ids = obj_history_vacations.mapped('leave_id').ids
+            # sudo: required to read source leaves from the origin company under multi-company record rules
+            obj_leaves = self.env['hr.leave'].sudo().search([
+                ('employee_id', '=', obj_employee.id),
+                '|',
+                ('state', '=', 'validate'),
+                ('id', 'in', referenced_leave_ids or [0]),
+            ])
+            # standard Odoo version "19": hr.leave no permite copy_data sin skip_copy_check.
+            # No cancelar ausencias en origen: action_refuse elimina hr.vacation vinculado y altera el histórico de Molpartes.
+            leave_migration_context = {
+                'skip_copy_check': True,
+                'leave_fast_create': True,
+                'leave_skip_date_check': True,
+                'leave_skip_state_check': True,
+                'tracking_disable': True,
+                'mail_activity_automation_skip': True,
+            }
+            leave_vals_list = []
+            leave_origin_ids = []
+            for leave in obj_leaves:
+                new_leave = leave.sudo().with_company(self.z_new_company_id.id).with_context(
+                    **leave_migration_context,
+                ).copy_data()
+                leave_vals = new_leave[0]
+                for field_name in (
+                    'message_follower_ids', 'message_ids', 'activity_ids', 'z_leave_extension_ids',
+                    'meeting_id', 'first_approver_id', 'second_approver_id', 'employee_company_id',
+                ):
+                    leave_vals.pop(field_name, None)
+                leave_vals['employee_id'] = obj_new_employee.id
+                leave_vals['company_id'] = self.z_new_company_id.id
+                leave_vals['state'] = leave.state
+                # Evitar que hr.leave.create resuelva employee_id por cédula al empleado origen
+                leave_vals.pop('employee_identification', None)
+                leave_origin_ids.append(leave.id)
+                leave_vals_list.append(leave_vals)
+            if leave_vals_list:
+                # sudo: required to create validated historical leaves bypassing time-off create/write rules
+                cr_leaves = self.with_company(self.z_new_company_id.id).sudo().with_context(
+                    **leave_migration_context,
+                ).env['hr.leave'].create(leave_vals_list)
+                for origin_leave_id, cr_leave in zip(leave_origin_ids, cr_leaves):
+                    leave_map[origin_leave_id] = cr_leave.id
+                    create_objects.append(cr_leave)
+
+            # DUPLICAR HISTORICOS DE VACACIONES, CESANTIAS, PRIMA Y RTEfte
             for hr_vacation in obj_history_vacations:
                 new_hr_vacation = hr_vacation.with_company(self.z_new_company_id.id).copy_data()
                 new_hr_vacation[0]['employee_id'] = obj_new_employee.id
-                new_hr_vacation[0]['contract_id'] = obj_new_contract.id
+                new_hr_vacation[0]['version_id'] = obj_new_employee.current_version_id.id
+                if new_hr_vacation[0].get('leave_id'):
+                    new_hr_vacation[0]['leave_id'] = leave_map.get(new_hr_vacation[0]['leave_id'], False)
+                if new_hr_vacation[0].get('payslip'):
+                    new_hr_vacation[0]['payslip'] = payslip_map.get(new_hr_vacation[0]['payslip'], False)
+                cr_hr_vacation = self.with_company(self.z_new_company_id.id).env['hr.vacation'].create(new_hr_vacation[0])
+                cr_hr_vacation.write({'employee_id':obj_new_employee.id, 'version_id':obj_new_employee.current_version_id.id})
+                create_objects.append(cr_hr_vacation)
 
-                self.with_company(self.z_new_company_id.id).env['hr.vacation'].create(new_hr_vacation[0])
-
-            obj_history_cesantias = self.env['hr.history.cesantias'].search([('contract_id','=',current_contract.id)])
+            obj_history_cesantias = self.env['hr.history.cesantias'].search([('version_id','=',current_version.id)])
             for hr_cesantia in obj_history_cesantias:
                 new_hr_cesantia = hr_cesantia.with_company(self.z_new_company_id.id).copy_data()
                 new_hr_cesantia[0]['employee_id'] = obj_new_employee.id
-                new_hr_cesantia[0]['contract_id'] = obj_new_contract.id
+                new_hr_cesantia[0]['version_id'] = obj_new_employee.current_version_id.id
+                if new_hr_cesantia[0].get('payslip'):
+                    new_hr_cesantia[0]['payslip'] = payslip_map.get(new_hr_cesantia[0]['payslip'], False)
+                cr_hr_cesantias = self.with_company(self.z_new_company_id.id).env['hr.history.cesantias'].create(new_hr_cesantia[0])
+                cr_hr_cesantias.write({'employee_id': obj_new_employee.id, 'version_id': obj_new_employee.current_version_id.id})
+                create_objects.append(cr_hr_cesantias)
 
-                self.with_company(self.z_new_company_id.id).env['hr.history.cesantias'].create(new_hr_cesantia[0])
+            obj_history_prima = self.env['hr.history.prima'].search([('version_id', '=', current_version.id)])
+            for hr_prima in obj_history_prima:
+                new_hr_prima = hr_prima.with_company(self.z_new_company_id.id).copy_data()
+                new_hr_prima[0]['employee_id'] = obj_new_employee.id
+                new_hr_prima[0]['version_id'] = obj_new_employee.current_version_id.id
+                if new_hr_prima[0].get('payslip'):
+                    new_hr_prima[0]['payslip'] = payslip_map.get(new_hr_prima[0]['payslip'], False)
+                cr_hr_prima = self.with_company(self.z_new_company_id.id).env['hr.history.prima'].create(new_hr_prima[0])
+                cr_hr_prima.write({'employee_id': obj_new_employee.id, 'version_id': obj_new_employee.current_version_id.id})
+                create_objects.append(cr_hr_prima)
+
+            obj_rtefte_history = self.env['hr.employee.rtefte.history'].search([('z_employee_id', '=', obj_employee.id)])
+            for rtefte_history in obj_rtefte_history:
+                new_rtefte_history = self.with_company(self.z_new_company_id.id).env['hr.employee.rtefte.history'].create({
+                    'z_employee_id': obj_new_employee.id,
+                    'z_year': rtefte_history.z_year,
+                    'z_month': rtefte_history.z_month,
+                    'z_payslip_id': payslip_map.get(rtefte_history.z_payslip_id.id, False) if rtefte_history.z_payslip_id else False,
+                })
+                rtefte_line_vals_list = []
+                for line in rtefte_history.z_line_ids:
+                    rtefte_line_vals_list.append({
+                        'z_history_id': new_rtefte_history.id,
+                        'z_concept_deduction_id': line.z_concept_deduction_id.id,
+                        'z_result_base': line.z_result_base,
+                        'z_result_calculation': line.z_result_calculation,
+                    })
+                if rtefte_line_vals_list:
+                    self.with_company(self.z_new_company_id.id).env['hr.employee.deduction.retention.history'].create(rtefte_line_vals_list)
+                create_objects.append(new_rtefte_history)
+
+            # MARCAR SI SE CAMBIO LA CUENTA BANCARIA
+            if self.z_bank_account_id != self.z_new_bank_account_id:
+                self.z_bank_account_changed = True
+
+            # FORZAR ACTUALIZACIÓN FINAL DE CAMPOS DEL EMPLEADO
+            # (algunos procesos anteriores pueden haber sobrescrito estos valores)
+            final_employee_update = {
+                'department_id': self.z_new_department_id.id if self.z_new_department_id else False,
+                'job_id': self.z_new_job_id.id if self.z_new_job_id else False,
+            }
+            if self.z_new_job_id:
+                final_employee_update['job_title'] = self.z_new_job_id.name
+            # Forzar también work_contact_id al nuevo contacto creado
+            if new_contact_created:
+                final_employee_update['work_contact_id'] = new_contact_created.id
+                # Sincronizar partner_encab_id con work_contact_id
+                final_employee_update['partner_encab_id'] = new_contact_created.id
+                new_contact_created.write({'email':email})
+                final_employee_update['work_email'] = email
+            obj_new_employee.write(final_employee_update)
+
+            # Reaplicar datos del contrato al final del proceso para evitar que queden vacíos por procesos posteriores.
+            final_version = obj_new_employee.current_version_id or obj_new_employee.get_info_version()
+            if final_version:
+                final_version_update_vals = {'z_employer_replacement_date': replacement_date}
+                if source_contract_start_date:
+                    final_version_update_vals['date_start'] = source_contract_start_date
+                    final_version_update_vals['contract_date_start'] = source_contract_date_start or source_contract_start_date
+                if source_contract_end_date:
+                    final_version_update_vals['date_end'] = source_contract_end_date
+                    final_version_update_vals['contract_date_end'] = source_contract_date_end or source_contract_end_date
+                final_version.write(final_version_update_vals)
+
+                if source_contract_wage and not final_version.change_wage_ids:
+                    self.env['hr.contract.change.wage'].create([{
+                        'version_id': final_version.id,
+                        'date_start': source_contract_start_date or replacement_date,
+                        'wage': source_contract_wage,
+                        'job_id': source_contract_job_id or False,
+                    }])
+                elif source_contract_wage and not final_version.wage:
+                    final_version.write({
+                        'wage': source_contract_wage,
+                        'job_id': source_contract_job_id or False,
+                    })
+
 
             self.state = 'done'
 

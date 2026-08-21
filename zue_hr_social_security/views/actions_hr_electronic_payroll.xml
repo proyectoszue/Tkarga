@@ -1,0 +1,33 @@
+<odoo>
+    <data>
+        <record id="consolidate_hr_electronic_payroll_form" model="ir.ui.view">
+            <field name="name">Consolidate hr electronic payroll form</field>
+            <field name="model">hr.electronic.payroll</field>
+            <field name="inherit_id" ref="zue_hr_payroll.hr_electronic_payroll_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='executing_electronic_payroll_ids']/list/field[@name='payslip_ids']" position="after">
+                    <field name="z_consolidated_provisions_detail_ids" optional="hide" widget="many2many_tags"/>
+                </xpath>
+                <xpath expr="//field[@name='executing_electronic_payroll_ids']/form/sheet[1]/group[1]/field[@name='payslip_ids']" position="after">
+                    <field name="z_consolidated_provisions_detail_ids" widget="many2many_tags" force_save="1" readonly="status == 'ACCEPTED'"/>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="consolidate_hr_electronic_adjust_payroll_form" model="ir.ui.view">
+            <field name="name">Consolidate hr electronic adjust payroll form</field>
+            <field name="model">hr.electronic.adjust.payroll</field>
+            <field name="inherit_id" ref="zue_hr_payroll.hr_electronic_adjust_payroll_form"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='executing_electronic_adjust_payroll_ids']/list/field[@name='payslip_ids']" position="after">
+                    <field name="z_consolidated_provisions_detail_ids" optional="hide" widget="many2many_tags"/>
+                </xpath>
+                <xpath expr="//field[@name='executing_electronic_adjust_payroll_ids']/form/sheet[1]/group[1]/field[@name='payslip_ids']" position="after">
+                    <field name="z_consolidated_provisions_detail_ids" widget="many2many_tags" force_save="1" readonly="status == 'ACCEPTED'"/>
+                </xpath>
+            </field>
+        </record>
+
+
+    </data>
+</odoo>

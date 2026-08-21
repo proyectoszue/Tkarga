@@ -4,13 +4,16 @@ from odoo.exceptions import UserError, ValidationError
 
 class hr_executing_social_security(models.Model):
     _name = 'hr.executing.social.security'
+    _inherit = ["analytic.mixin"]
     _description = 'Ejecución de seguridad social'
 
     executing_social_security_id =  fields.Many2one('hr.payroll.social.security', 'Ejecución de seguridad social', required=True, ondelete='cascade')
     employee_id = fields.Many2one('hr.employee', 'Empleado',required=True)
     branch_id =  fields.Many2one('zue.res.branch', 'Sucursal', required=True)
-    contract_id =  fields.Many2one('hr.contract', 'Contrato', required=True)
-    analytic_account_id = fields.Many2one('account.analytic.account', string='Cuenta analítica')
+    version_id =  fields.Many2one('hr.version', 'Contrato', required=True)
+    analytic_distribution = fields.Json(groups="hr.group_hr_user", tracking=False, string='Distribución analítica')
+    analytic_precision = fields.Integer(groups="hr.group_hr_user", tracking=False)
+    distribution_analytic_account_ids = fields.Many2many(groups="hr.group_hr_user", tracking=False)
     nNumeroHorasLaboradas = fields.Integer('Horas laboradas')
     nDiasLiquidados = fields.Integer('Días liquidados')
     nDiasIncapacidadEPS = fields.Integer('Días incapacidad EPS')

@@ -33,11 +33,9 @@ class hr_birthday_list(models.TransientModel):
     show_dependent = fields.Boolean(string='Mostrar dependientes')
     active_employee = fields.Boolean(string='Solo empleados con contrato activo', default=True)
 
-    def name_get(self):
-        result = []
-        for record in self:            
-            result.append((record.id, "Listado de cumpleaños"))
-        return result
+    def _compute_display_name(self):
+        for record in self:
+            record.display_name = "Listado de cumpleaños"
 
     def get_month(self):
         if self.month == '0':
@@ -119,8 +117,8 @@ class hr_birthday_list(models.TransientModel):
             query_where = "where a.company_id in (" + str(self.company.ids).replace('[','').replace(']','') + ") "
             query_where_dependent = "where a.company_id in (" + str(self.company.ids).replace('[','').replace(']','') + ") "
         else:
-            query_where = "where a.company_id in (" + str(self.company.ids).replace('[','').replace(']','') + ") and date_part('month',a.birthday) = " + self.month
-            query_where_dependent = "where a.company_id in (" + str(self.company.ids).replace('[', '').replace(']','') + ") and date_part('month',hed.date_birthday) = " + self.month
+            query_where = "where a.company_id in (" + str(self.company.ids).replace('[','').replace(']','') + ") and date_part('month',a.birthday) = " + self.month + " "
+            query_where_dependent = "where a.company_id in (" + str(self.company.ids).replace('[', '').replace(']','') + ") and date_part('month',hed.date_birthday) = " + self.month + " "
         # Filtro Sucursal
         str_ids_branch = ''
         for i in self.branch:
@@ -138,7 +136,7 @@ class hr_birthday_list(models.TransientModel):
             query_dependent = ' and 1=2 '
 
         if self.active_employee:
-            query_active_employee = "Inner join hr_contract as hc on a.id = hc.employee_id and hc.state='open' "
+            query_active_employee = "Inner join hr_version as hv on a.id = hv.employee_id and hv.contract_date_end < current_date "
         else:
             query_active_employee = '-- Todos los empleados'
         # ----------------------------------Ejecutar consulta
@@ -170,8 +168,8 @@ class hr_birthday_list(models.TransientModel):
                     order by name_employee,date_part('month',birthday),date_part('day',birthday)
                     '''%(query_active_employee,query_where,query_active_employee,query_dependent,query_where_dependent)
 
-        self._cr.execute(query_report)
-        result_query = self._cr.dictfetchall()
+        self.env.cr.execute(query_report)
+        result_query = self.env.cr.dictfetchall()
         if len(result_query) == 0:
             raise ValidationError(_('No se encontraron datos con los filtros seleccionados, por favor verificar.'))
         # Generar EXCEL

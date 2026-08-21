@@ -19,8 +19,8 @@
             <field name="priority">20</field>
             <field name="inherit_id" ref="hr_holidays.hr_leave_view_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//group[@name='col_right']" position="before">
-                    <group name="entities" attrs="{'invisible': [('type_of_entity', '=', False)]}">
+                <xpath expr="//group[@name='col_left']" position="before">
+                    <group name="entities" invisible="not type_of_entity">
                         <field name="is_recovery"/>
                         <field name="type_of_entity"/>
                         <field name="entity"/>
@@ -30,9 +30,7 @@
                         <field name="eps_value"/>
                         <field name="payment_date"/>
                     </group>
-                </xpath>
-                <xpath expr="//group[@name='col_right']" position="before">
-                    <group string="Vacaciones" attrs="{'invisible':[('is_vacation', '=', False)]}" col="4">
+                    <group string="Vacaciones" invisible="not is_vacation" col="4">
                         <field name="business_days" readonly="1" force_save="1"/>
                         <field name="days_31_business" readonly="1" force_save="1"/>
                         <field name="holidays" readonly="1" force_save="1"/>
@@ -50,37 +48,38 @@
             <field name="inherit_id" ref="hr_holidays.hr_leave_view_form_manager"/>
             <field name="arch" type="xml">
                 <xpath expr="//form[1]/header[1]" position="inside">
-                    <button name="add_extension" type="object" string="Agregar Prorroga" states="validate"/>
+                    <button name="add_extension" type="object" string="Agregar Prorroga" invisible="state != 'validate'"/>
                 </xpath>
                 <xpath expr="//widget[@name='hr_leave_stats']" position="attributes">
                     <attribute name="invisible">1</attribute>
                 </xpath>
-                <xpath expr="//form[1]/sheet[1]/group[1]/group[@name='col_left']/field[@name='employee_ids']" position="after">
+                <xpath expr="//field[@name='employee_id']" position="after">
                     <field name="employee_company_id"/>
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]" position="before">
                     <field name="alert_days_vacation" readonly="1" invisible="1"/>
-                    <div class="alert alert-warning oe_edit_only" role="alert" attrs="{'invisible': [('alert_days_vacation', '=', False)]}">
+                    <field name="is_vacation" invisible="1"/>
+                    <div class="alert alert-warning oe_edit_only" role="alert" invisible="not alert_days_vacation">
                         El empleado solo dispone de <field name="accumulated_vacation_days" readonly="1"/>
  días de vacaciones pendientes.
                     </div>
                 </xpath>
-                <xpath expr="//form[1]/sheet[1]/group[1]/group[1]/label[1]" position="before">
-                    <xpath expr="//field[@name='employee_id']" position="move"/>
-                </xpath>
+<!--                <xpath expr="//form[1]/sheet[1]/group[1]/group[1]/label[1]" position="before">-->
+<!--                    <xpath expr="//field[@name='employee_id']" position="move"/>-->
+<!--                </xpath>-->
                 <xpath expr="//field[@name='request_date_from']" position="attributes">
                     <attribute name="required">1</attribute>
+                    <attribute name="style">min-width: 12em</attribute>
                 </xpath>
                 <xpath expr="//field[@name='request_date_to']" position="attributes">
-                    <attribute name="attrs">{"required": [('is_vacation', '=',  False)], "invisible": ["|",["request_unit_half","=",True],["request_unit_hours","=",True]], "readonly": ["|",["state","not in",["draft","confirm"]],["is_vacation","=",True]]}</attribute>
+                    <attribute name="required">not is_vacation</attribute>
+                    <attribute name="invisible">request_unit_half or request_unit_hours</attribute>
+                    <attribute name="readonly">state not in ['draft','confirm'] or is_vacation</attribute>
                     <attribute name="force_save">True</attribute>
-                </xpath>
-                 <xpath expr="//field[@name='number_of_days']" position="attributes">
-                    <attribute name="attrs">{"readonly": [('state', 'not in', ('draft', 'confirm'))]}</attribute>
-                    <attribute name="force_save">True</attribute>
+                    <attribute name="style">min-width: 12em</attribute>
                 </xpath>
                 <xpath expr="//field[@name='name']" position="attributes">
-                    <attribute name="attrs">{"readonly": [('state', 'not in', ('draft', 'confirm'))]}</attribute>
+                    <attribute name="readonly">state not in ['draft', 'confirm']</attribute>
                     <attribute name="force_save">True</attribute>
                 </xpath>
                 <xpath expr="//field[@name='name']" position="before">
@@ -90,9 +89,9 @@
                 </xpath>
                 <xpath expr="//sheet[1]" position="inside">
                     <field name="z_qty_extension" invisible="1"/>
-                    <group string="Prorrogas" attrs="{'invisible': [['z_qty_extension','=',0]]}"/>
-                        <field name="z_leave_extension_ids" attrs="{'invisible': [['z_qty_extension','=',0]]}">
-                            <tree editable="bottom" create="0" delete="0">
+                    <group string="Prorrogas" invisible="z_qty_extension == 0"/>
+                        <field name="z_leave_extension_ids" invisible="z_qty_extension == 0">
+                            <list editable="bottom" create="0" delete="0">
                                 <field name="z_date_end" readonly="1" force_save="1"/>
                                 <field name="z_new_date_end" readonly="1" force_save="1"/>
                                 <field name="z_diagnostic_original_id" readonly="1" force_save="1"/>
@@ -101,43 +100,33 @@
                                 <field name="z_payroll_value"/>
                                 <field name="z_eps_value"/>
                                 <field name="z_payment_date"/>
-                            </tree>
+                            </list>
                         </field>
                     <group>
-                        <field name="z_payroll_value_with_extension" readonly="1" force_save="1" attrs="{'invisible': [['z_qty_extension','=',0]]}"/>
-                        <field name="z_eps_value_with_extension" readonly="1" force_save="1" attrs="{'invisible': [['z_qty_extension','=',0]]}"/>
+                        <field name="z_payroll_value_with_extension" readonly="1" force_save="1" invisible="z_qty_extension == 0"/>
+                        <field name="z_eps_value_with_extension" readonly="1" force_save="1" invisible="z_qty_extension == 0"/>
                     </group>
                 </xpath>
-            </field>
-        </record>
-
-        <record id="hr_leave_view_form_manager_inherit" model="ir.ui.view">
-            <field name="name">hr_leave_view_form_manager_inherit</field>
-            <field name="model">hr.leave</field>
-            <field name="inherit_id" ref="hr_holidays.hr_leave_view_form_manager"/>
-            <field name="priority" eval="20"/>
-            <field name="arch" type="xml">
-                <xpath expr="//form[1]/sheet[1]/group[1]/group[@name='col_left']/field[@name='employee_ids']"
-                       position="attributes">
-                    <attribute name="domain">[["contract_id.state","in",['open','finished']]]</attribute>
-                </xpath>
+<!--                <xpath expr="//field[@name='employee_ids']" position="attributes">-->
+<!--                    <attribute name="domain">[["version_id.state","in",['open']]]</attribute>-->
+<!--                </xpath>-->
             </field>
         </record>
 
         <record model="ir.actions.act_window" id="action_hr_leave_diagnostic">
             <field name="name">Diagnosticos Ausencias</field>
             <field name="res_model">hr.leave.diagnostic</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
         </record>
 
         <record model="ir.ui.view" id="hr_leave_diagnostic_list">
             <field name="name">hr leave diagnostic list</field>
             <field name="model">hr.leave.diagnostic</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="name"/>
                     <field name="code"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -176,11 +165,11 @@
                         <group>
                             <field name="z_leave_id" readonly="1" force_save="1"/>
                             <field name="z_date_end" readonly="1" force_save="1"/>
-                            <field name="z_diagnostic_id" attrs="{'invisible': [['z_diagnostic_id','=',False]]}"/>
+                            <field name="z_diagnostic_id" invisible="not z_diagnostic_id"/>
                             <field name="z_new_date_end"/>
                             <field name="z_obligatory_attachment" invisible="1"/>
                             <field name="z_attachment_filename" invisible="1"/>
-                            <field name="z_attachment" filename="z_attachment_filename" attrs="{'required': [['z_obligatory_attachment','=',True]]}"/>
+                            <field name="z_attachment" filename="z_attachment_filename" required="z_obligatory_attachment"/>
                         </group>
                         <footer>
                             <button name="authorized_extension" type="object" string="Agregar" class="btn btn-primary"/>

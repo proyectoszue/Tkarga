@@ -30,7 +30,7 @@
         <record id="zue_menu_action_contract_risk" model="ir.actions.act_window">
             <field name="name">Riesgos profesionales</field>
             <field name="res_model">hr.contract.risk</field>
-            <field name="view_mode">tree</field>
+            <field name="view_mode">list</field>
             <field name="domain">[]</field>
             <field name="help" type="html">
                 <p class="oe_view_nocontent_create">Crear Riesgos Profesional
@@ -42,31 +42,31 @@
             <field name="name">zue list contract risk</field>
             <field name="model">hr.contract.risk</field>
             <field name="arch" type="xml">
-                <tree editable="bottom">
+                <list editable="bottom">
                     <field name="code"/>
                     <field name="name"/>
                     <field name="percent"/>
                     <field name="date"/>
-                </tree>
+                </list>
             </field>
         </record>
         <!-- Actividad económica por nivel de riesgo -->
         <record id="zue_menu_action_zue_economic_activity_level_risk" model="ir.actions.act_window">
             <field name="name">Actividad económica por nivel de riesgo</field>
             <field name="res_model">zue.economic.activity.level.risk</field>
-            <field name="view_mode">tree</field>
+            <field name="view_mode">list</field>
         </record>
 
         <record model="ir.ui.view" id="zue_hr_employee.list_zue_economic_activity_level_risk">
             <field name="name">Actividad económica por nivel de riesgo list</field>
             <field name="model">zue.economic.activity.level.risk</field>
             <field name="arch" type="xml">
-                <tree editable="bottom">
+                <list editable="bottom">
                     <field name="z_risk_class_id"/>
                     <field name="z_code_ciiu_id"/>
                     <field name="z_code"/>
                     <field name="name"/>
-                </tree>
+                </list>
             </field>
         </record>
         <!-- Formulario de tipos de ausencia - ajustes -->
@@ -112,7 +112,7 @@
         <record id="zue_menu_action_annual_parameters" model="ir.actions.act_window">
             <field name="name">Parámetros anuales</field>
             <field name="res_model">hr.annual.parameters</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
             <field name="domain">[]</field>
             <field name="help" type="html">
                 <p class="oe_view_nocontent_create">Crear Parámetro anual
@@ -124,13 +124,13 @@
             <field name="name">zue list annual parameters</field>
             <field name="model">hr.annual.parameters</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="year"/>
                     <field name="smmlv_monthly"/>
                     <field name="transportation_assistance_monthly"/>
                     <field name="min_integral_salary"/>
                     <field name="hours_daily"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -234,15 +234,15 @@
                             </page>
                             <page string="UPC">
                                 <group>
-                                    <field name="z_upc_lines_ids" nolabel="1">
-                                        <tree editable="bottom">
+                                    <field name="z_upc_lines_ids" nolabel="1" colspan="2">
+                                        <list editable="bottom">
                                             <field name="z_age_group_upc"/>
                                             <field name="z_normal_zone_upc"/>
                                             <field name="z_special_zone_upc"/>
                                             <field name="z_cities_upc"/>
                                             <field name="z_islands_upc"/>
                                             <field name="z_gender_upc"/>
-                                        </tree>
+                                        </list>
                                     </field>
                                 </group>
                             </page>
@@ -258,8 +258,8 @@
                                 </group>
                                 <notebook>
                                     <page string="Configuración de reglas salariales">
-                                        <group>
-                                            <p>
+                                        <group colspan="2">
+                                            <p colspan="2">
                                                 Forma correcta de realizar la configuración dependiendo el campo Tipo Cálculo<br/><br/>
                                                 1. Si Tipo Cálculo es Información, se debe indicar el campo del cual se quiere la información en la columna información y su origen en la columna Origen Información<br/>
                                                 2. Si Tipo Cálculo es Sumatoria Reglas, se deben indicar las reglas a sumar en el campo Regla Salarial, si se debe tomar el acumulado del año anterior marca el check.<br/>
@@ -270,9 +270,9 @@
                                                 <br/>
                                             </p>
                                         </group>
-                                        <group>
-                                            <field name="conf_certificate_income_ids" nolabel="1">
-                                                <tree editable="bottom" default_order='sequence'>
+                                        <group colspan="2">
+                                            <field name="conf_certificate_income_ids" nolabel="1" colspan="2">
+                                                <list editable="bottom" default_order='sequence'>
                                                     <field name="sequence"/>
                                                     <field name="calculation"/>
                                                     <field name="type_partner"/>
@@ -285,35 +285,32 @@
                                                     <field name="sequence_list_sum"/>
                                                     <field name="z_show_format_income_and_pensions"/>
                                                     <field name="z_name_format_income_and_pensions"/>
-                                                </tree>
+                                                </list>
                                             </field>
                                         </group>
                                     </page>
                                     <page string="Estructura Certificado ingresos y retenciones">
-                                        <group>
-                                            <field name="report_income_and_withholdings" nolabel="1" widget="html" options="{'style-inline': true, 'codeview': true }"/>
+                                        <group colspan="2">
+                                            <field name="report_income_and_withholdings" nolabel="1" colspan="2" widget="html" options="{'style-inline': true, 'codeview': true }"/>
                                         </group>
                                     </page>
                                 </notebook>
                             </page>
                             <page string="Fondo de solidaridad y subsistencia">
                                 <group>
-                                    <field name="z_fds_lines_ids" nolabel="1">
-                                        <tree editable="bottom">
+                                    <field name="z_fds_lines_ids" nolabel="1" colspan="2">
+                                        <list editable="bottom">
                                             <field name="z_initial_value"/>
                                             <field name="z_final_value"/>
+<!--                                            <field name="z_reform_change"/>-->
                                             <field name="z_porcentage_solidarity_fund"/>
                                             <field name="z_porcentage_subsistence_fund"/>
-                                        </tree>
+                                        </list>
                                     </field>
                                 </group>
                             </page>
                         </notebook>
                     </sheet>
-                    <div class="oe_chatter">
-                        <field name="message_ids" widget="mail_thread"/>
-                        <field name="activity_ids" widget="mail_activity"/>
-                    </div>
                 </form>
             </field>
         </record>

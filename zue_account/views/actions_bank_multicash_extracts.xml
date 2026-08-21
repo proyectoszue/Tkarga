@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record model="ir.actions.act_window" id="action_bank_multicash_extracts">
+            <field name="name">Extracto multicash</field>
+            <field name="res_model">zue.bank.multicash.extracts</field>
+            <field name="target">new</field>
+            <field name="view_mode">form</field>
+        </record>
+
+        <record id="bank_multicash_extracts_form" model="ir.ui.view">
+            <field name="name">Extracto multicash</field>
+            <field name="model">zue.bank.multicash.extracts</field>
+            <field name="arch" type="xml">
+                <form string="extracto multicash">
+                    <sheet>
+                        <group>
+                            <group>
+                                <field name="z_extract_origin" filename="z_excel_origin_filename"/>
+                            </group>
+                            <br></br>
+                        </group>
+                    </sheet>
+                    <footer>
+                        <button name="convert_extract" string="Convertir archivo" type="object" class="oe_highlight"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>

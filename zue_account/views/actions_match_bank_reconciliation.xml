@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data>
+        <record id="account_journal_dashboard_kanban_zue_inherit_view" model="ir.ui.view">
+            <field name="name">account.journal.dashboard.zue.inherit.kanban</field>
+            <field name="model">account.journal</field>
+            <field name="inherit_id" ref="account.account_journal_dashboard_kanban_view" />
+            <field name="arch" type="xml">
+                <xpath expr="//t[1]" position="inside">
+                    <t t-if="dashboard.number_to_reconcile > 0">
+                        <button id="zue_match_reconciliation_button" type="object" name="zue_match_reconciliation"
+                                confirm="Se conciliaran automáticamente los apuntes ¿Desea continuar?"
+                                class="btn btn-primary">
+                            <span>Auto Conciliar</span>
+                        </button>
+                    </t>
+                </xpath>
+            </field>
+        </record>
+
+    </data>
+</odoo>

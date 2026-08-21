@@ -11,14 +11,18 @@ class hr_transfers_of_entities(models.TransientModel):
     new_entity = fields.Many2one('hr.employee.entities', string='Nueva entidad', domain="[('types_entities','in',[type_of_entity])]", required=True)
     date = fields.Date('Fecha de traslado', required=True)
 
-    @api.onchange('employee_id', 'type_of_entity')
+    @api.depends('employee_id', 'type_of_entity')
     def _get_entities(self):
-        if self.employee_id and self.type_of_entity:
-            obj_entity = self.env['hr.contract.setting'].search([('employee_id','=',self.employee_id.id),('contrib_id','=',self.type_of_entity.id)])
-            if len(obj_entity) == 1:
-                self.entity_actually = obj_entity.partner_id
-            else:
-                raise ValidationError(_('No se encontró entidad actual o se encontró más de una, verificar.'))
+        for record in self:
+            entity = False
+            if record.employee_id.id and record.type_of_entity.id:
+                obj_entity = self.env['hr.contract.setting'].search([
+                    ('employee_id', '=', record.employee_id.id),
+                    ('contrib_id', '=', record.type_of_entity.id)
+                ], limit=1)
+                if obj_entity:
+                    entity = obj_entity.partner_id
+            record.entity_actually = entity
 
     def process_transfer(self):
         if self.employee_id and self.type_of_entity:

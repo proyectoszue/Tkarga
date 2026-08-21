@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-inherit="hr_payroll.PayRunCard" t-inherit-mode="extension">
+        <xpath expr="//t[@t-set-slot='paid_prio']" position="replace">
+            <t t-set-slot="paid_prio" isVisible="false" isPriority="true"/>
+        </xpath>
+    </t>
+</templates>

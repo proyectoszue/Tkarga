@@ -28,7 +28,7 @@ class Hr_payslip(models.Model):
         round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
 
         employee = self.employee_id
-        contract = self.contract_id
+        version = self.version_id
 
         year = self.date_from.year
         annual_parameters = self.env['hr.annual.parameters'].search([('year', '=', year)])
@@ -44,7 +44,7 @@ class Hr_payslip(models.Model):
                     'worked_days': WorkedDays(employee.id, worked_days_dict, self.env),
                     'inputs': InputLine(employee.id, inputs_dict, self.env),
                     'employee': employee,
-                    'contract': contract,
+                    'version': version,
                     'annual_parameters': annual_parameters,
                     'inherit_contrato': inherit_contrato,
                 }
@@ -79,11 +79,12 @@ class Hr_payslip(models.Model):
                         'name': concepts.salary_rule_id.name,
                         'note': concepts.salary_rule_id.note,
                         'salary_rule_id': concepts.salary_rule_id.id,
-                        'contract_id': contract.id,
+                        'version_id': version.id,
                         'employee_id': employee.id,
                         'amount': tot_rule,
                         'quantity': 1.0,
                         'rate': 100,
+                        'total': self._get_payslip_line_total(tot_rule, 1, 100, concepts.salary_rule_id),
                         'slip_id': self.id,
                     }
         #Ejecutar reglas salariales estandar para este modelo no se tiene en cuenta la pestaña de Devengos y deducciones del contrato
@@ -111,11 +112,12 @@ class Hr_payslip(models.Model):
                         'name': rule.name,
                         'note': rule.note,
                         'salary_rule_id': rule.id,
-                        'contract_id': contract.id,
+                        'version_id': version.id,
                         'employee_id': employee.id,
                         'amount': amount,
                         'quantity': qty,
                         'rate': rate,
+                        'total': self._get_payslip_line_total(amount, qty, rate, rule),
                         'slip_id': self.id,
                     }
         return result.values()

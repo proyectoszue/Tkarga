@@ -23,15 +23,14 @@ class hr_consolidated_provisions(models.Model):
     z_observations = fields.Text('Observaciones')
     state = fields.Selection([('draft', 'Borrador'), ('done', 'Hecho'),('approved', 'Aprobado')], string='Estado', default='draft')
 
-    _sql_constraints = [('consolidated_provisions_uniq', 'unique(company_id,z_year,z_provision)',
-                         'El año seleccionado ya esta registrado para esta provisión y compañía, por favor verificar.')]
+    _consolidated_provisions_uniq = models.Constraint('unique(company_id,z_year,z_provision)',
+                         'El año seleccionado ya esta registrado para esta provisión y compañía, por favor verificar.')
 
-    def name_get(self):
-        result = []
+    @api.depends('z_provision', 'z_year')
+    def _compute_display_name(self):
         for record in self:
             provision_str = dict(self._fields['z_provision'].selection).get(record.z_provision)
-            result.append((record.id, "Consolidado {} - {}".format(str(record.z_year), provision_str)))
-        return result
+            record.display_name = "Consolidado {} - {}".format(str(record.z_year), provision_str)
 
     # @api.model
     # def _default_months(self):
@@ -74,7 +73,7 @@ class hr_consolidated_provisions(models.Model):
 
 class hr_consolidated_provisions_detail(models.Model):
     _name = 'hr.consolidated.provisions.detail'
-    _description = 'Detalle Consolidado Provisones'
+    _description = 'Detalle Consolidado Provisiones'
 
     z_consolidated_provision_id = fields.Many2one('hr.consolidated.provisions', string='Consolidado Provision', required=True, ondelete='cascade')
     z_employee_id = fields.Many2one('hr.employee', 'Empleado', required=True)
@@ -93,3 +92,9 @@ class hr_consolidated_provisions_detail(models.Model):
     #                         ('12', 'Diciembre')
     #                         ], string='Mes', required=True)
     z_total = fields.Float('Total', required=True)
+
+    @api.depends('z_consolidated_provision_id', 'z_employee_id')
+    def _compute_display_name(self):
+        for record in self:
+            provision_str = dict(self.z_consolidated_provision_id._fields['z_provision'].selection).get(record.z_consolidated_provision_id.z_provision)
+            record.display_name = "Consolidado {} - {} {}".format(str(record.z_consolidated_provision_id.z_year), provision_str, record.z_employee_id.name)

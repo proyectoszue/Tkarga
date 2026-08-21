@@ -22,6 +22,10 @@
 						<field name="z_expiration_days" type="object"/>
 						<field name="z_expiration_folios" type="object"/>
 					</group>
+					<div class="alert alert-warning" role="alert">
+                        ¡Por favor validar que los documentos electrónicos con fecha anterior a la resolución parametrizada ya hayan sido enviados
+						a la DIAN en su totalidad! Despues de generada una nueva resolución no podrá enviar documentos con fecha anterior.
+					</div>
                 </xpath>
 			</field>
 		</record>

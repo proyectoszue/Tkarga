@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <template id="report_liquidacion_final_document">
-        <t t-set="o" t-value="o.with_context(lang=o.employee_id.address_home_id.lang or o.env.lang)"/>
+        <t t-set="o" t-value="o.with_context(lang=o.employee_id.work_contact_id.lang or o.env.lang)"/>
         <div class="row">
             <div class="col-md-12 text-center">
                 <strong>LIQUIDACION DE CONTRATO LABORAL</strong>
@@ -17,7 +17,7 @@
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
                                     <b>Referencia</b>
                                     :
-                                    <span t-field="o.number"/>
+                                    <span t-field="o.name"/>
                                 </p>
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
                                     <b>Identidad</b>
@@ -32,7 +32,7 @@
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
                                     <b>Fecha ingreso</b>
                                     :
-                                    <span t-field="o.contract_id.date_start"/>
+                                    <span t-field="o.version_id.date_start"/>
                                 </p>
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
                                     <b>Cargo</b>
@@ -44,7 +44,7 @@
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
                                     <b>Tipo contrato</b>
                                     :
-                                    <span t-field="o.contract_id.contract_type"/>
+                                    <span t-field="o.version_id.contract_type"/>
                                 </p>
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
                                     <b>Sucursal</b>
@@ -69,17 +69,16 @@
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
                                     <b>Salario basico</b>
                                     :
-                                    <span t-field="o.contract_id.wage"/>
+                                    <span t-field="o.version_id.wage"/>
                                 </p>
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
                                     <b>Cuenta bancaria:</b>
-                                    <span t-field="o.employee_id.address_home_id.bank_ids.filtered(lambda bank: bank.is_main == True and bank.company_id == o.employee_id.company_id).acc_number"/>
+                                    <span t-field="o.employee_id.work_contact_id.bank_ids.filtered(lambda bank: bank.is_main == True and bank.company_id == o.employee_id.company_id).acc_number"/>
                                 </p>
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
                                     <b>Dias laborados</b>
                                     :
-<!--                                    <span t-esc="(o.date_liquidacion - o.contract_id.date_start).days+1"/>-->
-                                    <span t-esc="o.dias360(o.contract_id.date_start, o.date_liquidacion)"/>
+                                    <span t-esc="(o.date_liquidacion - o.version_id.contract_date_start).days+1"/>
                                 </p>
                                 <p style="line-height:15px;margin:10px;font-size: 100%;">
                                     <b>Fecha retiro</b>
@@ -218,7 +217,7 @@
                                     </tr>
                                     <tr>
                                         <td class="text-justify" colspan="2">
-                                            <span t-esc="o.contract_id.get_amount_text(o.line_ids.filtered(lambda line: line.code == 'NET').total).lower().capitalize()"/> pesos
+                                            <span t-esc="o.version_id.get_amount_text(o.line_ids.filtered(lambda line: line.code == 'NET').total).lower().capitalize()"/> pesos
                                         </td>
                                     </tr>
                                 </table>
@@ -233,7 +232,7 @@
     <template id="report_liquidacion_final">
         <t t-foreach="docs" t-as="o">
             <t t-set="inside_foreach_docs" t-value="o"/>
-            <t t-call="zue_hr_payroll.report_liquidacion_final_document" t-lang="o.employee_id.address_home_id.lang"/>
+            <t t-call="zue_hr_payroll.report_liquidacion_final_document" t-lang="o.employee_id.work_contact_id.lang"/>
         </t>
     </template>
 

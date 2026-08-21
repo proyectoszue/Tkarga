@@ -18,9 +18,6 @@
                             <group>
                                 <button name="download_excel" string="Descargar Excel" type="object" class="oe_highlight"/>
                             </group>
-                            <group>
-                                <button name="solution_report" string="Corregir Entradas" type="object" class="oe_highlight"/>
-                            </group>
                         </group>
                         <footer>
                             <button special="cancel" class="oe_link" string="Cancelar" />

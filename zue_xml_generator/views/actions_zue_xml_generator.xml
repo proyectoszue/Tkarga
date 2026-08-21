@@ -5,7 +5,7 @@
         <record id="action_xml_generator" model="ir.actions.act_window">
             <field name="name">Generar XML</field>
             <field name="res_model">zue.xml.generator.header</field>
-            <field name="view_mode">tree,form</field>
+            <field name="view_mode">list,form</field>
             <field name="help" type="html">
                 <p class="oe_view_nocontent_create">Crear XML
                 </p>
@@ -16,11 +16,11 @@
             <field name="name">zue list xml generator</field>
             <field name="model">zue.xml.generator.header</field>
             <field name="arch" type="xml">
-                <tree>
+                <list>
                     <field name="name"/>
                     <field name="code"/>
                     <field name="description"/>
-                </tree>
+                </list>
             </field>
         </record>
 
@@ -34,8 +34,8 @@
                         <field name="code"/>
                         <field name="description"/>
                     </group>
-                    <group string="Estructura del XML (Tags)">
-                        <p>
+                    <group string="Estructura del XML (Tags)" colspan="2">
+                        <p colspan="2">
                             Notas:<br/>
 
                             1. Los tags marcados como Padres, no deben tener información en el campo código, si la tiene el sistema no la procesara.<br/>
@@ -50,9 +50,9 @@
                             obj_xml.xml_generator(self)<br/>
                         </p>
                     </group>
-                    <group>
-                        <field name="details_ids" nolabel="1">
-                            <tree editable="bottom">
+                    <group colspan="2">
+                        <field name="details_ids" nolabel="1" colspan="2">
+                            <list editable="bottom">
                                 <field name="name"/>
                                 <field name="sequence"/>
                                 <field name="is_parent"/>
@@ -62,7 +62,7 @@
                                 <field name="code_validation_python" optional="show"/>
                                 <field name="is_for" optional="show"/>
                                 <field name="internal_for" optional="show"/>
-                            </tree>
+                            </list>
                         </field>
                     </group>
                 </form>

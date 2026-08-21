@@ -1,0 +1,52 @@
+.z_badge_layout_editor .z_badge_canvas {
+    position: relative;
+    background: #111;
+    overflow: hidden;
+    flex-shrink: 0;
+    user-select: none;
+}
+
+.z_badge_layout_editor .z_badge_bg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: fill;
+    pointer-events: none;
+}
+
+.z_badge_layout_editor .z_badge_bg_empty {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    text-align: center;
+    background: #f8f9fa;
+}
+
+.z_badge_layout_editor .z_badge_box {
+    position: absolute;
+    z-index: 2;
+    border: 1px dashed #00d4ff;
+    background: rgba(0, 212, 255, 0.18);
+    color: #fff;
+    font-size: 10px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: move;
+    box-sizing: border-box;
+    text-shadow: 0 0 2px #000;
+}
+
+.z_badge_layout_editor .z_badge_box_active {
+    border-color: #ffd700;
+    background: rgba(255, 215, 0, 0.28);
+}
+
+.z_badge_layout_editor .z_badge_size_panel {
+    min-width: 160px;
+}

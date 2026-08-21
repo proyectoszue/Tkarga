@@ -22,25 +22,36 @@ class hr_contact_employee_review_report(models.Model):
         companies_ids = self.env.companies.ids
         if not companies_ids:
             raise ValidationError(_('No se encontraron compañías asociadas al usuario. Por favor verificar.'))
-        
+
         companies_ids_str = ','.join(map(str, companies_ids))
 
         query_report = '''
-            select 
+            select
+                he.id as employee_id,
                 coalesce(rp.vat, '') as numero_documento_contacto,
                 coalesce(rp.name, '') as nombre_completo_contacto,
-                coalesce(he.identification_id, '') as numero_documento_empleado,
                 coalesce(he.name, '') as nombre_completo_empleado
             from hr_employee he
-            inner join res_partner rp ON he.address_home_id = rp.id
+            inner join res_partner rp ON he.work_contact_id = rp.id
             where he.active = true
             and he.company_id in (%s)
-            order by rp.vat, he.identification_id
+            order by rp.vat, he.name
         ''' % companies_ids_str
 
-        self._cr.execute(query_report)
-        result_query = self._cr.dictfetchall()
-        
+        self.env.cr.execute(query_report)
+        rows = self.env.cr.dictfetchall()
+
+        Employee = self.env['hr.employee']
+        result_query = []
+        for row in rows:
+            employee = Employee.browse(row['employee_id'])
+            result_query.append({
+                'numero_documento_contacto': row['numero_documento_contacto'],
+                'nombre_completo_contacto': row['nombre_completo_contacto'],
+                'numero_documento_empleado': (employee.identification_id or ''),
+                'nombre_completo_empleado': row['nombre_completo_empleado'],
+            })
+
         if len(result_query) == 0:
             raise ValidationError(_('No se encontró información para generar el reporte. Por favor verificar.'))
 
@@ -94,17 +105,17 @@ class hr_contact_employee_review_report(models.Model):
 
         # Agregar datos
         aument_rows = 4
-        
+
         # Formato para datos normales
         cell_format_data = book.add_format({'align': 'left', 'border': 1})
         cell_format_data.set_font_name('Calibri')
         cell_format_data.set_font_size(10)
-        
+
         # Formato para filas con diferencia en documentos (fondo rojo claro)
         cell_format_diff_documento = book.add_format({'align': 'left', 'border': 1, 'bg_color': '#FFC7CE'})
         cell_format_diff_documento.set_font_name('Calibri')
         cell_format_diff_documento.set_font_size(10)
-        
+
         # Formato para filas con diferencia en nombres (fondo amarillo)
         cell_format_diff_nombre = book.add_format({'align': 'left', 'border': 1, 'bg_color': '#FFEB9C'})
         cell_format_diff_nombre.set_font_name('Calibri')
@@ -116,11 +127,11 @@ class hr_contact_employee_review_report(models.Model):
             num_doc_empleado = str(query.get('numero_documento_empleado', '') or '').strip()
             nombre_contacto = str(query.get('nombre_completo_contacto', '') or '').strip()
             nombre_empleado = str(query.get('nombre_completo_empleado', '') or '').strip()
-            
+
             # Verificar si hay diferencias
             diferencia_documento = num_doc_contacto != num_doc_empleado
             diferencia_nombre = nombre_contacto != nombre_empleado
-            
+
             # Seleccionar formato según el tipo de diferencia
             if diferencia_documento:
                 formato_a_usar = cell_format_diff_documento
@@ -128,7 +139,7 @@ class hr_contact_employee_review_report(models.Model):
                 formato_a_usar = cell_format_diff_nombre
             else:
                 formato_a_usar = cell_format_data
-            
+
             sheet.write(aument_rows, 0, num_doc_contacto, formato_a_usar)
             sheet.write(aument_rows, 1, nombre_contacto, formato_a_usar)
             sheet.write(aument_rows, 2, num_doc_empleado, formato_a_usar)

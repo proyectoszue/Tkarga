@@ -41,20 +41,46 @@
                                         <br/>
                                         <table class="table table-striped">
                                             <tr class="text-center">
-                                                <td style="width: 25%" t-if="cp_template.signature_prepared == True">
-                                                    ELABORÓ
-                                                    <br/>
-                                                    <t t-if="cp_template.txt_signature_prepared == '$_name_employee'">
-                                                        <span t-if="cp_template.txt_signature_prepared"
-                                                              t-esc="o.employee_id.name"/>
+                                                <!-- Estado Hecho o Elaboró -->
+                                                <td style="width: 25%" t-if="cp_template.z_signature_done or cp_template.signature_prepared">
+                                                    <strong>ELABORÓ</strong>
+                                                    <!-- signature_prepared = True -->
+                                                    <t t-if="cp_template.signature_prepared">
                                                         <br/>
-                                                        C.C
-                                                        <span t-if="cp_template.txt_signature_prepared"
-                                                              t-esc="o.employee_id.identification_id"/>
+                                                        <t t-if="cp_template.z_txt_signature_prepared_contact == '$_name_employee'">
+                                                            <span t-if="cp_template.z_txt_signature_prepared_contact" t-esc="o.employee_id.name"/>
+                                                            <br/>
+                                                            <span>C.C: </span>
+                                                            <span t-if="cp_template.z_txt_signature_prepared_contact" t-esc="o.employee_id.identification_id"/>
+                                                        </t>
+                                                        <t t-else="">
+                                                            <span>Contacto Elaboró: </span>
+                                                            <span t-if="cp_template.z_txt_signature_prepared_contact" t-esc="cp_template.z_txt_signature_prepared_contact"/>
+                                                        </t>
                                                     </t>
-                                                    <t t-else="">
-                                                        <span t-if="cp_template.txt_signature_prepared"
-                                                              t-esc="cp_template.txt_signature_prepared"/>
+                                                    <!-- z_signature_done = True -->
+                                                    <t t-if="cp_template.z_signature_done">
+                                                        <br/>
+                                                        <t t-if="cp_template.z_txt_signature_prepared_contact == '$_name_employee'">
+                                                            <span t-if="cp_template.z_txt_signature_prepared_contact" t-esc="cp_template.z_txt_signature_prepared_contact.name"/>
+                                                            <br/>
+                                                            <span>C.C: </span>
+                                                            <span t-if="cp_template.z_txt_signature_prepared_contact" t-esc="o.employee_id.identification_id"/>
+                                                        </t>
+                                                        <t t-else="">
+                                                            <span>Creado Por: </span>
+                                                            <span t-if="o.create_uid" t-esc="o.create_uid.name" />
+                                                            <br/>
+<!--                                                            <span>Hecho Por: </span>-->
+<!--                                                            <span t-if="o.write_uid" t-esc="o.write_uid.name" />-->
+<!--                                                            <br/>-->
+                                                            <span>Sucursal: </span>
+                                                            <span t-if="o.write_uid.branch_id" t-esc="o.write_uid.branch_id.name" />
+                                                            <br/>
+                                                            <span>Cargo: </span>
+                                                            <span t-if="cp_template.z_txt_post_prepared" t-esc="cp_template.z_txt_post_prepared"/>
+                                                        </t>
+                                                        <br/>
                                                     </t>
                                                 </td>
                                                 <td style="width: 25%" t-if="cp_template.signature_reviewed == True">
@@ -152,20 +178,46 @@
                                         <br/>
                                         <table class="table table-striped">
                                             <tr class="text-center">
-                                                <td style="width: 25%" t-if="cp_template.signature_prepared == True">
-                                                    ELABORÓ
-                                                    <br/>
-                                                    <t t-if="cp_template.txt_signature_prepared == '$_name_employee'">
-                                                        <span t-if="cp_template.txt_signature_prepared"
-                                                              t-esc="o.employee_id.name"/>
+                                                <!-- Estado Hecho o Elaboró -->
+                                                <td style="width: 25%" t-if="cp_template.z_signature_done or cp_template.signature_prepared">
+                                                    <strong>ELABORÓ</strong>
+                                                    <!-- signature_prepared = True -->
+                                                    <t t-if="cp_template.signature_prepared">
                                                         <br/>
-                                                        C.C
-                                                        <span t-if="cp_template.txt_signature_prepared"
-                                                              t-esc="o.employee_id.identification_id"/>
+                                                        <t t-if="cp_template.z_txt_signature_prepared_contact == '$_name_employee'">
+                                                            <span t-if="cp_template.z_txt_signature_prepared_contact" t-esc="o.employee_id.name"/>
+                                                            <br/>
+                                                            <span>C.C: </span>
+                                                            <span t-if="cp_template.z_txt_signature_prepared_contact" t-esc="o.employee_id.identification_id"/>
+                                                        </t>
+                                                        <t t-else="">
+                                                            <span>Contacto Elaboró: </span>
+                                                            <span t-if="cp_template.z_txt_signature_prepared_contact" t-esc="cp_template.z_txt_signature_prepared_contact"/>
+                                                        </t>
                                                     </t>
-                                                    <t t-else="">
-                                                        <span t-if="cp_template.txt_signature_prepared"
-                                                              t-esc="cp_template.txt_signature_prepared"/>
+                                                    <!-- z_signature_done = True -->
+                                                    <t t-if="cp_template.z_signature_done">
+                                                        <br/>
+                                                        <t t-if="cp_template.z_txt_signature_prepared_contact == '$_name_employee'">
+                                                            <span t-if="cp_template.z_txt_signature_prepared_contact" t-esc="cp_template.z_txt_signature_prepared_contact.name"/>
+                                                            <br/>
+                                                            <span>C.C: </span>
+                                                            <span t-if="cp_template.z_txt_signature_prepared_contact" t-esc="o.employee_id.identification_id"/>
+                                                        </t>
+                                                        <t t-else="">
+                                                            <span>Creado Por: </span>
+                                                            <span t-if="o.create_uid" t-esc="o.create_uid.name" />
+                                                            <br/>
+<!--                                                            <span>Hecho Por: </span>-->
+<!--                                                            <span t-if="o.write_uid" t-esc="o.write_uid.name" />-->
+<!--                                                            <br/>-->
+                                                            <span>Sucursal: </span>
+                                                            <span t-if="o.write_uid.branch_id" t-esc="o.write_uid.branch_id.name" />
+                                                            <br/>
+                                                            <span>Cargo: </span>
+                                                            <span t-if="cp_template.z_txt_post_prepared" t-esc="cp_template.z_txt_post_prepared"/>
+                                                        </t>
+                                                        <br/>
                                                     </t>
                                                 </td>
                                                 <td style="width: 25%" t-if="cp_template.signature_reviewed == True">
@@ -235,7 +287,7 @@
             <t t-foreach="docs" t-as="o">
                 <t t-set="inside_foreach_docs" t-value="o"/>
                 <t t-call="zue_hr_payroll.reports_payslip_header_footer_template"
-                   t-lang="o.employee_id.address_home_id.lang"/>
+                   t-lang="o.employee_id.work_contact_id.lang"/>
             </t>
         </template>
 

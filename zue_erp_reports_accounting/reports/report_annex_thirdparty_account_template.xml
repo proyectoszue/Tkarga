@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <template id="annex_thirdparty_account_document">
+        <t t-call="web.html_container">
+            <t t-foreach="inside_foreach_docs or docs" t-as="o">
+                <t t-call="web.basic_layout">
+                    <div class="page" style="font-size: 10px; page-break-before: avoid;">
+                        <div style="vertical-align: middle;" align="center">
+                            <h4>
+                                <t t-esc="o.z_concept_id.z_company_id.name"/>
+                            </h4>
+                            <h4>NIT:
+                                <t t-esc="o.z_concept_id.z_company_id.vat"/>
+                            </h4>
+                            <h4>Anexo Cuenta Tercero</h4>
+                            <h4>
+                                <t t-esc="o.z_concept_id.display_name"/>/<t t-esc="o.z_initial_date"/>-
+                                <t t-esc="o.z_final_date"/>
+                            </h4>
+                        </div>
+                        <div class="container" style="vertical-align: middle;" align="center">
+                            <div class="table-responsive">
+                                <table class="table table-sm" style="font-size: 10px;">
+                                    <!-- Recorremos las cuentas -->
+                                    <t t-set="account_name" t-value="'start'"/>
+                                    <t t-set="gran_total_account_registered" t-value="0"/>
+                                    <t t-set="gran_total_account_base" t-value="0"/>
+                                    <t t-foreach="o.get_accounts()" t-as="account_group">
+                                        <t t-if="account_name!=account_group['account_name'] and account_name!='start'">
+                                            <!-- Gran total de la cuenta -->
+                                            <tr>
+                                                <td colspan="3" class="text-left font-weight-bold">
+                                                    <b>Gran Total
+                                                        <t t-esc="account_name"/>
+                                                    </b>
+                                                </td>
+                                                <td class="text-left font-weight-bold">
+                                                    <b>
+                                                        <t t-esc="'{:,.2f}'.format(gran_total_account_registered)"/>
+                                                    </b>
+                                                </td>
+                                                <td class="text-left font-weight-bold">
+                                                    <b>
+                                                        <t t-esc="'{:,.2f}'.format(gran_total_account_base)"/>
+                                                    </b>
+                                                </td>
+                                                <t t-set="gran_total_account_registered" t-value="0"/>
+                                                <t t-set="gran_total_account_base" t-value="0"/>
+                                            </tr>
+                                            <!-- Encabezado de cuenta -->
+                                            <tr class="table-dark">
+                                                <td colspan="5" class="text-left font-weight-bold">
+                                                    <b class="text-left font-weight-bold">
+                                                        <span t-esc="account_group['account_name']"/>
+                                                    </b>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <t t-if="account_name=='start'">
+                                            <!-- Encabezado de cuenta -->
+                                            <tr class="table-dark">
+                                                <td colspan="5" class="text-left font-weight-bold">
+                                                    <b class="text-left font-weight-bold">
+                                                        <span t-esc="account_group['account_name']"/>
+                                                    </b>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                        <!-- Detalles de terceros -->
+                                        <t t-set="count" t-value="0"/>
+                                        <t t-foreach="account_group['accounts']" t-as="account">
+                                            <tr class="table-secondary" t-if="count==0">
+                                                <td colspan="5" class="text-left font-weight-bold">
+                                                    <b>
+                                                        Tipo:
+                                                        <t t-esc="account_group['partner_type']"/>
+                                                    </b>
+                                                </td>
+                                                <!-- Encabezados de columnas -->
+                                                <tr>
+                                                    <td style="text-align: left;" class="text-left font-weight-bold">
+                                                        <b>Tipo Documento</b>
+                                                    </td>
+                                                    <td style="text-align: left;" class="text-left font-weight-bold">
+                                                        <b>Num. Documento</b>
+                                                    </td>
+                                                    <td style="text-align: left;" class="text-left font-weight-bold">
+                                                        <b>Tercero</b>
+                                                    </td>
+                                                    <td style="text-align: left;" class="text-left font-weight-bold">
+                                                        <b>Valor Registrado</b>
+                                                    </td>
+                                                    <td style="text-align: left;" class="text-left font-weight-bold">
+                                                        <b>Valor Base</b>
+                                                    </td>
+                                                </tr>
+                                            </tr>
+                                            <tr>
+                                                <td>
+                                                    <t t-esc="account['document_type']"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="account['document_num']"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="account['thirdparty']"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="'{:,.2f}'.format(account['registered_value'])"/>
+                                                </td>
+                                                <td>
+                                                    <t t-esc="'{:,.2f}'.format(account['base_value'])"/>
+                                                </td>
+                                            </tr>
+                                            <t t-set="count" t-value="count+1"/>
+                                        </t>
+                                        <!-- Subtotales por tipo de tercero -->
+                                        <tr>
+                                            <td colspan="3" class="text-left font-weight-bold">
+                                                <b>Total
+                                                    <t t-esc="account_group['partner_type']"/>
+                                                </b>
+                                            </td>
+                                            <td class="text-left font-weight-bold">
+                                                <b>
+                                                    <t t-esc="'{:,.2f}'.format(account_group['total_registered_value'])"/>
+                                                </b>
+                                            </td>
+                                            <td class="text-left font-weight-bold">
+                                                <b>
+                                                    <t t-esc="'{:,.2f}'.format(account_group['total_base_value'])"/>
+                                                </b>
+                                            </td>
+                                        </tr>
+
+                                        <t t-set="account_name" t-value="account_group['account_name']"/>
+                                        <t t-set="gran_total_account_registered"
+                                           t-value="gran_total_account_registered+account_group['total_registered_value']"/>
+                                        <t t-set="gran_total_account_base"
+                                           t-value="gran_total_account_base+account_group['total_base_value']"/>
+
+                                    </t>
+                                </table>
+                            </div>
+                            <div style="page-break-after: always;"/>
+                            <div class="table-responsive mt-4">
+                                <h4>Resumen de Cuentas</h4>
+                                <table class="table table-sm" style="font-size: 10px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Nombre de la Cuenta</th>
+                                            <th>Total Registrado</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="o.get_summary_accounts()" t-as="summary">
+                                            <tr t-if="not summary['account_name'].startswith('  ')">
+                                                <td style="text-align: left; font-weight: bold;">
+                                                    <t t-esc="summary['account_name']"/>
+                                                </td>
+                                                <td style="text-align: left; font-weight: bold;">
+                                                    <t t-esc="'{:,.2f}'.format(summary['total_value'])"/>
+                                                </td>
+                                            </tr>
+                                            <tr t-if="summary['account_name'].startswith('  ')">
+                                                <td style="text-align: left;">
+                                                    <t t-esc="summary['account_name']"/>
+                                                </td>
+                                                <td style="text-align: left;">
+                                                    <t t-esc="'{:,.2f}'.format(summary['total_value'])"/>
+                                                </td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+
+
+    <template id="annex_thirdparty_account_id">
+        <t t-foreach="docs" t-as="o">
+            <t t-set="inside_foreach_docs" t-value="o"/>
+            <t t-call="zue_erp_reports_accounting.annex_thirdparty_account_document"/>
+        </t>
+    </template>
+
+</odoo>
