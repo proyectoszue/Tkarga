@@ -90,7 +90,7 @@
                     </div>
                 </xpath>
                 <xpath expr="//field[@name='category_id']" position="after">
-                    <field name="company_id" string="Compañía" required="1"/>
+                    <field name="company_id" string="Compañía"/>
                 </xpath>
             </field>
         </record>
