@@ -85,12 +85,14 @@ class ResPartner(models.Model):
 
     @api.model
     def _get_view(self, view_id=None, view_type='form', **options):
+        """Fuerza el readonly del vat en cualquier vista final (gana a Studio). El tipo queda siempre editable."""
         arch, view = super()._get_view(view_id, view_type, **options)
         if view_type == 'form':
-            for node in arch.xpath("//field[@name='vat' or @name='l10n_latam_identification_type_id']"):
+            for node in arch.xpath("//field[@name='vat']"):
                 node.set('readonly', 'parent_id or z_identification_readonly')
+            for node in arch.xpath("//field[@name='l10n_latam_identification_type_id']"):
+                node.set('readonly', '0')
         return arch, view
-
 
     #UBICACIÓN PRINCIPAL
     x_city = fields.Many2one('zue.city', string='Ciudad ZUE TMP V15', tracking=True, ondelete='restrict') # TMP MIENTRAS MIGRACION a v19 DESPUES SE DEBE ELIMINAR
@@ -115,8 +117,8 @@ class ResPartner(models.Model):
     x_acceptance_date = fields.Date(string='Fecha de aceptación', tracking=True)
     x_not_contacted_again = fields.Boolean(string='No volver a ser contactado', tracking=True)
     x_date_decoupling = fields.Date(string="Fecha de desvinculación", tracking=True)
-    x_reason_desvinculation_text = fields.Text(string='Motivo desvinculación') 
-    
+    x_reason_desvinculation_text = fields.Text(string='Motivo desvinculación')
+
     #INFORMACION FINANCIERA
     x_company_size = fields.Selection([
                                         ('1', 'Mipyme'),
@@ -134,7 +136,7 @@ class ResPartner(models.Model):
                                         ('5', 'Web'),
                                         ('6', 'Otro')
                                     ], string='Origen de la cuenta', tracking=True)
-    
+
     @api.onchange('x_zip_id')
     @api.depends('x_zip_id')
     def _zip_update_zue(self):
@@ -146,45 +148,69 @@ class ResPartner(models.Model):
     @api.constrains('vat', 'country_id')
     def _check_vat(self, validation="error"):
         if self.sudo().env.ref('base.module_base_vat').state == 'installed':
-            # Si tiene el pais tiene marcado el check z_skip_validation no validar el check_vat
-            self = self.filtered(lambda partner: partner.country_id.z_skip_validation == False)
-            return super(ResPartner, self)._check_vat()
+            def _skip_standard_vat_validation(partner):
+                commercial_partner = partner.commercial_partner_id if 'commercial_partner_id' in partner._fields else False
+                country = commercial_partner.country_id if commercial_partner else partner.country_id
+                normalized_vat = (partner.vat or '').replace('-', '').replace(' ', '').upper()
+                is_de_document = 'x_document_type_guatemala' in partner._fields and partner.x_document_type_guatemala == 'DE'
+                is_gt_cui_nit = country and country.code == 'GT' and normalized_vat.isdigit() and len(normalized_vat) == 13
+                skip_by_country = bool(country and 'z_skip_validation' in country._fields and country.z_skip_validation)
+                return skip_by_country or is_de_document or is_gt_cui_nit
+
+            partners_to_validate = self.filtered(lambda partner: not _skip_standard_vat_validation(partner))
+            if not partners_to_validate:
+                return True
+            return super(ResPartner, partners_to_validate)._check_vat(validation=validation)
         else:
             return True
 
-    @api.depends('vat')
-    def _compute_no_same_vat_partner_id(self):
+    @api.depends('vat', 'company_id', 'company_registry', 'country_id')
+    def _compute_same_vat_partner_id(self):
         for partner in self:
-            partner.same_vat_partner_id = ""
+            partner.same_vat_partner_id = False
+            partner.same_company_registry_partner_id = False
 
-    @api.depends('vat', 'l10n_latam_identification_type_id', 'country_id')
+    @api.depends('vat','l10n_latam_identification_type_id','country_id')
     def _compute_verification_digit(self, return_digit=0):
+        # Logica para calcular digito de verificación
         multiplication_factors = [71, 67, 59, 53, 47, 43, 41, 37, 29, 23, 19, 17, 13, 7, 3]
+        digit = 0
 
         for partner in self:
             identification_type = partner.l10n_latam_identification_type_id
             has_co_document_code = (
-                identification_type and 'l10n_co_document_code' in identification_type._fields
+                    identification_type
+                    and 'l10n_co_document_code' in identification_type._fields
             )
-            vat_digits = ''.join(c for c in (partner.vat or '').split('-')[0] if c.isdigit())
-            if (
-                has_co_document_code
-                and identification_type.l10n_co_document_code == 'rut'
-                and vat_digits
-                and len(vat_digits) <= len(multiplication_factors)
-            ) or return_digit:
-                try:
-                    padded_vat = vat_digits.zfill(len(multiplication_factors))
-                    number = sum(
-                        int(digit) * multiplication_factors[index]
-                        for index, digit in enumerate(padded_vat)
-                    )
-                    number %= 11
-                    digit = number if number < 2 else 11 - number
-                    if return_digit:
-                        return digit
-                    partner.x_digit_verification = digit
-                except ValueError:
+            if has_co_document_code:
+                if (partner.vat and partner.l10n_latam_identification_type_id.l10n_co_document_code == 'rut' and len(partner.vat) <= len(
+                        multiplication_factors)) or return_digit:
+                    number = 0
+                    padded_vat = partner.vat.split('-')[0]
+
+                    while len(padded_vat) < len(multiplication_factors):
+                        padded_vat = '0' + padded_vat
+
+                    # if there is a single non-integer in vat the verification code should be False
+                    try:
+                        for index, vat_number in enumerate(padded_vat):
+                            number += int(vat_number) * multiplication_factors[index]
+
+                        number %= 11
+
+                        if number < 2:
+                            digit = number
+                        else:
+                            digit = 11 - number
+
+                        if not return_digit:
+                            partner.x_digit_verification = digit
+                        else:
+                            return digit
+
+                    except ValueError:
+                        partner.x_digit_verification = False
+                else:
                     partner.x_digit_verification = False
             else:
                 partner.x_digit_verification = False
@@ -193,9 +219,11 @@ class ResPartner(models.Model):
     def _run_vat_test(self, vat_number, default_country, partner_is_company=True):
         if default_country.z_skip_validation:
             return True
-        else:
-            res = super(ResPartner, self)._run_vat_test(vat_number, default_country, partner_is_company)
-            return res
+        if default_country.code == 'GT' and vat_number:
+            normalized_vat = vat_number.replace('-', '').replace(' ', '').upper()
+            if normalized_vat.isdigit() and len(normalized_vat) == 13:
+                return True
+        return super(ResPartner, self)._run_vat_test(vat_number, default_country, partner_is_company)
 
     #Onchange
     # @api.onchange('x_type_thirdparty')
@@ -205,8 +233,8 @@ class ResPartner(models.Model):
     #             for i in record.x_type_thirdparty:
     #                 print(i.id)
     #                 if i.id == 2 and record.company_type == 'company':
-    #                     raise UserError(_('Una compañia no puede estar catalogada como contacto, por favor verificar.')) 
-        
+    #                     raise UserError(_('Una compañia no puede estar catalogada como contacto, por favor verificar.'))
+
     @api.onchange('email')
     def _onchange_email(self):
         for record in self:
@@ -230,7 +258,7 @@ class ResPartner(models.Model):
                         and 'l10n_co_document_code' in identification_type._fields
                 )
                 if has_co_document_code and record.l10n_latam_identification_type_id.l10n_co_document_code == 'rut' and len(record.vat) > 9:
-                    raise UserError(_('El campo número de documento no debe tener mas de 9 dígitos cuando el tipo de documento es NIT.'))   
+                    raise UserError(_('El campo número de documento no debe tener mas de 9 dígitos cuando el tipo de documento es NIT.'))
 
                 company_id = record.company_id.id or self.env.company.id
                 domain = [
@@ -244,12 +272,12 @@ class ResPartner(models.Model):
                 obj = self.search(domain, limit=1)
                 if obj:
                     record.vat = ""
-                    raise UserError(_('Ya existe un Cliente con este número de NIT.'))                    
+                    raise UserError(_('Ya existe un Cliente con este número de NIT.'))
                 objArchivado = self.with_context(active_test=False).search(domain + [('active', '=', False)], limit=1)
                 if objArchivado:
                     record.vat = ""
-                    raise UserError(_('Ya existe un Cliente con este número de NIT pero se encuentra archivado.')) 
-    
+                    raise UserError(_('Ya existe un Cliente con este número de NIT pero se encuentra archivado.'))
+
     #-----------Validaciones
 
     @api.model
@@ -305,11 +333,11 @@ class ResPartner(models.Model):
                                 name_tercer = tercer.name or ''
                                 user_create = tercer.create_uid.name or ''
             if cant_vat > 1:
-                raise ValidationError(_('Ya existe un Cliente ('+name_tercer+') con este número de NIT creado por '+user_create+'.'))                
+                raise ValidationError(_('Ya existe un Cliente ('+name_tercer+') con este número de NIT creado por '+user_create+'.'))
             if cant_vat_archivado > 1:
-                raise ValidationError(_('Ya existe un Cliente ('+name_tercer+') con este número de NIT pero se encuentra archivado, fue creado por '+user_create+'.'))                
+                raise ValidationError(_('Ya existe un Cliente ('+name_tercer+') con este número de NIT pero se encuentra archivado, fue creado por '+user_create+'.'))
             if cant_vat_ind > 1:
-                raise ValidationError(_('Ya existe un Tercero ('+name_tercer+') con este número de ID creado por '+user_create+'.'))                
+                raise ValidationError(_('Ya existe un Tercero ('+name_tercer+') con este número de ID creado por '+user_create+'.'))
             if cant_vat_archivado_ind > 1:
                 raise ValidationError(_('Ya existe un Tercero ('+name_tercer+') con este número de ID pero se encuentra archivado, fue creado por '+user_create+'.'))
 
@@ -410,8 +438,8 @@ class ResPartner(models.Model):
 
                 name_partner = ''
                 name_partner = name_partner+fn if fn != '' else name_partner
-                name_partner = name_partner+" "+sn if sn != '' and name_partner != '' else name_partner+sn            
-                name_partner = name_partner+" "+fl if fl != '' and name_partner != '' else name_partner+fl            
+                name_partner = name_partner+" "+sn if sn != '' and name_partner != '' else name_partner+sn
+                name_partner = name_partner+" "+fl if fl != '' and name_partner != '' else name_partner+fl
                 name_partner = name_partner+" "+sl if sl != '' and name_partner != '' else name_partner+sl
 
                 record.name = name_partner.upper()
@@ -422,12 +450,11 @@ class ResPartner(models.Model):
 
     @api.onchange('name')
     def _onchange_info_name_upper(self):
-        for record in self:            
+        for record in self:
             record.name = record.name.upper() if record.name else False
 
-
     def _zue_identification_should_lock(self):
-        """Bloquea tipo/número solo si el contacto ya existe y tiene datos obligatorios completos."""
+        """Bloquea el número de identificación solo si el contacto ya existe y tiene datos obligatorios completos."""
         self.ensure_one()
         if not self.vat or not self.l10n_latam_identification_type_id:
             return False
@@ -453,35 +480,23 @@ class ResPartner(models.Model):
             )
 
     def _zue_check_identification_lock(self, vals):
+        """Bloquea el cambio de vat una vez el contacto está completo. El tipo de documento sigue editable."""
         if self.env.context.get('allow_partner_identification_update') or self.env.su:
             return
-        if 'vat' not in vals and 'l10n_latam_identification_type_id' not in vals:
+        if 'vat' not in vals:
             return
         for partner in self:
             if not isinstance(partner.id, int):
                 continue
             if not partner._zue_identification_should_lock():
                 continue
-
-            if 'vat' in vals:
-                new_vat = vals.get('vat') or False
-                if isinstance(new_vat, str):
-                    new_vat = new_vat.strip() or False
-                if (new_vat or '') != (partner.vat or '').strip():
-                    raise ValidationError(_(
-                        'El tipo o número de identificación no puede ser modificado una vez creado el contacto.'
-                    ))
-            if 'l10n_latam_identification_type_id' in vals:
-                new_type = vals.get('l10n_latam_identification_type_id')
-                if isinstance(new_type, models.BaseModel):
-                    new_type = new_type.id
-                elif isinstance(new_type, (list, tuple)) and new_type:
-                    new_type = new_type[1] if len(new_type) > 1 and not isinstance(new_type[0], int) else new_type[0]
-                current_type = partner.l10n_latam_identification_type_id.id
-                if (int(new_type) if new_type else False) != current_type:
-                    raise ValidationError(_(
-                        'El tipo o número de identificación no puede ser modificado una vez creado el contacto.'
-                    ))
+            new_vat = vals.get('vat') or False
+            if isinstance(new_vat, str):
+                new_vat = new_vat.strip() or False
+            if (new_vat or '') != (partner.vat or '').strip():
+                raise ValidationError(_(
+                    'El número de identificación no puede ser modificado una vez creado el contacto.'
+                ))
 
     @api.model_create_multi
     def create(self, values_list):
@@ -519,6 +534,9 @@ class ResPartner(models.Model):
             vals['x_second_lastname'] = vals.get('x_second_lastname', False).upper()
         self = self.with_context(no_vat_validation=True)
         res = super(ResPartner, self).write(vals)
-        for record in self:
-            record.validate_fields_mandatory_type_thirdparty()
+        if len(vals) == 1 and 'same_vat_partner_id' in vals:
+            return res
+        else:
+            for record in self:
+                record.validate_fields_mandatory_type_thirdparty()
         return res

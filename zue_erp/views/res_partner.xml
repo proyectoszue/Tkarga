@@ -56,9 +56,6 @@
                     <field name="x_first_lastname" invisible="is_company"/>
                     <field name="x_second_lastname" invisible="is_company"/>
                 </xpath>
-                <xpath expr="//field[@name='vat']" position="attributes">
-                    <attribute name="readonly">parent_id or z_identification_readonly</attribute>
-                </xpath>
                 <xpath expr="//form[1]/sheet[1]/group[1]/group[1]/div[1]/field[@name='zip']" position="attributes">
                     <attribute name="invisible">1</attribute>
                 </xpath>
@@ -90,7 +87,7 @@
                     </div>
                 </xpath>
                 <xpath expr="//field[@name='category_id']" position="after">
-                    <field name="company_id" string="Compañía" required="1"/>
+                    <field name="company_id" string="Compañía"/>
                 </xpath>
             </field>
         </record>
