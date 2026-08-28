@@ -117,8 +117,8 @@ class ResPartner(models.Model):
     x_acceptance_date = fields.Date(string='Fecha de aceptación', tracking=True)
     x_not_contacted_again = fields.Boolean(string='No volver a ser contactado', tracking=True)
     x_date_decoupling = fields.Date(string="Fecha de desvinculación", tracking=True)
-    x_reason_desvinculation_text = fields.Text(string='Motivo desvinculación')
-
+    x_reason_desvinculation_text = fields.Text(string='Motivo desvinculación') 
+    
     #INFORMACION FINANCIERA
     x_company_size = fields.Selection([
                                         ('1', 'Mipyme'),
@@ -136,7 +136,7 @@ class ResPartner(models.Model):
                                         ('5', 'Web'),
                                         ('6', 'Otro')
                                     ], string='Origen de la cuenta', tracking=True)
-
+    
     @api.onchange('x_zip_id')
     @api.depends('x_zip_id')
     def _zip_update_zue(self):
@@ -233,8 +233,8 @@ class ResPartner(models.Model):
     #             for i in record.x_type_thirdparty:
     #                 print(i.id)
     #                 if i.id == 2 and record.company_type == 'company':
-    #                     raise UserError(_('Una compañia no puede estar catalogada como contacto, por favor verificar.'))
-
+    #                     raise UserError(_('Una compañia no puede estar catalogada como contacto, por favor verificar.')) 
+        
     @api.onchange('email')
     def _onchange_email(self):
         for record in self:
@@ -258,7 +258,7 @@ class ResPartner(models.Model):
                         and 'l10n_co_document_code' in identification_type._fields
                 )
                 if has_co_document_code and record.l10n_latam_identification_type_id.l10n_co_document_code == 'rut' and len(record.vat) > 9:
-                    raise UserError(_('El campo número de documento no debe tener mas de 9 dígitos cuando el tipo de documento es NIT.'))
+                    raise UserError(_('El campo número de documento no debe tener mas de 9 dígitos cuando el tipo de documento es NIT.'))   
 
                 company_id = record.company_id.id or self.env.company.id
                 domain = [
@@ -438,8 +438,8 @@ class ResPartner(models.Model):
 
                 name_partner = ''
                 name_partner = name_partner+fn if fn != '' else name_partner
-                name_partner = name_partner+" "+sn if sn != '' and name_partner != '' else name_partner+sn
-                name_partner = name_partner+" "+fl if fl != '' and name_partner != '' else name_partner+fl
+                name_partner = name_partner+" "+sn if sn != '' and name_partner != '' else name_partner+sn            
+                name_partner = name_partner+" "+fl if fl != '' and name_partner != '' else name_partner+fl            
                 name_partner = name_partner+" "+sl if sl != '' and name_partner != '' else name_partner+sl
 
                 record.name = name_partner.upper()
@@ -450,7 +450,7 @@ class ResPartner(models.Model):
 
     @api.onchange('name')
     def _onchange_info_name_upper(self):
-        for record in self:
+        for record in self:            
             record.name = record.name.upper() if record.name else False
 
     def _zue_identification_should_lock(self):
