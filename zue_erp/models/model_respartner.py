@@ -165,7 +165,7 @@ class ResPartner(models.Model):
             return True
 
     @api.depends('vat', 'company_id', 'company_registry', 'country_id')
-    def _compute_same_vat_partner_id(self):
+    def _compute_no_same_vat_partner_id(self):
         for partner in self:
             partner.same_vat_partner_id = False
             partner.same_company_registry_partner_id = False
