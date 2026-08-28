@@ -3,6 +3,7 @@ access_zue_ciiu,zue.ciiu,model_zue_ciiu,base.group_user,1,1,1,1
 access_zue_contact_types,zue.contact_types,model_zue_contact_types,base.group_user,1,1,1,1
 access_zue_job_title,zue.job_title,model_zue_job_title,base.group_user,1,1,1,1
 access_zue_areas,zue.areas,model_zue_areas,base.group_user,1,1,1,1
+access_zue_service_type,zue.service.type,model_zue_service_type,base.group_user,1,1,1,1
 access_zue_res_branch,zue.res.branch,model_zue_res_branch,base.group_user,1,1,1,1
 access_zue_holidays,zue.holidays,model_zue_holidays,base.group_user,1,1,1,1
 access_zue_type_thirdparty,zue.type_thirdparty,model_zue_type_thirdparty,base.group_user,1,1,1,1
