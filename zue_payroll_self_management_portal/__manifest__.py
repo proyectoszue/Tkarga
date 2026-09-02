@@ -16,7 +16,7 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'ZuePayroll ManagementPortal',
-    "version": "19.0.1.0.0",
+    "version": "19.0.1.0.1",
     'icon': '/zue_payroll_self_management_portal/static/description/icon.png',
 
     # any module necessary for this one to work correctly

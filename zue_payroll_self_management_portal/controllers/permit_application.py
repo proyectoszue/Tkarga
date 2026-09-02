@@ -65,7 +65,10 @@ class ZuePermitApplicationPortal(Controller):
         obj_leave.with_context(leave_skip_state_check=True)._compute_date_from_to()
         obj_leave.with_context(leave_skip_state_check=True)._compute_department_id()
         obj_leave.with_context(leave_skip_state_check=True)._onchange_info_entity()
-        obj_leave.with_context(leave_skip_state_check=True).onchange_number_of_days_vacations()
+        if obj_leave.holiday_status_id.is_vacation:
+            computed = obj_leave.onchange_number_of_massive_days_vacations(obj_leave.employee_id, obj_leave.request_date_from, obj_leave.request_date_to)
+            computed['number_of_days'] = computed['business_days'] + computed['holidays']
+            obj_leave.write(computed)
 
         #Adjunto
         if post.get('attachment', False):
