@@ -163,11 +163,19 @@ class HolidaysRequest(models.Model):
             'days_31_holidays': days_31_h,
         }
 
-    @api.onchange('number_of_days','request_date_from')
+    @api.onchange('number_of_days','request_date_from','request_date_to')
     def onchange_number_of_days_vacations(self):
         for record in self:
-            original_number_of_days = record.number_of_days
-            if record.holiday_status_id.is_vacation and record.request_date_from:
+            if not record.holiday_status_id.is_vacation or not record.request_date_from or not record.employee_id:
+                continue
+            if record.request_date_to and record.request_date_to >= record.request_date_from:
+                computed = record.onchange_number_of_massive_days_vacations(record.employee_id, record.request_date_from, record.request_date_to)
+                record.business_days = computed['business_days']
+                record.holidays = computed['holidays']
+                record.days_31_business = computed['days_31_business']
+                record.days_31_holidays = computed['days_31_holidays']
+                record.number_of_days = record.business_days + record.holidays
+            elif record.number_of_days:
                 #Obtener si el dia sabado es habil | Guardar dias fines de semana 5=Sabado & 6=Domingo
                 lst_days = [5,6] if record.employee_id.sabado == False else [6]
                 date_to = record.request_date_from - timedelta(days=1)
@@ -204,14 +212,12 @@ class HolidaysRequest(models.Model):
                 # Día 31 no se paga: number_of_days = hábiles + festivos
                 record.number_of_days = record.business_days + record.holidays
                 #Verficar alerta
-                obj_version = self.env['hr.version'].search(
-                    [('employee_id', '=', record.employee_id.id), ('contract_date_start', '<=', record.date_to), ('contract_date_end', '=', False)])
-                if business_days > obj_version.get_accumulated_vacation_days():
-                    record.accumulated_vacation_days = obj_version.get_accumulated_vacation_days()
-                    record.alert_days_vacation =  True
-                else:
-                    record.accumulated_vacation_days = obj_version.get_accumulated_vacation_days()
-                    record.alert_days_vacation = False
+            reference_date = record.request_date_to or record.request_date_from
+            obj_version = self.env['hr.version'].search(
+                [('employee_id', '=', record.employee_id.id), ('contract_date_start', '<=', reference_date), ('contract_date_end', '=', False)], limit=1)
+            if obj_version:
+                record.accumulated_vacation_days = obj_version.get_accumulated_vacation_days()
+                record.alert_days_vacation = record.business_days > record.accumulated_vacation_days
 
     def _check_validity(self):
         sorted_leaves = defaultdict(lambda: self.env['hr.leave'])
