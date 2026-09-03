@@ -72,8 +72,99 @@
                                 <group>
                                     <field name="qty_failed" readonly="1"/>
                                     <field name="qty_done" readonly="1"/>
+                                    <field name="z_detail_status_filter" invisible="1"/>
                                 </group>
-                                <field name="executing_electronic_adjust_payroll_ids" nolabel="1">
+                                <div class="d-flex justify-content-end align-items-center gap-2 mb-1">
+                                    <button name="filter_details_all" type="object" string="Todos" class="btn-primary" invisible="z_detail_status_filter != 'all'"/>
+                                    <button name="filter_details_all" type="object" string="Todos" invisible="z_detail_status_filter == 'all'"/>
+                                    <button name="filter_details_accepted" type="object" string="Aceptados" class="btn-primary" invisible="z_detail_status_filter != 'accepted'"/>
+                                    <button name="filter_details_accepted" type="object" string="Aceptados" invisible="z_detail_status_filter == 'accepted'"/>
+                                    <button name="filter_details_failed" type="object" string="Fallidos" class="btn-primary" invisible="z_detail_status_filter != 'failed'"/>
+                                    <button name="filter_details_failed" type="object" string="Fallidos" invisible="z_detail_status_filter == 'failed'"/>
+                                </div>
+                                <field name="executing_electronic_adjust_payroll_ids" nolabel="1" invisible="z_detail_status_filter != 'all'">
+                                    <list>
+                                        <field name="employee_id" optional="show"/>
+                                        <field name="sequence" optional="show"/>
+                                        <field name="status" optional="show"/>
+                                        <field name="payslip_ids" optional="show" widget="many2many_tags"/>
+                                    </list>
+                                    <form>
+                                        <sheet>
+                                            <group>
+                                                <field name="employee_id" readonly="1"/>
+                                                <field name="version_id" readonly="1"/>
+                                                <field name="electronic_adjust_payroll_detail_id" readonly="1"/>
+                                                <field name="sequence" readonly="1"/>
+                                                <field name="payslip_ids" widget="many2many_tags" force_save="1" readonly="status == 'ACCEPTED'"/>
+                                                <field name="result_upload_xml" readonly="1"/>
+                                                <field name="status" readonly="1"/>
+                                                <field name="result_status" readonly="1"/>
+                                            </group>
+                                            <group string="Procesos">
+                                                <group string="XML" invisible="status == 'ACCEPTED'">
+                                                    <button name="get_xml" type="object" string="Crear/Actualizar XML"/>
+                                                    <button name="download_xml" type="object" string="Descargar XML"/>
+                                                    <br/><br/>
+                                                    <button name="convert_result_send_xml" type="object" string="Actualizar respuesta envío xml" invisible="1"/>
+                                                </group>
+                                                <group string="XML" invisible="status != 'ACCEPTED'">
+                                                    <button name="download_xml" type="object" string="Descargar XML"/>
+                                                </group>
+                                                <group string="WS">
+                                                    <button name="consume_web_service_send_xml" type="object" string="Enviar XML" invisible="status == 'ACCEPTED'"/>
+                                                    <button name="consume_web_service_status_document" type="object" string="Consultar Estado" invisible="status == 'ACCEPTED'"/>
+                                                    <button name="consume_web_service_get_cune" type="object" string="Obtener CUNE" invisible="status != 'ACCEPTED'"/>
+                                                    <br/><br/>
+                                                    <field name="resource_type_document"/>
+                                                    <button name="consume_web_service_download_files" type="object" string="Descargar archivo"/>
+                                                </group>
+                                            </group>
+                                        </sheet>
+                                    </form>
+                                </field>
+                                <field name="z_executing_accepted_ids" nolabel="1" invisible="z_detail_status_filter != 'accepted'">
+                                    <list>
+                                        <field name="employee_id" optional="show"/>
+                                        <field name="sequence" optional="show"/>
+                                        <field name="status" optional="show"/>
+                                        <field name="payslip_ids" optional="show" widget="many2many_tags"/>
+                                    </list>
+                                    <form>
+                                        <sheet>
+                                            <group>
+                                                <field name="employee_id" readonly="1"/>
+                                                <field name="version_id" readonly="1"/>
+                                                <field name="electronic_adjust_payroll_detail_id" readonly="1"/>
+                                                <field name="sequence" readonly="1"/>
+                                                <field name="payslip_ids" widget="many2many_tags" force_save="1" readonly="status == 'ACCEPTED'"/>
+                                                <field name="result_upload_xml" readonly="1"/>
+                                                <field name="status" readonly="1"/>
+                                                <field name="result_status" readonly="1"/>
+                                            </group>
+                                            <group string="Procesos">
+                                                <group string="XML" invisible="status == 'ACCEPTED'">
+                                                    <button name="get_xml" type="object" string="Crear/Actualizar XML"/>
+                                                    <button name="download_xml" type="object" string="Descargar XML"/>
+                                                    <br/><br/>
+                                                    <button name="convert_result_send_xml" type="object" string="Actualizar respuesta envío xml" invisible="1"/>
+                                                </group>
+                                                <group string="XML" invisible="status != 'ACCEPTED'">
+                                                    <button name="download_xml" type="object" string="Descargar XML"/>
+                                                </group>
+                                                <group string="WS">
+                                                    <button name="consume_web_service_send_xml" type="object" string="Enviar XML" invisible="status == 'ACCEPTED'"/>
+                                                    <button name="consume_web_service_status_document" type="object" string="Consultar Estado" invisible="status == 'ACCEPTED'"/>
+                                                    <button name="consume_web_service_get_cune" type="object" string="Obtener CUNE" invisible="status != 'ACCEPTED'"/>
+                                                    <br/><br/>
+                                                    <field name="resource_type_document"/>
+                                                    <button name="consume_web_service_download_files" type="object" string="Descargar archivo"/>
+                                                </group>
+                                            </group>
+                                        </sheet>
+                                    </form>
+                                </field>
+                                <field name="z_executing_failed_ids" nolabel="1" invisible="z_detail_status_filter != 'failed'">
                                     <list>
                                         <field name="employee_id" optional="show"/>
                                         <field name="sequence" optional="show"/>
