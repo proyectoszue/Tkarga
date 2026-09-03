@@ -518,14 +518,46 @@ class hr_electronic_adjust_payroll(models.Model):
     prefix_adjust = fields.Char(string='Prefijo ajuste')
     qty_failed = fields.Integer(string='Cantidad Fallidos / Sin Respuesta', default=0, copy=False)
     qty_done = fields.Integer(string='Cantidad Aceptados', default=0, copy=False)
+    z_detail_status_filter = fields.Selection([('all', 'Todos'), ('accepted', 'Aceptados'), ('failed', 'Fallidos')], string='Filtrar por estado', compute='_compute_detail_status_filter', readonly=True)
     executing_electronic_adjust_payroll_ids = fields.One2many('hr.electronic.adjust.payroll.detail', 'electronic_adjust_payroll_id',
                                                        string='Ejecución')
+    z_executing_accepted_ids = fields.One2many('hr.electronic.adjust.payroll.detail', 'electronic_adjust_payroll_id', string='Ejecución aceptados', domain=[('status', '=', 'ACCEPTED')])
+    z_executing_failed_ids = fields.One2many('hr.electronic.adjust.payroll.detail', 'electronic_adjust_payroll_id', string='Ejecución fallidos', domain=['!', ('status', '=', 'ACCEPTED')])
     time_process = fields.Char(string='Tiempo ejecución', copy=False)
 
     @api.depends('electronic_payroll_id')
     def _compute_display_name(self):
         for record in self:
             record.display_name = "Nómina Electrónica de Ajuste | Periodo {}-{}".format(record.electronic_payroll_id.month,str(record.electronic_payroll_id.year))
+
+    @api.depends_context('z_detail_status_filter')
+    def _compute_detail_status_filter(self):
+        value = self.env.context.get('z_detail_status_filter', 'all')
+        if value not in ('all', 'accepted', 'failed'):
+            value = 'all'
+        for record in self:
+            record.z_detail_status_filter = value
+
+    def filter_details_all(self):
+        return self.reload_detail_status_filter('all')
+
+    def filter_details_accepted(self):
+        return self.reload_detail_status_filter('accepted')
+
+    def filter_details_failed(self):
+        return self.reload_detail_status_filter('failed')
+
+    def reload_detail_status_filter(self, filter_value):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'res_model': self._name,
+            'res_id': self.id,
+            'view_mode': 'form',
+            'views': [(False, 'form')],
+            'target': 'current',
+            'context': dict(self.env.context, z_detail_status_filter=filter_value),
+        }
 
     def executing_electronic_payroll(self):
         # Eliminar ejecución

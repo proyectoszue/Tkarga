@@ -14,8 +14,8 @@
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'Human Resources',
-    "version": "19.0.1.0.1",
+    'category': 'Human Resources/Payroll',
+    'version': '19.0.1.1.1',
     'icon': '/zue_hr_payroll/static/description/icon.png',
 
     # any module necessary for this one to work correctly
@@ -26,12 +26,12 @@
         # 'data/hr_type_tax_retention_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
         'security/ir.model.access.csv',
         'views/res_config_settings_views.xml',
-        'views/actions_loans.xml',        
+        'views/actions_loans.xml',
         'views/actions_payslip.xml',
-        'views/actions_leave.xml',     
-        'views/actions_overtime.xml', 
-        'views/actions_concepts_deduction_retention.xml',    
-        'views/actions_calculation_rtefte_ordinary.xml', 
+        'views/actions_leave.xml',
+        'views/actions_overtime.xml',
+        'views/actions_concepts_deduction_retention.xml',
+        'views/actions_calculation_rtefte_ordinary.xml',
         'views/actions_payroll_flat_file.xml',
         'views/actions_payroll_flat_file_backup.xml',
         'views/actions_hr_payroll_posting.xml',
@@ -64,9 +64,9 @@
         'reports/report_payslip_contrato_templates.xml',
         'reports/reports_payslip_header_footer.xml',
         'reports/report_payslip_cesantias_prima_templates.xml',
-        'reports/report_book_vacation.xml', 
-        'reports/report_book_vacation_template.xml',      
-        'reports/report_book_cesantias.xml', 
+        'reports/report_book_vacation.xml',
+        'reports/report_book_vacation_template.xml',
+        'reports/report_book_cesantias.xml',
         'reports/report_book_cesantias_template.xml',
         'reports/hr_report_absenteeism_history.xml',
         'reports/hr_report_absenteeism_history_template.xml',
@@ -85,5 +85,28 @@
         ],
     },
     'license': 'LGPL-3',
+    'zue_functional': {
+        'area': 'Talento humano y nómina',
+        'summary': 'Módulo de nómina para la localización colombiana | Liquidación de Nómina.',
+        'features': [
+            'Calcula nómina colombiana, acumulados y retención en la fuente.',
+            'Configura reglas de deducción tributaria, tipos de impuesto y sustitución patronal.',
+            'Conserva el histórico de ausencias.',
+            'Genera nómina electrónica y notas de ajuste.',
+            'Permite filtrar resultados de nómina electrónica y notas de ajuste por estado: todos, aceptados o fallidos.',
+        ],
+        'reports': [
+            'Historico de Ausentismos',
+            'Certificado ingreso y retenciones',
+            'Comprobante de Nómina',
+            'Libro de Cesantías',
+            'Libro de Vacaciones',
+            'Informe de Liquidación',
+            'Reporte acumulados',
+            'Reporte Auditoria',
+            'Informe Comparativo de Liquidaciones',
+            'Reporte Consolidados',
+        ],
+    },
 }
 
