@@ -1,10 +1,12 @@
 <odoo>
     <data>
-        <record id="hr_payroll.report_payslip" model="ir.ui.view">
+        <record id="report_payslip" model="ir.ui.view">
             <field name="name">report_payslip</field>
+            <field name="key">zue_hr_payroll.report_payslip</field>
+            <field name="type">qweb</field>
             <field name="priority">16</field>
             <field name="arch" type="xml">
-                <t t-name="hr_payroll.report_payslip">
+                <t t-name="zue_hr_payroll.report_payslip">
                     <t t-set="o" t-value="o.with_context(lang=o.employee_id.work_contact_id.lang or o.env.lang)"/>
                     <div class="page" style="font-style: normal; font-size: 12px;">
                         <h6 style="text-align:center;">

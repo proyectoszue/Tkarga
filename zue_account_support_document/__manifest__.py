@@ -12,9 +12,8 @@
 
     'author': "ZUE S.A.S",
 
-    'category': 'Uncategorized',
-    "version": "19.0.1.0.0",
-
+    'category': 'Accounting/Localizations/EDI',
+    'version': '19.0.1.0.0',
     # any module necessary for this one to work correctly
     'depends': ['base','zue_erp','zue_account','l10n_co'],
 
@@ -29,4 +28,16 @@
         'views/menus.xml',
     ],
     'license': 'LGPL-3',
+    'zue_functional': {
+        'area': 'Contabilidad, compras y tesorería',
+        'summary': 'Modulo de ZUE para soporte de documentos DIAN.',
+        'features': [
+            'Gestiona documentos soporte y notas de ajuste exigidos por la DIAN.',
+            'Clasifica proveedores por régimen fiscal y obligación de facturar para seleccionar documentos soporte.',
+            'Asigna y conserva consecutivos DSE por compañía antes de generar los documentos.',
+            'Controla los envíos y el detalle de documentos soporte electrónicos.',
+        ],
+        'reports': [
+        ],
+    },
 }

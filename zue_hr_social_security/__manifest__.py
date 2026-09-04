@@ -14,8 +14,8 @@
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'Human Resources',
-    "version": "19.0.1.0.0",
+    'category': 'Human Resources/Payroll',
+    'version': '19.0.1.0.2',
     'icon': '/zue_hr_social_security/static/description/icon.png',
 
     # any module necessary for this one to work correctly
@@ -39,4 +39,19 @@
         'security/ir.model.access.csv',
     ],
     'license': 'LGPL-3',
+    'zue_functional': {
+        'area': 'Talento humano y nómina',
+        'summary': 'Módulo de nómina para la localización colombiana | Seguridad Social.',
+        'features': [
+            'Liquida seguridad social y provisiones de nómina.',
+            'Configura sucursales, centros de trabajo y contabilización del cierre mensual.',
+            'Genera consolidados de provisiones y procesos de nómina electrónica relacionados.',
+        ],
+        'reports': [
+            'Informe seguridad social',
+            'Reporte entidades',
+            'Informe de costos por empleado',
+            'Reporte libro de vacaciones',
+        ],
+    },
 }

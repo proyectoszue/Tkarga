@@ -29,6 +29,25 @@ class account_move(models.Model):
     def action_delete_duplicates(self):
         return True
 
+    #Metodo odoo fix error con boton acciones
+    def get_extra_print_items(self):
+        print_items = super().get_extra_print_items()
+        posted_moves = self.filtered(lambda move:move.state == 'posted'and move.commercial_partner_id)
+        suggested_edi_formats = {
+            suggested_format
+            for partner in posted_moves.mapped('commercial_partner_id')
+            if (suggested_format := partner._get_suggested_ubl_cii_edi_format())
+        }
+
+        if posted_moves.ubl_cii_xml_id or suggested_edi_formats:
+            print_items.append({
+                'key': 'download_ubl',
+                'description': _('Export XML'),
+                **posted_moves.action_invoice_download_ubl(),
+            })
+
+        return print_items
+
     # # Borrar
     # def button_process_edi_web_services(self):
     #     return
@@ -354,24 +373,26 @@ class annual_accounting_closing(models.Model):
 
         d_start_date = datetime.strptime(start_date, '%d/%m/%Y')
         d_end_date = datetime.strptime(end_date, '%d/%m/%Y')
+        company_id = self.company_id.id
+        company_key = str(company_id)
 
         query = '''
                 with saldo_anterior as (
                     select aml.account_id, aml.partner_id, sum(aml.debit - aml.credit) as saldo_anterior
                     from account_move am
                     inner join account_move_line aml on am.id = aml.move_id
-                    inner join account_account aa on aml.account_id = aa.id and coalesce(aa.code_store->>'1', '') similar to '%s' 
+                    inner join account_account aa on aml.account_id = aa.id and coalesce(aa.code_store->>'%s', '') similar to '%s' 
                     where am."date" < '%s' and am.company_id = %s and am.state = 'posted' 
                     group by aml.account_id, aml.partner_id
                 )
                 select aml.account_id, aml.partner_id, coalesce(sa.saldo_anterior, 0) + sum(aml.debit - aml.credit) as saldo
                 from account_move am
                 inner join account_move_line aml on am.id = aml.move_id
-                inner join account_account aa on aml.account_id = aa.id and coalesce(aa.code_store->>'1', '') similar to '%s' 
+                inner join account_account aa on aml.account_id = aa.id and coalesce(aa.code_store->>'%s', '') similar to '%s' 
                 left join saldo_anterior sa on aml.account_id = sa.account_id and aml.partner_id = sa.partner_id
                 where am."date" between '%s' and '%s' and am.company_id = %s and am.state = 'posted' 
                 group by aml.account_id, aml.partner_id, sa.saldo_anterior 
-                ''' % (accounts, str(d_start_date), self.company_id.id, accounts, str(d_start_date), str(d_end_date), self.company_id.id)
+                ''' % (company_key, accounts, str(d_start_date), company_id, company_key, accounts, str(d_start_date), str(d_end_date), company_id)
 
         self.env.cr.execute(query)
         result_query = self.env.cr.fetchall()

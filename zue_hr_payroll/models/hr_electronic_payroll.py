@@ -456,7 +456,7 @@ class hr_electronic_payroll(models.Model):
     _name = 'hr.electronic.payroll'
     _description = 'Nómina electrónica'
 
-    year = fields.Integer('Año', required=True, copy=False, default=fields.Date.today().year, tracking=True)
+    year = fields.Integer('Año', required=True, copy=False, default=fields.Date.today().year)
     month = fields.Selection([('1', 'Enero'),
                             ('2', 'Febrero'),
                             ('3', 'Marzo'),
@@ -469,26 +469,26 @@ class hr_electronic_payroll(models.Model):
                             ('10', 'Octubre'),
                             ('11', 'Noviembre'),
                             ('12', 'Diciembre')        
-                            ], string='Mes', required=True, copy=False, default=str(fields.Date.today().month), tracking=True)
-    observations = fields.Text('Observaciones', copy=False, tracking=True)
+                            ], string='Mes', required=True, copy=False, default=str(fields.Date.today().month))
+    observations = fields.Text('Observaciones', copy=False)
     state = fields.Selection([
             ('draft', 'Borrador'),
             ('xml', 'XML Generados'),
             ('ws', 'Enviados por WS'),
             ('close', 'Finalizado'),
-        ], string='Estado', default='draft', copy=False, tracking=True)
+        ], string='Estado', default='draft', copy=False)
     #Proceso
-    prefix = fields.Char(string='Prefijo', required=True, tracking=True)
-    qty_failed = fields.Integer(string='Cantidad Fallidos / Sin Respuesta', default=0, copy=False, tracking=True)
-    qty_done = fields.Integer(string='Cantidad Aceptados', default=0, copy=False, tracking=True)
+    prefix = fields.Char(string='Prefijo', required=True)
+    qty_failed = fields.Integer(string='Cantidad Fallidos / Sin Respuesta', default=0, copy=False)
+    qty_done = fields.Integer(string='Cantidad Aceptados', default=0, copy=False)
     z_detail_status_filter = fields.Selection([('all', 'Todos'), ('accepted', 'Aceptados'), ('failed', 'Fallidos')], string='Filtrar por estado', compute='_compute_detail_status_filter', readonly=True)
-    executing_electronic_payroll_ids = fields.One2many('hr.electronic.payroll.detail', 'electronic_payroll_id', string='Ejecución', tracking=True)
+    executing_electronic_payroll_ids = fields.One2many('hr.electronic.payroll.detail', 'electronic_payroll_id', string='Ejecución')
     z_executing_accepted_ids = fields.One2many('hr.electronic.payroll.detail', 'electronic_payroll_id', string='Ejecución aceptados', domain=[('status', '=', 'ACCEPTED')])
     z_executing_failed_ids = fields.One2many('hr.electronic.payroll.detail', 'electronic_payroll_id', string='Ejecución fallidos', domain=['!', ('status', '=', 'ACCEPTED')])
-    time_process = fields.Char(string='Tiempo ejecución', copy=False, tracking=True)
-    
+    time_process = fields.Char(string='Tiempo ejecución', copy=False)
+
     company_id = fields.Many2one('res.company', string='Compañía', required=True,
-        default=lambda self: self.env.company, tracking=True)
+        default=lambda self: self.env.company)
 
     _electronic_payroll_period_uniq = models.Constraint('unique(company_id,year,month)', 'El periodo seleccionado ya esta registrado para esta compañía, por favor verificar.')
 

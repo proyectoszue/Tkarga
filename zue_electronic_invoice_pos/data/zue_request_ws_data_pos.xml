@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="documentcufepos" model="zue.request.ws">
+            <field name="name">documentcufepos</field>
+            <field name="server_url">https://ws-pos.facturatech.co/v1/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="content_type">text/xml</field>
+            <field name="body">&lt;soapenv:Envelope
+            xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+            xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;
+            xmlns:pro=&quot;urn:https://ws-pos.facturatech.co/v1/pro/&quot;&gt;
+            &lt;soapenv:Body&gt;
+                &lt;pro:downloadCUFE&gt;
+                    &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                    &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                    &lt;prefix xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/prefix&gt;
+                    &lt;number xsi:type=&quot;xsd:integer&quot;&gt;ZUE_PARAMETER&lt;/number&gt;
+                &lt;/pro:downloadCUFE&gt;
+            &lt;/soapenv:Body&gt;
+        &lt;/soapenv:Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="documentpdfpos" model="zue.request.ws">
+            <field name="name">documentpdfpos</field>
+            <field name="server_url">https://ws-pos.facturatech.co/v1/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="content_type">text/xml</field>
+            <field name="body">&lt;soapenv:Envelope
+            xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+            xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;
+            xmlns:pro=&quot;urn:https://ws-pos.facturatech.co/v1/pro/&quot;&gt;
+            &lt;soapenv:Body&gt;
+                &lt;pro:downloadPDF&gt;
+                    &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                    &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                    &lt;prefix xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/prefix&gt;
+                    &lt;number xsi:type=&quot;xsd:integer&quot;&gt;ZUE_PARAMETER&lt;/number&gt;
+                &lt;/pro:downloadPDF&gt;
+            &lt;/soapenv:Body&gt;
+        &lt;/soapenv:Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="documentxmlpos" model="zue.request.ws">
+            <field name="name">documentxmlpos</field>
+            <field name="server_url">https://ws-pos.facturatech.co/v1/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="content_type">text/xml</field>
+            <field name="body">&lt;soapenv:Envelope
+            xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+            xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;
+            xmlns:pro=&quot;urn:https://ws-pos.facturatech.co/v1/pro/&quot;&gt;
+            &lt;soapenv:Body&gt;
+                &lt;pro:downloadXML&gt;
+                    &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                    &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                    &lt;prefix xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/prefix&gt;
+                    &lt;number xsi:type=&quot;xsd:integer&quot;&gt;ZUE_PARAMETER&lt;/number&gt;
+                &lt;/pro:downloadXML&gt;
+            &lt;/soapenv:Body&gt;
+        &lt;/soapenv:Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="documentStatuspos" model="zue.request.ws">
+            <field name="name">documentStatuspos</field>
+            <field name="server_url">https://ws-pos.facturatech.co/v1/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="content_type">text/xml</field>
+            <field name="body">&lt;soapenv:Envelope
+            xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+            xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;
+            xmlns:pro=&quot;urn:https://ws-pos.facturatech.co/v1/pro/&quot;&gt;
+            &lt;soapenv:Body&gt;
+                &lt;pro:documentStatus&gt;
+                    &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                    &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                    &lt;transaccionID xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/transaccionID&gt;
+                &lt;/pro:documentStatus&gt;
+            &lt;/soapenv:Body&gt;
+        &lt;/soapenv:Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+
+        <record id="uploadDocumentpos" model="zue.request.ws">
+            <field name="name">uploadDocumentpos</field>
+            <field name="server_url">https://ws-pos.facturatech.co/v1/pro/index.php?wsdl</field>
+            <field name="active">True</field>
+            <field name="content_type">text/xml</field>
+            <field name="body">&lt;soapenv:Envelope
+            xmlns:xsi=&quot;http://www.w3.org/2001/XMLSchema-instance&quot;
+            xmlns:xsd=&quot;http://www.w3.org/2001/XMLSchema&quot;
+            xmlns:pro=&quot;urn:https://ws-pos.facturatech.co/v1/pro/&quot;&gt;
+            &lt;soapenv:Body&gt;
+                &lt;pro:uploadDocument&gt;
+                    &lt;username xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/username&gt;
+                    &lt;password xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/password&gt;
+                    &lt;xmlBase64 xsi:type=&quot;xsd:string&quot;&gt;ZUE_PARAMETER&lt;/xmlBase64&gt;
+                &lt;/pro:uploadDocument&gt;
+            &lt;/soapenv:Body&gt;
+        &lt;/soapenv:Envelope&gt;</field>
+            <field name="method">POST</field>
+        </record>
+    </data>
+</odoo>

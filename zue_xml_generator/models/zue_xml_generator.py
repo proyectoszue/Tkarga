@@ -1,10 +1,19 @@
 from odoo import api, fields, models, _
-from odoo.exceptions import ValidationError, UserError
-from datetime import datetime, timedelta
-import pytz, re
+from odoo.exceptions import ValidationError
 from odoo.tools.safe_eval import safe_eval
 
+from datetime import datetime, timedelta
+
 from lxml import etree
+import pytz
+import re
+
+
+def _truncate_xml_code_snippet(text, max_len=160):
+    if not text:
+        return ''
+    t = str(text).replace('\n', ' ').strip()
+    return t if len(t) <= max_len else '%s...' % t[:max_len]
 
 class zue_xml_generator_details(models.Model):
     _name = 'zue.xml.generator.details'
@@ -28,13 +37,32 @@ class zue_xml_generator_header(models.Model):
 
     name = fields.Char(string='Nombre', required=True)
     code = fields.Char(string='Identificador',required=True)
-    description = fields.Text(string='Descripción')
+    description = fields.Text(string='Descripción')  
     details_ids = fields.One2many('zue.xml.generator.details', 'xml_generator_id', string='Estructura del XML (Tags)')
 
     sql_constraints = [
         ('name', 'UNIQUE (code)', 'Ya existe un registro con este identificador!')
     ]
 
+    def _format_xml_generator_error(self, xml_err_ctx, item, exc):
+        lines = [
+            _('Error al generar el XML (definición: "%s").') % (self.name,),
+            _('Tag: %s') % xml_err_ctx.get('tag', item.name),
+            _('Secuencia: %s') % xml_err_ctx.get('seq', item.sequence),
+        ]
+        if xml_err_ctx.get('i') is not None:
+            lines.append(_('Iteración del for (i): %s') % xml_err_ctx['i'])
+        if xml_err_ctx.get('j') is not None:
+            lines.append(_('Iteración del for anidado (j): %s') % xml_err_ctx['j'])
+        if xml_err_ctx.get('etapa'):
+            lines.append(_('Etapa: %s') % xml_err_ctx['etapa'])
+        if xml_err_ctx.get('bloque'):
+            lines.append(_('Contexto: %s') % xml_err_ctx['bloque'])
+        if xml_err_ctx.get('codigo_preview'):
+            lines.append(_('Fragmento de código (valor/validación): %s') % xml_err_ctx['codigo_preview'])
+        lines.append('')
+        lines.append(_('Detalle: %s') % str(exc))
+        return '\n'.join(lines)
 
     def xml_generator(self,o):
         #Recorre estructura para armar el XML
@@ -44,44 +72,51 @@ class zue_xml_generator_header(models.Model):
         old_tag = ''
 
         for item in sorted(self.details_ids, key=lambda x: x.sequence):
+            xml_err_ctx = {
+                'tag': item.name,
+                'seq': item.sequence,
+                'i': None,
+                'j': None,
+                'etapa': None,
+                'bloque': _('Principal'),
+                'codigo_preview': None,
+            }
             val = ''
             for_item = ''
             validation = True
             ldict = {'o': o}
             try:
-                if item.attributes_code_python:
-                    if 'not_include_in_for' in item.attributes_code_python:
-                        item_attributes_code_python = ''
-                    else:
-                        item_attributes_code_python = f",{item.attributes_code_python}" if item.attributes_code_python else ""
+                if item.attributes_code_python and 'not_include_in_for' not in item.attributes_code_python:
+                    item_attributes_code_python = f",{item.attributes_code_python}"
                 else:
-                    item_attributes_code_python = f",{item.attributes_code_python}" if item.attributes_code_python else ""
+                    item_attributes_code_python = ""
 
                 if '@current_datetime' in item_attributes_code_python:
-                    current_datetime_utc = datetime.now(pytz.utc)
-                    current_datetime_utc = current_datetime_utc.replace(second=0, microsecond=0)
-
-                    match = re.search(r"@current_datetime\+'-", item_attributes_code_python) or re.search(
-                        r"@current_datetime\+'+", item_attributes_code_python)
-
-                    if match:
-                        timezone_str = item_attributes_code_python[match.start() + 19:match.end() + 5]
-                        timezone_hours = int(timezone_str[:-3])
-                        timezone_minutes = int(timezone_str[-2:])
-
-                        timezone_delta = timedelta(hours=timezone_hours, minutes=timezone_minutes)
-
-                        hours_ago_utc = current_datetime_utc + timezone_delta
-                    else:
-                        raise ValidationError(
-                            _("Si se usa @current_datetime se debe especificar la zona horaria, así para Colombia:  @current_datetime+'-05:00' "))
-                        # hours_ago_utc = current_datetime_utc
-
-                    formatted_datetime = hours_ago_utc.strftime('%Y-%m-%dT%H:%M:%S')
-                    item_attributes_code_python = item_attributes_code_python.replace('@current_datetime',
-                                                                                      "'" + formatted_datetime + "'")
-
+                    current_datetime_utc = datetime.now(pytz.utc).replace(second=0, microsecond=0)
+                    match = re.search(
+                        r"@current_datetime\+'(?P<offset>[+-]\d{2}:\d{2})'",
+                        item_attributes_code_python,
+                    )
+                    if not match:
+                        raise ValidationError(_(
+                            "Si se usa @current_datetime se debe especificar la zona horaria, "
+                            "así para Colombia: @current_datetime+'-05:00'"
+                        ))
+                    timezone_str = match.group('offset')
+                    timezone_sign = -1 if timezone_str.startswith('-') else 1
+                    timezone_delta = timedelta(
+                        hours=timezone_sign * int(timezone_str[1:3]),
+                        minutes=timezone_sign * int(timezone_str[4:6]),
+                    )
+                    formatted_datetime = (current_datetime_utc + timezone_delta).strftime('%Y-%m-%dT%H:%M:%S')
+                    item_attributes_code_python = item_attributes_code_python.replace(
+                        '@current_datetime', f"'{formatted_datetime}'"
+                    )
                 if item.code_validation_python and item_attributes_code_python != "":
+                    xml_err_ctx.update({
+                        'etapa': _('Validación para armar atributos del tag'),
+                        'codigo_preview': _truncate_xml_code_snippet(item.code_validation_python),
+                    })
                     exec(item.code_validation_python, ldict)
                     validation = ldict.get('validation')
                     if validation == False:
@@ -91,6 +126,10 @@ class zue_xml_generator_header(models.Model):
                     tag_initial = item.name
                     old_tag = tag_initial
                     if item.code_validation_python:
+                        xml_err_ctx.update({
+                            'etapa': _('Validación del tag raíz (sequence=1)'),
+                            'codigo_preview': _truncate_xml_code_snippet(item.code_validation_python),
+                        })
                         exec(item.code_validation_python, ldict)
                         first_tag = ldict.get('tag')
                         if first_tag:
@@ -106,30 +145,21 @@ class zue_xml_generator_header(models.Model):
                         if item.sequence == 1 and first_tag:
                             create_element = f"{tag_initial} = etree.Element('{tag_initial}'{item_attributes_code_python})"
                         else:
-                            if item.code_validation_python:
-                                exec(item.code_validation_python, ldict)
-                                validation = ldict.get('validation')
-
-                            if validation == False:
-                                continue
-
                             create_element = f"{item.name} = etree.Element('{item.name}'{item_attributes_code_python})"
-                        try:
-                            exec(create_element)
-                        except IndexError as e:
-                            if item.sequence == 1:
-                                raise UserError(
-                                    _("Error en la configuración del XML para el tag raíz '%s'. "
-                                      "Se intentó acceder a una posición inexistente en el código dinámico. "
-                                      "Revise Código Atributos / Código Validación y valide longitud antes de usar índices.\n"
-                                      "Detalle técnico: %s") % (item.name, e)
-                                )
-                            continue
+                        xml_err_ctx.update({
+                            'etapa': _('Creación del elemento XML (etree.Element)'),
+                            'codigo_preview': None,
+                        })
+                        exec(create_element)
 
                 # Ejecutar código Python
                 if item.code_python and item.is_parent == False:
                     try:
                         if item.code_validation_python:
+                            xml_err_ctx.update({
+                                'etapa': _('Validación antes del código valor'),
+                                'codigo_preview': _truncate_xml_code_snippet(item.code_validation_python),
+                            })
                             exec(item.code_validation_python, ldict)
                             validation = ldict.get('validation')
 
@@ -137,6 +167,12 @@ class zue_xml_generator_header(models.Model):
                             continue
 
                         ldict = {'o':o}
+                        xml_err_ctx.update({
+                            'tag': item.name,
+                            'seq': item.sequence,
+                            'etapa': _('Ejecución código valor'),
+                            'codigo_preview': _truncate_xml_code_snippet(item.code_python),
+                        })
                         exec(item.code_python,ldict)
                         val = ldict.get('val')
 
@@ -172,7 +208,7 @@ class zue_xml_generator_header(models.Model):
 
                                     exec(assignee_parent)
                     except Exception as e:
-                        raise UserError(_('Error al ejecutar el código python del item %s, %s') % (item.name, e))
+                        raise ValidationError(self._format_xml_generator_error(xml_err_ctx, item, e))
                 else:
                     if item.name_parent:
                         if item.name_parent == old_tag and first_tag!='':
@@ -184,6 +220,10 @@ class zue_xml_generator_header(models.Model):
 
                     if item.code_python and item.is_for:
                         ldict = {'o': o}
+                        xml_err_ctx.update({
+                            'etapa': _('Código que obtiene la lista del for (for_item)'),
+                            'codigo_preview': _truncate_xml_code_snippet(item.code_python),
+                        })
                         exec(item.code_python, ldict)
                         # val = ldict.get('val')
                         for_item = ldict.get('for_item')
@@ -198,6 +238,13 @@ class zue_xml_generator_header(models.Model):
                         for i in range(max_rows):
                             break_for = False
                             for second_item in sorted(self.details_ids.filtered(lambda x: x.sequence >= actual_sequence), key=lambda x: x.sequence):
+                                xml_err_ctx.update({
+                                    'tag': second_item.name,
+                                    'seq': second_item.sequence,
+                                    'i': i,
+                                    'j': None,
+                                    'bloque': _('Dentro del for (padre: "%s")') % item.name,
+                                })
                                 if break_for:
                                     break
 
@@ -214,8 +261,15 @@ class zue_xml_generator_header(models.Model):
                                         if 'index_i' in second_item.internal_for:
                                             to_execute = to_execute.replace('index_i', str(i))
 
-                                        ldict = {'o': o,
-                                                 'for_item': for_item}
+                                        ldict = {
+                                            'o': o,
+                                            'for_item': for_item,
+                                            'index_i': i,
+                                        }
+                                        xml_err_ctx.update({
+                                            'etapa': _('For interno (internal_for)'),
+                                            'codigo_preview': _truncate_xml_code_snippet(to_execute),
+                                        })
                                         exec(to_execute, ldict)
                                         val = ldict.get('val')
                                         internal_max_rows = len(val)
@@ -224,7 +278,15 @@ class zue_xml_generator_header(models.Model):
                                         if internal_max_rows > 0:
                                             for j in range(internal_max_rows):
                                                 break_for = True
+                                                ldict['index_j'] = j
                                                 for third_item in sorted(self.details_ids.filtered(lambda x: x.sequence >= internal_sequence), key=lambda x: x.sequence):
+                                                    xml_err_ctx.update({
+                                                        'tag': third_item.name,
+                                                        'seq': third_item.sequence,
+                                                        'i': i,
+                                                        'j': j,
+                                                        'bloque': _('For anidado (segundo nivel "%s", padre for: "%s")') % (second_item.name, item.name),
+                                                    })
                                                     if third_item.sequence < internal_sequence or third_item.is_for == False:
                                                         break
                                                     else:
@@ -240,26 +302,39 @@ class zue_xml_generator_header(models.Model):
                                                                 if 'index_j' in to_validate:
                                                                     to_validate = to_validate.replace('index_j', str(j))
 
+                                                                xml_err_ctx.update({
+                                                                    'etapa': _('Validación (tercer nivel)'),
+                                                                    'codigo_preview': _truncate_xml_code_snippet(to_validate),
+                                                                })
                                                                 exec(to_validate, ldict)
                                                                 validation = ldict.get('validation')
 
                                                                 if validation == False:
                                                                     continue
 
-                                                            item_attributes_code_python = f",{third_item.attributes_code_python}" if third_item.attributes_code_python else ""
-                                                            item_attributes_code_python = item_attributes_code_python.replace(
-                                                                'index', str(i + 1)).replace('index_i', str(i)).replace(
-                                                                'index_j', str(j))
-                                                            create_element = f"{third_item.name} = etree.Element('{third_item.name}'{item_attributes_code_python})"
-                                                            try:
-                                                                exec(create_element)
-                                                            except IndexError as e:
-                                                                continue
+                                                            third_item_attributes = f",{third_item.attributes_code_python}" if third_item.attributes_code_python else ""
+                                                            third_item_attributes = third_item_attributes.replace(
+                                                                'index_i', str(i)
+                                                            ).replace('index_j', str(j)).replace('index', str(i + 1))
+                                                            create_element = f"{third_item.name} = etree.Element('{third_item.name}'{third_item_attributes})"
+                                                            xml_err_ctx.update({
+                                                                'etapa': _('Creación elemento (tercer nivel)'),
+                                                                'codigo_preview': None,
+                                                            })
+                                                            exec(create_element)
 
                                                         if third_item.code_python and third_item.is_parent == False:
-                                                            ldict = {'o': o,
-                                                                    'for_item': for_item}
+                                                            ldict = {
+                                                                'o': o,
+                                                                'for_item': for_item,
+                                                                'index_i': i,
+                                                                'index_j': j,
+                                                            }
                                                             if third_item.code_python == 'index':
+                                                                xml_err_ctx.update({
+                                                                    'etapa': _('Código valor literal "index" (tercer nivel)'),
+                                                                    'codigo_preview': 'index',
+                                                                })
                                                                 val = str(i + 1)
                                                             else:
                                                                 to_execute = third_item.code_python
@@ -269,6 +344,10 @@ class zue_xml_generator_header(models.Model):
                                                                 if 'index_j' in third_item.code_python:
                                                                     to_execute = to_execute.replace('index_j', str(j))
 
+                                                                xml_err_ctx.update({
+                                                                    'etapa': _('Ejecución código valor (tercer nivel)'),
+                                                                    'codigo_preview': _truncate_xml_code_snippet(to_execute),
+                                                                })
                                                                 exec(to_execute, ldict)
                                                                 val = ldict.get('val')
                                                             cont = 0
@@ -281,21 +360,24 @@ class zue_xml_generator_header(models.Model):
                                                                 if 'index_j' in to_validate:
                                                                     to_validate = to_validate.replace('index_j', str(j))
 
+                                                                xml_err_ctx.update({
+                                                                    'etapa': _('Validación post-valor (tercer nivel)'),
+                                                                    'codigo_preview': _truncate_xml_code_snippet(to_validate),
+                                                                })
                                                                 exec(to_validate, ldict)
                                                                 validation = ldict.get('validation')
 
                                                             if validation == True:
                                                                 if type(val) is list:
-                                                                    for i in val:
+                                                                    for _xmlgen_v in val:
                                                                         cont += 1
-                                                                        item_attributes_code_python = f",{third_item.attributes_code_python}" if third_item.attributes_code_python else ""
-                                                                        item_attributes_code_python = item_attributes_code_python.replace(
-                                                                            'index', str(i + 1)).replace('index_i',
-                                                                                                         str(i)).replace(
-                                                                            'index_j', str(j))
-                                                                        asigne_element = f"{third_item.name.replace('&', str(cont))} = etree.Element('{third_item.name.replace('&', str(cont))}'{item_attributes_code_python})"
+                                                                        third_item_attributes = f",{third_item.attributes_code_python}" if third_item.attributes_code_python else ""
+                                                                        third_item_attributes = third_item_attributes.replace(
+                                                                            'index_i', str(i)
+                                                                        ).replace('index_j', str(j)).replace('index', str(i + 1))
+                                                                        asigne_element = f"{third_item.name.replace('&', str(cont))} = etree.Element('{third_item.name.replace('&', str(cont))}'{third_item_attributes})"
                                                                         exec(asigne_element)
-                                                                        val = str(i)
+                                                                        val = str(_xmlgen_v)
                                                                         asigne_element = f"{third_item.name.replace('&', str(cont))}.text = val"
                                                                         exec(asigne_element)
                                                                         if third_item.name_parent:
@@ -329,15 +411,16 @@ class zue_xml_generator_header(models.Model):
                                                                 exec(assignee_parent)
                                         else:
                                             if second_item.name_parent:
-                                                item_attributes_code_python = f",{second_item.attributes_code_python}" if second_item.attributes_code_python else ""
-                                                item_attributes_code_python = item_attributes_code_python.replace('index',
-                                                                                                                  str(i + 1)).replace(
-                                                    'index_i', str(i))
-                                                create_element = f"{second_item.name} = etree.Element('{second_item.name}'{item_attributes_code_python})"
-                                                try:
-                                                    exec(create_element)
-                                                except IndexError as e:
-                                                    continue
+                                                second_item_attributes = f",{second_item.attributes_code_python}" if second_item.attributes_code_python else ""
+                                                second_item_attributes = second_item_attributes.replace(
+                                                    'index_i', str(i)
+                                                ).replace('index', str(i + 1))
+                                                create_element = f"{second_item.name} = etree.Element('{second_item.name}'{second_item_attributes})"
+                                                xml_err_ctx.update({
+                                                    'etapa': _('Creación elemento (segundo nivel, sin internal_for)'),
+                                                    'codigo_preview': _truncate_xml_code_snippet(create_element),
+                                                })
+                                                exec(create_element)
 
                                                 if second_item.name_parent == old_tag:
                                                     assignee_parent = f"{first_tag}.append({second_item.name})"
@@ -347,30 +430,36 @@ class zue_xml_generator_header(models.Model):
                                                 exec(assignee_parent)
                                     else:
                                         if second_item.name.find('&') == -1:
-                                            if second_item.attributes_code_python:
-                                                if 'not_include_in_for' in second_item.attributes_code_python:
-                                                    continue
-
-                                            item_attributes_code_python = f",{second_item.attributes_code_python}" if second_item.attributes_code_python else ""
-                                            item_attributes_code_python = item_attributes_code_python.replace('index',
-                                                                                                              str(i + 1)).replace(
-                                                'index_i', str(i))
-                                            create_element = f"{second_item.name} = etree.Element('{second_item.name}'{item_attributes_code_python})"
-
-                                            try:
-                                                exec(create_element)
-                                            except IndexError as e:
+                                            if second_item.attributes_code_python and 'not_include_in_for' in second_item.attributes_code_python:
                                                 continue
+                                            second_item_attributes = f",{second_item.attributes_code_python}" if second_item.attributes_code_python else ""
+                                            second_item_attributes = second_item_attributes.replace(
+                                                'index_i', str(i)
+                                            ).replace('index', str(i + 1))
+                                            create_element = f"{second_item.name} = etree.Element('{second_item.name}'{second_item_attributes})"
+                                            xml_err_ctx.update({
+                                                'etapa': _('Creación elemento (segundo nivel)'),
+                                                'codigo_preview': _truncate_xml_code_snippet(create_element),
+                                            })
+                                            exec(create_element)
 
                                         if second_item.code_python and second_item.is_parent == False:
-                                            ldict = {'o': o,
-                                                     'for_item': for_item}
+                                            ldict = {
+                                                'o': o,
+                                                'for_item': for_item,
+                                                'index_i': i,
+                                                'index_j': 0,
+                                            }
 
                                             if second_item.code_validation_python:
                                                 to_validate = second_item.code_validation_python
                                                 if 'index_i' in to_validate:
                                                     to_validate = to_validate.replace('index_i', str(i))
 
+                                                xml_err_ctx.update({
+                                                    'etapa': _('Validación antes del código valor (segundo nivel)'),
+                                                    'codigo_preview': _truncate_xml_code_snippet(to_validate),
+                                                })
                                                 exec(to_validate, ldict)
                                                 validation = ldict.get('validation')
                                             else:
@@ -380,9 +469,17 @@ class zue_xml_generator_header(models.Model):
                                                 continue
 
                                             if second_item.code_python == 'index':
+                                                xml_err_ctx.update({
+                                                    'etapa': _('Código valor literal "index" (segundo nivel)'),
+                                                    'codigo_preview': 'index',
+                                                })
                                                 val = str(i + 1)
                                             elif 'index_i' in second_item.code_python:
                                                 to_execute = second_item.code_python.replace('index_i', str(i))
+                                                xml_err_ctx.update({
+                                                    'etapa': _('Ejecución código valor (segundo nivel)'),
+                                                    'codigo_preview': _truncate_xml_code_snippet(to_execute),
+                                                })
                                                 exec(to_execute, ldict)
                                                 val = ldict.get('val')
                                                 for_item = ldict.get('for_item')
@@ -391,6 +488,10 @@ class zue_xml_generator_header(models.Model):
                                                     to_execute = second_item.code_python
                                                 else:
                                                     to_execute = item.code_python.replace('for_item =', 'val =') + '[' + str(i) + '].' + second_item.code_python
+                                                xml_err_ctx.update({
+                                                    'etapa': _('Ejecución código valor (segundo nivel)'),
+                                                    'codigo_preview': _truncate_xml_code_snippet(to_execute),
+                                                })
                                                 exec(to_execute, ldict)
 
                                                 val = ldict.get('val')
@@ -401,6 +502,10 @@ class zue_xml_generator_header(models.Model):
                                                 if 'index_i' in to_validate:
                                                     to_validate = to_validate.replace('index_i', str(i))
 
+                                                xml_err_ctx.update({
+                                                    'etapa': _('Validación post-valor (segundo nivel)'),
+                                                    'codigo_preview': _truncate_xml_code_snippet(to_validate),
+                                                })
                                                 exec(to_validate, ldict)
                                                 validation = ldict.get('validation')
                                             else:
@@ -408,14 +513,15 @@ class zue_xml_generator_header(models.Model):
 
                                             if validation:
                                                 if type(val) is list:
-                                                    for i in val:
+                                                    for _xmlgen_v2 in val:
                                                         cont += 1
-                                                        item_attributes_code_python = f",{second_item.attributes_code_python}" if second_item.attributes_code_python else ""
-                                                        item_attributes_code_python = item_attributes_code_python.replace(
-                                                            'index', str(i + 1)).replace('index_i', str(i))
-                                                        asigne_element = f"{second_item.name.replace('&', str(cont))} = etree.Element('{second_item.name.replace('&', str(cont))}'{item_attributes_code_python})"
+                                                        second_item_attributes = f",{second_item.attributes_code_python}" if second_item.attributes_code_python else ""
+                                                        second_item_attributes = second_item_attributes.replace(
+                                                            'index_i', str(i)
+                                                        ).replace('index', str(i + 1))
+                                                        asigne_element = f"{second_item.name.replace('&', str(cont))} = etree.Element('{second_item.name.replace('&', str(cont))}'{second_item_attributes})"
                                                         exec(asigne_element)
-                                                        val = str(i)
+                                                        val = str(_xmlgen_v2)
                                                         asigne_element = f"{second_item.name.replace('&', str(cont))}.text = val"
                                                         exec(asigne_element)
                                                         if second_item.name_parent:
@@ -450,9 +556,15 @@ class zue_xml_generator_header(models.Model):
 
 
                 tree_str = f"xml = etree.tostring({tag_initial})"
+                xml_err_ctx.update({
+                    'tag': tag_initial,
+                    'etapa': _('Serialización del XML (etree.tostring)'),
+                    'bloque': _('Raíz del documento: "%s"') % tag_initial,
+                    'codigo_preview': _truncate_xml_code_snippet(tree_str),
+                })
                 exec(tree_str)
             except Exception as e:
-                raise ValidationError(f'El tag {item.name} esta fallando, verificar en la configuración del XML! \n {str(e)}')
+                raise ValidationError(self._format_xml_generator_error(xml_err_ctx, item, e))
 
         xml_full_tags = etree.fromstring(eval("xml"))
         #Remover tags vacios se verifica 3 veces

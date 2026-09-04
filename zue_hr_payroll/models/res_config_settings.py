@@ -50,10 +50,13 @@ class ResConfigSettings(models.TransientModel):
     payroll_peoplepass_debit_account_id = fields.Many2one(related='company_id.payroll_peoplepass_debit_account_id',string='Cuenta contabilización pago valor no incluido débito', readonly=False)
     payroll_peoplepass_credit_account_id = fields.Many2one(related='company_id.payroll_peoplepass_credit_account_id',string='Cuenta contabilización pago valor no incluido crédito', readonly=False)
 
+    z_destination_sending_payroll = fields.Selection([('0', 'Corporativo'), ('1', 'Personal')], string='Destino envio comprobantes de nomina', default='0', help=("Define si los comprobantes se envian al correo corporativo o personal del empleado.\n" "Opciones: 0 (Corporativo), 1 (Personal)."))
+
     def set_values(self):
         super(ResConfigSettings, self).set_values()
         set_param = self.env['ir.config_parameter'].sudo().set_param
         set_param('zue_hr_payroll.module_hr_payroll_batch_account', self.module_hr_payroll_batch_account)
+        set_param('zue_hr_payroll.z_destination_sending_payroll', self.z_destination_sending_payroll)
         set_param('zue_hr_payroll.addref_work_address_account_moves', self.addref_work_address_account_moves)
         set_param('zue_hr_payroll.round_payroll', self.round_payroll)
         set_param('zue_hr_payroll.pay_vacations_in_payroll', self.pay_vacations_in_payroll)
@@ -65,6 +68,7 @@ class ResConfigSettings(models.TransientModel):
         res = super(ResConfigSettings, self).get_values()
         get_param = self.env['ir.config_parameter'].sudo().get_param
         res['module_hr_payroll_batch_account'] = get_param('zue_hr_payroll.module_hr_payroll_batch_account')
+        res['z_destination_sending_payroll'] = get_param('zue_hr_payroll.z_destination_sending_payroll')
         res['addref_work_address_account_moves'] = get_param('zue_hr_payroll.addref_work_address_account_moves')
         res['round_payroll'] = get_param('zue_hr_payroll.round_payroll')
         res['pay_vacations_in_payroll'] = get_param('zue_hr_payroll.pay_vacations_in_payroll')

@@ -88,11 +88,8 @@ class account_move(models.Model):
         lock_key = zlib.crc32(lock_seed.encode('utf-8'))
         if lock_key > 2147483647:
             lock_key -= 4294967296
-        self.env.cr.execute("SELECT pg_advisory_lock(%s)", (lock_key,))
+        self.env.cr.execute("SELECT pg_advisory_xact_lock(%s)", (lock_key,))
         return lock_key
-
-    def _release_ftech_lock(self, lock_key):
-        self.env.cr.execute("SELECT pg_advisory_unlock(%s)", (lock_key,))
 
     @api.model_create_multi
     def create(self, values_list):
@@ -123,6 +120,7 @@ class account_move(models.Model):
                         raise ValidationError(_('El valor total de la factura no puede ser 0. Por favor verifique!'))
 
         return super(account_move, self).create(values_list)
+
 
     @api.depends("z_alert_generated", "journal_id", "journal_id.z_generate_alert", "journal_id.dian_authorization_end_date", "journal_id.z_expiration_days", "journal_id.dian_max_range_number", "journal_id.z_expiration_folios")
     def _compute_z_dian_alert_type(self):
@@ -313,13 +311,15 @@ class account_move(models.Model):
         """Genera el archivo JSON para facturación electrónica"""
         json_data = None
 
-        # Buscar generador JSON similar al XML
-        if support_document:
-            obj_json = self.env['zue.json.generator.header'].search([('code', '=', 'DocSopElectronico_JSON')], limit=1)
+        json_generator = self.env.get('zue.json.generator.header')
+        if not json_generator:
+            obj_json = False
+        elif support_document:
+            obj_json = json_generator.search([('code', '=', 'DocSopElectronico_JSON')], limit=1)
         else:
-            obj_json = self.env['zue.json.generator.header'].search([('code', '=', 'FacElectronica_' + self.env.company.zue_electronic_invoice_operator + '_JSON')], limit=1)
+            obj_json = json_generator.search([('code', '=', 'FacElectronica_' + self.env.company.zue_electronic_invoice_operator + '_JSON')], limit=1)
             if not obj_json:
-                obj_json = self.env['zue.json.generator.header'].search([('code', '=', 'FacElectronica_' + self.env.company.zue_electronic_invoice_operator + 'v2_JSON')], limit=1)
+                obj_json = json_generator.search([('code', '=', 'FacElectronica_' + self.env.company.zue_electronic_invoice_operator + 'v2_JSON')], limit=1)
 
         self.fill_fe_table()
 
@@ -525,7 +525,9 @@ class account_move(models.Model):
         ldict = {'o':self}
 
         try:
-            if self.journal_id.z_is_debit_note:
+            if self.move_ref_id:
+                invoice_name = self.move_ref_id.name
+            elif self.journal_id.z_is_debit_note:
                 if self.ref:
                     invoice_name = self.ref[:self.ref.find(',')]
                 else:
@@ -556,6 +558,9 @@ class account_move(models.Model):
         val = 'DESCUENTO POR PRONTO PAGO: '
 
         try:
+            payment_condition_model = self.env.get('zue.prompt.payment.discount.condition')
+            if not payment_condition_model:
+                return ''
             query = """
                 SELECT so.pricelist_id, am.name
                 FROM sale_order so
@@ -577,7 +582,7 @@ class account_move(models.Model):
             if not pricelist_id:
                 return ''
 
-            obj_payment_condition = self.env['zue.prompt.payment.discount.condition'].search([('z_product_pricelist', '=', pricelist_id)], order='z_invoice_days asc')
+            obj_payment_condition = payment_condition_model.search([('z_product_pricelist', '=', pricelist_id)], order='z_invoice_days asc')
 
             if obj_payment_condition:
                 for condition in obj_payment_condition:
@@ -602,15 +607,22 @@ class account_move(models.Model):
         return to_return
 
     def get_pickings_fe(self):
+        if not self.env.get('sale.order') or not self.env.get('stock.picking'):
+            return False
         for record in self:
             obj_sale = self.env['sale.order'].search([('invoice_ids','in',[record.id])],limit=1)
             obj_picking = self.env['stock.picking'].search([('origin','=',obj_sale.name),('name','ilike','PICK')])
             return obj_picking
 
     def get_order_fe(self):
+        if not self.env.get('sale.order'):
+            return False
         for record in self:
             obj_sale = self.env['sale.order'].search([('invoice_ids','in',[record.id])],limit=1)
             return obj_sale
+
+    def _get_fe_web_service_name(self, service_name):
+        return service_name
 
     def send_xml_FE(self):
         """Envía el archivo XML o JSON según la configuración"""
@@ -632,10 +644,7 @@ class account_move(models.Model):
         user = self.company_id.zue_electronic_invoice_username
         password = self.company_id.zue_electronic_invoice_password
 
-        if self.pos_order_ids:
-            obj_ws = self.env['zue.request.ws'].search([('name', '=', 'uploadDocumentpos')])
-        else:
-            obj_ws = self.env['zue.request.ws'].search([('name', '=', 'upload_file_fe')])
+        obj_ws = self.env['zue.request.ws'].search([('name', '=', self._get_fe_web_service_name('upload_file_fe'))])
 
         if not obj_ws:
             raise ValidationError(_("Error! No ha configurado un web service con el nombre 'upload_file_fe'"))
@@ -664,10 +673,7 @@ class account_move(models.Model):
             user = self.company_id.zue_electronic_invoice_username
             password = self.company_id.zue_electronic_invoice_password
 
-        if self.pos_order_ids:
-            obj_ws = self.env['zue.request.ws'].search([('name', '=', 'documentStatuspos')])
-        else:
-            obj_ws = self.env['zue.request.ws'].search([('name', '=', 'check_status_fe')])
+        obj_ws = self.env['zue.request.ws'].search([('name', '=', self._get_fe_web_service_name('check_status_fe'))])
         if not obj_ws:
             raise ValidationError(_("Error! No ha configurado un web service con el nombre 'check_status_fe'"))
 
@@ -679,33 +685,27 @@ class account_move(models.Model):
 
     def download_pdf_file_FE(self, user='', password=''):
         self.ensure_one()
-        lock_key = self._acquire_ftech_lock('download_pdf')
-        try:
-            if self.env['ir.attachment'].search(self._get_fe_attachment_domain('FE_' + self.name), limit=1):
-                return True
+        self._acquire_ftech_lock('download_pdf')
+        if self.env['ir.attachment'].search(self._get_fe_attachment_domain('FE_' + self.name), limit=1):
+            return True
 
-            tmp_transaction_id = self.fe_transaction_id
-            if not tmp_transaction_id:
-                raise UserError(_('No se ha realizado el envío de la factura. Por favor verifique!'))
+        tmp_transaction_id = self.fe_transaction_id
+        if not tmp_transaction_id:
+            raise UserError(_('No se ha realizado el envío de la factura. Por favor verifique!'))
 
-            if not user:
-                user = self.company_id.zue_electronic_invoice_username
-                password = self.company_id.zue_electronic_invoice_password
+        if not user:
+            user = self.company_id.zue_electronic_invoice_username
+            password = self.company_id.zue_electronic_invoice_password
 
-            if self.pos_order_ids:
-                obj_ws = self.env['zue.request.ws'].search([('name', '=', 'documentpdfpos')])
-            else:
-                obj_ws = self.env['zue.request.ws'].search([('name', '=', 'download_pdf_fe')])
-            if not obj_ws:
-                raise ValidationError(_("Error! No ha configurado un web service con el nombre 'download_pdf_fe'"))
+        obj_ws = self.env['zue.request.ws'].search([('name', '=', self._get_fe_web_service_name('download_pdf_fe'))])
+        if not obj_ws:
+            raise ValidationError(_("Error! No ha configurado un web service con el nombre 'download_pdf_fe'"))
 
-            document, number = self._get_ftech_document_number()
+        document, number = self._get_ftech_document_number()
 
-            obj_result = obj_ws.connection_requests(user, password, document, number)
+        obj_result = obj_ws.connection_requests(user, password, document, number)
 
-            self.return_result_FE(obj_result, 'GET_PDF')
-        finally:
-            self._release_ftech_lock(lock_key)
+        self.return_result_FE(obj_result, 'GET_PDF')
 
     def get_cufe_FE(self, user='', password=''):
         if self.cufe_cude_ref:
@@ -719,10 +719,7 @@ class account_move(models.Model):
             user = self.company_id.zue_electronic_invoice_username
             password = self.company_id.zue_electronic_invoice_password
 
-        if self.pos_order_ids:
-            obj_ws = self.env['zue.request.ws'].search([('name', '=', 'documentcufepos')])
-        else:
-            obj_ws = self.env['zue.request.ws'].search([('name', '=', 'get_cufe_fe')])
+        obj_ws = self.env['zue.request.ws'].search([('name', '=', self._get_fe_web_service_name('get_cufe_fe'))])
         if not obj_ws:
             raise ValidationError(_("Error! No ha configurado un web service con el nombre 'get_cufe_fe'"))
 
@@ -736,8 +733,12 @@ class account_move(models.Model):
 
     def send_all_process(self):
         self.ensure_one()
+        self._acquire_ftech_lock('full_process')
+
         result = ''
         send_result = ''
+
+        self.validateFeCustomerPartner()
 
         if self.env.company.zue_electronic_invoice_disable_sending:
             return True

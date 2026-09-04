@@ -5,6 +5,11 @@ from odoo.exceptions import UserError, ValidationError
 class ResPartner(models.Model):
     _inherit = 'res.partner'
 
+    def _get_ubl_cii_edi_format(self):
+        if not self:
+            return False
+        return super()._get_ubl_cii_edi_format()
+
     #TRACK VISIBILITY PESTAÑA CONTABILIDAD
     property_account_receivable_id = fields.Many2one(tracking=True)
     property_account_payable_id = fields.Many2one(tracking=True)

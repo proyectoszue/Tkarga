@@ -14,8 +14,8 @@
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'Human Resources',
-    "version": "19.0.1.0.0",
+    'category': 'Human Resources/Employees',
+    'version': '19.0.1.0.4',
     'icon': '/zue_hr_employee/static/description/icon.png',
 
     # any module necessary for this one to work correctly
@@ -63,4 +63,24 @@
     },
     'installable': True,
     'license': 'LGPL-3',
+    'zue_functional': {
+        'area': 'Talento humano y nómina',
+        'summary': 'Módulo de nómina para la localización colombiana | Prametrización & Hoja de Vida Empleado & Contrato.',
+        'features': [
+            'Amplía la hoja de vida y contratación con tipos de empleado, entidades y devengos o deducciones.',
+            'Gestiona cambios salariales y sanciones de empleados.',
+            'Genera carnés y listados de cumpleaños.',
+            'Revisa la consistencia entre contactos y empleados.',
+        ],
+        'reports': [
+            'Lista de Cumpleaños',
+            'Certificacion laboral',
+            'Formato Datos Personales',
+            'Carta retiro de cesantías',
+            'Generar informe configurable hoja de vida',
+            'Informe configurable hoja de vida',
+            'Historico de certificados laborales generados',
+            'Configuración plantilla certificado laboral',
+        ],
+    },
 }

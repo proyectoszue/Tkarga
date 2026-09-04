@@ -5,7 +5,7 @@ class res_users(models.Model):
     _inherit = 'res.users'
     
     #Sucursal
-    branch_ids = fields.Many2many('zue.res.branch', string='Sucursal', ondelete='restrict')    
+    branch_ids = fields.Many2many('zue.res.branch', string='Sucursales permitidas', ondelete='restrict')
     #Firma
     signature_documents = fields.Binary(string='Firma ZUE')
     #Firma autorizada para certificado laboral

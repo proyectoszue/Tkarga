@@ -21,6 +21,8 @@
         <menuitem name="Tipos de movimiento" id="zue_account.menu_bank_movement_types" parent="contacts.menu_config_bank_accounts" action="action_bank_movement_types" sequence="5"/>
         <!-- Menu agrupa cuenta por concepto -->
         <menuitem name="Agrupa cuentas por Concepto" id="menu_concept_accounts" parent="account.account_account_menu" action="action_zue_concept_account" sequence="31"/>
+        <!-- Tipo de Impuestos (retenciones) -->
+        <menuitem name="Tipo de Impuestos" id="zue_account.zue_tax_type_menu" parent="account.account_account_menu" sequence="32" action="account_tax_type_action"/>
 
     </data>
 </odoo>

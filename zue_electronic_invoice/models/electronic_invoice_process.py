@@ -14,24 +14,23 @@ class AccountMove(models.Model):
     z_fe_detail_tax = fields.One2many('zue.fe.detail.tax', 'z_move_id', 'FE Detalle Impuesto')
     z_value_tax_fe = fields.Float(string='Impuesto sin redondeo')
 
+    def _get_fe_xml_prefixes(self):
+        return 'FacElectronica_', 'FE_v2_'
+
     def get_xml_v2(self):
         self.fill_fe_table()
 
         xml = None
-        if self.pos_order_ids:
-            obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', 'POSFacElectronica_' + self.env.company.zue_electronic_invoice_operator + 'v2')])
-        else:
-            obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', 'FacElectronica_' + self.env.company.zue_electronic_invoice_operator + 'v2')])
+        xml_prefix, filename_prefix = self._get_fe_xml_prefixes()
+        xml_code = xml_prefix + self.env.company.zue_electronic_invoice_operator + 'v2'
+        obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', xml_code)])
         if not obj_xml:
-            raise ValidationError(_("Error! No ha configurado un XML con el nombre '{}'".format(('POSFacElectronica_' if self.pos_order_ids else 'FacElectronica_') + self.env.company.zue_electronic_invoice_operator + "v2")))
+            raise ValidationError(_("Error! No ha configurado un XML con el nombre '{}'".format(xml_code)))
 
         xml = obj_xml.xml_generator(self)
         xml = xml.decode("UTF-8").replace("<ITE/>", "").replace("<TII/>", "").replace("<cfc", "<cfc:").replace("</cfc", "</cfc:").replace("<dte", "<dte:").replace("</dte", "</dte:").replace("<cno", "<cno:").replace("</cno", "</cno:").replace("<cex", "<cex:").replace("</cex", "</cex:")
 
-        if self.pos_order_ids:
-            filename = f'POS_FE_v2_{date.today().year}_{self.name}_{self.partner_id.name}.xml'
-        else:
-            filename = f'FE_v2_{date.today().year}_{self.name}_{self.partner_id.name}.xml'
+        filename = f'{filename_prefix}{date.today().year}_{self.name}_{self.partner_id.name}.xml'
 
         if self.xml_file_name:
             attachment = self.env['ir.attachment'].search(
@@ -63,6 +62,18 @@ class AccountMove(models.Model):
         # Se llenan tablas para el encabezado
         domain = ['&','&',('move_id', '=', self.id), ('name', '!=', self.name), ('balance', '!=', 0), ('price_subtotal', '!=', self.amount_total*-1)]
         obj_lines = self.env['account.move.line'].search(domain, order='id')
+        # Productos de ingreso con balance 0 (p. ej. descuento 100% / total en cero)
+        zero_product_lines = self.env['account.move.line'].search([
+            ('move_id', '=', self.id),
+            ('name', '!=', self.name),
+            ('display_type', '=', 'product'),
+            ('balance', '=', 0),
+        ]).filtered(
+            lambda line: line.account_id.internal_group == 'income'
+            or (line.account_id.internal_group == 'expense' and line.move_id.move_type in ('out_refund', 'in_refund'))
+        )
+        if zero_product_lines:
+            obj_lines = (obj_lines | zero_product_lines).sorted('id')
 
         total, totalret, base = 0, 0, 0
         tax_lines_encab = []
