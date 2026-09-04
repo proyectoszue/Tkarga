@@ -26,7 +26,7 @@
         'data/fe_payments_options_data.xml',
         'data/zue_xml_generator_data_nom_elect.xml',
         'data/zue_xml_generator_data_elect_invo.xml',
-        'data/zue_xml_generator_data_pos.xml',
+        # 'data/zue_xml_generator_data_pos.xml',
         'data/zue_xml_generator_data_doc_sop.xml',
         'views/actions_account_move.xml',
         'views/actions_account_tax.xml',

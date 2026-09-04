@@ -8,8 +8,8 @@
     'version': '19.0.1.0.0',
     'depends': ['zue_electronic_invoice', 'point_of_sale'],
     'data': [
-        # 'data/zue_request_ws_data_pos.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
-        # 'data/zue_xml_generator_data_pos.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
+        'data/zue_request_ws_data_pos.xml',
+        'data/zue_xml_generator_data_pos.xml',
     ],
     'license': 'LGPL-3',
     'auto_install': True,
