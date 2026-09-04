@@ -5,7 +5,7 @@ class zue_hr_employee_portal_design(models.Model):
     _description = 'Diseño del portal'
     _rec_name = 'z_company_design_id'
 
-    z_company_design_id = fields.Many2one('res.company', string='Compañía', required="True")
+    z_company_design_id = fields.Many2one('res.company', string='Compañía', required=True)
     z_theme = fields.Selection([('light', 'Claro'),('dark', 'Oscuro')],
                                     string='Tema') #OSCURO/CLARO
     z_background_color = fields.Char(string='Color fondo contenido')

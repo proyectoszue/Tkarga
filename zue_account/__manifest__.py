@@ -14,19 +14,19 @@
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'account',
-    "version": "19.0.1.0.0",
-
+    'category': 'Accounting/Accounting',
+    'version': '19.0.1.0.0',
     # any module necessary for this one to work correctly
-    'depends': ['base','account','zue_erp','account_reports','documents','l10n_co_reports','accountant','stock_account'],
+    'depends': ['base','account','zue_erp','account_reports','account_followup','documents','l10n_co_reports','accountant','stock_account','account_edi_ubl_cii'],
 
     # always loaded
     'data': [
         'security/ir.model.access.csv',
-        # 'data/account_fiscal_position_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
-        # 'data/zue_res_bank_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
-        # 'data/account_group_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
+        'data/account_fiscal_position_data.xml',
+        'data/zue_res_bank_data.xml',
+        # 'data/account_group_data.xml', duplicado con l10n_co (account.group-co.csv) en Odoo v19
         'views/actions_payment_file.xml',
+        'views/actions_account_tax.xml',
         'views/actions_account_account.xml',
         'views/aged_partner_balance_report_columns.xml',
         'views/actions_account_move.xml',
@@ -54,4 +54,25 @@
         ],
     },
     'license': 'LGPL-3',
+    'zue_functional': {
+        'area': 'Contabilidad, compras y tesorería',
+        'summary': 'Gestiona pagos bancarios, medios magnéticos, cierres, conciliación y seguimiento de cartera.',
+        'features': [
+            'Genera archivos bancarios para pagos a proveedores y anticipos.',
+            'Prepara medios magnéticos DIAN e información distrital.',
+            'Ejecuta cierres contables, conciliaciones y conversiones de extractos bancarios.',
+            'Amplía los informes de cartera y controla las cuentas que requieren tercero.',
+        ],
+        'reports': [
+            'Archivo de pago bancario TXT / Excel',
+            'Medios magnéticos y Artículo 631',
+            'Información de impuesto distrital',
+            'Reporte de extracto bancario',
+            'Extracto Multicash',
+            'Antigüedad de saldos por cobrar y pagar',
+            'Seguimiento de cobro',
+            'Cierre contable',
+            'Cierre de partidas conciliatorias',
+        ],
+    },
 }

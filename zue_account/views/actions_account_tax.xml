@@ -30,6 +30,7 @@
 								<field name="code"/>
 								<field name="name"/>
 								<field name="retention"/>
+								<field name="not_iclude"/>
 							</group>
 						</group>
                     </sheet>
@@ -46,6 +47,14 @@
                 <field name="tax_group_id" position="after">
                     <field name="tax_type"/>
                 </field>
+                <xpath expr="//field[@name='country_id']" position="after">
+					<field name="has_minimum_base"/>
+					<field name="minimum_base" invisible="has_minimum_base == False"/>
+                </xpath>
+				<xpath expr="//field[@name='is_base_affected']" position="after">
+					<field name="is_base_affected_only_taxes"/>
+					<field name="base_affected_only_taxes_id"/>
+                </xpath>
 			</field>
 		</record>
     </data>

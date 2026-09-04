@@ -16,7 +16,7 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Technical',
-    'version': '19.0.1.0.2',
+    'version': '19.0.1.0.3',
     'application': True,
 
     'depends': ['base', 'base_import', 'base_vat', 'base_address_extended', 'l10n_latam_base', 'contacts', 'zue_xml_generator', 'zue_request_ws'],

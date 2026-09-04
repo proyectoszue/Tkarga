@@ -6,7 +6,7 @@
             <field name="model">res.partner</field>
             <field name="inherit_id" ref="base.view_partner_form"/>
             <field name="arch" type="xml">
-                <xpath expr="//div[@class='o_address_format']" position="replace">
+                <xpath expr="//div[hasclass('o_address_format')]" position="replace">
                     <div class="o_address_format">
                         <field name="street" placeholder="Street..." class="o_address_street"/>
                         <field name="street2" placeholder="Street 2..." class="o_address_street"/>

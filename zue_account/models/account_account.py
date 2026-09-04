@@ -15,17 +15,19 @@ class AccountGroup(models.Model):
 
 class account_account(models.Model):
     _inherit = 'account.account'
-    #_inherit = ['account.account','mail.thread', 'mail.activity.mixin'] // EN V18 YA LO HEREDA ODOO REF
+    #_inherit = ['account.account','mail.thread', 'mail.activity.mixin'] // EN V18 YA LO HEREDA ODOO
 
-    required_partner = fields.Boolean('Obliga tercero', tracking=True)
+    required_partner = fields.Boolean('Obliga tercero', tracking=True, help='Indica que los movimientos de la cuenta deben identificar un tercero.')
     accounting_class = fields.Char('Clase', tracking=True)
+    z_generates_support_document = fields.Boolean('Genera documento soporte', tracking=True)
     exclude_balance_test = fields.Boolean('Permitir filtro de excluir en balance de prueba', tracking=True)
     z_not_disaggregate_partner_balance_test = fields.Boolean('No desagregar por tercero en balance de prueba', tracking=True)
     z_code_cgn = fields.Char(string='Codigo CGN')
     z_account_value = fields.Selection([
         ('1', 'Corriente'),
         ('2', 'No corriente')], string="Valor de cuenta")
-    
+    tax_type = fields.Many2one('account.tax.type', string='Tipo de Impuesto', domain="[('retention', '=', True)]", tracking=True)
+
     def _get_code_from_store(self):
         """Extrae el código de cuenta del campo code_store (JSON)
         El formato esperado es: {"1": "112000"}

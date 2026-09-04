@@ -15,8 +15,8 @@
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'Uncategorized',
-    "version": "19.0.1.0.0",
+    'category': 'Technical',
+    'version': '19.0.1.0.0',
     'application': True,
 
     # any module necessary for this one to work correctly
@@ -29,4 +29,15 @@
         'views/general_menus.xml'
     ],
     'license': 'LGPL-3',
+    'zue_functional': {
+        'area': 'Documentos e integraciones',
+        'summary': 'ZUE - App para el consumo de ws.',
+        'features': [
+            'Configura servicios web con URL, encabezados y parámetros.',
+            'Ejecuta solicitudes HTTP reutilizables desde otros módulos.',
+            'Conserva la configuración de autenticación y consumo del servicio.',
+        ],
+        'reports': [
+        ],
+    },
 }

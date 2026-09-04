@@ -95,7 +95,7 @@
                                     </b>
                                     <span t-if="employee_gender in ('female', 'femenino')">identificada</span><span t-else="">identificado</span> con cédula de ciudadanía número
                                     <span t-esc="str('{:20,.0f}'.format(int(o.employee_id.identification_id))).replace(',','.')"/>
-                                    <t t-if="o.contract_date_end == False">
+                                    <t t-if="version_full.retirement_date or o.contract_date_end">
                                         prestó sus servicios a la empresa en el
                                     </t>
                                     <t t-else="">
@@ -108,9 +108,9 @@
                                     </b>
                                     , entre el
                                         <span t-esc="o.get_date_text(o.contract_date_start)"/>
-                                        <t t-if="o.contract_date_end == False and version_full.retirement_date">
+                                        <t t-if="version_full.retirement_date or o.contract_date_end">
                                             y el
-                                            <span t-esc="o.get_date_text(version_full.retirement_date)"/>
+                                            <span t-esc="o.get_date_text(version_full.retirement_date or o.contract_date_end)"/>
                                         </t>
                                     <t t-else="">
                                         y hasta la fecha
@@ -163,10 +163,10 @@
                                     </b>
                                     <span t-if="employee_gender in ('female', 'femenino')">identificada</span><span t-else="">identificado</span> con cédula de ciudadanía número
                                     <span t-esc="str('{:20,.0f}'.format(int(o.employee_id.identification_id))).replace(',','.')"/>,
-                                    <t t-if="o.contract_date_end == True">
+                                    <t t-if="version_full.retirement_date or o.contract_date_end">
                                         laboró en nuestra compañía desde el
                                         <span t-esc="o.get_date_text(o.contract_date_start)"/>
-                                        hasta el<span t-esc="o.get_date_text(version_full.retirement_date)"/>,
+                                        hasta el <span t-esc="o.get_date_text(version_full.retirement_date or o.contract_date_end)"/>,
                                     </t>
                                     <t t-else="">
                                         labora en nuestra compañía desde el <span t-esc="o.get_date_text(o.contract_date_start)"/>,
@@ -175,7 +175,7 @@
                                     <b>
                                         <span t-esc="o.get_version_type()"/>,
                                     </b>
-                                    <t t-if="o.contract_date_end == False">
+                                    <t t-if="not (version_full.retirement_date or o.contract_date_end)">
                                         hasta la fecha.
                                     </t>
                                     <t>

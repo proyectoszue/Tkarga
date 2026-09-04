@@ -2,12 +2,6 @@ from odoo import tools
 from odoo import models, fields, api, _, SUPERUSER_ID
 from odoo.exceptions import UserError, ValidationError
 
-class hr_report_expenses_employee(models.Model):
-    _name = "hr.report.expenses.employee"
-    _description = "TMP ---- Informe de costos por empleado"
-
-    name = fields.Char(string='TMP')
-
 class hr_report_expenses_by_employee(models.Model):
     _name = "hr.report.expenses.by.employee"
     _description = "Informe de costos por empleado"

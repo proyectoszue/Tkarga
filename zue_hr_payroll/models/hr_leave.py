@@ -1,7 +1,6 @@
 from odoo import api, fields, models, SUPERUSER_ID, tools, _
 from odoo.exceptions import AccessError, UserError, ValidationError
 from odoo.tools import float_compare
-from odoo.osv import expression
 from datetime import datetime, timedelta, time
 from pytz import timezone, UTC
 from odoo.addons.base.models.res_partner import _tz_get

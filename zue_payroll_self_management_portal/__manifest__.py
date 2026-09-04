@@ -15,8 +15,8 @@
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'ZuePayroll ManagementPortal',
-    "version": "19.0.1.0.1",
+    'category': 'Human Resources/Payroll',
+    'version': '19.0.1.0.2',
     'icon': '/zue_payroll_self_management_portal/static/description/icon.png',
 
     # any module necessary for this one to work correctly
@@ -56,5 +56,20 @@
     },
     'bootstrap': True,
     'license': 'LGPL-3',
+    'zue_functional': {
+        'area': 'Talento humano y nómina',
+        'summary': 'Portal de autogestión de nómina.',
+        'features': [
+            'Publica comprobantes, contratos y documentos laborales en el portal del empleado.',
+            'Configura menús, diseño y comunicados del portal.',
+            'Gestiona la información temporal usada por la autogestión de nómina.',
+        ],
+        'reports': [
+            'Libro de Vacaciones Portal Web',
+            'Libro de Cesantías Portal Web',
+            'Certificacion laboral portal',
+            'Payrrol Vouchers Portal',
+        ],
+    },
 }
 

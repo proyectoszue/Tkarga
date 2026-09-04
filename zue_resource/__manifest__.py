@@ -16,9 +16,8 @@
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/14.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'Resource',
-    "version": "19.0.1.0.0",
-
+    'category': 'Human Resources/Employees',
+    'version': '19.0.1.0.0',
     # any module necessary for this one to work correctly
     'depends': ['base','zue_erp','resource'],
 
@@ -28,4 +27,14 @@
         'views/resource_calendar.xml',
     ],
     'license': 'LGPL-3',
+    'zue_functional': {
+        'area': 'Operación general',
+        'summary': 'Proyecto para ajustes al módulo recursos/resource de Odoo.',
+        'features': [
+            'Clasifica horarios de trabajo y permite considerar días festivos.',
+            'Calcula horas diurnas y nocturnas por tramo del calendario.',
+        ],
+        'reports': [
+        ],
+    },
 }

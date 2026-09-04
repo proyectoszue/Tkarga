@@ -13,7 +13,7 @@ class Hr_payslip(models.Model):
     #reason_retiro = fields.Char(string='Motivo de retiro TMP V13', store=False)
     # SE REQUIERE VOLVER A AJUSTAR POSTERIOR A MIGRACIÓN - ESTABA TIPO CHAR
     reason_retiro = fields.Many2one('hr.departure.reason', string='Motivo de retiro')
-    z_reason_retiro = fields.Many2one('hr.departure.reason', string='Motivo de retiro')
+    z_reason_retiro = fields.Many2one('hr.departure.reason', string='Motivo de retiro ZUE')
     have_compensation = fields.Boolean('Indemnización', default=False)
     settle_payroll_concepts = fields.Boolean('Liquida conceptos de nómina', default=True)
     novelties_payroll_concepts = fields.Boolean('Liquida conceptos de novedades', default=True)
@@ -161,4 +161,4 @@ class Hr_payslip(models.Model):
         # 8.Guardar proceso
         self.struct_id = struct_original
         result_finally = {**result_dev,**result_contrato,**result_ded_bases,**result_vac,**result_cesantias,**result_intcesantias,**result_prima,**result_ded}
-        return result_finally.values()  
+        return result_finally.values()

@@ -10,25 +10,24 @@
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'Uncategorized',
-    "version": "19.0.1.0.0",
-
+    'category': 'Accounting/Localizations/EDI',
+    'version': '19.0.1.1.1',
     # any module necessary for this one to work correctly
-    'depends': ['base','account','zue_account_support_document', 'point_of_sale', 'sale', 'stock'],
+    'depends': ['base','account','zue_account', 'zue_account_support_document', 'sale', 'stock'],
 
     # always loaded
     'data': [
         'security/ir.model.access.csv',
-        # 'data/zue_account_tax_type_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
-        # 'data/zue_responsibilities_rut_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
-        # 'data/product_category_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
-        # 'data/product_template_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
-        # 'data/zue_request_ws_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
-        # 'data/fe_payments_options_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
-        # 'data/zue_xml_generator_data_nom_elect.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
-        # 'data/zue_xml_generator_data_elect_invo.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
-        # 'data/zue_xml_generator_data_pos.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
-        # 'data/zue_xml_generator_data_doc_sop.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
+        'data/zue_account_tax_type_data.xml',
+        'data/zue_responsibilities_rut_data.xml',
+        'data/product_category_data.xml',
+        'data/product_template_data.xml',
+        'data/zue_request_ws_data.xml',
+        'data/fe_payments_options_data.xml',
+        'data/zue_xml_generator_data_nom_elect.xml',
+        'data/zue_xml_generator_data_elect_invo.xml',
+        'data/zue_xml_generator_data_pos.xml',
+        'data/zue_xml_generator_data_doc_sop.xml',
         'views/actions_account_move.xml',
         'views/actions_account_tax.xml',
         'views/actions_account_journal.xml',
@@ -38,4 +37,15 @@
         'views/actions_upload_dian_invoice.xml',
     ],
     'license': 'LGPL-3',
+    'zue_functional': {
+        'area': 'Contabilidad, compras y tesorería',
+        'summary': 'Módulo de facturación electrónica zue.',
+        'features': [
+            'Configura métodos de pago, tipos de impuesto y responsabilidades fiscales para facturación electrónica.',
+            'Genera y envía documentos electrónicos y permite descargar su representación PDF.',
+            'Conserva encabezados e impuestos reportados por el proveedor electrónico.',
+        ],
+        'reports': [
+        ],
+    },
 }

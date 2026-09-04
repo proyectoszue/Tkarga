@@ -8,7 +8,6 @@ from collections import defaultdict
 from datetime import datetime, timedelta, date, time
 from odoo.tools import float_round, date_utils
 from odoo.tools.misc import format_date
-from odoo.osv import expression
 from odoo.fields import Domain
 from odoo.tools.date_utils import get_month
 import math
@@ -27,7 +26,7 @@ class HrPayslipRun(models.Model):
     observations = fields.Text('Observaciones')
     definitive_plan = fields.Boolean(string='Plano definitivo generado')
     z_filter_state_finished = fields.Selection([('open', 'En Proceso'),
-                                                ('finished', 'Finalizado por liquidar')],string='Estado',
+                                                ('finished', 'Finalizado por liquidar')],string='Estado de contratos a liquidar',
                                                default='open', required=True)
     method_schedule_pay = fields.Selection([('bi-weekly', 'Quincenal'),
                                             ('monthly', 'Mensual')], 'Frecuencia de Pago')
@@ -664,8 +663,8 @@ class Hr_payslip(models.Model):
             #self.env['hr.vacation'].search([('payslip', '=', payslip.id)]).unlink()
             #self.env['hr.history.prima'].search([('payslip', '=', payslip.id)]).unlink()
             self.env['hr.history.cesantias'].search([('payslip', '=', payslip.id)]).unlink()
-            #Reversar Liquidación            
-            payslip.action_payslip_draft()            
+            #Reversar Liquidación
+            payslip.action_payslip_draft()
 
     #--------------------------------------------------LIQUIDACIÓN DE LA NÓMINA PERIÓDICA---------------------------------------------------------#
 
@@ -756,7 +755,7 @@ class Hr_payslip(models.Model):
                 localdict['values_base_compensation'] += amount if rule.z_base_compensation else 0
                 localdict['values_base_vacremuneradas'] += amount if rule.base_vacaciones_dinero else 0
                 localdict['values_base_vacdisfrutadas'] += amount if rule.base_vacaciones else 0
-            
+
             return localdict
 
         self.ensure_one()
@@ -773,7 +772,7 @@ class Hr_payslip(models.Model):
         vacation_days_calculate_absences = int(self.env['ir.config_parameter'].sudo().get_param(
             'zue_hr_payroll.vacation_days_calculate_absences')) or 5
         round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
-        
+
         worked_days_entry = 0
         leaves_days_law = 0
         leaves_days_all = 0
@@ -880,7 +879,7 @@ class Hr_payslip(models.Model):
                                 leaves[leave.work_entry_type_id.code + '_PARTNER_PLUS90'] = days_partner if number_of_days_total > 90 else 0
                                 leaves[leave.work_entry_type_id.code + '_PARTNER_MINUS90'] = days_partner if number_of_days_total <= 90 else 0
                                 leaves[leave.work_entry_type_id.code + '_PARTNER'] = days_partner
-        
+
         if localdict == None:
             localdict = {
                 **self._get_base_local_dict(),
@@ -964,7 +963,7 @@ class Hr_payslip(models.Model):
                 #LIQUIDACION DE CONTRATO SOLO DEV OR DED DEPENDIENTO SU ORIGEN
                 if (inherit_contrato_dev != 0 or inherit_contrato_ded != 0 or inherit_contrato_ded_bases != 0) and self.novelties_payroll_concepts == False and not concepts.salary_rule_id.code in ['TOTALDEV','TOTALDED','NET']:
                    tot_rule = 0
-                if inherit_contrato_dev != 0 and concepts.salary_rule_id.dev_or_ded != 'devengo':                            
+                if inherit_contrato_dev != 0 and concepts.salary_rule_id.dev_or_ded != 'devengo':
                     tot_rule = 0
                 if inherit_contrato_ded+inherit_contrato_ded_bases != 0 and concepts.salary_rule_id.dev_or_ded != 'deduccion' and not concepts.salary_rule_id.code in ['TOTALDEV','NET']:
                     tot_rule = 0

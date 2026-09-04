@@ -16,9 +16,8 @@
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/14.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'Documents',
-    "version": "19.0.1.0.0",
-
+    'category': 'Productivity/Documents',
+    'version': '19.0.1.0.0',
     # any module necessary for this one to work correctly
     'depends': ['base','documents','documents_account'],
 
@@ -34,8 +33,28 @@
     'license': 'LGPL-3',
     'assets': {
         'web.assets_backend': [
-            'zue_documents/static/src/documents_view/*',
-            'zue_documents/static/src/documents_view/**/*',
+            'zue_documents/static/src/documents_view/documents_upload_patch.js',
+            'zue_documents/static/src/documents_view/documents_zue_controller_mixin.js',
+            'zue_documents/static/src/documents_view/documents_zue_controller_mixin.xml',
+            'zue_documents/static/src/documents_view/kanban/documents_kanban_controller.js',
+            'zue_documents/static/src/documents_view/list/documents_list_controller.js',
+            'zue_documents/static/src/documents_view/inspector/documents_inspector.js',
+            'zue_documents/static/src/documents_view/pdf_manager/pdf_manager_patch.js',
+            'zue_documents/static/src/documents_view/pdf_manager/pdf_manager_labels.xml',
+            'zue_documents/static/src/documents_view/activity/documents_activity.js',
         ],
-    }
+    },
+    'zue_functional': {
+        'area': 'Documentos e integraciones',
+        'summary': 'Proyecto para ajustes al módulo de documentos de Odoo.',
+        'features': [
+            'Configura plantillas para solicitar documentos a terceros.',
+            'Gestiona solicitudes y su detalle desde asistentes.',
+            'Une documentos PDF seleccionados y genera el reporte consolidado.',
+        ],
+        'reports': [
+            'Reporte documentos - Unir PDFs',
+            'Reporte documentos - Unir PDFs - Favoritos',
+        ],
+    },
 }

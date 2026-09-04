@@ -1,11 +1,13 @@
 /** @odoo-module **/
 
 import { useService } from "@web/core/utils/hooks";
+import { patchDocumentsUploadHandlers } from "./documents_upload_patch";
 
 export const DocumentsZueControllerMixin = () => ({
     setup() {
         super.setup(...arguments);
         this.actionService = useService("action");
+        patchDocumentsUploadHandlers(this);
     },
 
     getActionService() {

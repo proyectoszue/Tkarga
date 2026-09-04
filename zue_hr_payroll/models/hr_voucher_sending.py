@@ -63,6 +63,7 @@ class hr_voucher_sending(models.Model):
 
     def create_document_inmemory(self,records):
         _logger.info(f'(START) HILO/REGISTRO - Envio de comprobantes, cantidad: {len(records)}')
+        destination_sending_payroll = self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.z_destination_sending_payroll') or '0'
         for payslip in records:
             obj_payslip = self.env['hr.payslip'].search([('id', '=', payslip)])
             try:
@@ -73,7 +74,7 @@ class hr_voucher_sending(models.Model):
                 email_vals = {}
                 identificacion  = obj_payslip.employee_id.identification_id
                 nombre_empleado = obj_payslip.employee_id.name
-                correo_envio    = obj_payslip.employee_id.work_email
+                correo_envio = obj_payslip.employee_id.work_email if destination_sending_payroll == '0' else obj_payslip.employee_id.personal_email
                 # body message
                 message = "Estimado "+ nombre_empleado + "<br/><br/>"
                 message += "Adjunto encontrará la información de la última liquidación y pago de su nómina.<br/><br/><br/>"
