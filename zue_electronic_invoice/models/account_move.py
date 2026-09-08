@@ -265,16 +265,17 @@ class account_move(models.Model):
 
     def get_xml(self, support_document=False, return_xml=False):
         xml = None
+        company = self.company_id
 
         if support_document:
             obj_xml = self.env['zue.xml.generator.header'].search([('code','=','DocSopElectronico_Carvajal')])
         else:
-            obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', 'FacElectronica_' + self.env.company.zue_electronic_invoice_operator)])
+            obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', 'FacElectronica_' + company.zue_electronic_invoice_operator)])
             if not obj_xml:
-                obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', 'FacElectronica_' + self.env.company.zue_electronic_invoice_operator + 'v2')])
+                obj_xml = self.env['zue.xml.generator.header'].search([('code', '=', 'FacElectronica_' + company.zue_electronic_invoice_operator + 'v2')])
             if len(obj_xml) == 0:
                 raise ValidationError(
-                    _("Error! No ha configurado un XML con el nombre 'FacElectronica_" + self.env.company.zue_electronic_invoice_operator + "'"))
+                    _("Error! No ha configurado un XML con el nombre 'FacElectronica_" + company.zue_electronic_invoice_operator + "'"))
 
         self.fill_fe_table()
         xml = obj_xml.xml_generator(self)
@@ -740,7 +741,7 @@ class account_move(models.Model):
 
         self.validateFeCustomerPartner()
 
-        if self.env.company.zue_electronic_invoice_disable_sending:
+        if self.company_id.zue_electronic_invoice_disable_sending:
             return True
 
         if self.journal_id.z_disable_dian_sending:
