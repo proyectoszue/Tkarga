@@ -22,9 +22,9 @@
     # always loaded
     'data': [
         'security/ir.model.access.csv',
-        'data/account_fiscal_position_data.xml',
-        'data/zue_res_bank_data.xml',
-        # 'data/account_group_data.xml', duplicado con l10n_co (account.group-co.csv) en Odoo v19
+        # 'data/account_fiscal_position_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
+        # 'data/zue_res_bank_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
+        # 'data/account_group_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
         'views/actions_payment_file.xml',
         'views/actions_account_tax.xml',
         'views/actions_account_account.xml',
