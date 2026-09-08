@@ -15,7 +15,7 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Human Resources/Payroll',
-    'version': '19.0.1.1.3',
+    'version': '19.0.1.1.8',
     'icon': '/zue_hr_payroll/static/description/icon.png',
 
     # any module necessary for this one to work correctly
@@ -89,9 +89,9 @@
         'area': 'Talento humano y nómina',
         'summary': 'Módulo de nómina para la localización colombiana | Liquidación de Nómina.',
         'features': [
-            'Calcula nómina colombiana, acumulados y retención en la fuente.',
+            'Calcula nómina colombiana, acumulados y retención en la fuente, conservando el tipo de contrato colombiano en el detalle.',
             'Configura reglas de deducción tributaria, tipos de impuesto y sustitución patronal.',
-            'Conserva el histórico de ausencias.',
+            'Conserva el histórico de ausencias y los motivos de retiro registrados como texto en las liquidaciones.',
             'Genera nómina electrónica y notas de ajuste.',
             'Permite filtrar resultados de nómina electrónica y notas de ajuste por estado: todos, aceptados o fallidos.',
         ],
