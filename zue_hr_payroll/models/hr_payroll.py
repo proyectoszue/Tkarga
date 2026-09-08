@@ -1622,6 +1622,18 @@ class Hr_payslip(models.Model):
                     else:
                         payments.payslip.write({'observation': 'El valor se trasladó a la liquidación ' + self.name + ' de ' + self.struct_id.name})
 
+    def action_edit_payslip_lines(self):
+        # Se hereda el wizard estándar para conservar entity_id/loan_id al validar la edición manual de las liquidaciones
+        action = super().action_edit_payslip_lines()
+        wizard = self.env['hr.payroll.edit.payslip.lines.wizard'].browse(action['res_id'])
+        for wizard_line, payslip_line in zip(wizard.line_ids, self.line_ids):
+            wizard_line.write({
+                'entity_id': payslip_line.entity_id.id,
+                'loan_id': payslip_line.loan_id.id,
+            })
+        return action
+
+
 class HrPayrollEditPayslipLinesWizard(models.TransientModel):
     _inherit = 'hr.payroll.edit.payslip.lines.wizard'
 
@@ -1668,3 +1680,18 @@ class HrPayrollEditPayslipLinesWizard(models.TransientModel):
         #     lines_to_payslip.append(line)
         # self.line_ids = lines_to_remove + [(0, 0, line) for line in lines_to_payslip]
         # return reload_wizard
+
+
+class HrPayrollEditPayslipLine(models.TransientModel):
+    _inherit = 'hr.payroll.edit.payslip.line'
+
+    entity_id = fields.Many2one('hr.employee.entities', string='Entidad')
+    loan_id = fields.Many2one('hr.loans', string='Prestamo')
+
+    def _export_to_payslip_line(self):
+        # Se agregan entity_id/loan_id al recrear las líneas del recibo para conservar entidad y préstamo tras la edición manual
+        lines = super()._export_to_payslip_line()
+        for wizard_line, vals in zip(self, lines):
+            vals['entity_id'] = wizard_line.entity_id.id
+            vals['loan_id'] = wizard_line.loan_id.id
+        return lines

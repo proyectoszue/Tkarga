@@ -63,6 +63,8 @@ class Hr_payslip(models.Model):
             localdict['rules_computed'].dict[rule.code] = localdict['rules_computed'].dict.get(rule.code, 0) + amount
             return localdict
 
+        self.load_dates_liq_contrato()
+
         employee = self.employee_id
         version = self.version_id
         result_finally = {}
