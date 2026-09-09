@@ -8,7 +8,7 @@ class hr_tipo_cotizante(models.Model):
     _name = 'hr.tipo.cotizante'
     _description = 'Tipos de cotizante'
     _order = 'code,name'
-    
+
     code = fields.Char('Código', required=True)
     name = fields.Char('Nombre', required=True)
 
@@ -65,11 +65,11 @@ class hr_parameterization_of_contributors(models.Model):
 
 class hr_indicador_especial_pila(models.Model):
     _name = 'hr.indicador.especial.pila'
-    _description = 'Indicadores especiales para PILA'    
-    
+    _description = 'Indicadores especiales para PILA'
+
     name = fields.Char("Nombre")
     code = fields.Char('Codigo')
-                
+
 class hr_contract_setting(models.Model):
     _name = 'hr.contract.setting'
     _description = 'Configuracion nomina entidades'
@@ -85,13 +85,13 @@ class hr_contract_setting(models.Model):
     _emp_type_entity_uniq = models.Constraint('unique(employee_id,contrib_id)', 'El empleado ya tiene una entidad de este tipo, por favor verifique.')
 
     @api.constrains('employee_id','contrib_id')
-    def _check_duplicate_entitites(self):  
+    def _check_duplicate_entitites(self):
         for record in self:
             obj_duplicate = self.env['hr.contract.setting'].search([('id','!=',record.id),('employee_id','=',record.employee_id.id),('contrib_id','=',record.contrib_id.id)])
 
-            if len(obj_duplicate) > 0:   
-                raise ValidationError(_('El empleado ya tiene una entidad de este tipo, por favor verifique.'))  
-    
+            if len(obj_duplicate) > 0:
+                raise ValidationError(_('El empleado ya tiene una entidad de este tipo, por favor verifique.'))
+
     def write(self, vals):
         for record in self:
             vals_history = {
@@ -121,7 +121,7 @@ class hr_contract_setting_history(models.Model):
 class hr_employee_dependents(models.Model):
     _name = 'hr.employee.dependents'
     _description = 'Dependientes de los empleados'
-    
+
     employee_id = fields.Many2one('hr.employee', 'Empleado', required=True, ondelete='cascade')
     name = fields.Char('Nombre completo', required=True)
     genero = fields.Selection([('masculino', 'Masculino'),
@@ -182,7 +182,7 @@ class hr_employee_dependents(models.Model):
 class hr_employee_labor_union(models.Model):
     _name = 'hr.employee.labor.union'
     _description = 'Sindicato de empleados'
-    
+
     employee_id = fields.Many2one('hr.employee', 'Empleado', required=True, ondelete='cascade')
     name_labor_union = fields.Char('Nombre del sindicato', required=True)
     afiliado = fields.Boolean('Afiliado', help='Indica si el empelado esta afiliado a un sindicato')
@@ -348,8 +348,6 @@ class hr_employee(models.Model):
     #z_city_birth_id = fields.Many2one('res.city',string="Ciudad de nacimiento",domain="[('state_id', '=', z_department_birth_id)]", tracking=True)
     z_department_birth_id = fields.Many2one('res.country.state',string="Departamento de nacimiento", domain="[('country_id', '=', country_id)]", tracking=True)
     z_military_passbook = fields.Boolean('Libreta militar', tracking=True)
-
-    _emp_identification_uniq = models.Constraint('unique(company_id,identification_id)', 'La cédula debe ser unica. La cédula ingresada ya existe en esta compañía')
 
     @api.onchange('partner_encab_id')
     def _onchange_tercero_asociado(self):

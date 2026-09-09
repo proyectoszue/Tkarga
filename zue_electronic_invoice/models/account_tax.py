@@ -1,7 +1,7 @@
 from odoo import models, fields, api, _
 
 class account_tax_type(models.Model):
-    _name = 'account.tax.type'
+    _inherit = 'account.tax.type'
     _description = 'Tipo de Impuestos'
 
     code = fields.Char('Código')

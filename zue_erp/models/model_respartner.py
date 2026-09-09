@@ -536,7 +536,8 @@ class ResPartner(models.Model):
         res = super(ResPartner, self).write(vals)
         if len(vals) == 1 and 'same_vat_partner_id' in vals:
             return res
-        else:
+        # Validar campos obligatorios del tipo al crear o cambiar el tipo de tercero
+        elif 'x_type_thirdparty' in vals:
             for record in self:
                 record.validate_fields_mandatory_type_thirdparty()
         return res

@@ -4,14 +4,14 @@
         <xpath expr="//Dropdown/t[@t-set-slot='content']" position="inside">
             <DropdownItem tag="'button'" class="'btn btn-link o_documents_kanban_request_template'"
                 t-if="userIsInternal"
-                onSelected.bind="onClickDocumentsRequestTemplate"
+                onSelected="() => this.onClickDocumentsRequestTemplate()"
                 attrs="{'disabled': !canUploadInFolder(folder) || folder.id === 'COMPANY'}">
                 <i class="fa fa-files-o fa-fw me-1"/>
                 <span>Plantilla de solicitud</span>
             </DropdownItem>
             <DropdownItem tag="'button'" class="'btn btn-link o_documents_kanban_merge_pdfs'"
                 t-if="userIsInternal"
-                onSelected.bind="onClickDocumentsMergePDFs">
+                onSelected="() => this.onClickDocumentsMergePDFs()">
                 <i class="fa fa-object-group fa-fw me-1"/>
                 <span>Unir PDFs</span>
             </DropdownItem>

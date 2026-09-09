@@ -49,13 +49,19 @@ class sending_support_document(models.Model):
         obj_moves_lines = self.env['account.move.line'].search([('move_id','in',obj_moves.ids),
                                                                 ('partner_id.zue_electronic_invoice_fiscal_regimen', '=', '49'),
                                                                 ('partner_id.obliged_invoice','=',False),
-                                                                ('account_id.accounting_class','=','RESULTADO')])
-        #Obtener diario consecutivo dian
+                                                                ('account_id.z_generates_support_document','=',True)])
         journal_support_document_co = self.company_id.journal_support_document_co
-        # En v18 el campo original secure_sequence_id fue eliminado
+        if not journal_support_document_co:
+            raise ValidationError(_('No hay un diario de documento soporte configurado en la compañía. Por favor verifique!'))
+        journal_support_document_co._z_assign_support_document_sequence()
         sequence_dian = journal_support_document_co.z_secure_sequence_id
         if not sequence_dian:
-            raise ValidationError(_('No hay una secuencia asociada al diario. Por favor verifique!'))
+            raise ValidationError(_(
+                'No se pudo asignar la secuencia DSE al diario "%(journal)s" '
+                'de la compañía "%(company)s".',
+                company=journal_support_document_co.company_id.display_name,
+                journal=journal_support_document_co.display_name,
+            ))
 
         #Insertar movimientos
         if len(obj_moves_lines) == 0:
@@ -102,7 +108,7 @@ class sending_support_document(models.Model):
             group_moves_df.loc[i,'first_concept'] = concepts.values[0]
             group_moves_df.loc[i,'line_move_ids'] = ','.join(map(str, line_move_ids_series.values))
             group_moves_df.loc[i, 'prefix_doc_support'] = journal_support_document_co.code
-            consecutive = sequence_dian._next()
+            consecutive = sequence_dian.next_by_id() if hasattr(sequence_dian, 'next_by_id') else sequence_dian._next()
             group_moves_df.loc[i, 'item_doc_support'] = int(re.search(r'\d+', consecutive).group())
             group_moves_df.loc[i, 'consecutive_doc_support'] = consecutive
             count_sequence+=1

@@ -27,49 +27,25 @@
                     <div style="display: -webkit-box;-webkit-box-pack: center;justify-content: center;">
                         <div class="flex-grow-1 bd-highlight" style="-webkit-box-flex: 1;-webkit-flex: 1;flex: 1;border: 2px solid black;">
                             <t t-set="bank_line" t-value="o.line_ids.filtered(lambda l: (l.account_id.account_type or '').startswith('asset_'))"/>
+                            <t t-set="receipt_partner" t-value="bank_line[:1].partner_id or o.partner_id or o.line_ids[:1].partner_id"/>
                             <strong>Nombre Tercero:
-                                <t t-if="len(bank_line) > 0">
-                                    <span t-field="bank_line[0].partner_id.name"/>
-                                </t>
-                                <t t-else="">
-                                    <span t-field="o.line_ids[0].partner_id.name"/>
-                                </t>
+                                <span t-field="receipt_partner.name"/>
                             </strong>
                             <br/>
                             <strong>Nit Tercero:
-                                <t t-if="len(bank_line) > 0">
-                                    <span t-field="bank_line[0].partner_id.vat"/>
-                                </t>
-                                <t t-else="">
-                                    <span t-field="o.line_ids[0].partner_id.vat"/>
-                                </t>
+                                <span t-field="receipt_partner.vat"/>
                             </strong>
                             <br/>
                             <strong>Dirección:
-                                <t t-if="len(bank_line) > 0">
-                                    <span t-field="bank_line[0].partner_id.street"/>
-                                </t>
-                                <t t-else="">
-                                    <span t-field="o.line_ids[0].partner_id.street"/>
-                                </t>
+                                <span t-field="receipt_partner.street"/>
                             </strong>
                             <br/>
                             <strong>Télefono:
-                                <t t-if="len(bank_line) > 0">
-                                    <span t-field="bank_line[0].partner_id.phone"/>
-                                </t>
-                                <t t-else="">
-                                    <span t-field="o.line_ids[0].partner_id.phone"/>
-                                </t>
+                                <span t-field="receipt_partner.phone"/>
                             </strong>
                             <br/>
                             <strong>Ciudad:
-                                <t t-if="len(bank_line) > 0">
-                                    <span t-field="bank_line[0].partner_id.city_id.name"/>
-                                </t>
-                                <t t-else="">
-                                    <span t-field="o.line_ids[0].partner_id.city_id.name"/>
-                                </t>
+                                <span t-field="receipt_partner.city_id.name"/>
                             </strong>
                             <br/>
                         </div>

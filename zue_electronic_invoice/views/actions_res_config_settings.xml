@@ -63,6 +63,7 @@
                         <field name="zue_electronic_invoice_fiscal_regimen"/>
                         <field name="zue_electronic_invoice_responsable_iva" invisible="1"/>
                         <field name="obliged_invoice" type="object" invisible="zue_electronic_invoice_fiscal_regimen != '49'"/>
+                        <field name="z_entrego_rut"/>
                     </group>
                 </xpath>
             </field>

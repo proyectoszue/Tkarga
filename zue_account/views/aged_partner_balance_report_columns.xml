@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
     <data>
+        <!-- Prevent unique collisions if these expressions already exist in DB -->
+        <function model="account.report.expression" name="_zue_bind_existing_aged_partner_xmlids"/>
 
         <!-- Aged Receivable: custom columns -->
         <record id="aged_receivable_report_supplier_invoice_number" model="account.report.column">

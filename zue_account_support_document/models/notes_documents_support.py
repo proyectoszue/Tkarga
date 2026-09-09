@@ -43,13 +43,23 @@ class notes_documents_support(models.Model):
         obj_moves_lines = self.env['account.move.line'].search([('move_id', 'in', obj_moves.ids),
             ('partner_id.zue_electronic_invoice_fiscal_regimen', '=', '49'),
             ('partner_id.obliged_invoice', '=', False),
-            ('account_id.accounting_class', '=', 'RESULTADO')])
+            ('account_id.z_generates_support_document','=',True)])
 
         if not obj_moves_lines:
             raise ValidationError(_('No se encontro información de acuerdo a los filtros ingresados.'))
 
         journal_nc_support_document_co = self.company_id.journal_nc_support_document_co
+        if not journal_nc_support_document_co:
+            raise ValidationError(_('No hay un diario de nota crédito doc. soporte configurado en la compañía. Por favor verifique!'))
+        journal_nc_support_document_co._z_assign_support_document_sequence()
         sequence_dian = journal_nc_support_document_co.z_secure_sequence_id
+        if not sequence_dian:
+            raise ValidationError(_(
+                'No se pudo asignar la secuencia DSE al diario "%(journal)s" '
+                'de la compañía "%(company)s".',
+                company=journal_nc_support_document_co.company_id.display_name,
+                journal=journal_nc_support_document_co.display_name,
+            ))
 
         # Helper para sacar el siguiente consecutivo de la secuencia (v19 seguro)
         def _next_seq():

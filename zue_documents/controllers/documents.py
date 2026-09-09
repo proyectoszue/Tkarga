@@ -158,15 +158,18 @@ class ShareRoute(DocumentsShareRoute):
             )
         except OSError:
             _logger.exception("Documents upload filesystem failure: %s", log_context)
-            return request.make_response(
-                _("No fue posible guardar el archivo en el servidor. Verifique permisos, espacio en disco y estado del filestore."),
-                headers=[('Content-Type', 'text/plain; charset=utf-8')],
+            return request.make_json_response(
+                {
+                    'error': _(
+                        "No fue posible guardar el archivo en el servidor. "
+                        "Verifique permisos, espacio en disco y estado del filestore."
+                    ),
+                },
                 status=500,
             )
         except Exception as error:
             _logger.exception("Unexpected documents upload failure: %s", log_context)
-            return request.make_response(
-                f"{type(error).__name__}: {error}",
-                headers=[('Content-Type', 'text/plain; charset=utf-8')],
+            return request.make_json_response(
+                {'error': f"{type(error).__name__}: {error}"},
                 status=500,
             )

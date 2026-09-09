@@ -9,7 +9,7 @@
                         <t t-call="web.external_layout">
                             <!-- Contenido dependiendo la estructura -->
                             <t t-if="cp_template.type_report == 'nomina'">
-                                <t t-call="hr_payroll.report_payslip"/>
+                                <t t-call="zue_hr_payroll.report_payslip"/>
                             </t>
                             <t t-if="cp_template.type_report == 'vacaciones'">
                                 <t t-call="zue_hr_payroll.report_liquidacion_vacaciones_document"/>
@@ -146,7 +146,7 @@
                             </div>
                             <!-- Contenido dependiendo la estructura -->
                             <t t-if="cp_template.type_report == 'nomina'">
-                                <t t-call="hr_payroll.report_payslip"/>
+                                <t t-call="zue_hr_payroll.report_payslip"/>
                             </t>
                             <t t-if="cp_template.type_report == 'vacaciones'">
                                 <t t-call="zue_hr_payroll.report_liquidacion_vacaciones_document"/>

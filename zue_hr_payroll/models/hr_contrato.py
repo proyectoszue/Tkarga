@@ -13,7 +13,7 @@ class Hr_payslip(models.Model):
     #reason_retiro = fields.Char(string='Motivo de retiro TMP V13', store=False)
     # SE REQUIERE VOLVER A AJUSTAR POSTERIOR A MIGRACIÓN - ESTABA TIPO CHAR
     reason_retiro = fields.Many2one('hr.departure.reason', string='Motivo de retiro')
-    z_reason_retiro = fields.Many2one('hr.departure.reason', string='Motivo de retiro')
+    z_reason_retiro = fields.Many2one('hr.departure.reason', string='Motivo de retiro ZUE')
     have_compensation = fields.Boolean('Indemnización', default=False)
     settle_payroll_concepts = fields.Boolean('Liquida conceptos de nómina', default=True)
     novelties_payroll_concepts = fields.Boolean('Liquida conceptos de novedades', default=True)
@@ -62,6 +62,8 @@ class Hr_payslip(models.Model):
         def _sum_salary_rule(localdict, rule, amount):
             localdict['rules_computed'].dict[rule.code] = localdict['rules_computed'].dict.get(rule.code, 0) + amount
             return localdict
+
+        self.load_dates_liq_contrato()
 
         employee = self.employee_id
         version = self.version_id
@@ -161,4 +163,4 @@ class Hr_payslip(models.Model):
         # 8.Guardar proceso
         self.struct_id = struct_original
         result_finally = {**result_dev,**result_contrato,**result_ded_bases,**result_vac,**result_cesantias,**result_intcesantias,**result_prima,**result_ded}
-        return result_finally.values()  
+        return result_finally.values()

@@ -265,6 +265,8 @@ class hr_version(models.Model):
     z_not_pay_auxtransportation = fields.Boolean(string='No liquidar auxilio de transporte', tracking=True)
     info_project = fields.Char(related='employee_id.info_project', store=True)
     branch_id = fields.Many2one(related='employee_id.branch_id', store=True)
+    emp_work_address_id = fields.Many2one(related='employee_id.address_id', string='Ubicacion laboral', store=True, help=("Muestra la direccion laboral del empleado asociada a la version contractual.\n" "Se conserva para reportes y datos historicos migrados desde contratos anteriores."))
+    emp_identification_id = fields.Char(related='employee_id.identification_id', string='Numero de identificacion', store=True, help=("Muestra el numero de identificacion del empleado asociado a la version contractual.\n" "Se conserva para busquedas y reportes historicos migrados desde contratos anteriores."))
     # date_prima = fields.Date('Fecha de liquidación de prima')
     # date_cesantias = fields.Date('Fecha de liquidación de cesantías')
     # date_vacaciones = fields.Date('Fecha de liquidación de vacaciones')
@@ -297,6 +299,15 @@ class hr_version(models.Model):
     time_with_the_state = fields.Char('Tiempo que lleva con el estado', tracking=True)
     #Pestaña de dotacion
     employee_endowment_ids = fields.One2many('hr.employee.endowment', 'version_id', 'Dotación', copy=True)
+
+    @api.constrains('identification_id', 'company_id', 'employee_id')
+    def _check_unique_identification_id(self):
+        for record in self.filtered('identification_id'):
+            domain = [('id', '!=', record.id), ('company_id', '=', record.company_id.id), ('identification_id', '=', record.identification_id)]
+            if record.employee_id:
+                domain.append(('employee_id', '!=', record.employee_id.id))
+            if self.sudo().with_context(active_test=False).search_count(domain):
+                raise ValidationError(_('La cédula debe ser unica. La cédula ingresada ya existe en esta compañía'))
 
     @api.model_create_multi
     def create(self, vals_list):

@@ -142,6 +142,11 @@ class account_balance_report_filters(models.TransientModel):
         # account.code_store en Odoo 19 se indexa por compania raiz.
         # Se deja fallback a compania activa por compatibilidad con datos legados.
         account_code_expr = f"coalesce(c.code_store->>'{company_root_id}', c.code_store->>'{self.company_id.id}')"
+        language_code = (self.env.lang or 'en_US').replace("'", "''")
+        account_name_expr = (
+            f'''coalesce(c."name"->>'{language_code}', c."name"->>'es_CO', '''
+            '''c."name"->>'es_ES', c."name"->>'en_US')'''
+        )
         #-----------------------------Filtros necesarios para obtener la información----------------------------------
         query_where = f"where b.company_id = {self.company_id.id} and a.company_id = {self.company_id.id} and a.parent_state = 'posted' and a.date <= '{date_end}' "
         #domain = [('company_id', '=', self.company_id.id), ('parent_state', '=', 'posted'), ('date', '<=', date_end)]
@@ -221,7 +226,12 @@ class account_balance_report_filters(models.TransientModel):
         query_select_levels_group = ''
         query_from_levels_group = ''
         for q_group in lst_levels_group:
-            query_select_levels_group += f'c{q_group[0]}.code_prefix_start as "{q_group[1]}", c{q_group[0]}."name"->>\'en_US\' as "{q_group[2]}",'
+            group_alias = f'c{q_group[0]}'
+            group_name_expr = (
+                f'''coalesce({group_alias}."name"->>'{language_code}', {group_alias}."name"->>'es_CO', '''
+                f'''{group_alias}."name"->>'es_ES', {group_alias}."name"->>'en_US')'''
+            )
+            query_select_levels_group += f'{group_alias}.code_prefix_start as "{q_group[1]}", {group_name_expr} as "{q_group[2]}",'
             query_select_levels_group += f''' ' ' as "Nivel {q_group[0]} Tercero", '''
             query_from_levels_group += f'left join account_group as c{q_group[0]} on c{q_group[0]-1}.parent_id = c{q_group[0]}.id '
         query_select_levels_group = '--NO AHI GRUPOS DE CUENTA' if query_select_levels_group == '' else query_select_levels_group
@@ -233,9 +243,9 @@ class account_balance_report_filters(models.TransientModel):
         query = f'''with alldata as (
                 Select --Cuenta
                         {query_select_levels_group}
-                        c0.code_prefix_start as "Nivel 0", c0."name"->>'en_US' as "Nivel 0 Descripción",
+                        c0.code_prefix_start as "Nivel 0", coalesce(c0."name"->>'{language_code}', c0."name"->>'es_CO', c0."name"->>'es_ES', c0."name"->>'en_US') as "Nivel 0 Descripción",
                         ' ' as "Nivel 0 Tercero",' ' as "Nivel 0 TerceroD",
-                        {account_code_expr} as "Cuenta", c."name"->>'en_US' as "Descripción",
+                        {account_code_expr} as "Cuenta", {account_name_expr} as "Descripción",
                         --Tercero
                         case when {str(self.filter_not_accumulated_partner).lower()} = true and '{self.type_balance}' in ('2','2.1') and c.z_not_disaggregate_partner_balance_test then 'Z_NO_PERMITE_DESAGREGAR_POR_TERCERO'
                             else coalesce(case when d.vat is not null then d.vat || ' | ' || d.name

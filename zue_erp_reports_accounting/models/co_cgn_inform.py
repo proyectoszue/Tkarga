@@ -83,9 +83,9 @@ class zue_co_cgn_inform(models.TransientModel):
                             coalesce(d.name,'') as "Tercero",
                             coalesce(d.z_code_partner_reciprocal_operations,'') as "CodigoTerceroORP",
                             -- Cuenta
-                            c.code as "Cuenta", coalesce(c.z_code_cgn,'.') as "CuentaCGN",
+                            account_code.code as "Cuenta", coalesce(c.z_code_cgn,'.') as "CuentaCGN",
                             --Valores
-                            case when c.code like '2%' or c.code like '3%' or c.code like '4%'
+                            case when account_code.code like '2%' or account_code.code like '3%' or account_code.code like '4%'
                                 then 
                                     case when a."date" < '{self.z_date_start}' then (a.debit - a.credit)*-1
                                         else 0 end 
@@ -97,7 +97,7 @@ class zue_co_cgn_inform(models.TransientModel):
                                 else 0 end as "Debito",	
                             case when a.date >= '{self.z_date_start}' and a.date <= '{self.z_date_end}' then a.credit
                                 else 0 end as "Credito",
-                            case when c.code like '2%' or c.code like '3%' or c.code like '4%' 
+                            case when account_code.code like '2%' or account_code.code like '3%' or account_code.code like '4%'
                                 then
                                     ((case when a."date" < '{self.z_date_start}' then a.debit - a.credit else 0 end) + ((case when a.date >= '{self.z_date_start}' and a.date <= '{self.z_date_end}' then a.debit else 0 end) - (case when a.date >= '{self.z_date_start}' and a.date <= '{self.z_date_end}' then a.credit else 0 end)))*-1
                                 else 
@@ -108,8 +108,17 @@ class zue_co_cgn_inform(models.TransientModel):
                     From account_move_line as a
                     inner join account_move as b on a.move_id = b.id 
                     inner join account_account as c on a.account_id = c.id
+                    cross join lateral (select c.code_store->>'{self.z_company_id.root_id.id}' as code) as account_code
                     left join res_partner as d on a.partner_id = d.id  
-                    left join account_group as c0 on c.group_id = c0.id
+                    left join lateral (
+                        select account_group.*
+                        from account_group
+                        where account_group.code_prefix_start <= left(account_code.code, char_length(account_group.code_prefix_start))
+                            and account_group.code_prefix_end >= left(account_code.code, char_length(account_group.code_prefix_end))
+                            and account_group.company_id = {self.z_company_id.root_id.id}
+                        order by char_length(account_group.code_prefix_start) desc, account_group.id
+                        limit 1
+                    ) as c0 on true
                     {query_from_levels_group}
                     {query_where}
             '''
@@ -253,23 +262,20 @@ class zue_co_cgn_inform(models.TransientModel):
         if self.z_type_report == 'orp':
             lst_group_by = ['TipoRegistro', 'Cuenta', 'CuentaCGN', 'Tercero', 'CodigoTerceroORP']
             lst_levels_group_by = ['TipoRegistro', 'Nivel_0', 'Nivel_0_CGN', 'Nivel_Tercero', 'Nivel_ORP']
+        amount_columns = ['SaldoInicial', 'Debito', 'Credito', 'SaldoFinal', 'ValorCorriente', 'ValorNoCorriente']
         lst_dataframes = []
-        lst_dataframes.append(df_report.groupby(by=lst_group_by, group_keys=False,as_index=False).sum())
-        lst_dataframes.append(df_report.groupby(by=lst_levels_group_by, group_keys=False, as_index=False).sum())
+        lst_dataframes.append(df_report[lst_group_by + amount_columns].groupby(by=lst_group_by, group_keys=False,as_index=False).sum())
+        lst_dataframes.append(df_report[lst_levels_group_by + amount_columns].groupby(by=lst_levels_group_by, group_keys=False, as_index=False).sum())
         for lvl in lst_levels_group:
             lst_levels_group_by = ['TipoRegistro', lvl, lvl+'_CGN']
             if self.z_type_report == 'orp':
                 lst_levels_group_by = ['TipoRegistro', lvl, lvl + '_CGN', 'Nivel_Tercero', 'Nivel_ORP']
-            lst_dataframes.append(df_report.groupby(by=lst_levels_group_by, group_keys=False, as_index=False).sum())
+            lst_dataframes.append(df_report[lst_levels_group_by + amount_columns].groupby(by=lst_levels_group_by, group_keys=False, as_index=False).sum())
         #5. Crear dataframe final y ordenar
-        df_report_finally = False
-        columns = lst_group_by + ['SaldoInicial', 'Debito', 'Credito', 'SaldoFinal', 'ValorCorriente', 'ValorNoCorriente']
+        columns = lst_group_by + amount_columns
         for df in lst_dataframes:
             df.columns = columns
-            if type(df_report_finally) is bool:
-                df_report_finally = df
-            else:
-                df_report_finally = df_report_finally.append(df)
+        df_report_finally = pd.concat(lst_dataframes, ignore_index=True)
         df_report_finally = df_report_finally.sort_values(by=lst_group_by)
         #6. Eliminar duplicados para garantizar la información
         df_report_finally = df_report_finally.groupby(by=lst_group_by, group_keys=False, as_index=False).sum()

@@ -22,10 +22,11 @@ class AccountDebitNote(models.TransientModel):
     _inherit = 'account.debit.note'
 
     def create_debit(self):
-        if not self.journal_id.z_is_debit_note:
+        self.ensure_one()
+        journal = self.journal_id or (self.move_ids[:1].journal_id if self.move_ids else False)
+        if journal and not journal.z_is_debit_note:
             raise ValidationError(_('El diario seleccionado no ha sido marcado como nota débito. Por favor verifique!'))
-
-        res = super(AccountDebitNote, self).create_debit()
+        return super(AccountDebitNote, self).create_debit()
 
 class AccountMoveReversal(models.TransientModel):
     _inherit = "account.move.reversal"
@@ -34,6 +35,8 @@ class AccountMoveReversal(models.TransientModel):
                                                  ('2', 'Anulación de factura electrónica'),
                                                  ('3', 'Rebaja o descuento parcial o total'),
                                                  ('4', 'Ajuste de precio'),
+                                                 ('6', 'Descuento comercial por pronto pago'),
+                                                 ('7', 'Descuento comercial por volumen de ventas'),
                                                  ('8', 'Refacturación'),
                                                  ('5', 'Otros')], string='Concepto nota crédito')
     description_code_debit = fields.Selection([('1', 'Intereses'),
@@ -43,22 +46,15 @@ class AccountMoveReversal(models.TransientModel):
     analytic_account_id = fields.Many2one('account.analytic.account', 'Cuenta analítica')
 
     def _prepare_default_reversal(self, move):
-        reverse_date = self.date or fields.Date.context_today(self)
-        return {
-            'ref': _('Reversal of: %(move_name)s, %(reason)s', move_name=move.name, reason=self.reason)
-            if self.reason
-            else _('Reversal of: %s', move.name),
-            'date': reverse_date,
-            'invoice_date': move.is_invoice(include_receipts=True) and (self.date or move.date) or False,
-            'journal_id': self.journal_id.id,
-            'invoice_payment_term_id': None,
-            'invoice_user_id': move.invoice_user_id.id,
-            'auto_post': 'at_date' if reverse_date > fields.Date.context_today(self) else 'no',
+        values = super(AccountMoveReversal, self)._prepare_default_reversal(move)
+        values.update({
             'description_code_credit': self.description_code_credit,
             'description_code_debit': self.description_code_debit,
-        }
+        })
+        return values
 
     def reverse_moves(self, is_modify=False):
+        self.ensure_one()
         if self.description_code_debit and not self.journal_id.z_is_debit_note:
             raise ValidationError(_('El diario seleccionado no ha sido marcado como nota débito. Por favor verifique!'))
 

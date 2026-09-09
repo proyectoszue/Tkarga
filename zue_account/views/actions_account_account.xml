@@ -5,9 +5,13 @@
 			<field name="model">account.account</field>
 			<field name="priority">20</field>
 			<field name="inherit_id" ref="account.view_account_form"/>
-			<field name="arch" type="xml">                
-				<xpath expr="//field[@name='currency_id']" position="after">					
-					<field name="accounting_class"/>	
+			<field name="arch" type="xml">
+				<xpath expr="//page[@name='accounting']//field[@name='tax_ids']" position="after">
+					<field name="tax_type" options="{'no_create': True, 'no_create_edit': True}"/>
+				</xpath>
+				<xpath expr="//field[@name='currency_id']" position="after">
+					<field name="accounting_class"/>
+					<field name="z_generates_support_document"/>
 <!--                    <field name="required_partner" />-->
 					<field name="exclude_balance_test"/>
 					<field name="z_not_disaggregate_partner_balance_test"/>

@@ -12,6 +12,7 @@ class ResCompany(models.Model):
     z_folder_multicash_issue_id = fields.Many2one('documents.document', string='Carpeta Multicash - Con Novedad', domain=[('type', '=', 'folder'), ('shortcut_document_id', '=', False)])
     z_folder_retention_certificates_id = fields.Many2one('documents.document', string='Carpeta certificados de retención', domain=[('type', '=', 'folder'), ('shortcut_document_id', '=', False)])
 
+
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
 

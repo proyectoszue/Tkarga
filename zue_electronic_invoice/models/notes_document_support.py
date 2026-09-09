@@ -365,6 +365,8 @@ class sending_notes_document_support_detail(models.Model):
 
             result = self.return_result_FE(obj_result, 'SEND_FE')
 
+            if self.transaction_id:
+                self.consume_web_service_get_cuds()
             # if result:
             #     return result
             # else:
@@ -451,7 +453,7 @@ class sending_notes_document_support_detail(models.Model):
         try:
             username = self.move_id.company_id.zue_support_document_username
             password = self.move_id.company_id.zue_support_document_password
-            tmp_transaction_id = self.fe_transaction_id
+            tmp_transaction_id = self.transaction_id
 
             if not tmp_transaction_id:
                 raise UserError(_('No se ha realizado el envío de la factura. Por favor verifique!'))

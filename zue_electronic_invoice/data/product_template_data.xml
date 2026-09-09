@@ -7,10 +7,9 @@
                 <field name="name">AF15001 Ambientación En La Construcción</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="AF15002" model="product.template">
@@ -18,10 +17,9 @@
                 <field name="name">AF15002 Mantenimiento Redes Y Estructuras</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="AF15003" model="product.template">
@@ -29,10 +27,9 @@
                 <field name="name">AF15003 Racks Bodega</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="AF15004" model="product.template">
@@ -40,10 +37,9 @@
                 <field name="name">AF15004 Mobiliario Oficinas</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="AF15005" model="product.template">
@@ -51,10 +47,9 @@
                 <field name="name">AF15005 Mobiliario Bodega</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="AF15006" model="product.template">
@@ -62,10 +57,9 @@
                 <field name="name">AF15006 Electrodomésticos</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="AF15007" model="product.template">
@@ -73,10 +67,9 @@
                 <field name="name">AF15007 Material Seguridad Del Trabajo</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="AF15008" model="product.template">
@@ -84,10 +77,9 @@
                 <field name="name">AF15008 Equipo De Computo / Computadores</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="AF15009" model="product.template">
@@ -95,10 +87,9 @@
                 <field name="name">AF15009 Equipo De Computo / Impresoras</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="AF15010" model="product.template">
@@ -106,10 +97,9 @@
                 <field name="name">AF15010 Equipo De Computo / Tablet</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="AF15011" model="product.template">
@@ -117,10 +107,9 @@
                 <field name="name">AF15011 Equipo De Computo / Celulares</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="AF15012" model="product.template">
@@ -128,10 +117,9 @@
                 <field name="name">AF15012 Equipo De Computo / Tv, Teléfonos,</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="AF15013" model="product.template">
@@ -139,10 +127,9 @@
                 <field name="name">AF15013 Equipo Para La Bodega / (Sunchadora, Dispensadores, Etc)</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="AF15014" model="product.template">
@@ -150,10 +137,9 @@
                 <field name="name">AF15014 Flota Vehicular / Automóvil</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="AF15015" model="product.template">
@@ -161,10 +147,9 @@
                 <field name="name">AF15015 Flota Vehicular / Repartidor</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="AF15016" model="product.template">
@@ -172,10 +157,9 @@
                 <field name="name">AF15016 Flota Vehicular / Motocicleta</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.fixed_assets_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14001" model="product.template">
@@ -183,10 +167,9 @@
                 <field name="name">CI14001 Flete Internacional A Puerto Buenaventura</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14002" model="product.template">
@@ -194,10 +177,9 @@
                 <field name="name">CI14002 Flete Internacional A Puerto Cartagena</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14003" model="product.template">
@@ -205,10 +187,9 @@
                 <field name="name">CI14003 Flete Internacional Aéreo</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14004" model="product.template">
@@ -216,10 +197,9 @@
                 <field name="name">CI14004 Seguros Mercancía Internacional</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14005" model="product.template">
@@ -227,10 +207,9 @@
                 <field name="name">CI14005 Cargos En Destino</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14006" model="product.template">
@@ -238,10 +217,9 @@
                 <field name="name">CI14006 Cargos En Origen</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14007" model="product.template">
@@ -249,10 +227,9 @@
                 <field name="name">CI14007 Manejo Otm FCL</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14008" model="product.template">
@@ -260,10 +237,9 @@
                 <field name="name">CI14008 Acompañamiento De Carga Y/O Escolta</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14009" model="product.template">
@@ -271,10 +247,9 @@
                 <field name="name">CI14009 Gastos Conexos De La Carga</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14010" model="product.template">
@@ -282,10 +257,9 @@
                 <field name="name">CI14010 Deposito Dropp Off</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14011" model="product.template">
@@ -293,10 +267,9 @@
                 <field name="name">CI14011 Expedición De BL En Destino</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14012" model="product.template">
@@ -304,10 +277,9 @@
                 <field name="name">CI14012 Expedición De BL En Origen</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14013" model="product.template">
@@ -315,10 +287,9 @@
                 <field name="name">CI14013 Tributos Aduaneros</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14014" model="product.template">
@@ -326,10 +297,9 @@
                 <field name="name">CI14014 Emision - Liberación - Radicación BL</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14015" model="product.template">
@@ -337,10 +307,9 @@
                 <field name="name">CI14015 Trámite De Nacionalización</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14016" model="product.template">
@@ -348,10 +317,9 @@
                 <field name="name">CI14016 Papeleria Y Trámites En La Nacionalización</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14017" model="product.template">
@@ -359,10 +327,9 @@
                 <field name="name">CI14017 4X1000 Gmf</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14018" model="product.template">
@@ -370,10 +337,9 @@
                 <field name="name">CI14018 DPA Bodegaje Para Nacionalización</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14019" model="product.template">
@@ -381,10 +347,9 @@
                 <field name="name">CI14019 Montacarga</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="CI14020" model="product.template">
@@ -392,10 +357,9 @@
                 <field name="name">CI14020 Servicio De Cargue Y Descargue</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.indirect_import_costs_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SA12001" model="product.template">
@@ -403,10 +367,9 @@
                 <field name="name">SA12001 Beneficios Educación Formación Empresarial</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.administrative_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SA12002" model="product.template">
@@ -414,10 +377,9 @@
                 <field name="name">SA12002 Combustibles Lubricantes</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.administrative_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SA12003" model="product.template">
@@ -425,10 +387,9 @@
                 <field name="name">SA12003 Contribuciones Y Afiliaciones</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.administrative_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SA12005" model="product.template">
@@ -436,10 +397,9 @@
                 <field name="name">SA12005 Gastos De Viaje</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.administrative_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SA12006" model="product.template">
@@ -447,10 +407,9 @@
                 <field name="name">SA12006 Gastos Financieros</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.administrative_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SA12007" model="product.template">
@@ -458,10 +417,9 @@
                 <field name="name">SA12007 Gastos Legales Documentos</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.administrative_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SA12009" model="product.template">
@@ -469,10 +427,9 @@
                 <field name="name">SA12009 Insumo De Oficina</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.administrative_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SA12010" model="product.template">
@@ -480,10 +437,9 @@
                 <field name="name">SA12010 Papeleria Institucional</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.administrative_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SA12012" model="product.template">
@@ -491,10 +447,9 @@
                 <field name="name">SA12012 Seguros</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.administrative_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SA12014" model="product.template">
@@ -502,10 +457,9 @@
                 <field name="name">SA12014 Servicios Técnicos</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.administrative_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SA12015" model="product.template">
@@ -513,10 +467,9 @@
                 <field name="name">SA12015 Suministro Personal Temporal</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.administrative_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SA12017" model="product.template">
@@ -524,10 +477,9 @@
                 <field name="name">SA12017 Servicio de cafeteria</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.administrative_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SA12024" model="product.template">
@@ -535,10 +487,9 @@
                 <field name="name">SA12024 Servicios de Mantenimiento y Redes</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.administrative_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SA12025" model="product.template">
@@ -546,10 +497,9 @@
                 <field name="name">SA12025 Asesorías Contables y Jurídicas</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.administrative_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SA12026" model="product.template">
@@ -557,10 +507,9 @@
                 <field name="name">SA12026 Eventos Corporativos</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.administrative_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SB17001" model="product.template">
@@ -568,10 +517,9 @@
                 <field name="name">SB17001 Arrendamientos</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.basic_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SB17002" model="product.template">
@@ -579,10 +527,9 @@
                 <field name="name">SB17002 Administración Propiedad</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.basic_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SB17003" model="product.template">
@@ -590,10 +537,9 @@
                 <field name="name">SB17003 Servicios Públicos</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.basic_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SB17004" model="product.template">
@@ -601,10 +547,9 @@
                 <field name="name">SB17004 Servicio Agua</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.basic_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SB17005" model="product.template">
@@ -612,10 +557,9 @@
                 <field name="name">SB17005 Servicio Luz</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.basic_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SB17006" model="product.template">
@@ -623,10 +567,9 @@
                 <field name="name">SB17006 Servicio Internet Y Comunicaciones</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.basic_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SB17007" model="product.template">
@@ -634,10 +577,9 @@
                 <field name="name">SB17007 Servicio De Telefonia Celular</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.basic_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
             <record id="SB17008" model="product.template">
@@ -645,10 +587,9 @@
                 <field name="name">SB17008 Servicio De Vigilancia</field>
                 <field name="purchase_ok">True</field>
                 <field name="sale_ok">False</field>
-                <field name="detailed_type">service</field>
+                <field name="type">service</field>
                 <field name="invoice_policy">delivery</field>
                 <field name="categ_id" ref="zue_electronic_invoice.basic_services_id"/>
-                <field name="taxes_id" eval="[(6, 0, [ref('account.l10n_co_tax_8')])]"/>
             </record>
 
     </data>

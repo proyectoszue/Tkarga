@@ -91,5 +91,35 @@
                 </xpath>
             </field>
         </record>
+
+        <record id="view_partner_zue_erp_identification_readonly" model="ir.ui.view">
+            <field name="name">res.partner.zue.erp.identification.readonly</field>
+            <field name="model">res.partner</field>
+            <field name="inherit_id" ref="l10n_latam_base.view_partner_latam_form"/>
+            <field name="priority">999</field>
+            <field name="arch" type="xml">
+                <xpath expr="//label[@for='l10n_latam_identification_type_id']" position="replace"/>
+                <xpath expr="//label[@for='vat']" position="replace"/>
+                <xpath expr="//span[hasclass('oe_read_only')]" position="replace"/>
+                <xpath expr="//field[@name='x_type_thirdparty']" position="after">
+                    <xpath expr="//field[@name='l10n_latam_identification_type_id']" position="move"/>
+                    <xpath expr="//field[@name='vat']" position="move"/>
+                </xpath>
+                <xpath expr="//div[@name='vat_vies_container']" position="attributes">
+                    <attribute name="invisible">1</attribute>
+                </xpath>
+                <xpath expr="//field[@name='l10n_latam_identification_type_id']" position="attributes">
+                    <attribute name="class"/>
+                    <attribute name="invisible"/>
+                    <attribute name="string">Tipo de Identificación</attribute>
+                    <attribute name="readonly">parent_id or z_identification_readonly</attribute>
+                </xpath>
+                <xpath expr="//field[@name='vat']" position="attributes">
+                    <attribute name="class"/>
+                    <attribute name="string">NIT</attribute>
+                    <attribute name="readonly">parent_id or z_identification_readonly</attribute>
+                </xpath>
+            </field>
+        </record>
     </data>
 </odoo>

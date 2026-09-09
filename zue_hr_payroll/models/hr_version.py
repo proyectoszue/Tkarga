@@ -11,6 +11,9 @@ from dateutil.relativedelta import relativedelta
 class hr_version(models.Model):
     _inherit = 'hr.version'
 
+    z_not_modify_state = fields.Boolean(string='No registrar cambio en contrato',
+        help='Conserva la marca técnica utilizada por procesos especiales de liquidación contractual.')
+
     def get_vacation_base_amount(self, amount_base, annual_parameters=False):
         if self.modality_salary == 'integral' and annual_parameters:
             return amount_base * (annual_parameters.porc_integral_salary / 100.0)

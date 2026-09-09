@@ -16,3 +16,4 @@ access_zue_bank_transaction_table,zue.bank.transaction.table,model_zue_bank_tran
 access_zue_bank_movement_types,zue.bank.movement.types,model_zue_bank_movement_types,base.group_user,1,1,1,1
 access_zue_concept_accounts,zue.concept.accounts,model_zue_concept_accounts,base.group_user,1,1,1,1
 access_zue_account_closing_reversal_wizard,zue.account.closing.reversal.wizard,model_zue_account_closing_reversal_wizard,account.group_account_manager,1,1,1,1
+access_account_tax_type,account.tax.type,model_account_tax_type,base.group_user,1,1,1,1

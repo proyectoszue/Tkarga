@@ -64,6 +64,10 @@
                                 <label for="payroll_electronic_service_ws" class="col-lg-3 o_light_label"/>
                                 <field name="payroll_electronic_service_ws"/>
                             </div>
+                            <div class="row">
+                                <label for="z_destination_sending_payroll" class="col-lg-3 o_light_label"/>
+                                <field name="z_destination_sending_payroll"/>
+                            </div>
                         </div>
                     </div>
                 </div>

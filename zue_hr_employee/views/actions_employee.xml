@@ -161,7 +161,7 @@
                     <attribute name="invisible">1</attribute>
                 </xpath>
                 <!-- Reemplazar el contenedor original para mostrar etiquetas/nombres de los campos -->
-                <xpath expr="//div[@class='oe_title mw-100 ps-0 pe-sm-2']" position="replace">
+                <xpath expr="//div[hasclass('oe_title', 'mw-100', 'ps-0', 'pe-sm-2')]" position="replace">
                     <div class="oe_title mw-100 ps-0 pe-sm-2">
                         <h1>
                             <field name="type_thirdparty" invisible="1"/>

@@ -23,11 +23,10 @@
     # Categories can be used to filter modules in modules listing
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
-    'category': 'Uncategorized',
-    "version": "19.0.1.0.0",
-
+    'category': 'Accounting/Localizations/Reporting',
+    'version': '19.0.1.0.0',
     # any module necessary for this one to work correctly
-    'depends': ['base', 'contacts', 'account', 'account_accountant', 'zue_account', 'l10n_co_reports'],
+    'depends': ['base', 'contacts', 'account', 'account_accountant', 'account_reports', 'zue_account', 'l10n_co_reports'],
 
     # always loaded
     'data': [
@@ -56,4 +55,25 @@
         'views/menus.xml',
     ],
     'license': 'LGPL-3',
+    'zue_functional': {
+        'area': 'Contabilidad, compras y tesorería',
+        'summary': 'ZUE ERP Reportes Contables.',
+        'features': [
+            'Genera auxiliares contables, libro mayor y libro diario.',
+            'Consulta balances y auxiliares en vistas dinámicas y pivote.',
+            'Permite el seguimiento de actividades desde los reportes contables.',
+        ],
+        'reports': [
+            'Balance de prueba',
+            'Informe de auditoria de consecutivos',
+            'Comprobante Contable',
+            'Anexo cuenta tercero',
+            'Reporte saldos de CxC-CxP',
+            'Informe de auditoria consecutivos',
+            'Informe CGN | Operaciones Recíprocas',
+            'Informe de ventas y compras',
+            'Reporte CXC - Recaudos',
+            'Generar Balance de prueba',
+        ],
+    },
 }
