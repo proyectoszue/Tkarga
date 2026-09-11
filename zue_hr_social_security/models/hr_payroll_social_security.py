@@ -1333,10 +1333,24 @@ class hr_payroll_social_security(models.Model):
                             bool_company = False
                             if account_rule.company.id == employee.company_id.id or account_rule.company.id == False:
                                 bool_company = True
-                            # Validar departamento
+                            # Validar departamento (depto o padre; abuelo solo si no hay regla más cercana con débito)
                             bool_department = False
-                            if account_rule.department.id == employee.department_id.id or account_rule.department.id == employee.department_id.parent_id.id or account_rule.department.id == employee.department_id.parent_id.parent_id.id or account_rule.department.id == False:
+                            emp_department = employee.department_id
+                            rule_department = account_rule.department
+                            if not rule_department or rule_department.id == emp_department.id or rule_department.id == emp_department.parent_id.id:
                                 bool_department = True
+                            elif rule_department.id == emp_department.parent_id.parent_id.id:
+                                has_closer_debit_rule = False
+                                for closer_rule in closing.detail_ids:
+                                    if not closer_rule.debit_account:
+                                        continue
+                                    if closer_rule.company and closer_rule.company.id != employee.company_id.id:
+                                        continue
+                                    if closer_rule.department.id in (emp_department.id, emp_department.parent_id.id):
+                                        has_closer_debit_rule = True
+                                        break
+                                if not has_closer_debit_rule:
+                                    bool_department = True
 
                             if bool_department and bool_company and bool_work_location:
                                 debit_account_id = account_rule.debit_account
