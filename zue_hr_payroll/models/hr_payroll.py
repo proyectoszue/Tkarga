@@ -158,8 +158,8 @@ class HrPayslipRun(models.Model):
         else:
             version_domain = Domain([('company_id', '=', company),('employee_id', '!=', False),('employee_id.active', '=', True),('z_state_finished', '=', True)])
 
-        # Prestaciones: excluir empleados ya retirados durante el período (liquidadas en el cierre del contrato).
-        if structure.process in ('prima', 'cesantias', 'intereses_cesantias', 'vacaciones'):
+        # Excluir empleados ya retirados durante el período (liquidados en el cierre del contrato).
+        if structure.process in ('nomina', 'prima', 'cesantias', 'intereses_cesantias', 'vacaciones'):
             version_domain &= Domain(['|', ('retirement_date', '=', False), ('retirement_date', '>', date_end)])
 
         if method_schedule_pay:
