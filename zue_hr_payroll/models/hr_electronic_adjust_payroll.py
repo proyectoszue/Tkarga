@@ -395,7 +395,7 @@ class hr_electronic_adjust_payroll_detail(models.Model):
         for payslip in self.payslip_ids:
             for line in payslip.line_ids:
                 value += abs(line.total) if line.salary_rule_id.code in lst_codes else 0
-        return value
+        return round(value, 2)
 
     def get_value_total_dev(self):
         value = 0
