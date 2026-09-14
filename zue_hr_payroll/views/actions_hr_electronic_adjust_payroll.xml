@@ -84,6 +84,10 @@
                                 </div>
                                 <field name="executing_electronic_adjust_payroll_ids" nolabel="1" invisible="z_detail_status_filter != 'all'">
                                     <list>
+                                        <control>
+                                            <create string="Agregar una línea"/>
+                                            <delete invisible="parent.state == 'close'"/>
+                                        </control>
                                         <field name="employee_id" optional="show"/>
                                         <field name="sequence" optional="show"/>
                                         <field name="status" optional="show"/>
@@ -125,6 +129,10 @@
                                 </field>
                                 <field name="z_executing_accepted_ids" nolabel="1" invisible="z_detail_status_filter != 'accepted'">
                                     <list>
+                                        <control>
+                                            <create string="Agregar una línea"/>
+                                            <delete invisible="parent.state == 'close'"/>
+                                        </control>
                                         <field name="employee_id" optional="show"/>
                                         <field name="sequence" optional="show"/>
                                         <field name="status" optional="show"/>
@@ -166,6 +174,10 @@
                                 </field>
                                 <field name="z_executing_failed_ids" nolabel="1" invisible="z_detail_status_filter != 'failed'">
                                     <list>
+                                        <control>
+                                            <create string="Agregar una línea"/>
+                                            <delete invisible="parent.state == 'close'"/>
+                                        </control>
                                         <field name="employee_id" optional="show"/>
                                         <field name="sequence" optional="show"/>
                                         <field name="status" optional="show"/>

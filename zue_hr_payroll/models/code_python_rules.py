@@ -7158,7 +7158,7 @@ validation = o.get_value_salary_rules(['INCAPACIDAD006']) > 0
 
 # LicenciaMP - 39
 # Código atributos
-Cantidad=str(int(o.get_quantity_salary_rules(['LICENCIA002','LICENCIA003']))),Pago=str(o.get_value_salary_rules(['LICENCIA002','LICENCIA003',LICENCIA006]))
+Cantidad=str(int(o.get_quantity_salary_rules(['LICENCIA002','LICENCIA003']))),Pago=str(o.get_value_salary_rules(['LICENCIA002','LICENCIA003','LICENCIA006']))
 # Código validación
 validation = o.get_value_salary_rules(['LICENCIA002','LICENCIA003','LICENCIA006']) > 0
 
