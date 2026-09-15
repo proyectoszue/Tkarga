@@ -15,7 +15,7 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Human Resources/Payroll',
-    'version': '19.0.1.2.1',
+    'version': '19.0.1.3.0',
     'icon': '/zue_hr_payroll/static/description/icon.png',
 
     # any module necessary for this one to work correctly
@@ -95,6 +95,7 @@
             'Genera nómina electrónica y notas de ajuste.',
             'Permite filtrar resultados de nómina electrónica y notas de ajuste por estado: todos, aceptados o fallidos.',
             'Restringir eliminación de registros en la grilla de nómina electrónica cuando el proceso se encuentre en estado finalizado',
+            'Valida que la cuenta bancaria principal tenga banco y código BIC antes de generar el plano de nómina.',
         ],
         'reports': [
             'Historico de Ausentismos',
