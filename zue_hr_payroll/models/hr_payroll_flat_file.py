@@ -1125,6 +1125,12 @@ class hr_payroll_flat_file(models.TransientModel):
         return base64.encodebytes((content_txt).encode())
 
     #Ejecutar proceso
+    def validate_main_bank_bic(self, employee, bank):
+        if not bank.bank_id:
+            raise ValidationError(_('El empleado %s tiene cuenta bancaria principal sin banco asignado.') % employee.name)
+        if not bank.bank_id.bic:
+            raise ValidationError(_('Falta el código BIC del banco "%s" (empleado %s).') % (bank.bank_id.name or _('Sin nombre'), employee.name))
+
     def generate_flat_file(self):
         self.env['hr.payroll.flat.file.detail'].search([('flat_file_id','=',self.id)]).unlink()
         if self.flat_rule_not_included:
@@ -1145,6 +1151,7 @@ class hr_payroll_flat_file(models.TransientModel):
                 for bank in payslip.employee_id.work_contact_id.bank_ids:
                     if bank.is_main == True:
                         count_bank_main += 1
+                        self.validate_main_bank_bic(payslip.employee_id, bank)
                         obj_payslip += payslip
                 if count_bank_main != 1:
                     raise ValidationError(_(f'El empleado {payslip.employee_id.name} no tiene configurado cuenta bancaria principal o tiene más de una, por favor verificar'))
@@ -1189,6 +1196,7 @@ class hr_payroll_flat_file(models.TransientModel):
                             for bank in payslip.employee_id.work_contact_id.bank_ids.filtered(lambda x: x.company_id.id == self.company_id.id):
                                 if bank.is_main == True:
                                     count_bank_main += 1
+                                    self.validate_main_bank_bic(payslip.employee_id, bank)
                                     if bank.payroll_dispersion_account.id == self.journal_id.id:
                                         obj_payslip += payslip
                             if count_bank_main != 1:
