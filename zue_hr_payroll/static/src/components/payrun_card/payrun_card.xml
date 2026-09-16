@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <templates xml:space="preserve">
     <t t-inherit="hr_payroll.PayRunCard" t-inherit-mode="extension">
+        <!-- Ocultar burbuja Pagado en cabecera del formulario del lote -->
+        <xpath expr="//StatusBubble" position="attributes">
+            <attribute name="removeStates">['04_cancel', '03_paid']</attribute>
+        </xpath>
         <xpath expr="//t[@t-set-slot='paid_prio']" position="replace">
             <t t-set-slot="paid_prio" isVisible="false" isPriority="true"/>
         </xpath>
