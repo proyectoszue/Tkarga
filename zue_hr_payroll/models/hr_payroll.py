@@ -461,6 +461,21 @@ class Hr_payslip(models.Model):
             errors_by_slip.setdefault(slip, [])
         return errors_by_slip
 
+    def _get_warnings_by_slip(self):
+        # Quita solo el warning de duración (quincena CO vs bi-weekly); el resto se conserva
+        warnings_by_slip = super()._get_warnings_by_slip()
+        duration_message = self.env._("The duration of the payslip is not accurate according to the structure type.")
+        for slip, warnings in warnings_by_slip.items():
+            warnings_by_slip[slip] = [
+                warning for warning in warnings
+                if warning.get('message') != duration_message
+            ]
+        return warnings_by_slip
+
+    def _compute_is_wrong_duration(self):
+        # Desactiva el flag de duración incorrecta (mismo caso quincena CO vs bi-weekly)
+        self.is_wrong_duration = False
+
     rtefte_id = fields.Many2one('hr.employee.rtefte', 'RteFte')
     not_line_ids = fields.One2many('hr.payslip.not.line', 'slip_id', string='Reglas no aplicadas')
     observation = fields.Text(string='Observación')

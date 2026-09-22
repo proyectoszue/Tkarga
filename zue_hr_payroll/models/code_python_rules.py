@@ -428,17 +428,17 @@ if obj_salary_rule and liquidated_eps_employee:
                 days = obj_overtime.shift_hours / 8
                 total = payslip.get_payroll_value_contributor_51(payslip.date_from.year, days)
                 result = (round(total * porc) * -1) if not annual_parameters.weight_contribution_calculations else ((round(total * porc) if round(total * porc) % 100 == 0 else round(total * porc) + 100 - round(total * porc) % 100) * -1)
-                if aplicar == 0 and inherit_contrato == 0:
+                if aplicar == 0:
                     salud_primera_quincena = payslip.sum_mount_x_rule('SSOCIAL001', payslip.date_from.replace(day=1), payslip.date_to)
                     result = result - salud_primera_quincena
- 
+
         # =============================================================
         # RAMA B — Resto de cotizantes
         # =============================================================
         else:
             total = 0.0
             total_validation = 0.0
- 
+
             # ---- B.1  IBC mes anterior + vacaciones disfrutadas (regla computada) [Molpartes] ----
             if annual_parameters.z_enable_ibc_previous_month and (worked_days.VACDISFRUTADAS or 0) and (rules_computed.dict.get('VACDISFRUTADAS', 0) > 0):
                 total = payslip.sum_mount_before('DEV_SALARIAL', payslip.date_from)
@@ -454,7 +454,7 @@ if obj_salary_rule and liquidated_eps_employee:
                     if total_statute > 0:
                         total += total_statute
                 total = total / 30 * leaves.VACDISFRUTADAS
- 
+
             # ---- B.2  IBC vacaciones (estructura 'vacaciones') o estándar [Molpartes] ----
             elif annual_parameters.z_enable_ibc_previous_month and (worked_days.VACDISFRUTADAS or 0):
                 if payslip.struct_id.process == 'vacaciones':
@@ -484,7 +484,7 @@ if obj_salary_rule and liquidated_eps_employee:
                         total_statute = total_no_salarial - statute_value
                         if total_statute > 0:
                             total += total_statute
- 
+
             # ---- B.3  IBC estándar (devengado del periodo) [Tkarga/Servagro/AlianzaT normalizado] ----
             else:
                 total = (categories.DEV_SALARIAL or 0) + payslip.sum_mount('DEV_SALARIAL', payslip.date_from, payslip.date_to)
@@ -499,7 +499,7 @@ if obj_salary_rule and liquidated_eps_employee:
                     total_statute = total_no_salarial - statute_value
                     if total_statute > 0:
                         total += total_statute
- 
+
             # ---- Cola común B: días, tope 25 SMMLV (prorrateado), integral, piso, redondeo, resta 1ª quincena ----
             if total_validation > 0:
                 dias_work = payslip.sum_days_contribution_base(payslip.date_from, payslip.date_to)
@@ -523,7 +523,7 @@ if obj_salary_rule and liquidated_eps_employee:
                         salario_minimo = salario_minimo * dias_work
                         total = salario_minimo if total < salario_minimo else total
                 result = (round(total * porc) * -1) if not annual_parameters.weight_contribution_calculations else ((round(total * porc) if round(total * porc) % 100 == 0 else round(total * porc) + 100 - round(total * porc) % 100) * -1)
-                if aplicar == 0 and inherit_contrato == 0:
+                if aplicar == 0:
                     salud_primera_quincena = payslip.sum_mount_x_rule('SSOCIAL001', payslip.date_from.replace(day=1), payslip.date_to)
                     result = result - salud_primera_quincena
 #---------------------------------------Pension Empleado--------------------------------------------------------
@@ -659,7 +659,7 @@ if obj_salary_rule and liquidate_employee_pension and version.contract_type != '
 #  - Ley 1393/1395:      total_validation > 0  (estilo Molpartes/Tkarga)
 #  - Tope 25 SMMLV:      SIEMPRE prorrateado /30 * dias_validation
 #  - Piso SMMLV:         SIEMPRE (rama no integral)
-#  - Resta 1ª quincena:  SOLO si aplicar == 0 y inherit_contrato == 0
+#  - Resta 1ª quincena:  SOLO si aplicar == 0 (cobro quincenal/"Siempre"; también en liq. contrato)
 #  - Redondeo:           configurable por weight_contribution_calculations
 #  - Cotizante 51:       rama por horas (Tkarga / Servagro / Molpartes)
 #  - IBC mes anterior/vacaciones: rama Molpartes (gated z_enable_ibc_previous_month)
@@ -698,7 +698,7 @@ if obj_salary_rule and liquidate_employee_pension and (not employee.subtipo_coti
                          else round(total * porc) + 100 - round(total * porc) % 100) * -1
                     )
                 )
-                if aplicar == 0 and inherit_contrato == 0:
+                if aplicar == 0:
                     pension_primera_quincena = payslip.sum_mount_x_rule(
                         'SSOCIAL002', payslip.date_from.replace(day=1), payslip.date_to
                     )
@@ -822,7 +822,7 @@ if obj_salary_rule and liquidate_employee_pension and (not employee.subtipo_coti
                          else round(total * porc) + 100 - round(total * porc) % 100) * -1
                     )
                 )
-                if aplicar == 0 and inherit_contrato == 0:
+                if aplicar == 0:
                     pension_primera_quincena = payslip.sum_mount_x_rule(
                         'SSOCIAL002', payslip.date_from.replace(day=1), payslip.date_to
                     )
