@@ -464,11 +464,14 @@ class Hr_payslip(models.Model):
     def _get_warnings_by_slip(self):
         # Quita solo el warning de duración (quincena CO vs bi-weekly); el resto se conserva
         warnings_by_slip = super()._get_warnings_by_slip()
-        duration_message = self.env._("The duration of the payslip is not accurate according to the structure type.")
+        duration_messages = {
+            "The duration of the payslip is not accurate according to the structure type.",
+            "La duración de un recibo de nómina no es exacta según el tipo de estructura.",
+        }
         for slip, warnings in warnings_by_slip.items():
             warnings_by_slip[slip] = [
                 warning for warning in warnings
-                if warning.get('message') != duration_message
+                if warning.get('message') not in duration_messages
             ]
         return warnings_by_slip
 
@@ -645,6 +648,8 @@ class Hr_payslip(models.Model):
                 if payslip.struct_id.process == 'contrato':
                     write_vals['z_vacation_contract_line_skip'] = payslip.z_vacation_contract_line_skip
                 payslip.write(write_vals)
+        # Recalcula avisos tras calcular (el filtro de duración debe aplicarse al instante)
+        self._compute_issues()
         return True
 
     def restart_payroll(self):
