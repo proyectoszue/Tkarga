@@ -237,6 +237,16 @@ class hr_employee_sanctions(models.Model):
 class hr_employee(models.Model):
     _inherit = 'hr.employee'
 
+    @api.depends('bank_account_ids')
+    def _compute_primary_bank_account_id(self):
+        for employee in self:
+            if employee.bank_account_ids:
+                salary_distribution = employee.salary_distribution or {}
+                primary_account = min(employee.bank_account_ids, key=lambda acc: salary_distribution.get(str(acc.id), {}).get("sequence", float("inf")))
+                employee.primary_bank_account_id = primary_account
+            else:
+                employee.primary_bank_account_id = False
+
     @api.model
     def _get_default_type_thirdparty(self):
         id_type = self.env['zue.type_thirdparty'].search([('types', '=', '4')], limit=1).id
