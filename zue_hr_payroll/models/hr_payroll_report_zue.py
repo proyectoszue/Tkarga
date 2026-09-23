@@ -138,6 +138,9 @@ class HrPayrollReportZueFilter(models.TransientModel):
             else:
                 str_ids = str_ids+','+str(i.id)
 
+        if not str_ids:
+            raise ValidationError(_('No se ha encontrado información con el lote seleccionado, por favor verificar.'))
+
         min_date = min_date.strftime('%Y-%m-%d')
         max_date = max_date.strftime('%Y-%m-%d')
 
@@ -223,12 +226,12 @@ class HrPayrollReportZueFilter(models.TransientModel):
             From hr_payslip as a 
             --Info Empleado
             Inner Join (Select distinct row_number() over(order by a.name) as item,
-                        a.id,identification_id,a.name,a.branch_id,p.job_id,
+                        a.id,d.identification_id,a.name,a.branch_id,p.job_id,
                         address_id,work_contact_id,d.department_id
                         From hr_employee as a
                         inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)
                         inner join hr_version as d on p.version_id = d.id
-                        group by a.id,identification_id,a.name,a.branch_id,p.job_id,address_id,work_contact_id,d.department_id) as c on a.employee_id = c.id
+                        group by a.id,d.identification_id,a.name,a.branch_id,p.job_id,address_id,work_contact_id,d.department_id) as c on a.employee_id = c.id
             Inner Join hr_version as d on a.version_id = d.id
             Left Join hr_payslip_line as b on a.id = b.slip_id
             Left Join hr_salary_rule as hr on b.salary_rule_id = hr.id
@@ -267,12 +270,12 @@ class HrPayrollReportZueFilter(models.TransientModel):
             Inner Join hr_salary_rule_category as hc on b.category_id = hc.id REPLACE_FILTER_RULE_CATEGORY
             --Info Empleado
             Inner Join (Select distinct row_number() over(order by a.name) as item,
-                        a.id,identification_id,a.name,a.branch_id,p.job_id,
+                        a.id,d.identification_id,a.name,a.branch_id,p.job_id,
                         address_id,work_contact_id,p.department_id
                         From hr_employee as a
                         inner join hr_payslip as p on a.id = p.employee_id and p.id in (%s)
                         inner join hr_version as d on p.version_id = d.id
-                        group by a.id,identification_id,a.name,a.branch_id,p.job_id,address_id,work_contact_id,p.department_id) as c on a.employee_id = c.id
+                        group by a.id,d.identification_id,a.name,a.branch_id,p.job_id,address_id,work_contact_id,p.department_id) as c on a.employee_id = c.id
             Inner Join hr_version as d on a.version_id = d.id
             Left join zue_res_branch as e on c.branch_id = e.id
             Left join account_analytic_account as f on d.analytic_distribution = to_jsonb(json_build_object(f.id, 100))
@@ -541,6 +544,9 @@ class HrPayrollReportZueFilter(models.TransientModel):
                 str_ids = str(i.id)
             else:
                 str_ids = str_ids + ',' + str(i.id)
+
+        if not str_ids:
+            raise ValidationError(_('No se ha encontrado información con el lote seleccionado, por favor verificar.'))
 
         min_date = min_date.strftime('%Y-%m-%d')
         max_date = max_date.strftime('%Y-%m-%d')
