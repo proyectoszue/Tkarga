@@ -688,6 +688,11 @@ class Hr_payslip(models.Model):
 
     #--------------------------------------------------LIQUIDACIÓN DE LA NÓMINA PERIÓDICA---------------------------------------------------------#
 
+    @api.depends(lambda self: self._get_recomputing_fields())
+    def _compute_line_ids(self):
+        if not self.env.context.get("payslip_no_recompute") or 'location_zue' == 'location_zue':
+            return
+
     def _get_new_worked_days_lines(self):
         if self.struct_id.use_worked_day_lines:
             # computation of the salary worked days
