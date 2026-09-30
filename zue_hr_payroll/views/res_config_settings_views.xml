@@ -52,17 +52,25 @@
                                 <label for="payroll_electronic_password_ws" class="col-lg-3 o_light_label"/>
                                 <field name="payroll_electronic_password_ws"/>
                             </div>
-                            <div class="row">
+                            <!--<div class="row">
                                 <label for="payroll_electronic_company_id_ws" class="col-lg-3 o_light_label"/>
                                 <field name="payroll_electronic_company_id_ws"/>
                             </div>
                             <div class="row">
                                 <label for="payroll_electronic_account_id_ws" class="col-lg-3 o_light_label"/>
                                 <field name="payroll_electronic_account_id_ws"/>
-                            </div>
+                            </div>-->
                             <div class="row">
                                 <label for="payroll_electronic_service_ws" class="col-lg-3 o_light_label"/>
                                 <field name="payroll_electronic_service_ws"/>
+                            </div>
+                            <div class="row">
+                                <label for="z_journal_electronic_payroll_id" class="col-lg-3 o_light_label"/>
+                                <field name="z_journal_electronic_payroll_id"/>
+                            </div>
+                            <div class="row">
+                                <label for="z_journal_electronic_adjust_payroll_id" class="col-lg-3 o_light_label"/>
+                                <field name="z_journal_electronic_adjust_payroll_id"/>
                             </div>
                             <div class="row">
                                 <label for="z_destination_sending_payroll" class="col-lg-3 o_light_label"/>

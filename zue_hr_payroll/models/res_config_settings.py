@@ -14,6 +14,8 @@ class ResCompany(models.Model):
     payroll_electronic_company_id_ws = fields.Char(string='Identificador compañia WS')
     payroll_electronic_account_id_ws = fields.Char(string='Identificador cuenta WS')
     payroll_electronic_service_ws = fields.Char(string='Servicio WS', default='PAYROLL')
+    z_journal_electronic_payroll_id = fields.Many2one('account.journal', string='Diario NE')
+    z_journal_electronic_adjust_payroll_id = fields.Many2one('account.journal', string='Diario NE Ajuste')
     payroll_peoplepass_journal_id = fields.Many2one('account.journal',string='Diario contabilización pago valor no incluido')
     payroll_peoplepass_debit_account_id = fields.Many2one('account.account',string='Cuenta contabilización pago valor no incluido débito')
     payroll_peoplepass_credit_account_id = fields.Many2one('account.account',string='Cuenta contabilización pago valor no incluido crédito')
@@ -45,6 +47,8 @@ class ResConfigSettings(models.TransientModel):
     payroll_electronic_company_id_ws = fields.Char(related='company_id.payroll_electronic_company_id_ws',string='Identificador compañia WS', readonly=False)
     payroll_electronic_account_id_ws = fields.Char(related='company_id.payroll_electronic_account_id_ws',string='Identificador cuenta WS', readonly=False)
     payroll_electronic_service_ws = fields.Char(related='company_id.payroll_electronic_service_ws',string='Servicio WS', default='PAYROLL', readonly=False)
+    z_journal_electronic_payroll_id = fields.Many2one(related='company_id.z_journal_electronic_payroll_id', string='Diario NE', readonly=False)
+    z_journal_electronic_adjust_payroll_id = fields.Many2one(related='company_id.z_journal_electronic_adjust_payroll_id', string='Diario NE Ajuste', readonly=False)
     #PeoplePass
     payroll_peoplepass_journal_id = fields.Many2one(related='company_id.payroll_peoplepass_journal_id',string='Diario contabilización pago valor no incluido', readonly=False)
     payroll_peoplepass_debit_account_id = fields.Many2one(related='company_id.payroll_peoplepass_debit_account_id',string='Cuenta contabilización pago valor no incluido débito', readonly=False)
