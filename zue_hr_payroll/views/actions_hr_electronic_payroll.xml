@@ -48,7 +48,8 @@
                             <group string="Periodo">
                                 <field name="year"/>
                                 <field name="month"/>
-                                <field name="prefix"/>
+                                <field name="z_journal_id" readonly="1"/>
+                                <field name="prefix" readonly="1"/>
                             </group>
                             <group string="Observaciones">
                                 <field name="observations" nolabel="1"/>

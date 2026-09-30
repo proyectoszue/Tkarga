@@ -851,6 +851,11 @@ class Hr_payslip(models.Model):
                     if self.version_id.method_schedule_pay == 'bi-weekly' and self.date_from.month == 2 and self.date_to.month == 2 and self.date_from.day == 16 and self.date_to.day in (28, 29):
                         period_days = (self.date_to - self.date_from).days + 1
                         number_of_days = (number_of_days * 15.0) / period_days if period_days > 0 else number_of_days
+                    # Días de incapacidad cumplidos al cierre del periodo
+                    accumulated_days = (end_date - leave.leave_id.request_date_from).days + 1
+                    days_over_90 = max(0, min(number_of_days, accumulated_days - 90))
+                    days_over_180 = max(0, min(number_of_days, accumulated_days - 180))
+                    days_over_90 = days_over_90 - days_over_180
                     '''
                     while es_continuidad == 1:
                         obj_leave = self.env['hr.leave'].search([('employee_id', '=', employee.id),('state','=','validate'),
@@ -864,11 +869,15 @@ class Hr_payslip(models.Model):
                     '''
                     if leaves.get(leave.work_entry_type_id.code,False):
                         leaves[leave.work_entry_type_id.code+'_TOTAL'] += number_of_days_total
+                        leaves[leave.work_entry_type_id.code+'_OVER90'] = leaves.get(leave.work_entry_type_id.code+'_OVER90', 0) + days_over_90
+                        leaves[leave.work_entry_type_id.code+'_OVER180'] = leaves.get(leave.work_entry_type_id.code+'_OVER180', 0) + days_over_180
                         leaves[leave.work_entry_type_id.code + '_PLUS90'] += number_of_days_total if number_of_days_total > 90 else 0
                         leaves[leave.work_entry_type_id.code + '_MINUS90'] += number_of_days_total if number_of_days_total <= 90 else 0
                         leaves[leave.work_entry_type_id.code] += number_of_days
                     else:
                         leaves[leave.work_entry_type_id.code+'_TOTAL'] = number_of_days_total
+                        leaves[leave.work_entry_type_id.code+'_OVER90'] = days_over_90
+                        leaves[leave.work_entry_type_id.code+'_OVER180'] = days_over_180
                         leaves[leave.work_entry_type_id.code + '_PLUS90'] = number_of_days_total if number_of_days_total > 90 else 0
                         leaves[leave.work_entry_type_id.code + '_MINUS90'] = number_of_days_total if number_of_days_total <= 90 else 0
                         leaves[leave.work_entry_type_id.code] = number_of_days

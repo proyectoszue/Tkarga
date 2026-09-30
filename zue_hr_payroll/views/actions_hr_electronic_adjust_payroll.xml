@@ -47,8 +47,9 @@
                         <group>
                             <group>
                                 <field name="electronic_payroll_id"/>
-                                <field name="prefix"/>
-                                <field name="prefix_adjust" required="1"/>
+                                <field name="z_journal_id" readonly="1"/>
+                                <field name="prefix" readonly="1"/>
+                                <field name="prefix_adjust" readonly="1"/>
                             </group>
                             <group string="Observaciones">
                                 <field name="observations" nolabel="1"/>
