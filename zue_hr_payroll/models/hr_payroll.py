@@ -371,7 +371,7 @@ class Hr_payslip_line(models.Model):
     state_slip = fields.Selection(related='slip_id.state', string='Estado Nómina', store=True)
     z_analytic_account_slip_id = fields.Many2one(related='slip_id.z_analytic_account_id', string='Cuenta Analitica', store=True)
     struct_slip_id = fields.Many2one(related='slip_id.struct_id', string='Estructura', store=True)
-    contract_type = fields.Selection(related='version_id.contract_type', string='Tipo de contrato', store=True)
+    contract_type = fields.Many2one(related='version_id.contract_type_id', string='Tipo de contrato', store=True)
     date_end = fields.Date(related='version_id.date_end', string='Fecha de finalización de contrato', store=True)
     type_of_jurisdiction = fields.Many2one(related='version_id.type_of_jurisdiction', string='Tipo de Fuero', store=True)
 
