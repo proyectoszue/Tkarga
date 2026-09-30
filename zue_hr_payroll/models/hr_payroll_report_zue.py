@@ -296,6 +296,8 @@ class HrPayrollReportZueFilter(models.TransientModel):
                         rp_et.x_business_name,rp_et.name,hc.name,b.sequence
         ''' % (str_ids,str_ids)
 
+        quantity_categories = "('PRESTACIONES_SOCIALES')" if self.not_show_rule_entity else "('HEYREC','PRESTACIONES_SOCIALES')"
+
         query = f"""
                     Select * from
                     (
@@ -306,7 +308,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
                         {query_amount_rules}
                         Union 
                         -- CANTIDAD SOLO PARA HORAS EXTRAS Y PRESTACIONES SOCIALES (CESANTIAS & PRIMA)
-                        {query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Cantidad de ' || COALESCE(hr.short_name,COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'')) as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.quantity),0) as "Cantidad"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and hc.code in ('HEYREC','PRESTACIONES_SOCIALES') ''')}
+                        {query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Cantidad de ' || COALESCE(hr.short_name,COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'')) as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.quantity),0) as "Cantidad"').replace('REPLACE_FILTER_RULE_CATEGORY',f''' and hc.code in {quantity_categories} ''')}
         				Union 
         				-- BASE SOLO PARA PRESTACIONES SOCIALES (CESANTIAS & PRIMA)
         				{query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Base de ' || COALESCE(hr.short_name,COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'')) as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.amount_base),0) as "Base"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and hc.code in ('PRESTACIONES_SOCIALES') ''')}
