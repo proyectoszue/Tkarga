@@ -514,8 +514,9 @@ class hr_electronic_adjust_payroll(models.Model):
     ], string='Estado', default='draft', copy=False)
     company_id = fields.Many2one(related='electronic_payroll_id.company_id', string='Compañía', store=True)
     # Proceso
+    z_journal_id = fields.Many2one(related='company_id.z_journal_electronic_adjust_payroll_id', string='Diario NE Ajuste', readonly=True)
     prefix = fields.Char(related='electronic_payroll_id.prefix',string='Prefijo', store=True)
-    prefix_adjust = fields.Char(string='Prefijo ajuste')
+    prefix_adjust = fields.Char(string='Prefijo ajuste', readonly=True, copy=False)
     qty_failed = fields.Integer(string='Cantidad Fallidos / Sin Respuesta', default=0, copy=False)
     qty_done = fields.Integer(string='Cantidad Aceptados', default=0, copy=False)
     z_detail_status_filter = fields.Selection([('all', 'Todos'), ('accepted', 'Aceptados'), ('failed', 'Fallidos')], string='Filtrar por estado', compute='_compute_detail_status_filter', readonly=True)
@@ -605,21 +606,11 @@ class hr_electronic_adjust_payroll(models.Model):
         # obj_employee = self.env['hr.employee'].search([('id', 'in', self.electronic_payroll_detail_ids.employee_id.ids)])
         # obj_employee += self.env['hr.employee'].search([('active','=',False),('id', 'in', self.electronic_payroll_detail_ids.employee_id.ids)])
 
-        query_max_item = '''
-        Select max(next_item) as next_item from 
-        (
-        Select max(a.item) as next_item from hr_electronic_payroll_detail as a 
-        inner join hr_electronic_payroll as b on a.electronic_payroll_id = b.id and b.prefix = %s and b.state = 'close' and b.company_id = %s
-        union
-        Select coalesce(max(a.item),0) as next_item from hr_electronic_adjust_payroll_detail as a 
-        inner join hr_electronic_adjust_payroll as b on a.electronic_adjust_payroll_id = b.id and (b.prefix = %s or b.prefix_adjust = %s) and b.state = 'close' and b.id != %s and b.company_id = %s
-        ) as a        
-        '''
-        self.env.cr.execute(query_max_item, (self.prefix_adjust, self.company_id.id, self.prefix_adjust, self.prefix_adjust, self.id, self.company_id.id))
-        res_max_item = self.env.cr.fetchone()
-        max_item = res_max_item[0] or 0
+        journal = self.company_id.z_journal_electronic_adjust_payroll_id
+        if not journal:
+            raise ValidationError(_('No hay Diario NE Ajuste configurado en Ajustes > Nómina > Nómina Electrónica para la compañía "%s".') % self.company_id.display_name)
 
-        item = 0
+        vals_list = []
         for ep_detail in self.electronic_payroll_detail_ids:
             employee = ep_detail.employee_id
             if not employee:
@@ -632,7 +623,7 @@ class hr_electronic_adjust_payroll(models.Model):
                 obj_versions += self.env['hr.version'].search([('employee_id', '=', employee.id), ('retirement_date', '>=', date_start), ('retirement_date', '<=', date_end + relativedelta(months=1))])
                 obj_versions += self.env['hr.version'].search([('contract_type','=','aprendizaje'), ('employee_id', '=', employee.id), ('contract_date_end', '>=', date_start),('contract_date_end', '<=', date_end + relativedelta(months=1))])
             for obj_version in obj_versions:
-                item += 1
+                prefix_doc, item, sequence_doc = journal.getNextElectronicDocumentNumber()
                 # Obtener nóminas en ese rango de fechas
                 obj_payslip = self.env['hr.payslip'].search(
                     [('state', '=', 'validated'), ('employee_id', '=', employee.id), ('version_id', '=', obj_version.id),
@@ -642,18 +633,21 @@ class hr_electronic_adjust_payroll(models.Model):
                      ('id', 'not in', obj_payslip.ids),('struct_id.process', 'in', ['cesantias', 'intereses_cesantias', 'prima']),
                      ('date_to', '>=', date_start), ('date_to', '<=', date_end)])
 
-                value_detail = {
+                vals_list.append({
                     'electronic_adjust_payroll_id':self.id,
                     'employee_id':employee.id,
                     'version_id':obj_version.id,
                     'electronic_adjust_payroll_detail_id':ep_detail.id,
-                    'item':item+max_item,
-                    'sequence': self.prefix_adjust+''+str(item+max_item),
-                    'nonce': 'ZUE_NOMINAELECTRONICA_AJUSTE_'+self.prefix_adjust+''+str(item+max_item),
+                    'item':item,
+                    'sequence': sequence_doc,
+                    'nonce': 'ZUE_NOMINAELECTRONICA_AJUSTE_'+sequence_doc,
                     'payslip_ids':[(6, 0, obj_payslip.ids)]
-                }
+                })
 
-                self.env['hr.electronic.adjust.payroll.detail'].create(value_detail)
+        # El prefijo queda fijo en el ajuste para no alterar documentos ya reportados si luego cambia el diario
+        self.prefix_adjust = journal.code
+        if vals_list:
+            self.env['hr.electronic.adjust.payroll.detail'].create(vals_list)
 
         for detail in self.executing_electronic_adjust_payroll_ids:
             detail.get_xml()
