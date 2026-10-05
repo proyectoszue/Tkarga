@@ -296,8 +296,6 @@ class HrPayrollReportZueFilter(models.TransientModel):
                         rp_et.x_business_name,rp_et.name,hc.name,b.sequence
         ''' % (str_ids,str_ids)
 
-        quantity_categories = "('PRESTACIONES_SOCIALES')" if self.not_show_rule_entity else "('HEYREC','PRESTACIONES_SOCIALES')"
-
         query = f"""
                     Select * from
                     (
@@ -308,7 +306,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
                         {query_amount_rules}
                         Union 
                         -- CANTIDAD SOLO PARA HORAS EXTRAS Y PRESTACIONES SOCIALES (CESANTIAS & PRIMA)
-                        {query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Cantidad de ' || COALESCE(hr.short_name,COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'')) as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.quantity),0) as "Cantidad"').replace('REPLACE_FILTER_RULE_CATEGORY',f''' and hc.code in {quantity_categories} ''')}
+                        {query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Cantidad de ' || COALESCE(hr.short_name,COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'')) as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.quantity),0) as "Cantidad"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and hc.code in ('HEYREC','PRESTACIONES_SOCIALES') ''')}
         				Union 
         				-- BASE SOLO PARA PRESTACIONES SOCIALES (CESANTIAS & PRIMA)
         				{query_quantity_bases_days.replace('REPLACE_TITULO', ''' 'Base de ' || COALESCE(hr.short_name,COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'')) as "Reglas Salariales + Entidad" ''').replace('REPLACE_VALUE', 'COALESCE(Sum(b.amount_base),0) as "Base"').replace('REPLACE_FILTER_RULE_CATEGORY',''' and hc.code in ('PRESTACIONES_SOCIALES') ''')}
@@ -368,7 +366,8 @@ class HrPayrollReportZueFilter(models.TransientModel):
             columns_index.append('Código SENA')
         if self.show_basic_salary == True:
             columns_index.append('Salario Base')
-        columns_index.append('Novedades')
+        if not self.not_show_rule_entity:
+            columns_index.append('Novedades')
 
         # Obtener tamaño de las columnas fijas
         column_len = []
@@ -381,13 +380,12 @@ class HrPayrollReportZueFilter(models.TransientModel):
             position_initial += 1
 
         #Pivotear consulta final
-        if self.not_show_rule_entity:
-            columns_pivot_final = ['Secuencia', 'Categoría', 'Regla Salarial']
-        else:
-            columns_pivot_final = ['Secuencia', 'Categoría', 'Reglas Salariales + Entidad']
+        columns_pivot_final = ['Secuencia', 'Categoría', 'Reglas Salariales + Entidad']
 
         pivot_report = pd.pivot_table(df_report, values='Monto', index=columns_index,
                                       columns=columns_pivot_final, aggfunc=np.sum)
+        if self.not_show_rule_entity:
+            pivot_report.columns.names = [None] * len(columns_pivot_final)
         column_totals = pivot_report.sum(axis=0)
 
         #Obtener titulo y fechas de liquidación
@@ -447,12 +445,13 @@ class HrPayrollReportZueFilter(models.TransientModel):
                                      {'type': 'no_errors',
                                       'format': number_format})
         #Campo de novedades
-        cell_format_novedades = writer.book.add_format({'text_wrap': True, 'border': 1, 'align': 'left'})
-        cell_format_novedades.set_font_name('Calibri')
-        cell_format_novedades.set_font_size(11)
-        worksheet.conditional_format(3,len(columns_index)-1,cant_filas-1,len(columns_index)-1,
-                                        {'type': 'no_errors',
-                                        'format': cell_format_novedades})
+        if not self.not_show_rule_entity:
+            cell_format_novedades = writer.book.add_format({'text_wrap': True, 'border': 1, 'align': 'left'})
+            cell_format_novedades.set_font_name('Calibri')
+            cell_format_novedades.set_font_size(11)
+            worksheet.conditional_format(3,len(columns_index)-1,cant_filas-1,len(columns_index)-1,
+                                            {'type': 'no_errors',
+                                            'format': cell_format_novedades})
         #Titulo totales
         cell_format_total = writer.book.add_format({'bold': True,'align':'right','border':1})
         cell_format_total.set_font_name('Calibri')

@@ -172,8 +172,9 @@ class Hr_payslip(models.Model):
                         wage = version.wage if wage == 0 else wage
                         initial_process_date = self.date_prima if inherit_contrato != 0 else self.date_from
                         end_process_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
-                        obj_wage = self.env['hr.contract.change.wage'].search([('version_id', '=', version.id), ('date_start', '>=', initial_process_date), ('date_start', '<=', end_process_date)])
-                        if prima_salary_take and len(obj_wage) > 0:
+                        # Promedia salario y auxilio solo si hubo variación salarial en los últimos 3 meses
+                        has_salary_variation = self._has_salary_variation_last_3_months(version, end_process_date)
+                        if prima_salary_take and has_salary_variation:
                             wage_average = 0
                             while initial_process_date <= end_process_date:
                                 if initial_process_date.day != 31:
@@ -192,7 +193,7 @@ class Hr_payslip(models.Model):
                         auxtransporte_tope = annual_parameters.top_max_transportation_assistance
                         if version.z_not_pay_auxtransportation:
                             auxtransporte = 0
-                        if prima_salary_take and len(obj_wage) > 0 and auxtransporte != 0:  # Prorratea el auxilio de transporte segun los dias con derecho
+                        if prima_salary_take and has_salary_variation and auxtransporte != 0:  # Prorratea el auxilio de transporte segun los dias con derecho
                             auxtransporte_average = 0
                             initial_process_date = self.date_prima if inherit_contrato != 0 else self.date_from
                             end_process_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to

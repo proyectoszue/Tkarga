@@ -322,15 +322,19 @@ class HrPayslipRun(models.Model):
         if len(slips_original.filtered(lambda x: len(x.move_id) == 0 or x.move_id == False)) == 0:
             self.action_confirm()
 
+    def action_draft(self):
+        self.slip_ids.delete_payslip_account_moves()
+        return super(HrPayslipRun, self).action_draft()
+
     def restart_payroll_batch(self):
         self.mapped('slip_ids').action_payslip_cancel()
         self.mapped('slip_ids').unlink()
         return self.write({'state': '01_ready','observations':False,'time_process':False})
 
     def restart_payroll_account_batch(self):
+        #Eliminar contabilización
+        self.slip_ids.delete_payslip_account_moves(allow_posted=True)
         for payslip in self.slip_ids:
-            #Eliminar contabilización y el calculo
-            payslip.mapped('move_id').unlink()
             #Eliminar historicos
             #self.env['hr.vacation'].search([('payslip', '=', payslip.id)]).unlink()
             #self.env['hr.history.prima'].search([('payslip', '=', payslip.id)]).unlink()
@@ -340,9 +344,9 @@ class HrPayslipRun(models.Model):
         return self.write({'state': '01_ready'})
 
     def restart_full_payroll_batch(self):
+        #Eliminar contabilización
+        self.slip_ids.delete_payslip_account_moves(allow_posted=True)
         for payslip in self.slip_ids:
-            #Eliminar contabilización
-            payslip.mapped('move_id').unlink()
             #Eliminar historicos
             #self.env['hr.vacation'].search([('payslip', '=', payslip.id)]).unlink()
             #self.env['hr.history.prima'].search([('payslip', '=', payslip.id)]).unlink()
@@ -653,11 +657,9 @@ class Hr_payslip(models.Model):
         return True
 
     def restart_payroll(self):
+        #Eliminar contabilización
+        self.delete_payslip_account_moves()
         for payslip in self:
-            #Eliminar contabilización y el calculo
-            if payslip.mapped('move_id').state == 'posted':
-                raise ValidationError(f'No puedes reversar un movimiento contable de nómina publicado.')
-            payslip.mapped('move_id').unlink()
             # Modificar cuotas de prestamos pagadas
             obj_payslip_line = self.env['hr.payslip.line'].search(
                 [('slip_id', '=', payslip.id), ('loan_id', '!=', False)])
@@ -1392,11 +1394,32 @@ class Hr_payslip(models.Model):
             result_finally = {**result, **result_vac}
             return result_finally.values()
 
+    # Elimina los movimientos contables de las liquidaciones.
+    # Genera error si el movimiento está publicado (excepto con allow_posted=True)
+    # o si el mismo movimiento pertenece a otras liquidaciones que no se están procesando.
+    def delete_payslip_account_moves(self, allow_posted=False):
+        moves = self.mapped('move_id')
+        if not moves:
+            return True
+        if not allow_posted and moves.filtered(lambda m: m.state == 'posted'):
+            raise ValidationError(_('No puede reversar o cancelar una liquidación con movimiento contable publicado.'))
+        shared_slips = self.search([('move_id', 'in', moves.ids), ('id', 'not in', self.ids)])
+        if shared_slips:
+            raise ValidationError(_('El movimiento contable es compartido con otras liquidaciones, debe reiniciar el lote completo.'))
+        moves.unlink()
+        return True
+
     def action_payslip_cancel(self):
-        posted_moves = self.mapped('move_id').filtered(lambda m: m.state == 'posted')
-        if posted_moves:
-            raise ValidationError(_('No puedes cancelar un movimiento contable de nómina publicado.'))
+        self.delete_payslip_account_moves()
         return super(Hr_payslip, self).action_payslip_cancel()
+
+    def action_payslip_draft(self):
+        self.delete_payslip_account_moves()
+        return super(Hr_payslip, self).action_payslip_draft()
+
+    def unlink(self):
+        self.delete_payslip_account_moves()
+        return super(Hr_payslip, self).unlink()
 
     def action_payslip_done(self):
         #res = super(Hr_payslip, self).action_payslip_done()
