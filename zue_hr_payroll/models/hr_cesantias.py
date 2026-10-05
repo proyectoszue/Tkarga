@@ -205,6 +205,7 @@ class Hr_payslip(models.Model):
                         acumulados_promedio = 0
                     #Salario - Se toma el salario correspondiente a la fecha de liquidación
                     wage,auxtransporte,auxtransporte_tope,auxtransporte_prorated = 0,0,0,False
+                    has_salary_variation = False
                     if version.subcontract_type not in ('obra_parcial','obra_integral'):
                         wage = 0
                         obj_wage = self.env['hr.contract.change.wage'].search([('version_id','=',version.id),('date_start','<',self.date_to)])
@@ -251,15 +252,11 @@ class Hr_payslip(models.Model):
                         obj_salary_rule_aux = localdict['payslip'].get_salary_rule('AUX000', employee.type_employee.id)
                         if obj_salary_rule_aux and obj_salary_rule_aux.base_cesantias:
                             auxtransporte = 0
-                        # Prorratea el auxilio de transporte segun los dias con derecho (misma logica de Prima)
+                        # Prorratea el auxilio de transporte segun los dias con derecho, solo si hubo variación salarial en los últimos 3 meses
                         if cesantias_salary_take and auxtransporte != 0:
                             period_start_date = self.date_cesantias if inherit_contrato != 0 else self.date_from
                             period_end_date = self.date_liquidacion if inherit_contrato != 0 else self.date_to
-                            obj_wage_period = self.env['hr.contract.change.wage'].search([
-                                ('version_id', '=', version.id),
-                                ('date_start', '>=', period_start_date),
-                                ('date_start', '<=', period_end_date)])
-                            if len(obj_wage_period) > 0:
+                            if has_salary_variation:
                                 auxtransporte_average = 0
                                 initial_process_date = period_start_date
                                 end_process_date = period_end_date
