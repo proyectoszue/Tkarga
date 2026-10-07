@@ -204,6 +204,7 @@
                     <button name="restart_payroll_account_batch" type="object" string="Reversar contabilización" invisible="state not in ['03_paid', '04_cancel']"/>
                     <button name="restart_full_payroll_batch" type="object" string="Reversar totalmente" invisible="state not in ['03_paid', '04_cancel']"/>
                     <button name="generate_settlement_report_entity" type="object" string="Reporte por entidad" invisible="state not in ['03_paid', '04_cancel']"/>
+                    <button name="action_create_vacation_history" type="object" string="Generar Histórico de Vacaciones" invisible="state not in ['01_ready', '02_close']"/>
                     <button name="action_open_form" type="object" string="Editar"/>
                 </xpath>
             </field>
@@ -245,6 +246,7 @@
                         <button name="restart_payroll_account_batch" type="object" string="Reversar contabilización" invisible="state not in ['03_paid', '04_cancel']"/>
                         <button name="restart_full_payroll_batch" type="object" string="Reversar totalmente" invisible="state not in ['03_paid', '04_cancel']"/>
                         <button name="generate_settlement_report_entity" type="object" string="Reporte por entidad" invisible="state not in ['03_paid', '04_cancel']"/>
+                        <button name="action_create_vacation_history" type="object" string="Generar Histórico de Vacaciones" invisible="state not in ['01_ready', '02_close']" class="oe_highlight"/>
                     </header>
                 </xpath>
                 <xpath expr="//form[1]/group[1]" position="after">
