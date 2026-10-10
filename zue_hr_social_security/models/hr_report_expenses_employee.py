@@ -66,7 +66,7 @@ class hr_report_expenses_by_employee(models.Model):
                     a.date_to as fecha_liquidacion,a.date_from as fecha_inicial,a.date_to as fecha_final,
                     b."name" as compania,coalesce(h."name",'') as sucursal,
                     d.vat as identificacion,c."name" as empleado,
-                    coalesce(i."name",'')  as ubicacion_laboral, '' as cuenta_analitica, c."info_project" as proyecto,
+                    coalesce(i."name",'')  as ubicacion_laboral, coalesce(k."name"->>'es_CO',k."name"->>'en_US','') as cuenta_analitica, c."info_project" as proyecto,
                     e."sequence" as secuencia_contrato,
                     coalesce(coalesce(g."name"->>'es_ES',g."name"->>'en_US'),'') as categoria_regla,
                     coalesce(coalesce(f."name"->>'es_ES',f."name"->>'en_US'),'') as regla_salarial, f."sequence" as secuencia_regla,coalesce(m."name",'') as entidad,
@@ -82,7 +82,7 @@ class hr_report_expenses_by_employee(models.Model):
             inner join hr_salary_rule_category as g on f.category_id = g.id
             left join zue_res_branch as h on c.branch_id = h.id
             left join res_partner as i on c.partner_encab_id = i.id
-            --left join account_analytic_account as k on a.analytic_account_id  = k.id
+            left join account_analytic_account as k on a.z_analytic_account_id = k.id
             left join hr_employee_entities as l on aa.entity_id = l.id
             left join res_partner as m on l.partner_id = m.id
             UNION ALL
@@ -91,7 +91,7 @@ class hr_report_expenses_by_employee(models.Model):
 		            a."date" as fecha_liquidacion,a."date" as fecha_inicial,a."date" as fecha_final,
                     c."name" as compania,coalesce(h."name",'') as sucursal,
                     d.vat as identificacion,b."name" as empleado,
-                    coalesce(i."name",'') as ubicacion_laboral, '' as cuenta_analitica,b.info_project as proyecto,
+                    coalesce(i."name",'') as ubicacion_laboral, coalesce(k."name"->>'es_CO',k."name"->>'en_US','') as cuenta_analitica,b.info_project as proyecto,
                     '' as secuencia_contrato,coalesce(coalesce(g."name"->>'es_ES',g."name"->>'en_US'),'') as categoria_regla, coalesce(coalesce(f."name"->>'es_ES',f."name"->>'en_US'),'') as regla_salarial, f."sequence" as secuencia_regla,'' as entidad,
                     1 as unidades,
                     a.amount as valor,hc.department_id  as departamento,hc.job_id as puesto_trabajo,hc.contract_type as tipo_contrato,hc.contract_date_end as fecha_finalizacion_contrato,hc.type_of_jurisdiction as tipo_fuero
@@ -104,7 +104,7 @@ class hr_report_expenses_by_employee(models.Model):
             left join zue_res_branch as h on b.branch_id = h.id
             left join res_partner as i on b.partner_encab_id = i.id
             left join hr_version as hc on hc.employee_id = b.id and hc.contract_date_end is null
-            --left join account_analytic_account as k on hc.analytic_account_id  = k.id
+            left join account_analytic_account as k on k.id = (select split_part(kv.key, ',', 1)::int from jsonb_each_text(hc.analytic_distribution) as kv order by kv.value::numeric desc limit 1)
 			UNION all
 			--SEGURIDAD SOCIAL
 			Select 'SEGURIDAD SOCIAL' as estructura,0 as liquidacion,
@@ -125,7 +125,7 @@ class hr_report_expenses_by_employee(models.Model):
                     ((TO_DATE(a.year||'-'||a.month||'-01','YYYY-MM-DD') + '1 month'::interval) - '1 day'::interval)::date as fecha_final,
                     c."name" as compania,coalesce(h."name",'') as sucursal,
                     d.vat as identificacion,b."name" as empleado,
-                    coalesce(i."name",'') as ubicacion_laboral, '' as cuenta_analitica,coalesce(b.info_project,'') as proyecto,
+                    coalesce(i."name",'') as ubicacion_laboral, coalesce(k."name"->>'es_CO',k."name"->>'en_US','') as cuenta_analitica,coalesce(b.info_project,'') as proyecto,
                     hc."sequence" as secuencia_contrato,
                     'SEGURIDAD SOCIAL' as categoria_regla,
                     cch.description as regla_salarial,
@@ -164,7 +164,7 @@ class hr_report_expenses_by_employee(models.Model):
             inner join res_partner as d on b.partner_encab_id = d.id
             left join zue_res_branch as h on b.branch_id = h.id
             left join res_partner as i on b.partner_encab_id = i.id
-            --left join account_analytic_account as k on hc.analytic_account_id  = k.id
+            left join account_analytic_account as k on k.id = (select split_part(kv.key, ',', 1)::int from jsonb_each_text(hc.analytic_distribution) as kv order by kv.value::numeric desc limit 1)
             left join hr_employee_entities as hee_salud on ae."TerceroEPS" = hee_salud.id
             left join res_partner rp_salud on hee_salud.partner_id = rp_salud.id
             left join hr_employee_entities as hee_pension on ae."TerceroPension" = hee_pension.id
@@ -198,7 +198,7 @@ class hr_report_expenses_by_employee(models.Model):
                     ((TO_DATE(a.year||'-'||a.month||'-01','YYYY-MM-DD') + '1 month'::interval) - '1 day'::interval)::date as fecha_final,
                     c."name" as compania,coalesce(h."name",'') as sucursal,
                     d.vat as identificacion,b."name" as empleado,
-                    coalesce(i."name",'') as ubicacion_laboral, '' as cuenta_analitica,coalesce(b.info_project,'') as proyecto,
+                    coalesce(i."name",'') as ubicacion_laboral, coalesce(k."name"->>'es_CO',k."name"->>'en_US','') as cuenta_analitica,coalesce(b.info_project,'') as proyecto,
                     hc."sequence" as secuencia_contrato,
                     'PROVISIONES' as categoria_regla,
                     upper(ep.provision) as regla_salarial, 0 as secuencia_regla,
@@ -213,7 +213,7 @@ class hr_report_expenses_by_employee(models.Model):
             inner join res_partner as d on b.partner_encab_id = d.id
             left join zue_res_branch as h on b.branch_id = h.id
             left join res_partner as i on b.partner_encab_id = i.id
-            --left join account_analytic_account as k on hc.analytic_account_id  = k.id
+            left join account_analytic_account as k on k.id = (select split_part(kv.key, ',', 1)::int from jsonb_each_text(hc.analytic_distribution) as kv order by kv.value::numeric desc limit 1)
             ) as a
             order by a.fecha_liquidacion,a.fecha_inicial,a.fecha_final,a.compania,a.sucursal, a.empleado, a.secuencia_regla
            '''
