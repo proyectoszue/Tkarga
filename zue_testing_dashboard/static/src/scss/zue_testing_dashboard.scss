@@ -1,0 +1,741 @@
+// Colores de etiquetas equivalentes a $green-500, $red-500, $blue-500 y $gray-600.
+$zue_testing_dashboard_green_500: #198754;
+$zue_testing_dashboard_red_500: #dc3545;
+$zue_testing_dashboard_blue_500: #0d6efd;
+$zue_testing_dashboard_gray_600: #6c757d;
+
+.o_zue_testing_dashboard {
+    --o-zue-testing-dashboard-toolbar-height: auto;
+    background: var(--o-view-background-color, #fff);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+    position: relative;
+}
+
+.o_zue_testing_dashboard_toolbar {
+    background: var(--o-view-background-color, #fff);
+    border-bottom: 1px solid var(--border-color, #dee2e6);
+    display: flex;
+    flex: 0 0 auto;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    justify-content: space-between;
+    padding: 0.75rem 1rem;
+    position: relative;
+    z-index: 20;
+}
+
+.o_zue_testing_dashboard_toolbar_title h2 {
+    font-size: 1.25rem;
+}
+
+.o_zue_testing_dashboard_toolbar_controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.o_zue_testing_dashboard_content {
+    flex: 1 1 auto;
+    min-height: 0;
+    position: relative;
+}
+
+.o_zue_testing_dashboard_body {
+    height: 100%;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.o_zue_testing_dashboard_execution {
+    width: 100%;
+}
+
+.o_zue_testing_dashboard_execution table {
+    table-layout: fixed;
+    width: 100%;
+}
+
+.o_zue_testing_dashboard_col_status {
+    width: 9%;
+}
+
+.o_zue_testing_dashboard_col_source {
+    width: 12%;
+}
+
+.o_zue_testing_dashboard_col_test {
+    width: 52%;
+}
+
+.o_zue_testing_dashboard_col_message {
+    width: 17%;
+}
+
+.o_zue_testing_dashboard_col_duration {
+    width: 10%;
+}
+
+.o_zue_testing_dashboard_overlay {
+    background: rgba(0, 0, 0, 0.28);
+    bottom: 0;
+    left: 0;
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transition: opacity 0.2s ease;
+    z-index: 25;
+}
+
+.o_zue_testing_dashboard_overlay.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.o_zue_testing_dashboard_drawer {
+    background: var(--o-view-background-color, #fff);
+    border-left: 1px solid var(--border-color, #dee2e6);
+    bottom: 0;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.12);
+    display: flex;
+    flex-direction: column;
+    max-width: 100%;
+    position: absolute;
+    right: 0;
+    top: 0;
+    transform: translateX(105%);
+    transition: transform 0.2s ease;
+    z-index: 30;
+}
+
+.o_zue_testing_dashboard_drawer_tests {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100%;
+    width: 70%;
+}
+
+.o_zue_testing_dashboard_drawer_info {
+    height: 100%;
+    max-height: 100%;
+    width: 35%;
+}
+
+.o_zue_testing_dashboard_drawer.is-open {
+    transform: translateX(0);
+}
+
+.o_zue_testing_dashboard_drawer_header {
+    align-items: flex-start;
+    border-bottom: 1px solid var(--border-color, #dee2e6);
+    display: flex;
+    flex: 0 0 auto;
+    gap: 0.75rem;
+    justify-content: space-between;
+    padding: 0.75rem 0.9rem;
+}
+
+.o_zue_testing_dashboard_drawer_header h3 {
+    font-size: 1rem;
+}
+
+.o_zue_testing_dashboard_drawer_body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    padding: 1rem;
+}
+
+.o_zue_testing_dashboard_fab_group {
+    bottom: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    position: absolute;
+    right: 1.25rem;
+    z-index: 40;
+}
+
+.o_zue_testing_dashboard_drawer_fab {
+    align-items: center;
+    background: var(--bs-primary, #714B67);
+    border: 0;
+    border-radius: 50%;
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.18);
+    color: #fff;
+    display: inline-flex;
+    font-size: 1.1rem;
+    height: 3rem;
+    justify-content: center;
+    width: 3rem;
+}
+
+.o_zue_testing_dashboard_drawer_fab_info {
+    background: #495057;
+}
+
+.o_zue_testing_dashboard_drawer_fab:hover {
+    filter: brightness(1.05);
+}
+
+.o_zue_testing_dashboard_drawer_fab.is-open {
+    background: #343a40;
+}
+
+.o_zue_testing_dashboard_module,
+.o_zue_testing_dashboard_provider {
+    min-width: 200px;
+}
+
+.o_zue_testing_dashboard_scope {
+    min-width: 220px;
+}
+
+// SelectMenu nace con w-auto; en los selectores del panel debe ocupar todo el ancho.
+.o_zue_testing_dashboard_module .o_select_menu,
+.o_zue_testing_dashboard_provider .o_select_menu,
+.o_zue_testing_dashboard_scope .o_select_menu {
+    width: 100%;
+}
+
+.o_zue_testing_dashboard_provider .o_select_menu_menu .o_select_menu_group {
+    color: $zue_testing_dashboard_gray_600;
+    font-weight: 700;
+    pointer-events: none;
+}
+
+.o_zue_testing_dashboard_provider .o_select_menu_menu .o_select_menu_group:not(:first-child) {
+    margin-top: 0.5rem;
+}
+
+.o_zue_testing_dashboard_metric {
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 6px;
+    min-width: 112px;
+    padding: 8px 10px;
+}
+
+.o_zue_testing_dashboard_metric_filter {
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+    user-select: none;
+}
+
+.o_zue_testing_dashboard_metric_filter:hover {
+    background: #f8f9fa;
+    border-color: #adb5bd;
+}
+
+.o_zue_testing_dashboard_metric_filter.is-active {
+    background: color-mix(in srgb, var(--bs-primary, #714B67) 14%, #fff);
+    border-color: var(--bs-primary, #714B67);
+    box-shadow: inset 0 0 0 1px var(--bs-primary, #714B67);
+}
+
+// El color de la etiqueta solo se aplica cuando el filtro esta seleccionado.
+@mixin zue-testing-dashboard-metric-tone($color) {
+    &.is-active {
+        background: color-mix(in srgb, $color 18%, #fff);
+        border-color: $color;
+        box-shadow: inset 0 0 0 1px $color;
+
+        span,
+        strong {
+            color: $color;
+        }
+
+        &:hover {
+            background: color-mix(in srgb, $color 24%, #fff);
+            border-color: $color;
+        }
+    }
+}
+
+.o_zue_testing_dashboard_metric_ok {
+    @include zue-testing-dashboard-metric-tone($zue_testing_dashboard_green_500);
+}
+
+.o_zue_testing_dashboard_metric_controlled {
+    @include zue-testing-dashboard-metric-tone($zue_testing_dashboard_blue_500);
+}
+
+.o_zue_testing_dashboard_metric_failed {
+    @include zue-testing-dashboard-metric-tone($zue_testing_dashboard_red_500);
+}
+
+.o_zue_testing_dashboard_metric_parametric {
+    @include zue-testing-dashboard-metric-tone(#6610f2);
+}
+
+.o_zue_testing_dashboard_metric_process {
+    @include zue-testing-dashboard-metric-tone(#fd7e14);
+}
+
+.o_zue_testing_dashboard_metric span {
+    color: #6c757d;
+    display: block;
+    font-size: 12px;
+}
+
+.o_zue_testing_dashboard_metric strong {
+    display: block;
+    font-size: 20px;
+    line-height: 1.2;
+}
+
+.o_zue_testing_dashboard_panel {
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 6px;
+    padding: 12px;
+}
+
+.o_zue_testing_dashboard_panel_header {
+    align-items: center;
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.o_zue_testing_dashboard_panel_header h3 {
+    font-size: 16px;
+    margin: 0;
+}
+
+.o_zue_testing_dashboard_detail {
+    background: #f8f9fa;
+    border-radius: 4px;
+    max-height: 220px;
+    overflow: auto;
+    padding: 8px;
+    white-space: pre-wrap;
+}
+
+// Panel con pestañas: sin pre-wrap para que la indentación del template no ocupe espacio.
+.o_zue_testing_dashboard_process_result {
+    background: #f8f9fa;
+    border-radius: 4px;
+    max-height: 480px;
+    overflow: auto;
+    padding: 8px;
+    white-space: normal;
+}
+
+.o_zue_testing_dashboard_process_tabs {
+    flex-wrap: wrap;
+}
+
+.o_zue_testing_dashboard_process_tabs .nav-link {
+    background: transparent;
+    border-color: transparent;
+    cursor: pointer;
+    font-size: 12px;
+    padding: 0.25rem 0.6rem;
+}
+
+.o_zue_testing_dashboard_process_tabs .nav-link.active {
+    background: #fff;
+    border-color: var(--border-color, #dee2e6) var(--border-color, #dee2e6) #fff;
+    font-weight: 600;
+}
+
+.o_zue_testing_dashboard_form_two_cols {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    min-width: 420px;
+}
+
+.o_zue_testing_dashboard_form_two_cols > .o_zue_testing_dashboard_field_stack {
+    flex: 1 1 220px;
+    min-width: 200px;
+}
+
+.o_zue_testing_dashboard_ss_sections {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+}
+
+.o_zue_testing_dashboard_ss_section {
+    min-width: 0;
+}
+
+.o_zue_testing_dashboard_selectable_table tbody tr {
+    cursor: pointer;
+}
+
+.o_zue_testing_dashboard_detail_panel {
+    background: #fff;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 4px;
+    padding: 8px;
+}
+
+.o_zue_testing_dashboard_field_stack {
+    background: #fff;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.o_zue_testing_dashboard_field_stack_row {
+    align-items: flex-start;
+    border-bottom: 1px solid var(--border-color, #dee2e6);
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 4px 8px;
+}
+
+.o_zue_testing_dashboard_field_stack_row:last-child {
+    border-bottom: 0;
+}
+
+.o_zue_testing_dashboard_field_stack_label {
+    color: #495057;
+    flex: 0 1 48%;
+    font-weight: 600;
+}
+
+.o_zue_testing_dashboard_field_stack_value {
+    flex: 1 1 52%;
+    text-align: right;
+    word-break: break-word;
+}
+
+.o_zue_testing_dashboard_catalog {
+    min-height: 0;
+}
+
+.o_zue_testing_dashboard_catalog_item {
+    background: #f8f9fa;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-left: 3px solid var(--border-color, #dee2e6);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    margin-bottom: 0.75rem;
+    padding: 0.75rem;
+}
+
+.o_zue_testing_dashboard_catalog_item_process {
+    border-left-color: #fd7e14;
+}
+
+.o_zue_testing_dashboard_catalog_item_parametric {
+    border-left-color: #6610f2;
+}
+
+.o_zue_testing_dashboard_catalog_item .form-check-label {
+    cursor: pointer;
+}
+
+.o_zue_testing_dashboard_catalog_group {
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 6px;
+    padding: 8px 10px;
+}
+
+.o_zue_testing_dashboard_catalog_group_title {
+    cursor: pointer;
+    font-weight: 600;
+    list-style-position: outside;
+}
+
+.o_zue_testing_dashboard_shared_config {
+    background: color-mix(in srgb, var(--bs-primary, #714B67) 8%, #fff);
+    border: 2px solid var(--bs-primary, #714B67);
+    border-left-width: 6px;
+    border-radius: 6px;
+    padding: 0.75rem;
+}
+
+.o_zue_testing_dashboard_shared_config_title {
+    color: var(--bs-primary, #714B67);
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.o_zue_testing_dashboard_shared_config .o_zue_testing_dashboard_test_inputs {
+    margin-bottom: 0;
+}
+
+.o_zue_testing_dashboard_status_types {
+    list-style: none;
+    margin: 0;
+    padding-left: 0;
+}
+
+.o_zue_testing_dashboard_status_types li {
+    margin-bottom: 6px;
+}
+
+.o_zue_testing_dashboard_status_types .badge {
+    vertical-align: baseline;
+}
+
+// Replica la rejilla y las etiquetas de los grupos internos del formulario de Odoo,
+// cuyas reglas nativas solo aplican dentro de .o_form_view.
+.o_zue_testing_dashboard_test_inputs.o_inner_group {
+    align-items: baseline;
+    display: grid;
+    gap: 0.5rem 1rem;
+    grid-template-columns: fit-content(150px) minmax(0, 1fr);
+    margin-bottom: 0.5rem;
+}
+
+.o_zue_testing_dashboard_test_inputs .o_form_label {
+    font-weight: 500;
+    line-height: 1.5;
+    margin-bottom: 0;
+}
+
+.o_zue_testing_dashboard_test_inputs .o_cell:not(.o_wrap_label):not(.o_wrap_input) {
+    grid-column: span 2;
+}
+
+.o_zue_testing_dashboard_test_inputs .o_field_widget {
+    width: 100%;
+}
+
+.o_zue_testing_dashboard_test_inputs .o_field_many2one .o_input_dropdown {
+    width: 100%;
+}
+
+.o_zue_testing_dashboard_test_inputs .o_select_menu {
+    width: 100%;
+}
+
+.o_zue_testing_dashboard_test_inputs .o_input {
+    width: 100%;
+}
+
+.o_zue_testing_dashboard_novelty_row {
+    background: #f8f9fa;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+}
+
+.o_zue_testing_dashboard_novelty_row .o_zue_testing_dashboard_test_inputs {
+    margin-bottom: 0;
+}
+
+.o_zue_testing_dashboard_test_inputs .o_form_label.o_required_modifier::after {
+    color: #d23f3a;
+    content: " *";
+}
+
+.o_zue_testing_dashboard_field_picker_panel {
+    background: #fff;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    margin-top: 4px;
+    max-width: 100%;
+    min-width: 280px;
+    overflow: hidden;
+    z-index: 5;
+}
+
+.o_zue_testing_dashboard_field_picker_header {
+    align-items: center;
+    border-bottom: 1px solid var(--border-color, #dee2e6);
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 10px;
+}
+
+.o_zue_testing_dashboard_field_picker_title {
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.o_zue_testing_dashboard_field_picker_close {
+    color: #6c757d;
+    line-height: 1;
+    padding: 0;
+}
+
+.o_zue_testing_dashboard_field_picker_search {
+    border: 0;
+    border-bottom: 1px solid var(--border-color, #dee2e6);
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.o_zue_testing_dashboard_field_picker_list {
+    max-height: 260px;
+    overflow: auto;
+}
+
+.o_zue_testing_dashboard_field_picker_item {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-bottom: 1px solid #f1f3f5;
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 12px;
+    text-align: left;
+    width: 100%;
+}
+
+.o_zue_testing_dashboard_field_picker_item:hover {
+    background: #f8f9fa;
+}
+
+.o_zue_testing_dashboard_field_picker_item_content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+}
+
+.o_zue_testing_dashboard_field_picker_item_label {
+    color: #212529;
+    font-size: 13px;
+    line-height: 1.3;
+}
+
+.o_zue_testing_dashboard_field_picker_item_meta {
+    color: #6c757d;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.o_zue_testing_dashboard_field_picker_item_chevron {
+    color: #adb5bd;
+    flex-shrink: 0;
+    font-size: 11px;
+    margin-left: 8px;
+}
+
+.o_zue_testing_dashboard_field_picker_empty {
+    color: #6c757d;
+    font-size: 12px;
+    padding: 10px 12px;
+}
+
+// Estilo píldora unificado (como Estado ejecución del Historial).
+.o_zue_testing_dashboard .badge {
+    border: 0;
+    border-radius: 50rem;
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    line-height: 1;
+    padding: 0.35em 0.7em;
+    vertical-align: middle;
+    white-space: nowrap;
+}
+
+.badge.o_zue_testing_dashboard_badge_ok {
+    background-color: $zue_testing_dashboard_green_500;
+    color: #fff;
+}
+
+.badge.o_zue_testing_dashboard_badge_failed {
+    background-color: $zue_testing_dashboard_red_500;
+    color: #fff;
+}
+
+.badge.o_zue_testing_dashboard_badge_controlled {
+    background-color: $zue_testing_dashboard_blue_500;
+    color: #fff;
+}
+
+.badge.o_zue_testing_dashboard_badge_skipped {
+    background-color: $zue_testing_dashboard_gray_600;
+    color: #fff;
+}
+
+.badge.o_zue_testing_dashboard_badge_test_type_parametric {
+    background-color: #6610f2;
+    color: #fff;
+}
+
+.badge.o_zue_testing_dashboard_badge_test_type_process {
+    background-color: #fd7e14;
+    color: #fff;
+}
+
+// Historial: misma píldora con texto blanco.
+.o_zue_testing_dashboard_history .o_field_badge .badge,
+.o_zue_testing_dashboard_history .badge {
+    border-radius: 50rem !important;
+    font-weight: 700 !important;
+    color: #fff !important;
+}
+
+.o_zue_testing_dashboard_history .o_data_cell[name="test_type"] .badge.text-bg-info,
+.o_zue_testing_dashboard_history .o_field_widget[name="test_type"] .badge.text-bg-info {
+    background-color: #6610f2 !important;
+}
+
+.o_zue_testing_dashboard_history .o_data_cell[name="test_type"] .badge.text-bg-primary,
+.o_zue_testing_dashboard_history .o_field_widget[name="test_type"] .badge.text-bg-primary {
+    background-color: #fd7e14 !important;
+}
+
+.o_zue_testing_dashboard_history .o_data_cell[name="status"] .badge.text-bg-info,
+.o_zue_testing_dashboard_history .o_field_widget[name="status"] .badge.text-bg-info {
+    background-color: $zue_testing_dashboard_blue_500 !important;
+}
+
+.o_zue_testing_dashboard_history .o_data_cell[name="state"] .badge.text-bg-warning,
+.o_zue_testing_dashboard_history .o_field_widget[name="state"] .badge.text-bg-warning {
+    background-color: #fd7e14 !important;
+}
+
+// Historial: el detalle usa el mismo render que la ejecucion en vivo y necesita ancho de tabla.
+.modal-dialog:has(.o_zue_testing_dashboard_history_line) {
+    max-width: 95vw;
+    width: 1240px;
+}
+
+// El detalle de la linea se muestra a ancho completo, sin el boton de expandir del dialogo.
+.modal:has(.o_zue_testing_dashboard_history_line) .modal-header button:not(.btn-close) {
+    display: none;
+}
+
+.o_zue_testing_dashboard_history_line .o_form_sheet {
+    max-width: none;
+    width: 100%;
+}
+
+.o_zue_testing_dashboard_history_line .o_inner_group {
+    width: 100%;
+}
+
+.o_zue_testing_dashboard_history_text {
+    width: 100%;
+}
+
+.o_zue_testing_dashboard_history_text,
+.o_zue_testing_dashboard_history_text textarea,
+.o_zue_testing_dashboard_history_text .o_field_text {
+    overflow-wrap: anywhere;
+    white-space: pre-wrap;
+    width: 100%;
+}
+
+.o_zue_testing_dashboard_result_field {
+    display: block;
+}
+
+.o_zue_testing_dashboard_result_field .o_zue_testing_dashboard_process_result {
+    background: #fff;
+    max-height: none;
+}
+
+.o_zue_testing_dashboard_result_field table {
+    width: 100%;
+}

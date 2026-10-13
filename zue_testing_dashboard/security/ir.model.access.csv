@@ -1,0 +1,5 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+zue_testing_dashboard_access_session,zue.testing.dashboard.session,model_zue_testing_dashboard_session,zue_testing_dashboard.zue_testing_dashboard_group_user,1,1,1,1
+zue_testing_dashboard_access_line,zue.testing.dashboard.line,model_zue_testing_dashboard_line,zue_testing_dashboard.zue_testing_dashboard_group_user,1,1,1,1
+zue_testing_dashboard_access_run,zue.testing.dashboard.run,model_zue_testing_dashboard_run,zue_testing_dashboard.zue_testing_dashboard_group_user,1,1,1,1
+zue_testing_dashboard_access_run_line,zue.testing.dashboard.run.line,model_zue_testing_dashboard_run_line,zue_testing_dashboard.zue_testing_dashboard_group_user,1,1,1,1

@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Core: templates OWL del panel (UI base). Campos de dominio por herencia. -->
+<templates>
+
+    <!-- Many2one genérico del field picker. -->
+    <t t-name="zue_testing_dashboard.RecordMany2One" owl="1">
+        <div class="o_input_dropdown o_field_many2one_selection w-100"
+             t-att-class="{ 'pe-none opacity-50': props.disabled }">
+            <AutoComplete value="props.displayName || ''"
+                          placeholder="props.placeholder"
+                          autoSelect="true"
+                          sources="sources"
+                          onChange.bind="onChange"
+                          class="'o_input'"/>
+            <span class="o_dropdown_button"/>
+        </div>
+    </t>
+
+    <!-- Config compartida: contenedor vacío; cada dominio agrega campos (t-inherit). -->
+    <t t-name="zue_testing_dashboard.SharedConfigFields" owl="1">
+        <div class="o_zue_testing_dashboard_shared_config_fields o_zue_testing_dashboard_test_inputs o_inner_group"/>
+    </t>
+
+    <!-- Pantalla principal del panel. -->
+    <t t-name="zue_testing_dashboard.ZueTestingDashboard" owl="1">
+        <div class="o_zue_testing_dashboard">
+            <div class="o_zue_testing_dashboard_toolbar">
+                <div class="o_zue_testing_dashboard_toolbar_title">
+                    <h2 class="m-0">Panel de pruebas ZUE</h2>
+                    <div class="text-muted">Adaptador visual para proveedores de pruebas instalados</div>
+                </div>
+                <div class="o_zue_testing_dashboard_toolbar_controls">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <div class="o_field_widget o_zue_testing_dashboard_module">
+                            <SelectMenu choices="moduleChoices"
+                                        value="state.moduleKey"
+                                        placeholder="'Modulo'"
+                                        disabled="state.running"
+                                        onSelect="(value) => this.onModuleChange(value)"/>
+                        </div>
+                        <div class="o_field_widget o_zue_testing_dashboard_provider">
+                            <SelectMenu choices="providerChoices"
+                                        groups="providerGroups"
+                                        value="state.providerModel"
+                                        placeholder="'Grupo'"
+                                        autoSort="false"
+                                        disabled="state.running || !moduleGroups.length"
+                                        onSelect="(value) => this.onProviderChange(value)"/>
+                        </div>
+                        <div class="o_field_widget o_zue_testing_dashboard_scope">
+                            <SelectMenu choices="scopeChoices"
+                                        value="state.scope"
+                                        placeholder="'Filtro'"
+                                        autoSort="false"
+                                        disabled="state.running || !selectedProvider"
+                                        onSelect="(value) => this.onScopeChange(value)"/>
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <button class="btn btn-outline-secondary btn-sm" t-att-disabled="!state.running" t-on-click="() => this.onStopClick()">
+                            Detener
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" t-att-disabled="state.running" t-on-click="() => this.onRefreshCatalogClick()">
+                            Actualizar catalogo
+                        </button>
+                        <button class="btn btn-outline-secondary btn-sm" t-att-disabled="state.running || (!state.lines.length &amp;&amp; !state.sessionId)" t-on-click="() => this.onClearClick()">
+                            Limpiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="o_zue_testing_dashboard_content">
+            <div class="o_zue_testing_dashboard_body">
+            <div class="o_zue_testing_dashboard_summary d-flex flex-wrap gap-2 mb-3">
+                <div t-att-class="'o_zue_testing_dashboard_metric o_zue_testing_dashboard_metric_filter' + (isStatusFilterActive('total') ? ' is-active' : '')"
+                     role="button"
+                     title="Filtrar por total"
+                     t-on-click="() => this.onStatusFilterToggle('total')">
+                    <span>Total</span>
+                    <strong t-esc="state.counts.total"/>
+                </div>
+                <div t-att-class="'o_zue_testing_dashboard_metric o_zue_testing_dashboard_metric_filter o_zue_testing_dashboard_metric_ok' + (isStatusFilterActive('ok') ? ' is-active' : '')"
+                     role="button"
+                     title="Filtrar por correctas"
+                     t-on-click="() => this.onStatusFilterToggle('ok')">
+                    <span>Correctas</span>
+                    <strong t-esc="state.counts.ok"/>
+                </div>
+                <div t-att-class="'o_zue_testing_dashboard_metric o_zue_testing_dashboard_metric_filter o_zue_testing_dashboard_metric_controlled' + (isStatusFilterActive('controlled') ? ' is-active' : '')"
+                     role="button"
+                     title="Filtrar por controladas"
+                     t-on-click="() => this.onStatusFilterToggle('controlled')">
+                    <span>Controladas</span>
+                    <strong t-esc="state.counts.controlled"/>
+                </div>
+                <div t-att-class="'o_zue_testing_dashboard_metric o_zue_testing_dashboard_metric_filter o_zue_testing_dashboard_metric_failed' + (isStatusFilterActive('failed') ? ' is-active' : '')"
+                     role="button"
+                     title="Filtrar por fallidas"
+                     t-on-click="() => this.onStatusFilterToggle('failed')">
+                    <span>Fallidas</span>
+                    <strong t-esc="state.counts.failed"/>
+                </div>
+                <div t-att-class="'o_zue_testing_dashboard_metric o_zue_testing_dashboard_metric_filter o_zue_testing_dashboard_metric_parametric' + (isTestTypeFilterActive('parametric') ? ' is-active' : '')"
+                     role="button"
+                     title="Filtrar por paramétricas"
+                     t-on-click="() => this.onTestTypeFilterToggle('parametric')">
+                    <span>Paramétricas</span>
+                    <strong t-esc="testTypeCounts.parametric"/>
+                </div>
+                <div t-att-class="'o_zue_testing_dashboard_metric o_zue_testing_dashboard_metric_filter o_zue_testing_dashboard_metric_process' + (isTestTypeFilterActive('process') ? ' is-active' : '')"
+                     role="button"
+                     title="Filtrar por proceso"
+                     t-on-click="() => this.onTestTypeFilterToggle('process')">
+                    <span>Proceso</span>
+                    <strong t-esc="testTypeCounts.process"/>
+                </div>
+                <div class="o_zue_testing_dashboard_metric">
+                    <span>Progreso</span>
+                    <strong><t t-esc="progressPercent"/>%</strong>
+                </div>
+                <div class="o_zue_testing_dashboard_metric">
+                    <span>Sesion</span>
+                    <strong t-esc="state.sessionId || '-'"/>
+                </div>
+            </div>
+
+            <div class="progress mb-3" role="progressbar">
+                <div class="progress-bar" t-att-style="progressStyle"/>
+            </div>
+
+            <div t-if="state.error" class="alert alert-danger" role="alert">
+                <t t-esc="state.error"/>
+            </div>
+
+            <div class="o_zue_testing_dashboard_execution">
+                    <div class="o_zue_testing_dashboard_panel">
+                        <div class="o_zue_testing_dashboard_panel_header">
+                            <h3>Ejecucion</h3>
+                            <span class="text-muted">
+                                <t t-esc="state.currentIndex"/> / <t t-esc="state.totalToRun"/>
+                            </span>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table table-sm table-hover align-middle">
+                                <thead>
+                                    <tr>
+                                        <th class="o_zue_testing_dashboard_col_status">Estado</th>
+                                        <th class="o_zue_testing_dashboard_col_source">Origen</th>
+                                        <th class="o_zue_testing_dashboard_col_test">Prueba</th>
+                                        <th class="o_zue_testing_dashboard_col_message">Mensaje</th>
+                                        <th class="o_zue_testing_dashboard_col_duration text-end">Segundos</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-if="!filteredLines.length">
+                                        <td colspan="5" class="text-muted">
+                                            <t t-if="state.lines.length">No hay pruebas para los filtros seleccionados.</t>
+                                            <t t-else="">No hay pruebas ejecutadas.</t>
+                                        </td>
+                                    </tr>
+                                    <tr t-foreach="filteredLines" t-as="line" t-key="line.sequence">
+                                        <td>
+                                            <span t-att-class="statusClass(line.status)" t-esc="line.status_label || line.status"/>
+                                        </td>
+                                        <td t-esc="line.module_name"/>
+                                        <td>
+                                            <div>
+                                                <span t-esc="line.summary"/>
+                                            </div>
+                                            <div t-if="line.test_type" class="mt-1">
+                                                <span t-att-class="testTypeClass(line.test_type)"
+                                                      t-esc="line.test_type_label || testTypeLabel(line.test_type)"/>
+                                            </div>
+                                            <details class="mt-1">
+                                                <summary class="text-muted">Referencia tecnica</summary>
+                                                <small class="text-muted" t-esc="line.technical_name"/>
+                                            </details>
+                                            <details t-if="line.test_data" class="mt-1">
+                                                <summary class="text-muted">Datos de prueba</summary>
+                                                <pre class="o_zue_testing_dashboard_detail" t-esc="line.test_data"/>
+                                            </details>
+                                            <details t-if="hasProcessResult(line)" class="mt-1">
+                                                <summary class="text-muted">Resultado de liquidación</summary>
+                                                <ZueProcessResultViewer line="line"/>
+                                            </details>
+                                            <details t-if="line.functional_log" class="mt-1">
+                                                <summary class="text-muted">Log funcional</summary>
+                                                <pre class="o_zue_testing_dashboard_detail" t-esc="line.functional_log"/>
+                                            </details>
+                                            <details t-if="line.detail" class="mt-1">
+                                                <summary class="text-muted">Detalle</summary>
+                                                <pre class="o_zue_testing_dashboard_detail" t-esc="line.detail"/>
+                                            </details>
+                                        </td>
+                                        <td t-esc="line.message"/>
+                                        <td class="text-end" t-esc="line.duration.toFixed ? line.duration.toFixed(3) : line.duration"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+            </div>
+            </div>
+
+            <div t-att-class="'o_zue_testing_dashboard_overlay' + (isAnyDrawerOpen ? ' is-visible' : '')"
+                 t-on-click="() => this.closeAllDrawers()"/>
+
+            <aside t-att-class="'o_zue_testing_dashboard_drawer o_zue_testing_dashboard_drawer_tests' + (state.testsDrawerOpen ? ' is-open' : '')"
+                   aria-label="Pruebas detectadas">
+                    <div class="o_zue_testing_dashboard_drawer_header">
+                        <div>
+                            <h3 class="m-0">Pruebas detectadas</h3>
+                            <span class="text-muted small">
+                                <t t-esc="selectedTestsCount"/> / <t t-esc="selectedCatalogTests.length"/>
+                            </span>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <button class="btn btn-primary btn-sm"
+                                    t-att-disabled="!canRun"
+                                    t-on-click="() => this.onRunClick()">
+                                Ejecutar
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm"
+                                    t-att-disabled="state.running"
+                                    t-on-click="() => this.clearTestParameterization()"
+                                    title="Limpiar parametrizacion de las pruebas">
+                                Limpiar
+                            </button>
+                            <button type="button"
+                                    class="btn btn-link btn-sm p-0"
+                                    title="Cerrar"
+                                    t-on-click="() => this.closeTestsDrawer()">
+                                <i class="fa fa-times"/>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="o_zue_testing_dashboard_drawer_body">
+                    <div class="o_zue_testing_dashboard_panel">
+                        <div class="o_zue_testing_dashboard_catalog">
+                            <div t-if="selectedModule and selectedProvider" class="mb-3">
+                                <div class="text-muted small mb-2">
+                                    <strong t-esc="selectedModule.name"/>
+                                    <span> / </span>
+                                    <span t-esc="selectedProvider.name"/>
+                                </div>
+                                <div class="text-muted" t-if="selectedProvider.description" t-esc="selectedProvider.description"/>
+                                <div t-if="selectedCatalogTests.length" class="form-check mb-2">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           t-att-checked="allCatalogTestsSelected"
+                                           t-att-disabled="state.running"
+                                           t-on-change="(event) => this.onToggleAllTests(event)"/>
+                                    <label class="form-check-label">Seleccionar todas</label>
+                                </div>
+                                <!-- Bloque estándar: título + aplicar; campos vía SharedConfigFields. -->
+                                <div t-if="showGroupSharedConfig"
+                                     class="o_zue_testing_dashboard_shared_config mb-3">
+                                    <div class="o_zue_testing_dashboard_shared_config_title">
+                                        <i class="fa fa-sliders me-2"/>
+                                        <span>Configuración compartida</span>
+                                    </div>
+                                    <div class="text-muted small mb-2">
+                                        Rellena las pruebas marcadas. Cada prueba conserva campos editables.
+                                    </div>
+                                    <t t-call="zue_testing_dashboard.SharedConfigFields"/>
+                                    <button type="button"
+                                            class="btn btn-outline-primary btn-sm mt-2"
+                                            t-att-disabled="state.running || !selectedTestsCount"
+                                            t-on-click="() => this.applyGroupSharedConfig()">
+                                        <i class="fa fa-copy me-1"/>
+                                        Aplicar a todas las pruebas del grupo
+                                    </button>
+                                </div>
+                                <div t-if="!catalogGroups.length" class="text-muted">No hay pruebas en este filtro.</div>
+                                <t t-foreach="catalogGroups" t-as="group" t-key="group.tag">
+                                    <details class="o_zue_testing_dashboard_catalog_group mb-2" open="open">
+                                        <summary class="o_zue_testing_dashboard_catalog_group_title">
+                                            <t t-esc="group.label"/> (<t t-esc="group.count"/>)
+                                        </summary>
+                                        <ul class="list-unstyled mb-0 mt-2 ps-2">
+                                            <li t-foreach="group.tests" t-as="test" t-key="test.technical_name"
+                                                t-att-class="catalogItemClass(test)">
+                                                <div class="form-check">
+                                                    <input class="form-check-input"
+                                                           type="checkbox"
+                                                           t-att-id="'zue_test_' + test.technical_name"
+                                                           t-att-checked="state.selectedTests[test.technical_name] !== false"
+                                                           t-att-disabled="state.running"
+                                                           t-on-change="(event) => this.onTestSelectionChange(test.technical_name, event)"/>
+                                                    <label class="form-check-label" t-att-for="'zue_test_' + test.technical_name">
+                                                        <span t-esc="test.summary"/>
+                                                        <br/>
+                                                        <span t-if="test.test_type"
+                                                              t-att-class="testTypeClass(test.test_type)"
+                                                              t-esc="test.test_type_label || testTypeLabel(test.test_type)"/>
+                                                        <br t-if="test.test_type"/>
+                                                        <small class="text-muted" t-esc="test.technical_name"/>
+                                                    </label>
+                                                </div>
+                                                <!-- Inputs de proceso: definidos por el dominio (payroll hoy). -->
+                                                <t t-call="zue_testing_dashboard.ProcessTestInputs">
+                                                    <t t-set="test" t-value="test"/>
+                                                </t>
+
+                                                <div t-if="showParametricFieldPicker(test)" class="o_zue_testing_dashboard_test_inputs o_inner_group mt-2 ms-4">
+                                                    <t t-foreach="getTestFieldRows(test.technical_name)" t-as="row" t-key="row.uid">
+                                                        <div class="o_cell o_wrap_label">
+                                                            <label class="o_form_label" t-esc="row.label"/>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_input d-flex align-items-center gap-2">
+                                                            <div class="o_field_widget flex-grow-1">
+                                                                <t t-if="isSelectMenuTestField(row.type)">
+                                                                    <SelectMenu choices="getTestFieldRowChoices(row)"
+                                                                                value="row.value"
+                                                                                placeholder="'Seleccione un valor'"
+                                                                                disabled="state.running"
+                                                                                onOpened="() => this.ensureTestFieldRowOptions(test, row)"
+                                                                                onSelect="(value) => this.setTestFieldRowValue(test.technical_name, row.uid, value)"/>
+                                                                </t>
+                                                                <t t-elif="isDateTestField(row.type)">
+                                                                    <DateTimeInput type="row.type === 'datetime' ? 'datetime' : 'date'"
+                                                                                   value="getTestFieldRowDateValue(row)"
+                                                                                   disabled="state.running"
+                                                                                   onChange="(dateValue) => this.onTestFieldRowDateChange(test.technical_name, row, dateValue)"/>
+                                                                </t>
+                                                                <t t-elif="isMonetaryTestField(row.type)">
+                                                                    <input class="o_input o_field_monetary w-100"
+                                                                           type="text"
+                                                                           inputmode="decimal"
+                                                                           t-att-value="getMonetaryInputDisplay('field_' + test.technical_name + '_' + row.uid, row.value)"
+                                                                           t-att-disabled="state.running"
+                                                                           t-on-focus="() => this.onMonetaryInputFocus('field_' + test.technical_name + '_' + row.uid)"
+                                                                           t-on-blur="(event) => this.onMonetaryInputBlur('field_' + test.technical_name + '_' + row.uid, event, (value) => this.setTestFieldRowValue(test.technical_name, row.uid, value))"
+                                                                           t-on-change="(event) => this.setTestFieldRowValue(test.technical_name, row.uid, this.parseMonetaryInputValue(event.target.value))"/>
+                                                                </t>
+                                                                <t t-else="">
+                                                                    <input class="o_input w-100"
+                                                                           t-att-type="isNumericTestField(row.type) ? 'number' : 'text'"
+                                                                           t-att-value="row.value"
+                                                                           t-att-disabled="state.running"
+                                                                           t-on-change="(event) => this.onTestFieldRowChange(test.technical_name, row.uid, event)"/>
+                                                                </t>
+                                                            </div>
+                                                            <button type="button"
+                                                                    class="btn btn-link btn-sm text-danger p-0"
+                                                                    t-att-disabled="state.running"
+                                                                    t-on-click="() => this.removeTestFieldRow(test.technical_name, row.uid)"
+                                                                    title="Eliminar">
+                                                                <i class="fa fa-trash"/>
+                                                            </button>
+                                                        </div>
+                                                    </t>
+                                                    <div class="o_zue_testing_dashboard_field_picker o_cell position-relative">
+                                                        <button type="button"
+                                                                class="btn btn-link btn-sm p-0"
+                                                                t-att-disabled="state.running"
+                                                                t-on-click="() => this.toggleTestFieldPicker(test)">
+                                                            + Agregar dato
+                                                        </button>
+                                                        <div t-if="isTestFieldPickerOpen(test.technical_name)"
+                                                             class="o_zue_testing_dashboard_field_picker_panel">
+                                                            <div class="o_zue_testing_dashboard_field_picker_header">
+                                                                <span class="o_zue_testing_dashboard_field_picker_title">Seleccione un campo</span>
+                                                                <button type="button"
+                                                                        class="btn btn-link btn-sm o_zue_testing_dashboard_field_picker_close"
+                                                                        t-att-disabled="state.running"
+                                                                        t-on-click="() => this.closeTestFieldPicker()"
+                                                                        title="Cerrar">
+                                                                    <i class="fa fa-times"/>
+                                                                </button>
+                                                            </div>
+                                                            <input class="form-control form-control-sm o_zue_testing_dashboard_field_picker_search"
+                                                                   type="text"
+                                                                   placeholder="Buscar..."
+                                                                   t-att-value="state.testFieldPicker.search"
+                                                                   t-on-input="(event) => this.onTestFieldPickerSearch(event)"/>
+                                                            <div class="o_zue_testing_dashboard_field_picker_list">
+                                                                <button t-foreach="getFilteredPickerFields(test)" t-as="pickerField" t-key="pickerField.name"
+                                                                        type="button"
+                                                                        class="o_zue_testing_dashboard_field_picker_item"
+                                                                        t-on-click="() => this.addTestFieldRow(test, pickerField)">
+                                                                    <span class="o_zue_testing_dashboard_field_picker_item_content">
+                                                                        <span class="o_zue_testing_dashboard_field_picker_item_label" t-esc="pickerField.label"/>
+                                                                        <span class="o_zue_testing_dashboard_field_picker_item_meta" t-esc="getTestFieldPickerMeta(pickerField)"/>
+                                                                    </span>
+                                                                    <i class="fa fa-chevron-right o_zue_testing_dashboard_field_picker_item_chevron"/>
+                                                                </button>
+                                                                <div t-if="!getFilteredPickerFields(test).length" class="o_zue_testing_dashboard_field_picker_empty">
+                                                                    Sin campos disponibles.
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </li>
+                                        </ul>
+                                    </details>
+                                </t>
+                            </div>
+                        </div>
+                    </div>
+                    </div>
+            </aside>
+
+            <aside t-att-class="'o_zue_testing_dashboard_drawer o_zue_testing_dashboard_drawer_info' + (state.infoDrawerOpen ? ' is-open' : '')"
+                   aria-label="Notas y tipos de estados">
+                    <div class="o_zue_testing_dashboard_drawer_header">
+                        <h3 class="m-0">Informacion</h3>
+                        <button type="button"
+                                class="btn btn-link btn-sm p-0"
+                                title="Cerrar"
+                                t-on-click="() => this.closeInfoDrawer()">
+                            <i class="fa fa-times"/>
+                        </button>
+                    </div>
+                    <div class="o_zue_testing_dashboard_drawer_body">
+                        <div class="o_zue_testing_dashboard_panel mb-3">
+                            <div class="o_zue_testing_dashboard_panel_header">
+                                <h3>Notas</h3>
+                            </div>
+                            <ul class="mb-0">
+                                <li t-foreach="state.notes" t-as="note" t-key="note" t-esc="note"/>
+                            </ul>
+                        </div>
+                        <div class="o_zue_testing_dashboard_panel">
+                            <div class="o_zue_testing_dashboard_panel_header">
+                                <h3>Tipos de estados</h3>
+                            </div>
+                            <ul class="o_zue_testing_dashboard_status_types mb-0">
+                                <li t-foreach="state.statusLegends" t-as="legend" t-key="legend.status">
+                                    <span t-att-class="statusClass(legend.status)" class="me-1" t-esc="legend.label"/>
+                                    <t t-esc="legend.description"/>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+            </aside>
+
+            <div class="o_zue_testing_dashboard_fab_group">
+                <button type="button"
+                        t-att-class="'o_zue_testing_dashboard_drawer_fab o_zue_testing_dashboard_drawer_fab_info' + (state.infoDrawerOpen ? ' is-open' : '')"
+                        t-att-title="state.infoDrawerOpen ? 'Cerrar informacion' : 'Abrir notas y estados'"
+                        t-on-click="() => this.toggleInfoDrawer()">
+                    <i t-att-class="state.infoDrawerOpen ? 'fa fa-times' : 'fa fa-info'"/>
+                </button>
+                <button type="button"
+                        t-att-class="'o_zue_testing_dashboard_drawer_fab o_zue_testing_dashboard_drawer_fab_tests' + (state.testsDrawerOpen ? ' is-open' : '')"
+                        t-att-title="state.testsDrawerOpen ? 'Cerrar pruebas' : 'Abrir pruebas detectadas'"
+                        t-on-click="() => this.toggleTestsDrawer()">
+                    <i t-att-class="state.testsDrawerOpen ? 'fa fa-times' : 'fa fa-list'"/>
+                </button>
+            </div>
+            </div>
+        </div>
+    </t>
+</templates>

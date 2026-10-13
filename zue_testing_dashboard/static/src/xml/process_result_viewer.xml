@@ -1,0 +1,458 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <t t-name="zue_testing_dashboard.ProcessResultViewer">
+        <div class="o_zue_testing_dashboard_process_result">
+            <t t-if="isPeriodClosureResult(line)">
+                <t t-set="periodHeader" t-value="getPeriodClosureHeaderInfo(line)"/>
+                <ul class="nav nav-tabs o_zue_testing_dashboard_process_tabs mb-2">
+                    <li class="nav-item">
+                        <button type="button"
+                                t-att-class="'nav-link' + (getPeriodClosureResultTab(line) === 'header' ? ' active' : '')"
+                                t-on-click="() => this.setPeriodClosureResultTab(line, 'header')">
+                            Encabezado
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button type="button"
+                                t-att-class="'nav-link' + (getPeriodClosureResultTab(line) === 'execution' ? ' active' : '')"
+                                t-on-click="() => this.setPeriodClosureResultTab(line, 'execution')">
+                            Detalle (Ejecución)
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button type="button"
+                                t-att-class="'nav-link' + (getPeriodClosureResultTab(line) === 'warnings' ? ' active' : '')"
+                                t-on-click="() => this.setPeriodClosureResultTab(line, 'warnings')">
+                            Advertencias
+                        </button>
+                    </li>
+                    <li class="nav-item">
+                        <button type="button"
+                                t-att-class="'nav-link' + (getPeriodClosureResultTab(line) === 'accounting' ? ' active' : '') + (hasPeriodClosureAccounting(line) ? '' : ' text-muted')"
+                                t-on-click="() => this.setPeriodClosureResultTab(line, 'accounting')">
+                            Contabilización
+                        </button>
+                    </li>
+                </ul>
+                <t t-if="getPeriodClosureResultTab(line) === 'header'">
+                    <table class="table table-sm table-bordered mb-0">
+                        <tbody>
+                            <tr>
+                                <th>Periodo</th>
+                                <td>
+                                    <t t-esc="periodHeader.month_label || periodHeader.month || '-'"/>
+                                    /
+                                    <t t-esc="periodHeader.year || '-'"/>
+                                    <small class="text-muted ms-1" t-if="periodHeader.period" t-esc="'(' + periodHeader.period + ')'"/>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Compañía</th>
+                                <td t-esc="periodHeader.company || '-'"/>
+                            </tr>
+                            <tr>
+                                <th>Contrato evaluado</th>
+                                <td t-esc="periodHeader.contract || '-'"/>
+                            </tr>
+                            <tr>
+                                <th>Empleado</th>
+                                <td t-esc="periodHeader.employee || '-'"/>
+                            </tr>
+                            <tr>
+                                <th>Líneas de resultado</th>
+                                <td t-esc="periodHeader.line_count"/>
+                            </tr>
+                            <tr>
+                                <th>Tiempo de ejecución</th>
+                                <td t-esc="periodHeader.time_process || '-'"/>
+                            </tr>
+                            <tr>
+                                <th>Estado del proceso</th>
+                                <td>
+                                    <t t-esc="periodHeader.state_label || periodHeader.state || '-'"/>
+                                    <small class="text-muted ms-1" t-if="periodHeader.state" t-esc="'(' + periodHeader.state + ')'"/>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+                <t t-elif="getPeriodClosureResultTab(line) === 'execution'">
+                    <div class="o_zue_testing_dashboard_master_detail">
+                        <t t-if="isProvisionsResult(line)">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0 o_zue_testing_dashboard_selectable_table">
+                                    <thead>
+                                        <tr>
+                                            <th>Provisión</th>
+                                            <th class="text-end">Valor liquidado</th>
+                                            <th class="text-end">Pagos del mes</th>
+                                            <th class="text-end">Valor a pagar</th>
+                                            <th class="text-end">Valor provisión mes</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="getProvisionsRows(line)" t-as="provisionRow" t-key="provisionRow_index">
+                                            <tr t-att-class="getPeriodClosureSelectedRowIndex(line) === provisionRow_index ? 'table-active' : ''"
+                                                t-on-click="() => this.setPeriodClosureSelectedRowIndex(line, provisionRow_index)">
+                                                <td>
+                                                    <t t-esc="provisionRow.label || provisionRow.code || '-'"/>
+                                                    <small t-if="provisionRow.missing" class="text-muted ms-1">(sin detalle)</small>
+                                                </td>
+                                                <td class="text-end" t-esc="formatProcessResultMonetaryValue(provisionRow.amount)"/>
+                                                <td class="text-end" t-esc="formatProcessResultMonetaryValue(provisionRow.value_payments)"/>
+                                                <td class="text-end" t-esc="formatProcessResultMonetaryValue(provisionRow.current_payable_value)"/>
+                                                <td class="text-end" t-esc="formatProcessResultMonetaryValue(provisionRow.value_balance)"/>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="o_zue_testing_dashboard_detail_panel mt-2">
+                                <t t-set="selectedProvision" t-value="getSelectedProvisionsRow(line)"/>
+                                <t t-if="selectedProvision and selectedProvision.detail">
+                                    <div class="fw-bold mb-1">
+                                        Detalle:
+                                        <t t-esc="selectedProvision.label || selectedProvision.code || '-'"/>
+                                    </div>
+                                    <div class="o_zue_testing_dashboard_form_two_cols">
+                                        <div class="o_zue_testing_dashboard_field_stack">
+                                            <div t-foreach="getProvisionsDetailColumnFields(selectedProvision, 'column_left')"
+                                                 t-as="detailField"
+                                                 t-key="'prov_sel_l_' + detailField_index"
+                                                 class="o_zue_testing_dashboard_field_stack_row">
+                                                <span class="o_zue_testing_dashboard_field_stack_label" t-esc="detailField.label || '-'"/>
+                                                <span class="o_zue_testing_dashboard_field_stack_value" t-esc="formatSocialSecurityFieldValue(detailField)"/>
+                                            </div>
+                                        </div>
+                                        <div class="o_zue_testing_dashboard_field_stack">
+                                            <div t-foreach="getProvisionsDetailColumnFields(selectedProvision, 'column_right')"
+                                                 t-as="detailField"
+                                                 t-key="'prov_sel_r_' + detailField_index"
+                                                 class="o_zue_testing_dashboard_field_stack_row">
+                                                <span class="o_zue_testing_dashboard_field_stack_label" t-esc="detailField.label || '-'"/>
+                                                <span class="o_zue_testing_dashboard_field_stack_value" t-esc="formatSocialSecurityFieldValue(detailField)"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </t>
+                                <t t-elif="selectedProvision">
+                                    <div class="text-muted">Sin detalle generado para esta provisión.</div>
+                                </t>
+                                <t t-else="">
+                                    <div class="text-muted">Seleccione una fila para ver el detalle.</div>
+                                </t>
+                            </div>
+                        </t>
+                        <t t-else="">
+                            <div class="table-responsive">
+                                <table class="table table-sm table-bordered mb-0 o_zue_testing_dashboard_selectable_table">
+                                    <thead>
+                                        <tr>
+                                            <th>Empleado</th>
+                                            <th>Contrato</th>
+                                            <th class="text-end">Días liquidados</th>
+                                            <th class="text-end">Sueldo</th>
+                                            <th>Ausencia</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <t t-foreach="getSocialSecuritySegments(line)" t-as="segment" t-key="segment_index">
+                                            <tr t-att-class="getPeriodClosureSelectedRowIndex(line) === segment_index ? 'table-active' : ''"
+                                                t-on-click="() => this.setPeriodClosureSelectedRowIndex(line, segment_index)">
+                                                <td t-esc="segment.employee || segment.label || ('Tramo ' + (segment_index + 1))"/>
+                                                <td t-esc="segment.contract || '-'"/>
+                                                <td class="text-end" t-esc="segment.days_liquidated"/>
+                                                <td class="text-end" t-esc="formatProcessResultMonetaryValue(segment.salary)"/>
+                                                <td t-esc="segment.leave || '-'"/>
+                                            </tr>
+                                        </t>
+                                        <t t-if="!getSocialSecuritySegments(line).length">
+                                            <tr>
+                                                <td colspan="5" class="text-muted">Sin tramos de ejecución.</td>
+                                            </tr>
+                                        </t>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <div class="o_zue_testing_dashboard_detail_panel mt-2">
+                                <t t-set="selectedSegment" t-value="getSelectedSocialSecuritySegment(line)"/>
+                                <t t-if="selectedSegment">
+                                    <div class="fw-bold mb-1">
+                                        Detalle:
+                                        <t t-esc="selectedSegment.employee || selectedSegment.label || '-'"/>
+                                    </div>
+                                    <div class="o_zue_testing_dashboard_ss_sections">
+                                        <t t-foreach="socialSecuritySectionDefs" t-as="ssSection" t-key="ssSection.key">
+                                            <div class="o_zue_testing_dashboard_ss_section">
+                                                <div class="fw-bold mb-1" t-esc="ssSection.label"/>
+                                                <t t-set="ssFields" t-value="getSocialSecuritySegmentSectionFields(selectedSegment, ssSection.key)"/>
+                                                <t t-if="ssFields.length">
+                                                    <div class="o_zue_testing_dashboard_field_stack">
+                                                        <div t-foreach="ssFields"
+                                                             t-as="ssField"
+                                                             t-key="'ss_sel_' + ssSection.key + '_' + ssField_index"
+                                                             class="o_zue_testing_dashboard_field_stack_row">
+                                                            <span class="o_zue_testing_dashboard_field_stack_label" t-esc="ssField.label || '-'"/>
+                                                            <span class="o_zue_testing_dashboard_field_stack_value" t-esc="formatSocialSecurityFieldValue(ssField)"/>
+                                                        </div>
+                                                    </div>
+                                                </t>
+                                                <t t-else="">
+                                                    <div class="text-muted">Sin datos en este apartado.</div>
+                                                </t>
+                                            </div>
+                                        </t>
+                                    </div>
+                                </t>
+                                <t t-else="">
+                                    <div class="text-muted">Seleccione una fila para ver el detalle.</div>
+                                </t>
+                            </div>
+                        </t>
+                    </div>
+                </t>
+                <t t-elif="getPeriodClosureResultTab(line) === 'warnings'">
+                    <t t-if="isProvisionsResult(line)">
+                        <t t-if="getProvisionsWarnings(line).length">
+                            <table class="table table-sm table-bordered mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Empleado</th>
+                                        <th>Contrato</th>
+                                        <th>Descripción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="getProvisionsWarnings(line)" t-as="warning" t-key="warning_index">
+                                        <td t-esc="warning.employee || '-'"/>
+                                        <td t-esc="warning.contract || '-'"/>
+                                        <td t-esc="warning.description || '-'"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+                        <t t-else="">
+                            <div class="text-muted">Sin advertencias para el empleado en este periodo.</div>
+                        </t>
+                    </t>
+                    <t t-else="">
+                        <t t-if="getSocialSecurityWarnings(line).length">
+                            <table class="table table-sm table-bordered mb-0">
+                                <thead>
+                                    <tr>
+                                        <th>Empleado</th>
+                                        <th>Sucursal</th>
+                                        <th>Descripción</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr t-foreach="getSocialSecurityWarnings(line)" t-as="warning" t-key="warning_index">
+                                        <td t-esc="warning.employee || '-'"/>
+                                        <td t-esc="warning.branch || '-'"/>
+                                        <td t-esc="warning.description || '-'"/>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </t>
+                        <t t-else="">
+                            <div class="text-muted">Sin advertencias para el empleado en este periodo.</div>
+                        </t>
+                    </t>
+                </t>
+                <t t-else="">
+                    <t t-if="hasPeriodClosureAccounting(line)">
+                        <t t-set="periodAccounting" t-value="getPeriodClosureAccounting(line)"/>
+                        <table class="table table-sm table-bordered mb-3">
+                            <tbody>
+                                <tr>
+                                    <th>Asiento</th>
+                                    <td t-esc="periodAccounting.move_name || '-'"/>
+                                </tr>
+                                <tr>
+                                    <th>Referencia</th>
+                                    <td t-esc="periodAccounting.move_ref || '-'"/>
+                                </tr>
+                                <tr>
+                                    <th>Estado</th>
+                                    <td t-esc="periodAccounting.move_state || '-'"/>
+                                </tr>
+                                <tr>
+                                    <th>Fecha</th>
+                                    <td t-esc="periodAccounting.move_date || '-'"/>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <t t-foreach="getPeriodClosureAccountingProcesses(line)" t-as="accProcess" t-key="accProcess_index">
+                            <div class="mb-3">
+                                <div class="fw-bold mb-1">
+                                    <t t-esc="accProcess.label || accProcess.code || ('Proceso ' + (accProcess_index + 1))"/>
+                                    <small class="text-muted ms-1" t-if="accProcess.code" t-esc="'(' + accProcess.code + ')'"/>
+                                </div>
+                                <t t-if="accProcess.lines and accProcess.lines.length">
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <thead>
+                                            <tr>
+                                                <th>Descripción</th>
+                                                <th>Cuenta</th>
+                                                <th>Tercero</th>
+                                                <th class="text-end">Débito</th>
+                                                <th class="text-end">Crédito</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr t-foreach="accProcess.lines" t-as="moveLine" t-key="moveLine_index">
+                                                <td t-esc="moveLine.name || '-'"/>
+                                                <td t-esc="moveLine.account || '-'"/>
+                                                <td t-esc="moveLine.partner || '-'"/>
+                                                <td class="text-end" t-esc="formatProcessResultMonetaryValue(moveLine.debit)"/>
+                                                <td class="text-end" t-esc="formatProcessResultMonetaryValue(moveLine.credit)"/>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </t>
+                                <t t-else="">
+                                    <div class="text-muted">Sin líneas para este proceso.</div>
+                                </t>
+                            </div>
+                        </t>
+                    </t>
+                    <t t-else="">
+                        <div class="text-muted">
+                            Contabilización no generada. Marque "Generar contabilización" al ejecutar la prueba para ver el asiento y sus líneas.
+                        </div>
+                    </t>
+                </t>
+            </t>
+            <t t-else="">
+            <ul class="nav nav-tabs o_zue_testing_dashboard_process_tabs mb-2">
+                <li class="nav-item">
+                    <button type="button"
+                            t-att-class="'nav-link' + (getProcessResultTab(line) === 'worked_days' ? ' active' : '')"
+                            t-on-click="() => this.setProcessResultTab(line, 'worked_days')">
+                        Dias trabajados
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button"
+                            t-att-class="'nav-link' + (getProcessResultTab(line) === 'salary_lines' ? ' active' : '')"
+                            t-on-click="() => this.setProcessResultTab(line, 'salary_lines')">
+                        Calculo del salario
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button"
+                            t-att-class="'nav-link' + (getProcessResultTab(line) === 'not_applied' ? ' active' : '')"
+                            t-on-click="() => this.setProcessResultTab(line, 'not_applied')">
+                        Reglas no aplicadas
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button"
+                            t-att-class="'nav-link' + (getProcessResultTab(line) === 'info' ? ' active' : '')"
+                            t-on-click="() => this.setProcessResultTab(line, 'info')">
+                        Informacion
+                    </button>
+                </li>
+            </ul>
+            <div t-if="getProcessResultTab(line) === 'worked_days'" class="table-responsive">
+                <t t-if="getProcessWorkedDaysLines(line).length">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead>
+                            <tr>
+                                <th>Codigo</th>
+                                <th>Descripcion</th>
+                                <th class="text-end">Dias</th>
+                                <th class="text-end">Horas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="getProcessWorkedDaysLines(line)" t-as="dayLine" t-key="dayLine_index">
+                                <td t-esc="dayLine.code || '-'"/>
+                                <td t-esc="dayLine.name || '-'"/>
+                                <td class="text-end" t-esc="formatProcessResultValue(dayLine.number_of_days)"/>
+                                <td class="text-end" t-esc="formatProcessResultValue(dayLine.number_of_hours)"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+                <t t-else="">
+                    <div class="text-muted">Sin dias trabajados en la simulacion.</div>
+                </t>
+            </div>
+            <div t-if="getProcessResultTab(line) === 'salary_lines'" class="table-responsive">
+                <t t-if="getProcessCalculatedLines(line).length">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead>
+                            <tr>
+                                <th>Codigo</th>
+                                <th>Concepto</th>
+                                <th>Categoria</th>
+                                <th class="text-end">Cantidad</th>
+                                <th class="text-end">Importe</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="getProcessCalculatedLines(line)" t-as="calcLine" t-key="calcLine_index">
+                                <td t-esc="calcLine.code || '-'"/>
+                                <td t-esc="calcLine.name || '-'"/>
+                                <td t-esc="calcLine.category || '-'"/>
+                                <td class="text-end" t-esc="formatProcessResultValue(calcLine.quantity)"/>
+                                <td class="text-end" t-esc="formatProcessResultMonetaryValue(calcLine.amount)"/>
+                                <td class="text-end" t-esc="formatProcessResultMonetaryValue(calcLine.total)"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+                <t t-else="">
+                    <div class="text-muted">Sin conceptos calculados.</div>
+                </t>
+            </div>
+            <div t-if="getProcessResultTab(line) === 'not_applied'" class="table-responsive">
+                <t t-if="getProcessNotAppliedLines(line).length">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead>
+                            <tr>
+                                <th>Codigo</th>
+                                <th>Concepto</th>
+                                <th>Categoria</th>
+                                <th class="text-end">Cantidad</th>
+                                <th class="text-end">Importe</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="getProcessNotAppliedLines(line)" t-as="notLine" t-key="notLine_index">
+                                <td t-esc="notLine.code || '-'"/>
+                                <td t-esc="notLine.name || '-'"/>
+                                <td t-esc="notLine.category || '-'"/>
+                                <td class="text-end" t-esc="formatProcessResultValue(notLine.quantity)"/>
+                                <td class="text-end" t-esc="formatProcessResultMonetaryValue(notLine.amount)"/>
+                                <td class="text-end" t-esc="formatProcessResultMonetaryValue(notLine.total)"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+                <t t-else="">
+                    <div class="text-muted">Sin reglas no aplicadas.</div>
+                </t>
+            </div>
+            <div t-if="getProcessResultTab(line) === 'info'">
+                <t t-if="getProcessObtainedInfo(line).length">
+                    <table class="table table-sm table-bordered mb-0">
+                        <tbody>
+                            <tr t-foreach="getProcessObtainedInfo(line)" t-as="infoLine" t-key="infoLine_index">
+                                <th t-esc="infoLine.label || '-'"/>
+                                <td t-esc="formatProcessInfoValue(infoLine)"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+                <t t-else="">
+                    <div class="text-muted">Sin informacion adicional.</div>
+                </t>
+            </div>
+            </t>
+        </div>
+    </t>
+</templates>
