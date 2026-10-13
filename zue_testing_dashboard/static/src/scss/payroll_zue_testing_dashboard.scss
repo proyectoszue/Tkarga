@@ -1,0 +1,79 @@
+/* Payroll: estilos de formularios y resultados de nómina (SS/provisiones/novedades). */
+
+.o_zue_testing_dashboard_form_two_cols {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    min-width: 420px;
+}
+
+.o_zue_testing_dashboard_form_two_cols > .o_zue_testing_dashboard_field_stack {
+    flex: 1 1 220px;
+    min-width: 200px;
+}
+
+.o_zue_testing_dashboard_ss_sections {
+    display: grid;
+    gap: 12px;
+    grid-template-columns: repeat(2, minmax(220px, 1fr));
+}
+
+.o_zue_testing_dashboard_ss_section {
+    min-width: 0;
+}
+
+.o_zue_testing_dashboard_selectable_table tbody tr {
+    cursor: pointer;
+}
+
+.o_zue_testing_dashboard_detail_panel {
+    background: #fff;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 4px;
+    padding: 8px;
+}
+
+.o_zue_testing_dashboard_field_stack {
+    background: #fff;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.o_zue_testing_dashboard_field_stack_row {
+    align-items: flex-start;
+    border-bottom: 1px solid var(--border-color, #dee2e6);
+    display: flex;
+    gap: 12px;
+    justify-content: space-between;
+    padding: 4px 8px;
+}
+
+.o_zue_testing_dashboard_field_stack_row:last-child {
+    border-bottom: 0;
+}
+
+.o_zue_testing_dashboard_field_stack_label {
+    color: #495057;
+    flex: 0 1 48%;
+    font-weight: 600;
+}
+
+.o_zue_testing_dashboard_field_stack_value {
+    flex: 1 1 52%;
+    text-align: right;
+    word-break: break-word;
+}
+
+
+.o_zue_testing_dashboard_novelty_row {
+    background: #f8f9fa;
+    border: 1px solid var(--border-color, #dee2e6);
+    border-radius: 4px;
+    padding: 0.5rem 0.75rem;
+}
+
+.o_zue_testing_dashboard_novelty_row .o_zue_testing_dashboard_test_inputs {
+    margin-bottom: 0;
+}
+

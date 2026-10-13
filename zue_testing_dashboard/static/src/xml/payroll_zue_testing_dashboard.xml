@@ -1,0 +1,1086 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Payroll: VersionMany2One, campos SharedConfig, ProcessTestInputs. -->
+<templates>
+<t t-name="zue_testing_dashboard.VersionMany2One" owl="1">
+        <div class="o_input_dropdown o_field_many2one_selection w-100"
+             t-att-class="{ 'pe-none opacity-50': props.disabled }">
+            <AutoComplete value="props.displayName || ''"
+                          placeholder="props.placeholder"
+                          autoSelect="true"
+                          sources="sources"
+                          onChange.bind="onChange"
+                          class="'o_input'"/>
+            <span class="o_dropdown_button"/>
+        </div>
+    </t>
+
+    <!-- Payroll: campos de config compartida (contrato, fechas, año/mes). -->
+    <t t-name="zue_testing_dashboard.SharedConfigFields.payroll"
+       t-inherit="zue_testing_dashboard.SharedConfigFields"
+       t-inherit-mode="extension"
+       owl="1">
+        <xpath expr="//div[hasclass('o_zue_testing_dashboard_shared_config_fields')]" position="inside">
+                                        <div class="o_cell o_wrap_label">
+                                            <label class="o_form_label">Contrato</label>
+                                        </div>
+                                        <div class="o_cell o_wrap_input">
+                                            <div class="o_field_widget o_field_many2one">
+                                                <ZueDashboardVersionMany2One
+                                                    value="groupSharedConfig.versionId"
+                                                    displayName="groupSharedConfig.versionLabel"
+                                                    placeholder="'Empleado | Contrato | Tipo'"
+                                                    disabled="state.running"
+                                                    update="(versionId, versionLabel) => this.setGroupSharedVersion(versionId, versionLabel)"/>
+                                            </div>
+                                        </div>
+                                        <t t-if="isPeriodClosureSharedConfig">
+                                            <div class="o_cell o_wrap_label">
+                                                <label class="o_form_label">Año</label>
+                                            </div>
+                                            <div class="o_cell o_wrap_input">
+                                                <input class="o_input w-100"
+                                                       type="number"
+                                                       min="2000"
+                                                       max="2100"
+                                                       t-att-value="groupSharedConfig.year"
+                                                       t-att-disabled="state.running"
+                                                       t-on-change="(event) => this.setGroupSharedValue('year', event.target.value)"/>
+                                            </div>
+                                            <div class="o_cell o_wrap_label">
+                                                <label class="o_form_label">Mes</label>
+                                            </div>
+                                            <div class="o_cell o_wrap_input">
+                                                <SelectMenu choices="socialSecurityMonthChoices"
+                                                            value="groupSharedConfig.month"
+                                                            placeholder="'Mes'"
+                                                            disabled="state.running"
+                                                            onSelect="(value) => this.setGroupSharedValue('month', value)"/>
+                                            </div>
+                                        </t>
+                                        <t t-else="">
+                                            <div class="o_cell o_wrap_label">
+                                                <label class="o_form_label">Fecha desde</label>
+                                            </div>
+                                            <div class="o_cell o_wrap_input">
+                                                <div class="o_field_widget o_field_date">
+                                                    <DateTimeInput type="'date'"
+                                                                   value="getGroupSharedDateValue('dateStart')"
+                                                                   disabled="state.running"
+                                                                   onChange="(dateValue) => this.setGroupSharedDate('dateStart', dateValue)"/>
+                                                </div>
+                                            </div>
+                                            <div class="o_cell o_wrap_label">
+                                                <label class="o_form_label">Fecha hasta</label>
+                                            </div>
+                                            <div class="o_cell o_wrap_input">
+                                                <div class="o_field_widget o_field_date">
+                                                    <DateTimeInput type="'date'"
+                                                                   value="getGroupSharedDateValue('dateEnd')"
+                                                                   disabled="state.running"
+                                                                   onChange="(dateValue) => this.setGroupSharedDate('dateEnd', dateValue)"/>
+                                                </div>
+                                            </div>
+                                        </t>
+        </xpath>
+    </t>
+
+    <!-- Payroll: formularios por prueba de liquidación / cierres / novedades. -->
+    <t t-name="zue_testing_dashboard.ProcessTestInputs" owl="1">
+        <div class="o_zue_testing_dashboard_process_test_inputs_root">
+<div t-if="test.test_type === 'process'" class="o_zue_testing_dashboard_test_inputs o_inner_group mt-2 ms-4">
+                                                    <div class="o_cell o_wrap_label">
+                                                        <label class="o_form_label">Contrato</label>
+                                                    </div>
+                                                    <div class="o_cell o_wrap_input">
+                                                        <div class="o_field_widget o_field_many2one">
+                                                            <ZueDashboardVersionMany2One
+                                                                value="getProcessTestInputState(test.technical_name).versionId"
+                                                                displayName="getProcessTestInputState(test.technical_name).versionLabel"
+                                                                placeholder="'Empleado | Contrato | Tipo'"
+                                                                disabled="state.running"
+                                                                update="(versionId, versionLabel) => this.setProcessVersionSelection(test.technical_name, versionId, versionLabel)"/>
+                                                        </div>
+                                                    </div>
+                                                    <t t-if="isPeriodClosureProcess(test)">
+                                                        <div class="o_cell o_wrap_label">
+                                                            <label class="o_form_label">Año</label>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_input">
+                                                            <input class="o_input w-100"
+                                                                   type="number"
+                                                                   min="2000"
+                                                                   max="2100"
+                                                                   t-att-value="getProcessTestInputState(test.technical_name).year"
+                                                                   t-att-disabled="state.running"
+                                                                   t-on-change="(event) => this.setProcessTestInputValue(test.technical_name, 'year', event.target.value)"/>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_label">
+                                                            <label class="o_form_label">Mes</label>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_input">
+                                                            <SelectMenu choices="socialSecurityMonthChoices"
+                                                                        value="getProcessTestInputState(test.technical_name).month"
+                                                                        placeholder="'Mes'"
+                                                                        disabled="state.running"
+                                                                        onSelect="(value) => this.setProcessTestInputValue(test.technical_name, 'month', value)"/>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_label">
+                                                            <label class="o_form_label">Generar contabilización</label>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_input">
+                                                            <div class="form-check form-switch">
+                                                                <input type="checkbox"
+                                                                       class="form-check-input"
+                                                                       t-att-checked="getProcessTestInputState(test.technical_name).generateAccounting"
+                                                                       t-att-disabled="state.running"
+                                                                       t-on-change="(event) => this.setProcessTestInputValue(test.technical_name, 'generateAccounting', event.target.checked)"/>
+                                                            </div>
+                                                        </div>
+                                                    </t>
+                                                    <t t-if="!isPeriodClosureProcess(test)">
+                                                    <div class="o_cell o_wrap_label">
+                                                        <label class="o_form_label">Fecha desde</label>
+                                                    </div>
+                                                    <div class="o_cell o_wrap_input">
+                                                        <div class="o_field_widget o_field_date">
+                                                            <DateTimeInput type="'date'"
+                                                                           value="getProcessDateValue(test.technical_name, 'dateStart')"
+                                                                           disabled="state.running"
+                                                                           onChange="(dateValue) => this.onProcessDateChange(test.technical_name, 'dateStart', dateValue)"/>
+                                                        </div>
+                                                    </div>
+                                                    <div class="o_cell o_wrap_label">
+                                                        <label class="o_form_label">Fecha hasta</label>
+                                                    </div>
+                                                    <div class="o_cell o_wrap_input">
+                                                        <div class="o_field_widget o_field_date">
+                                                            <DateTimeInput type="'date'"
+                                                                           value="getProcessDateValue(test.technical_name, 'dateEnd')"
+                                                                           disabled="state.running"
+                                                                           onChange="(dateValue) => this.onProcessDateChange(test.technical_name, 'dateEnd', dateValue)"/>
+                                                        </div>
+                                                    </div>
+                                                    </t>
+                                                    <t t-if="isContractLiquidationProcess(test)">
+                                                        <div class="o_cell o_wrap_label">
+                                                            <label class="o_form_label">Fecha de liquidación</label>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_input">
+                                                            <div class="o_field_widget o_field_date">
+                                                                <DateTimeInput type="'date'"
+                                                                               value="getProcessDateValue(test.technical_name, 'dateLiquidacion')"
+                                                                               disabled="state.running"
+                                                                               onChange="(dateValue) => this.setProcessTestInputValue(test.technical_name, 'dateLiquidacion', this.serializeDateValue(dateValue, 'date'))"/>
+                                                            </div>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_label">
+                                                            <label class="o_form_label">Fecha causación prima</label>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_input">
+                                                            <div class="o_field_widget o_field_date">
+                                                                <DateTimeInput type="'date'"
+                                                                               value="getProcessDateValue(test.technical_name, 'datePrima')"
+                                                                               disabled="true"/>
+                                                            </div>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_label">
+                                                            <label class="o_form_label">Fecha causación cesantías</label>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_input">
+                                                            <div class="o_field_widget o_field_date">
+                                                                <DateTimeInput type="'date'"
+                                                                               value="getProcessDateValue(test.technical_name, 'dateCesantias')"
+                                                                               disabled="true"/>
+                                                            </div>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_label">
+                                                            <label class="o_form_label">Fecha causación vacaciones</label>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_input">
+                                                            <div class="o_field_widget o_field_date">
+                                                                <DateTimeInput type="'date'"
+                                                                               value="getProcessDateValue(test.technical_name, 'dateVacaciones')"
+                                                                               disabled="true"/>
+                                                            </div>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_label">
+                                                            <label class="o_form_label">Indemnización</label>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_input">
+                                                            <div class="form-check form-switch">
+                                                                <input type="checkbox"
+                                                                       class="form-check-input"
+                                                                       t-att-checked="getProcessTestInputState(test.technical_name).haveCompensation"
+                                                                       t-att-disabled="state.running"
+                                                                       t-on-change="(event) => this.setProcessTestInputValue(test.technical_name, 'haveCompensation', event.target.checked)"/>
+                                                            </div>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_label">
+                                                            <label class="o_form_label">Motivo de retiro</label>
+                                                        </div>
+                                                        <div class="o_cell o_wrap_input">
+                                                            <div class="o_field_widget o_field_many2one">
+                                                                <ZueDashboardRecordMany2One
+                                                                    modelName="'hr.departure.reason'"
+                                                                    dialogTitle="'Buscar: Motivo de retiro'"
+                                                                    value="getProcessTestInputState(test.technical_name).reasonRetiroId"
+                                                                    displayName="getProcessTestInputState(test.technical_name).reasonRetiroLabel"
+                                                                    placeholder="'Motivo de retiro (opcional)'"
+                                                                    disabled="state.running"
+                                                                    update="(reasonId, reasonLabel) => this.setProcessReasonRetiroSelection(test.technical_name, reasonId, reasonLabel)"/>
+                                                            </div>
+                                                        </div>
+                                                    </t>
+                                                    <div t-if="isIndependentPayrollProcess(test)" class="o_cell o_zue_testing_dashboard_novelties mt-2">
+                                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                                            <label class="o_form_label mb-0">Novedades independientes</label>
+                                                            <button type="button"
+                                                                    class="btn btn-link btn-sm p-0"
+                                                                    t-att-disabled="state.running"
+                                                                    t-on-click="() => this.addProcessIndependentNovelty(test.technical_name)">
+                                                                + Agregar novedad independiente
+                                                            </button>
+                                                        </div>
+                                                        <t t-foreach="getProcessIndependentNovelties(test.technical_name)" t-as="novelty" t-key="novelty.uid">
+                                                            <div class="o_zue_testing_dashboard_novelty_row mb-2">
+                                                                <div class="o_inner_group o_zue_testing_dashboard_test_inputs">
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Regla salarial</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input d-flex align-items-center gap-2">
+                                                                        <div class="o_field_widget o_field_many2one flex-grow-1">
+                                                                            <ZueDashboardRecordMany2One
+                                                                                modelName="'hr.salary.rule'"
+                                                                                dialogTitle="'Buscar: Regla salarial'"
+                                                                                value="novelty.salaryRuleId"
+                                                                                displayName="novelty.salaryRuleLabel"
+                                                                                placeholder="'Regla salarial'"
+                                                                                disabled="state.running"
+                                                                                update="(ruleId, ruleLabel) => this.setProcessIndependentNoveltyValue(test.technical_name, novelty.uid, {salaryRuleId: ruleId || false, salaryRuleLabel: ruleLabel || ''})"/>
+                                                                        </div>
+                                                                        <button type="button"
+                                                                                class="btn btn-link btn-sm text-danger p-0"
+                                                                                t-att-disabled="state.running"
+                                                                                t-on-click="() => this.removeProcessIndependentNovelty(test.technical_name, novelty.uid)"
+                                                                                title="Eliminar">
+                                                                            <i class="fa fa-trash"/>
+                                                                        </button>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Fecha</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <div class="o_field_widget o_field_date">
+                                                                            <DateTimeInput type="'date'"
+                                                                                           value="getProcessIndependentNoveltyDateValue(test.technical_name, novelty.uid)"
+                                                                                           minDate="getProcessPeriodMinDate(test.technical_name)"
+                                                                                           maxDate="getProcessPeriodMaxDate(test.technical_name)"
+                                                                                           disabled="state.running || !hasProcessPeriod(test.technical_name)"
+                                                                                           onChange="(dateValue) => this.onProcessIndependentNoveltyDateChange(test.technical_name, novelty.uid, dateValue)"/>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Valor</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <input class="o_input o_field_monetary w-100"
+                                                                               type="text"
+                                                                               inputmode="decimal"
+                                                                               t-att-value="getMonetaryInputDisplay('indep_' + test.technical_name + '_' + novelty.uid, novelty.amount)"
+                                                                               t-att-disabled="state.running"
+                                                                               t-on-focus="() => this.onMonetaryInputFocus('indep_' + test.technical_name + '_' + novelty.uid)"
+                                                                               t-on-blur="(event) => this.onMonetaryInputBlur('indep_' + test.technical_name + '_' + novelty.uid, event, (value) => this.setProcessIndependentNoveltyValue(test.technical_name, novelty.uid, {amount: value}))"
+                                                                               t-on-change="(event) => this.setProcessIndependentNoveltyValue(test.technical_name, novelty.uid, {amount: this.parseMonetaryInputValue(event.target.value)})"/>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label">Descripción</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <input class="o_input w-100"
+                                                                               type="text"
+                                                                               t-att-value="novelty.description"
+                                                                               t-att-disabled="state.running"
+                                                                               t-on-change="(event) => this.setProcessIndependentNoveltyValue(test.technical_name, novelty.uid, {description: event.target.value})"/>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </t>
+                                                    </div>
+                                                    <div t-if="!isVacacionesProcess(test) and !isContractLiquidationProcess(test) and !isIndependentPayrollProcess(test) and !isPeriodClosureProcess(test)" class="o_cell o_zue_testing_dashboard_novelties">
+                                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                                            <label class="o_form_label mb-0">Novedades</label>
+                                                            <button type="button"
+                                                                    class="btn btn-link btn-sm p-0"
+                                                                    t-att-disabled="state.running"
+                                                                    t-on-click="() => this.addProcessNovelty(test.technical_name)">
+                                                                + Agregar novedad
+                                                            </button>
+                                                        </div>
+                                                        <t t-foreach="getProcessNovelties(test.technical_name)" t-as="novelty" t-key="novelty.uid">
+                                                            <div class="o_zue_testing_dashboard_novelty_row mb-2">
+                                                                <div class="o_inner_group o_zue_testing_dashboard_test_inputs">
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label">Tipo entrada</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input d-flex align-items-center gap-2">
+                                                                        <div class="o_field_widget o_field_many2one flex-grow-1">
+                                                                            <ZueDashboardRecordMany2One
+                                                                                modelName="'hr.work.entry.type'"
+                                                                                dialogTitle="'Buscar: Tipo de entrada'"
+                                                                                value="novelty.workEntryTypeId"
+                                                                                displayName="novelty.workEntryTypeLabel"
+                                                                                placeholder="'Tipo de entrada de trabajo'"
+                                                                                disabled="state.running"
+                                                                                update="(typeId, typeLabel) => this.setProcessNoveltyWorkEntryType(test.technical_name, novelty.uid, typeId, typeLabel)"/>
+                                                                        </div>
+                                                                        <button type="button"
+                                                                                class="btn btn-link btn-sm text-danger p-0"
+                                                                                t-att-disabled="state.running"
+                                                                                t-on-click="() => this.removeProcessNovelty(test.technical_name, novelty.uid)"
+                                                                                title="Eliminar novedad">
+                                                                            <i class="fa fa-trash"/>
+                                                                        </button>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Desde</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <div class="o_field_widget o_field_date o_required_modifier">
+                                                                            <DateTimeInput type="'date'"
+                                                                                           value="getProcessNoveltyDateValue(test.technical_name, novelty.uid, 'dateFrom')"
+                                                                                           minDate="getProcessNoveltyMinDate(test.technical_name, novelty.uid, 'dateFrom')"
+                                                                                           maxDate="getProcessNoveltyMaxDate(test.technical_name, novelty.uid, 'dateFrom')"
+                                                                                           disabled="state.running || !hasProcessPeriod(test.technical_name)"
+                                                                                           onChange="(dateValue) => this.onProcessNoveltyDateChange(test.technical_name, novelty.uid, 'dateFrom', dateValue)"/>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Hasta</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <div class="o_field_widget o_field_date o_required_modifier">
+                                                                            <DateTimeInput type="'date'"
+                                                                                           value="getProcessNoveltyDateValue(test.technical_name, novelty.uid, 'dateTo')"
+                                                                                           minDate="getProcessNoveltyMinDate(test.technical_name, novelty.uid, 'dateTo')"
+                                                                                           maxDate="getProcessNoveltyMaxDate(test.technical_name, novelty.uid, 'dateTo')"
+                                                                                           disabled="state.running || !hasProcessPeriod(test.technical_name)"
+                                                                                           onChange="(dateValue) => this.onProcessNoveltyDateChange(test.technical_name, novelty.uid, 'dateTo', dateValue)"/>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </t>
+                                                    </div>
+                                                    <div t-if="isVacacionesProcess(test)" class="o_cell o_zue_testing_dashboard_novelties mt-2">
+                                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                                            <label class="o_form_label mb-0">Vacaciones disfrutadas</label>
+                                                            <button type="button"
+                                                                    class="btn btn-link btn-sm p-0"
+                                                                    t-att-disabled="state.running"
+                                                                    t-on-click="() => this.addProcessEnjoyedVacation(test.technical_name)">
+                                                                + Agregar rango
+                                                            </button>
+                                                        </div>
+                                                        <t t-foreach="getProcessEnjoyedVacations(test.technical_name)" t-as="enjoyed" t-key="enjoyed.uid">
+                                                            <div class="o_zue_testing_dashboard_novelty_row mb-2">
+                                                                <div class="o_inner_group o_zue_testing_dashboard_test_inputs">
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Desde</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input d-flex align-items-center gap-2">
+                                                                        <div class="o_field_widget o_field_date o_required_modifier flex-grow-1">
+                                                                            <DateTimeInput type="'date'"
+                                                                                           value="getProcessEnjoyedVacationDateValue(test.technical_name, enjoyed.uid, 'dateFrom')"
+                                                                                           minDate="getProcessEnjoyedVacationMinDate(test.technical_name, enjoyed.uid, 'dateFrom')"
+                                                                                           maxDate="getProcessEnjoyedVacationMaxDate(test.technical_name, enjoyed.uid, 'dateFrom')"
+                                                                                           disabled="state.running || !hasProcessPeriod(test.technical_name)"
+                                                                                           onChange="(dateValue) => this.onProcessEnjoyedVacationDateChange(test.technical_name, enjoyed.uid, 'dateFrom', dateValue)"/>
+                                                                        </div>
+                                                                        <button type="button"
+                                                                                class="btn btn-link btn-sm text-danger p-0"
+                                                                                t-att-disabled="state.running"
+                                                                                t-on-click="() => this.removeProcessEnjoyedVacation(test.technical_name, enjoyed.uid)"
+                                                                                title="Eliminar rango">
+                                                                            <i class="fa fa-trash"/>
+                                                                        </button>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Hasta</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <div class="o_field_widget o_field_date o_required_modifier">
+                                                                            <DateTimeInput type="'date'"
+                                                                                           value="getProcessEnjoyedVacationDateValue(test.technical_name, enjoyed.uid, 'dateTo')"
+                                                                                           minDate="getProcessEnjoyedVacationMinDate(test.technical_name, enjoyed.uid, 'dateTo')"
+                                                                                           maxDate="getProcessEnjoyedVacationMaxDate(test.technical_name, enjoyed.uid, 'dateTo')"
+                                                                                           disabled="state.running || !hasProcessPeriod(test.technical_name)"
+                                                                                           onChange="(dateValue) => this.onProcessEnjoyedVacationDateChange(test.technical_name, enjoyed.uid, 'dateTo', dateValue)"/>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </t>
+                                                    </div>
+                                                    <div t-if="isVacacionesProcess(test)" class="o_cell o_zue_testing_dashboard_novelties mt-2">
+                                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                                            <label class="o_form_label mb-0">Vacaciones remuneradas</label>
+                                                            <button type="button"
+                                                                    class="btn btn-link btn-sm p-0"
+                                                                    t-att-disabled="state.running"
+                                                                    t-on-click="() => this.addProcessPaidVacation(test.technical_name)">
+                                                                + Agregar línea
+                                                            </button>
+                                                        </div>
+                                                        <t t-foreach="getProcessPaidVacations(test.technical_name)" t-as="paid" t-key="paid.uid">
+                                                            <div class="o_zue_testing_dashboard_novelty_row mb-2">
+                                                                <div class="o_inner_group o_zue_testing_dashboard_test_inputs">
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Días</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input d-flex align-items-center gap-2">
+                                                                        <input class="o_input flex-grow-1"
+                                                                               type="number"
+                                                                               min="1"
+                                                                               step="1"
+                                                                               t-att-value="paid.days"
+                                                                               t-att-disabled="state.running"
+                                                                               t-on-change="(event) => this.setProcessPaidVacationValue(test.technical_name, paid.uid, {days: event.target.value})"/>
+                                                                        <button type="button"
+                                                                                class="btn btn-link btn-sm text-danger p-0"
+                                                                                t-att-disabled="state.running"
+                                                                                t-on-click="() => this.removeProcessPaidVacation(test.technical_name, paid.uid)"
+                                                                                title="Eliminar línea">
+                                                                            <i class="fa fa-trash"/>
+                                                                        </button>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Fecha inicial</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <div class="o_field_widget o_field_date o_required_modifier">
+                                                                            <DateTimeInput type="'date'"
+                                                                                           value="getProcessPaidVacationDateValue(test.technical_name, paid.uid)"
+                                                                                           minDate="getProcessPeriodMinDate(test.technical_name)"
+                                                                                           maxDate="getProcessPeriodMaxDate(test.technical_name)"
+                                                                                           disabled="state.running || !hasProcessPeriod(test.technical_name)"
+                                                                                           onChange="(dateValue) => this.onProcessPaidVacationDateChange(test.technical_name, paid.uid, dateValue)"/>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </t>
+                                                    </div>
+                                                    <div t-if="isWageChangeProcess(test)" class="o_cell o_zue_testing_dashboard_novelties mt-2">
+                                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                                            <label class="o_form_label mb-0">Cambios de salario en el periodo</label>
+                                                            <button type="button"
+                                                                    class="btn btn-link btn-sm p-0"
+                                                                    t-att-disabled="state.running"
+                                                                    t-on-click="() => this.addProcessWageChange(test.technical_name)">
+                                                                + Agregar cambio de salario
+                                                            </button>
+                                                        </div>
+                                                        <t t-foreach="getProcessWageChanges(test.technical_name)" t-as="wageChange" t-key="wageChange.uid">
+                                                            <div class="o_zue_testing_dashboard_novelty_row mb-2">
+                                                                <div class="o_inner_group o_zue_testing_dashboard_test_inputs">
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Fecha</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input d-flex align-items-center gap-2">
+                                                                        <div class="o_field_widget o_field_date o_required_modifier flex-grow-1">
+                                                                            <DateTimeInput type="'date'"
+                                                                                           value="getProcessWageChangeDateValue(test.technical_name, wageChange.uid)"
+                                                                                           minDate="getProcessPeriodMinDate(test.technical_name)"
+                                                                                           maxDate="getProcessPeriodMaxDate(test.technical_name)"
+                                                                                           disabled="state.running || !hasProcessPeriod(test.technical_name)"
+                                                                                           onChange="(dateValue) => this.onProcessWageChangeDateChange(test.technical_name, wageChange.uid, dateValue)"/>
+                                                                        </div>
+                                                                        <button type="button"
+                                                                                class="btn btn-link btn-sm text-danger p-0"
+                                                                                t-att-disabled="state.running"
+                                                                                t-on-click="() => this.removeProcessWageChange(test.technical_name, wageChange.uid)"
+                                                                                title="Eliminar cambio de salario">
+                                                                            <i class="fa fa-trash"/>
+                                                                        </button>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label">Salario actual</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <span class="text-muted"
+                                                                              t-esc="formatMonetaryDisplayOrDash(wageChange.currentWage)"/>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Nuevo salario</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <input class="o_input o_field_monetary w-100"
+                                                                               type="text"
+                                                                               inputmode="decimal"
+                                                                               t-att-value="getMonetaryInputDisplay('wage_chg_' + test.technical_name + '_' + wageChange.uid, wageChange.wage)"
+                                                                               t-att-disabled="state.running"
+                                                                               t-on-focus="() => this.onMonetaryInputFocus('wage_chg_' + test.technical_name + '_' + wageChange.uid)"
+                                                                               t-on-blur="(event) => this.onMonetaryInputBlur('wage_chg_' + test.technical_name + '_' + wageChange.uid, event, (value) => this.setProcessWageChangeValue(test.technical_name, wageChange.uid, {wage: value}))"
+                                                                               t-on-change="(event) => this.setProcessWageChangeValue(test.technical_name, wageChange.uid, {wage: this.parseMonetaryInputValue(event.target.value)})"/>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </t>
+                                                    </div>
+                                                    <div t-if="isCesantiasProcess(test)" class="o_cell o_zue_testing_dashboard_novelties mt-2">
+                                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                                            <label class="o_form_label mb-0">Anticipo de cesantías</label>
+                                                        </div>
+                                                        <div class="o_inner_group o_zue_testing_dashboard_test_inputs">
+                                                            <div class="o_cell o_wrap_label">
+                                                                <label class="o_form_label">Marcar anticipo</label>
+                                                            </div>
+                                                            <div class="o_cell o_wrap_input">
+                                                                <input type="checkbox"
+                                                                       class="form-check-input"
+                                                                       t-att-checked="getProcessTestInputState(test.technical_name).isAdvanceSeverance"
+                                                                       t-att-disabled="state.running"
+                                                                       t-on-change="(event) => this.setProcessAdvanceSeverance(test.technical_name, event.target.checked)"/>
+                                                            </div>
+                                                            <t t-if="getProcessTestInputState(test.technical_name).isAdvanceSeverance">
+                                                                <div class="o_cell o_wrap_label">
+                                                                    <label class="o_form_label o_required_modifier">Valor del anticipo</label>
+                                                                </div>
+                                                                <div class="o_cell o_wrap_input">
+                                                                    <input class="o_input o_field_monetary w-100"
+                                                                           type="text"
+                                                                           inputmode="decimal"
+                                                                           t-att-value="getMonetaryInputDisplay('adv_sev_' + test.technical_name, getProcessTestInputState(test.technical_name).advanceSeveranceValue)"
+                                                                           t-att-disabled="state.running"
+                                                                           t-on-focus="() => this.onMonetaryInputFocus('adv_sev_' + test.technical_name)"
+                                                                           t-on-blur="(event) => this.onMonetaryInputBlur('adv_sev_' + test.technical_name, event, (value) => this.setProcessAdvanceSeveranceValue(test.technical_name, value))"
+                                                                           t-on-change="(event) => this.setProcessAdvanceSeveranceValue(test.technical_name, this.parseMonetaryInputValue(event.target.value))"/>
+                                                                </div>
+                                                            </t>
+                                                        </div>
+                                                    </div>
+                                                    <div t-if="isPeriodicPayrollProcess(test)" class="o_cell o_zue_testing_dashboard_novelties mt-2">
+                                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                                            <label class="o_form_label mb-0">Horas extra</label>
+                                                            <button type="button"
+                                                                    class="btn btn-link btn-sm p-0"
+                                                                    t-att-disabled="state.running"
+                                                                    t-on-click="() => this.addProcessOvertime(test.technical_name)">
+                                                                + Agregar hora extra
+                                                            </button>
+                                                        </div>
+                                                        <t t-foreach="getProcessOvertimes(test.technical_name)" t-as="overtime" t-key="overtime.uid">
+                                                            <div class="o_zue_testing_dashboard_novelty_row mb-2">
+                                                                <div class="o_inner_group o_zue_testing_dashboard_test_inputs">
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Tipo</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input d-flex align-items-center gap-2">
+                                                                        <div class="o_field_widget o_field_many2one flex-grow-1">
+                                                                            <ZueDashboardRecordMany2One
+                                                                                modelName="'hr.type.overtime'"
+                                                                                dialogTitle="'Buscar: Tipo de hora extra'"
+                                                                                value="overtime.typeOvertimeId"
+                                                                                displayName="overtime.typeOvertimeLabel"
+                                                                                placeholder="'Tipo de hora extra'"
+                                                                                disabled="state.running"
+                                                                                update="(typeId, typeLabel) => this.setProcessOvertimeType(test.technical_name, overtime.uid, typeId, typeLabel)"/>
+                                                                        </div>
+                                                                        <button type="button"
+                                                                                class="btn btn-link btn-sm text-danger p-0"
+                                                                                t-att-disabled="state.running"
+                                                                                t-on-click="() => this.removeProcessOvertime(test.technical_name, overtime.uid)"
+                                                                                title="Eliminar">
+                                                                            <i class="fa fa-trash"/>
+                                                                        </button>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Horas</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <input class="o_input w-100"
+                                                                               type="number"
+                                                                               step="0.01"
+                                                                               t-att-value="overtime.hours"
+                                                                               t-att-disabled="state.running"
+                                                                               t-on-change="(event) => this.setProcessOvertimeValue(test.technical_name, overtime.uid, 'hours', event.target.value)"/>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Desde</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <div class="o_field_widget o_field_date">
+                                                                            <DateTimeInput type="'date'"
+                                                                                           value="getProcessOvertimeDateValue(test.technical_name, overtime.uid, 'dateFrom')"
+                                                                                           minDate="getProcessPeriodMinDate(test.technical_name)"
+                                                                                           maxDate="getProcessRowRangeMaxDate(test.technical_name, overtime.dateTo)"
+                                                                                           disabled="state.running || !hasProcessPeriod(test.technical_name)"
+                                                                                           onChange="(dateValue) => this.onProcessOvertimeDateChange(test.technical_name, overtime.uid, 'dateFrom', dateValue)"/>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Hasta</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <div class="o_field_widget o_field_date">
+                                                                            <DateTimeInput type="'date'"
+                                                                                           value="getProcessOvertimeDateValue(test.technical_name, overtime.uid, 'dateTo')"
+                                                                                           minDate="getProcessRowRangeMinDate(test.technical_name, overtime.dateFrom)"
+                                                                                           maxDate="getProcessPeriodMaxDate(test.technical_name)"
+                                                                                           disabled="state.running || !hasProcessPeriod(test.technical_name)"
+                                                                                           onChange="(dateValue) => this.onProcessOvertimeDateChange(test.technical_name, overtime.uid, 'dateTo', dateValue)"/>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </t>
+                                                    </div>
+                                                    <div t-if="isPeriodicPayrollProcess(test)" class="o_cell o_zue_testing_dashboard_novelties mt-2">
+                                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                                            <label class="o_form_label mb-0">Préstamos</label>
+                                                            <button type="button"
+                                                                    class="btn btn-link btn-sm p-0"
+                                                                    t-att-disabled="state.running"
+                                                                    t-on-click="() => this.addProcessLoan(test.technical_name)">
+                                                                + Agregar prestamo
+                                                            </button>
+                                                        </div>
+                                                        <t t-foreach="getProcessLoans(test.technical_name)" t-as="loan" t-key="loan.uid">
+                                                            <div class="o_zue_testing_dashboard_novelty_row mb-2">
+                                                                <div class="o_inner_group o_zue_testing_dashboard_test_inputs">
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Regla salarial</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input d-flex align-items-center gap-2">
+                                                                        <div class="o_field_widget o_field_many2one flex-grow-1">
+                                                                            <ZueDashboardRecordMany2One
+                                                                                modelName="'hr.salary.rule'"
+                                                                                dialogTitle="'Buscar: Regla salarial'"
+                                                                                value="loan.salaryRuleId"
+                                                                                displayName="loan.salaryRuleLabel"
+                                                                                placeholder="'Regla del prestamo'"
+                                                                                disabled="state.running"
+                                                                                update="(ruleId, ruleLabel) => this.setProcessLoanValue(test.technical_name, loan.uid, {salaryRuleId: ruleId || false, salaryRuleLabel: ruleLabel || ''})"/>
+                                                                        </div>
+                                                                        <button type="button"
+                                                                                class="btn btn-link btn-sm text-danger p-0"
+                                                                                t-att-disabled="state.running"
+                                                                                t-on-click="() => this.removeProcessLoan(test.technical_name, loan.uid)"
+                                                                                title="Eliminar">
+                                                                            <i class="fa fa-trash"/>
+                                                                        </button>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Entidad</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <div class="o_field_widget o_field_many2one">
+                                                                            <ZueDashboardRecordMany2One
+                                                                                modelName="'hr.employee.entities'"
+                                                                                dialogTitle="'Buscar: Entidad'"
+                                                                                value="loan.entityId"
+                                                                                displayName="loan.entityLabel"
+                                                                                placeholder="'Entidad del prestamo'"
+                                                                                disabled="state.running"
+                                                                                update="(entityId, entityLabel) => this.setProcessLoanValue(test.technical_name, loan.uid, {entityId: entityId || false, entityLabel: entityLabel || ''})"/>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Aplicar cobro</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <SelectMenu choices="loanApplyChargeChoices"
+                                                                                    value="loan.applyCharge"
+                                                                                    placeholder="'Aplicar cobro'"
+                                                                                    disabled="state.running || !loanApplyChargeChoices.length"
+                                                                                    onSelect="(value) => this.setProcessLoanValue(test.technical_name, loan.uid, {applyCharge: value})"/>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Valor cuota</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <input class="o_input o_field_monetary w-100"
+                                                                               type="text"
+                                                                               inputmode="decimal"
+                                                                               t-att-value="getMonetaryInputDisplay('loan_' + test.technical_name + '_' + loan.uid, loan.amount)"
+                                                                               t-att-disabled="state.running"
+                                                                               t-on-focus="() => this.onMonetaryInputFocus('loan_' + test.technical_name + '_' + loan.uid)"
+                                                                               t-on-blur="(event) => this.onMonetaryInputBlur('loan_' + test.technical_name + '_' + loan.uid, event, (value) => this.setProcessLoanValue(test.technical_name, loan.uid, {amount: value}))"
+                                                                               t-on-change="(event) => this.setProcessLoanValue(test.technical_name, loan.uid, {amount: this.parseMonetaryInputValue(event.target.value)})"/>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </t>
+                                                    </div>
+                                                    <div t-if="isPeriodicPayrollProcess(test)" class="o_cell o_zue_testing_dashboard_novelties mt-2">
+                                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                                            <label class="o_form_label mb-0">Conceptos diferentes</label>
+                                                            <button type="button"
+                                                                    class="btn btn-link btn-sm p-0"
+                                                                    t-att-disabled="state.running"
+                                                                    t-on-click="() => this.addProcessDifferentConcept(test.technical_name)">
+                                                                + Agregar concepto
+                                                            </button>
+                                                        </div>
+                                                        <t t-foreach="getProcessDifferentConcepts(test.technical_name)" t-as="concept" t-key="concept.uid">
+                                                            <div class="o_zue_testing_dashboard_novelty_row mb-2">
+                                                                <div class="o_inner_group o_zue_testing_dashboard_test_inputs">
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Regla salarial</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input d-flex align-items-center gap-2">
+                                                                        <div class="o_field_widget o_field_many2one flex-grow-1">
+                                                                            <ZueDashboardRecordMany2One
+                                                                                modelName="'hr.salary.rule'"
+                                                                                dialogTitle="'Buscar: Regla salarial'"
+                                                                                value="concept.salaryRuleId"
+                                                                                displayName="concept.salaryRuleLabel"
+                                                                                placeholder="'Regla salarial'"
+                                                                                disabled="state.running"
+                                                                                update="(ruleId, ruleLabel) => this.setProcessDifferentConceptValue(test.technical_name, concept.uid, {salaryRuleId: ruleId || false, salaryRuleLabel: ruleLabel || ''})"/>
+                                                                        </div>
+                                                                        <button type="button"
+                                                                                class="btn btn-link btn-sm text-danger p-0"
+                                                                                t-att-disabled="state.running"
+                                                                                t-on-click="() => this.removeProcessDifferentConcept(test.technical_name, concept.uid)"
+                                                                                title="Eliminar">
+                                                                            <i class="fa fa-trash"/>
+                                                                        </button>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Fecha</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <div class="o_field_widget o_field_date">
+                                                                            <DateTimeInput type="'date'"
+                                                                                           value="getProcessDifferentConceptDateValue(test.technical_name, concept.uid)"
+                                                                                           minDate="getProcessPeriodMinDate(test.technical_name)"
+                                                                                           maxDate="getProcessPeriodMaxDate(test.technical_name)"
+                                                                                           disabled="state.running || !hasProcessPeriod(test.technical_name)"
+                                                                                           onChange="(dateValue) => this.onProcessDifferentConceptDateChange(test.technical_name, concept.uid, dateValue)"/>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Valor</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <input class="o_input o_field_monetary w-100"
+                                                                               type="text"
+                                                                               inputmode="decimal"
+                                                                               t-att-value="getMonetaryInputDisplay('diff_' + test.technical_name + '_' + concept.uid, concept.amount)"
+                                                                               t-att-disabled="state.running"
+                                                                               t-on-focus="() => this.onMonetaryInputFocus('diff_' + test.technical_name + '_' + concept.uid)"
+                                                                               t-on-blur="(event) => this.onMonetaryInputBlur('diff_' + test.technical_name + '_' + concept.uid, event, (value) => this.setProcessDifferentConceptValue(test.technical_name, concept.uid, {amount: value}))"
+                                                                               t-on-change="(event) => this.setProcessDifferentConceptValue(test.technical_name, concept.uid, {amount: this.parseMonetaryInputValue(event.target.value)})"/>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label">Descripcion</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <input class="o_input w-100"
+                                                                               type="text"
+                                                                               t-att-value="concept.description"
+                                                                               t-att-disabled="state.running"
+                                                                               t-on-change="(event) => this.setProcessDifferentConceptValue(test.technical_name, concept.uid, {description: event.target.value})"/>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label">Entidad</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <div class="o_field_widget o_field_many2one">
+                                                                            <ZueDashboardRecordMany2One
+                                                                                modelName="'hr.employee.entities'"
+                                                                                dialogTitle="'Buscar: Entidad'"
+                                                                                value="concept.partnerId"
+                                                                                displayName="concept.partnerLabel"
+                                                                                placeholder="'Opcional'"
+                                                                                disabled="state.running"
+                                                                                update="(partnerId, partnerLabel) => this.setProcessDifferentConceptValue(test.technical_name, concept.uid, {partnerId: partnerId || false, partnerLabel: partnerLabel || ''})"/>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </t>
+                                                    </div>
+                                                    <div t-if="isPeriodicPayrollProcess(test)" class="o_cell o_zue_testing_dashboard_novelties mt-2">
+                                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                                            <label class="o_form_label mb-0">Conceptos fijos del contrato</label>
+                                                            <button type="button"
+                                                                    class="btn btn-link btn-sm p-0"
+                                                                    t-att-disabled="state.running"
+                                                                    t-on-click="() => this.addProcessContractConcept(test.technical_name)">
+                                                                + Agregar concepto fijo
+                                                            </button>
+                                                        </div>
+                                                        <t t-foreach="getProcessContractConcepts(test.technical_name)" t-as="fixedConcept" t-key="fixedConcept.uid">
+                                                            <div class="o_zue_testing_dashboard_novelty_row mb-2">
+                                                                <div class="o_inner_group o_zue_testing_dashboard_test_inputs">
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Regla salarial</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input d-flex align-items-center gap-2">
+                                                                        <div class="o_field_widget o_field_many2one flex-grow-1">
+                                                                            <ZueDashboardRecordMany2One
+                                                                                modelName="'hr.salary.rule'"
+                                                                                dialogTitle="'Buscar: Regla salarial'"
+                                                                                value="fixedConcept.salaryRuleId"
+                                                                                displayName="fixedConcept.salaryRuleLabel"
+                                                                                placeholder="'Regla salarial'"
+                                                                                disabled="state.running"
+                                                                                update="(ruleId, ruleLabel) => this.setProcessContractConceptValue(test.technical_name, fixedConcept.uid, {salaryRuleId: ruleId || false, salaryRuleLabel: ruleLabel || ''})"/>
+                                                                        </div>
+                                                                        <button type="button"
+                                                                                class="btn btn-link btn-sm text-danger p-0"
+                                                                                t-att-disabled="state.running"
+                                                                                t-on-click="() => this.removeProcessContractConcept(test.technical_name, fixedConcept.uid)"
+                                                                                title="Eliminar">
+                                                                            <i class="fa fa-trash"/>
+                                                                        </button>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Valor</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <input class="o_input o_field_monetary w-100"
+                                                                               type="text"
+                                                                               inputmode="decimal"
+                                                                               t-att-value="getMonetaryInputDisplay('fixed_' + test.technical_name + '_' + fixedConcept.uid, fixedConcept.amount)"
+                                                                               t-att-disabled="state.running"
+                                                                               t-on-focus="() => this.onMonetaryInputFocus('fixed_' + test.technical_name + '_' + fixedConcept.uid)"
+                                                                               t-on-blur="(event) => this.onMonetaryInputBlur('fixed_' + test.technical_name + '_' + fixedConcept.uid, event, (value) => this.setProcessContractConceptValue(test.technical_name, fixedConcept.uid, {amount: value}))"
+                                                                               t-on-change="(event) => this.setProcessContractConceptValue(test.technical_name, fixedConcept.uid, {amount: this.parseMonetaryInputValue(event.target.value)})"/>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Periodo</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <SelectMenu choices="contractConceptPeriodChoices"
+                                                                                    value="fixedConcept.period"
+                                                                                    placeholder="'Periodo'"
+                                                                                    disabled="state.running || !contractConceptPeriodChoices.length"
+                                                                                    onSelect="(value) => this.setProcessContractConceptValue(test.technical_name, fixedConcept.uid, {period: value})"/>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Aplicar cobro</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <SelectMenu choices="contractConceptAplicarChoices"
+                                                                                    value="fixedConcept.aplicar"
+                                                                                    placeholder="'Aplicar cobro'"
+                                                                                    disabled="state.running || !contractConceptAplicarChoices.length"
+                                                                                    onSelect="(value) => this.setProcessContractConceptValue(test.technical_name, fixedConcept.uid, {aplicar: value})"/>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label">Fecha inicial</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <div class="o_field_widget o_field_date">
+                                                                            <DateTimeInput type="'date'"
+                                                                                           value="getProcessContractConceptDateValue(test.technical_name, fixedConcept.uid, 'dateStart')"
+                                                                                           maxDate="getProcessContractConceptMaxDate(test.technical_name, fixedConcept.uid, 'dateStart')"
+                                                                                           disabled="state.running"
+                                                                                           onChange="(dateValue) => this.onProcessContractConceptDateChange(test.technical_name, fixedConcept.uid, 'dateStart', dateValue)"/>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label">Fecha final</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <div class="o_field_widget o_field_date">
+                                                                            <DateTimeInput type="'date'"
+                                                                                           value="getProcessContractConceptDateValue(test.technical_name, fixedConcept.uid, 'dateEnd')"
+                                                                                           minDate="getProcessContractConceptMinDate(test.technical_name, fixedConcept.uid, 'dateEnd')"
+                                                                                           disabled="state.running"
+                                                                                           onChange="(dateValue) => this.onProcessContractConceptDateChange(test.technical_name, fixedConcept.uid, 'dateEnd', dateValue)"/>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label">Entidad</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <div class="o_field_widget o_field_many2one">
+                                                                            <ZueDashboardRecordMany2One
+                                                                                modelName="'hr.employee.entities'"
+                                                                                dialogTitle="'Buscar: Entidad'"
+                                                                                value="fixedConcept.partnerId"
+                                                                                displayName="fixedConcept.partnerLabel"
+                                                                                placeholder="'Opcional'"
+                                                                                disabled="state.running"
+                                                                                update="(partnerId, partnerLabel) => this.setProcessContractConceptValue(test.technical_name, fixedConcept.uid, {partnerId: partnerId || false, partnerLabel: partnerLabel || ''})"/>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </t>
+                                                    </div>
+                                                    <div t-if="isPeriodicPayrollProcess(test)" class="o_cell o_zue_testing_dashboard_novelties mt-2">
+                                                        <div class="d-flex align-items-center justify-content-between mb-2">
+                                                            <label class="o_form_label mb-0">Configuración RTF</label>
+                                                            <button type="button"
+                                                                    class="btn btn-link btn-sm p-0"
+                                                                    t-att-disabled="state.running"
+                                                                    t-on-click="() => this.addProcessRtfDeduction(test.technical_name)">
+                                                                + Agregar deducción
+                                                            </button>
+                                                        </div>
+                                                        <div class="o_inner_group o_zue_testing_dashboard_test_inputs">
+                                                            <div class="o_cell o_wrap_label">
+                                                                <label class="o_form_label">Procedimiento retención</label>
+                                                            </div>
+                                                            <div class="o_cell o_wrap_input">
+                                                                <SelectMenu choices="retentionProcedureChoices"
+                                                                            value="getProcessTestInputState(test.technical_name).retentionProcedure"
+                                                                            placeholder="'Por defecto del contrato'"
+                                                                            disabled="state.running || !retentionProcedureChoices.length"
+                                                                            onSelect="(value) => this.setProcessRetentionProcedure(test.technical_name, value)"/>
+                                                            </div>
+                                                            <t t-if="getProcessTestInputState(test.technical_name).retentionProcedure === 'fixed'">
+                                                                <div class="o_cell o_wrap_label">
+                                                                    <label class="o_form_label o_required_modifier">Valor fijo retención</label>
+                                                                </div>
+                                                                <div class="o_cell o_wrap_input">
+                                                                    <input class="o_input o_field_monetary w-100"
+                                                                           type="text"
+                                                                           inputmode="decimal"
+                                                                           t-att-value="getMonetaryInputDisplay('rtf_fixed_' + test.technical_name, getProcessTestInputState(test.technical_name).fixedValueRetentionProcedure)"
+                                                                           t-att-disabled="state.running"
+                                                                           t-on-focus="() => this.onMonetaryInputFocus('rtf_fixed_' + test.technical_name)"
+                                                                           t-on-blur="(event) => this.onMonetaryInputBlur('rtf_fixed_' + test.technical_name, event, (value) => this.setProcessFixedValueRetention(test.technical_name, value))"
+                                                                           t-on-change="(event) => this.setProcessFixedValueRetention(test.technical_name, this.parseMonetaryInputValue(event.target.value))"/>
+                                                                </div>
+                                                            </t>
+                                                        </div>
+                                                        <t t-foreach="getProcessRtfDeductions(test.technical_name)" t-as="rtfDeduction" t-key="rtfDeduction.uid">
+                                                            <div class="o_zue_testing_dashboard_novelty_row mb-2 mt-2">
+                                                                <div class="o_inner_group o_zue_testing_dashboard_test_inputs">
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Regla</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input d-flex align-items-center gap-2">
+                                                                        <div class="o_field_widget o_field_many2one flex-grow-1">
+                                                                            <ZueDashboardRecordMany2One
+                                                                                modelName="'hr.salary.rule'"
+                                                                                dialogTitle="'Buscar: Regla tributaria'"
+                                                                                domain="rtfSalaryRuleDomain"
+                                                                                value="rtfDeduction.salaryRuleId"
+                                                                                displayName="rtfDeduction.salaryRuleLabel"
+                                                                                placeholder="'Regla tributaria'"
+                                                                                disabled="state.running"
+                                                                                update="(ruleId, ruleLabel) => this.setProcessRtfDeductionValue(test.technical_name, rtfDeduction.uid, {salaryRuleId: ruleId || false, salaryRuleLabel: ruleLabel || ''})"/>
+                                                                        </div>
+                                                                        <button type="button"
+                                                                                class="btn btn-link btn-sm text-danger p-0"
+                                                                                t-att-disabled="state.running"
+                                                                                t-on-click="() => this.removeProcessRtfDeduction(test.technical_name, rtfDeduction.uid)"
+                                                                                title="Eliminar">
+                                                                            <i class="fa fa-trash"/>
+                                                                        </button>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Fecha Inicial</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <div class="o_field_widget o_field_date">
+                                                                            <DateTimeInput type="'date'"
+                                                                                           value="getProcessRtfDeductionDateValue(test.technical_name, rtfDeduction.uid, 'dateStart')"
+                                                                                           maxDate="getProcessRtfDeductionMaxDate(test.technical_name, rtfDeduction.uid, 'dateStart')"
+                                                                                           disabled="state.running"
+                                                                                           onChange="(dateValue) => this.onProcessRtfDeductionDateChange(test.technical_name, rtfDeduction.uid, 'dateStart', dateValue)"/>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Fecha Final</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <div class="o_field_widget o_field_date">
+                                                                            <DateTimeInput type="'date'"
+                                                                                           value="getProcessRtfDeductionDateValue(test.technical_name, rtfDeduction.uid, 'dateEnd')"
+                                                                                           minDate="getProcessRtfDeductionMinDate(test.technical_name, rtfDeduction.uid, 'dateEnd')"
+                                                                                           disabled="state.running"
+                                                                                           onChange="(dateValue) => this.onProcessRtfDeductionDateChange(test.technical_name, rtfDeduction.uid, 'dateEnd', dateValue)"/>
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_label">
+                                                                        <label class="o_form_label o_required_modifier">Valor Total</label>
+                                                                    </div>
+                                                                    <div class="o_cell o_wrap_input">
+                                                                        <input class="o_input o_field_monetary w-100"
+                                                                               type="text"
+                                                                               inputmode="decimal"
+                                                                               t-att-value="getMonetaryInputDisplay('rtf_ded_' + test.technical_name + '_' + rtfDeduction.uid, rtfDeduction.valueTotal)"
+                                                                               t-att-disabled="state.running"
+                                                                               t-on-focus="() => this.onMonetaryInputFocus('rtf_ded_' + test.technical_name + '_' + rtfDeduction.uid)"
+                                                                               t-on-blur="(event) => this.onMonetaryInputBlur('rtf_ded_' + test.technical_name + '_' + rtfDeduction.uid, event, (value) => this.setProcessRtfDeductionValue(test.technical_name, rtfDeduction.uid, {valueTotal: value}))"
+                                                                               t-on-change="(event) => this.setProcessRtfDeductionValue(test.technical_name, rtfDeduction.uid, {valueTotal: this.parseMonetaryInputValue(event.target.value)})"/>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </t>
+                                                    </div>
+                                                </div>
+<div t-if="isAbsencesParametricTest(test)" class="o_zue_testing_dashboard_test_inputs o_inner_group mt-2 ms-4">
+                                                    <div class="o_cell o_wrap_label">
+                                                        <label class="o_form_label">Empleado/Contrato</label>
+                                                    </div>
+                                                    <div class="o_cell o_wrap_input">
+                                                        <div class="o_field_widget o_field_many2one">
+                                                            <ZueDashboardVersionMany2One
+                                                                value="getProcessTestInputState(test.technical_name).versionId"
+                                                                displayName="getProcessTestInputState(test.technical_name).versionLabel"
+                                                                placeholder="'Empleado | Contrato | Tipo'"
+                                                                disabled="state.running"
+                                                                update="(versionId, versionLabel) => this.setProcessVersionSelection(test.technical_name, versionId, versionLabel)"/>
+                                                        </div>
+                                                    </div>
+                                                    <div class="o_cell o_wrap_label">
+                                                        <label class="o_form_label">Tipo de entrada</label>
+                                                    </div>
+                                                    <div class="o_cell o_wrap_input">
+                                                        <div class="o_field_widget o_field_many2one">
+                                                            <ZueDashboardRecordMany2One
+                                                                modelName="'hr.leave.type'"
+                                                                dialogTitle="'Buscar: Tipo de ausencia'"
+                                                                value="getProcessTestInputState(test.technical_name).leaveTypeId"
+                                                                displayName="getProcessTestInputState(test.technical_name).leaveTypeLabel"
+                                                                placeholder="'Tipo de ausencia (hr.leave.type)'"
+                                                                domain="absencesLeaveTypeDomain"
+                                                                disabled="state.running"
+                                                                update="(leaveTypeId, leaveTypeLabel) => this.setAbsencesLeaveTypeSelection(test.technical_name, leaveTypeId, leaveTypeLabel)"/>
+                                                        </div>
+                                                    </div>
+                                                    <div class="o_cell o_wrap_label">
+                                                        <label class="o_form_label">Fecha desde</label>
+                                                    </div>
+                                                    <div class="o_cell o_wrap_input">
+                                                        <div class="o_field_widget o_field_date">
+                                                            <DateTimeInput type="'date'"
+                                                                           value="getProcessDateValue(test.technical_name, 'dateStart')"
+                                                                           disabled="state.running"
+                                                                           onChange="(dateValue) => this.onProcessDateChange(test.technical_name, 'dateStart', dateValue)"/>
+                                                        </div>
+                                                    </div>
+                                                    <div class="o_cell o_wrap_label">
+                                                        <label class="o_form_label">Fecha hasta</label>
+                                                    </div>
+                                                    <div class="o_cell o_wrap_input">
+                                                        <div class="o_field_widget o_field_date">
+                                                            <DateTimeInput type="'date'"
+                                                                           value="getProcessDateValue(test.technical_name, 'dateEnd')"
+                                                                           disabled="state.running"
+                                                                           onChange="(dateValue) => this.onProcessDateChange(test.technical_name, 'dateEnd', dateValue)"/>
+                                                        </div>
+                                                    </div>
+                                                    <div class="o_cell o_wrap_label">
+                                                        <label class="o_form_label">Estado destino</label>
+                                                    </div>
+                                                    <div class="o_cell o_wrap_input">
+                                                        <SelectMenu choices="absencesDestinationStateChoices"
+                                                                    value="getProcessTestInputState(test.technical_name).destinationState"
+                                                                    placeholder="'Estado destino'"
+                                                                    disabled="state.running"
+                                                                    onSelect="(value) => this.setProcessTestInputValue(test.technical_name, 'destinationState', value)"/>
+                                                    </div>
+                                                </div>
+        </div>
+    </t>
+</templates>

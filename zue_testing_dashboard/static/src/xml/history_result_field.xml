@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates>
+    <t t-name="zue_testing_dashboard.HistoryResultField">
+        <div class="o_zue_testing_dashboard o_zue_testing_dashboard_result_field w-100">
+            <t t-set="historyLine" t-value="resultLine"/>
+            <ZueProcessResultViewer t-if="historyLine" line="historyLine"/>
+            <div t-else="" class="text-muted">Sin resultado de proceso almacenado.</div>
+        </div>
+    </t>
+</templates>
