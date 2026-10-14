@@ -221,7 +221,7 @@ class HrPayrollReportZueFilter(models.TransientModel):
                     COALESCE(COALESCE(g."name"->>'es_ES',g."name"->>'en_US'),'') as "Cargo",COALESCE(rb.name,'') as "Banco",COALESCE(bank.acc_number,'') as "Cuenta Bancaria",COALESCE(COALESCE(ajb."name"->>'es_ES',ajb."name"->>'en_US'),'') as "Cuenta Dispersora",
                     COALESCE(d.code_sena,'') as "Código SENA",COALESCE(rp.name,'') as "Ubicación Laboral",COALESCE(COALESCE(dt."name"->>'es_ES',dt."name"->>'en_US'),'') as "Departamento",
                     COALESCE(d.wage,0) as "Salario Base",'' as "Novedades",
-                    COALESCE(hr.short_name,COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'')) as "Regla Salarial",COALESCE(hr.short_name,COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'')) ||' '|| case when hc.code = 'SSOCIAL' then '' else COALESCE(COALESCE(rp_et.x_business_name,rp_et.name),'') end as "Reglas Salariales + Entidad",
+                    COALESCE(hr.short_name,COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'')) as "Regla Salarial",case when hc.code = 'INCAPACIDAD' then COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'') else COALESCE(hr.short_name,COALESCE(COALESCE(hr."name"->>'es_ES',hr."name"->>'en_US'),'')) ||' '|| case when hc.code = 'SSOCIAL' then '' else COALESCE(COALESCE(rp_et.x_business_name,rp_et.name),'') end end as "Reglas Salariales + Entidad",
                     COALESCE(COALESCE(hc."name"->>'es_ES',hc."name"->>'en_US'),'') as "Categoría",COALESCE(b.sequence,0) as "Secuencia",COALESCE(Sum(b.total),0) as "Monto"
             From hr_payslip as a 
             --Info Empleado

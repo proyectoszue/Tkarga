@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Core: viewer genérico (días / cálculo / no aplicadas / info). -->
+<templates>
+    <t t-name="zue_testing_dashboard.ProcessResultViewer" owl="1">
+        <div class="o_zue_testing_dashboard_process_result">
+            <t t-if="isPeriodClosureResult(line)">
+                <t t-call="zue_testing_dashboard.ProcessResultViewer.PeriodClosure"/>
+            </t>
+            <t t-else="">
+            <ul class="nav nav-tabs o_zue_testing_dashboard_process_tabs mb-2">
+                <li class="nav-item">
+                    <button type="button"
+                            t-att-class="'nav-link' + (getProcessResultTab(line) === 'worked_days' ? ' active' : '')"
+                            t-on-click="() => this.setProcessResultTab(line, 'worked_days')">
+                        Dias trabajados
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button"
+                            t-att-class="'nav-link' + (getProcessResultTab(line) === 'salary_lines' ? ' active' : '')"
+                            t-on-click="() => this.setProcessResultTab(line, 'salary_lines')">
+                        Calculo del salario
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button"
+                            t-att-class="'nav-link' + (getProcessResultTab(line) === 'not_applied' ? ' active' : '')"
+                            t-on-click="() => this.setProcessResultTab(line, 'not_applied')">
+                        Reglas no aplicadas
+                    </button>
+                </li>
+                <li class="nav-item">
+                    <button type="button"
+                            t-att-class="'nav-link' + (getProcessResultTab(line) === 'info' ? ' active' : '')"
+                            t-on-click="() => this.setProcessResultTab(line, 'info')">
+                        Informacion
+                    </button>
+                </li>
+            </ul>
+            <div t-if="getProcessResultTab(line) === 'worked_days'" class="table-responsive">
+                <t t-if="getProcessWorkedDaysLines(line).length">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead>
+                            <tr>
+                                <th>Codigo</th>
+                                <th>Descripcion</th>
+                                <th class="text-end">Dias</th>
+                                <th class="text-end">Horas</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="getProcessWorkedDaysLines(line)" t-as="dayLine" t-key="dayLine_index">
+                                <td t-esc="dayLine.code || '-'"/>
+                                <td t-esc="dayLine.name || '-'"/>
+                                <td class="text-end" t-esc="formatProcessResultValue(dayLine.number_of_days)"/>
+                                <td class="text-end" t-esc="formatProcessResultValue(dayLine.number_of_hours)"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+                <t t-else="">
+                    <div class="text-muted">Sin dias trabajados en la simulacion.</div>
+                </t>
+            </div>
+            <div t-if="getProcessResultTab(line) === 'salary_lines'" class="table-responsive">
+                <t t-if="getProcessCalculatedLines(line).length">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead>
+                            <tr>
+                                <th>Codigo</th>
+                                <th>Concepto</th>
+                                <th>Categoria</th>
+                                <th class="text-end">Cantidad</th>
+                                <th class="text-end">Importe</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="getProcessCalculatedLines(line)" t-as="calcLine" t-key="calcLine_index">
+                                <td t-esc="calcLine.code || '-'"/>
+                                <td t-esc="calcLine.name || '-'"/>
+                                <td t-esc="calcLine.category || '-'"/>
+                                <td class="text-end" t-esc="formatProcessResultValue(calcLine.quantity)"/>
+                                <td class="text-end" t-esc="formatProcessResultMonetaryValue(calcLine.amount)"/>
+                                <td class="text-end" t-esc="formatProcessResultMonetaryValue(calcLine.total)"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+                <t t-else="">
+                    <div class="text-muted">Sin conceptos calculados.</div>
+                </t>
+            </div>
+            <div t-if="getProcessResultTab(line) === 'not_applied'" class="table-responsive">
+                <t t-if="getProcessNotAppliedLines(line).length">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead>
+                            <tr>
+                                <th>Codigo</th>
+                                <th>Concepto</th>
+                                <th>Categoria</th>
+                                <th class="text-end">Cantidad</th>
+                                <th class="text-end">Importe</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="getProcessNotAppliedLines(line)" t-as="notLine" t-key="notLine_index">
+                                <td t-esc="notLine.code || '-'"/>
+                                <td t-esc="notLine.name || '-'"/>
+                                <td t-esc="notLine.category || '-'"/>
+                                <td class="text-end" t-esc="formatProcessResultValue(notLine.quantity)"/>
+                                <td class="text-end" t-esc="formatProcessResultMonetaryValue(notLine.amount)"/>
+                                <td class="text-end" t-esc="formatProcessResultMonetaryValue(notLine.total)"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+                <t t-else="">
+                    <div class="text-muted">Sin reglas no aplicadas.</div>
+                </t>
+            </div>
+            <div t-if="getProcessResultTab(line) === 'info'">
+                <t t-if="getProcessObtainedInfo(line).length">
+                    <table class="table table-sm table-bordered mb-0">
+                        <tbody>
+                            <tr t-foreach="getProcessObtainedInfo(line)" t-as="infoLine" t-key="infoLine_index">
+                                <th t-esc="infoLine.label || '-'"/>
+                                <td t-esc="formatProcessInfoValue(infoLine)"/>
+                            </tr>
+                        </tbody>
+                    </table>
+                </t>
+                <t t-else="">
+                    <div class="text-muted">Sin informacion adicional.</div>
+                </t>
+            </div>
+            </t>
+        </div>
+    </t>
+</templates>

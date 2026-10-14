@@ -11,8 +11,19 @@ class account_move_line(models.Model):
     required_partner = fields.Boolean(related='account_id.required_partner', string="Obliga tercero", help='Muestra si la cuenta contable exige identificar un tercero.')
     accounting_class = fields.Char(string='Clase', store=True, related='account_id.accounting_class')
     account_group_id = fields.Many2one(related='account_id.group_id', string='Grupo Cuenta', store=True)
-    analytic_account_id = fields.Many2one('account.analytic.account', string='Cuenta Analítica',
-                                          store=True,check_company=True, copy=True)
+    # analytic_account_id = fields.Many2one('account.analytic.account', string='Cuenta Analítica', store=True,check_company=True, copy=True)
+    analytic_account_id = fields.Many2one('account.analytic.account', string='Distribución Analítica',
+                                          compute='_compute_analytic_account_distribution', store=True, check_company=True)
+
+    # Cuenta analítica principal (mayor porcentaje) de la distribución analítica, para agrupar en vistas pivote
+    @api.depends('analytic_distribution')
+    def _compute_analytic_account_distribution(self):
+        for line in self:
+            account_id = False
+            if line.analytic_distribution:
+                main_key = max(line.analytic_distribution, key=lambda key: line.analytic_distribution[key])
+                account_id = int(main_key.split(',')[0])
+            line.analytic_account_id = account_id
 
     def _zue_extract_company_ids_from_domain(self, domain):
         company_ids = set()
