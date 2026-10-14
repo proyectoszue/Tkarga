@@ -146,7 +146,8 @@ class Hr_payslip(models.Model):
         if not initial_accrual_date or days_360_to_add <= 0:
             return initial_accrual_date
         days_360_to_add = int(days_360_to_add)
-        final_accrual_date = self._add_days_360(initial_accrual_date, days_360_to_add)
+        # El día inicial cuenta dentro del periodo
+        final_accrual_date = self._add_days_360(initial_accrual_date, days_360_to_add - 1)
         if self.dias360(initial_accrual_date, final_accrual_date) > 360:
             final_accrual_date = final_accrual_date - timedelta(days=(self.dias360(initial_accrual_date, final_accrual_date) - 360))
         return final_accrual_date
@@ -254,8 +255,6 @@ class Hr_payslip(models.Model):
                     leaves['BUSINESS' + leave.work_entry_type_id.code] = business_days - days_31_b
                     leaves['31HOLIDAYS' + leave.work_entry_type_id.code] = days_31_h
                     leaves['31BUSINESS' + leave.work_entry_type_id.code] = days_31_b
-                    # El día 31 hábil tomado fuera del periodo de la nómina causa un día menos
-                    leaves['31ACCRUAL' + leave.work_entry_type_id.code] = 1 if count_day_31 and days_31_b and end_date > self.date_to else 0
 
                 leaves_time.append(leaves)
                 leave_time_ids.append(leave.leave_id.id)
@@ -325,9 +324,7 @@ class Hr_payslip(models.Model):
                             days_vacations_31_business = leaves.get('31BUSINESSVACDISFRUTADAS',0)
                             days_vacations_holidays = leaves.get('HOLIDAYSVACDISFRUTADAS',0)
                             days_vacations_31_holidays = leaves.get('31HOLIDAYSVACDISFRUTADAS',0)
-                            days_31_accrual_adjust = leaves.get('31ACCRUALVACDISFRUTADAS',0)
                         else:
-                            days_31_accrual_adjust = 0
                             id_leave = leaves.get('IDLEAVE')
                             obj_leave = self.env['hr.leave'].search([('id', '=', id_leave)])
                             obj_leave_equals = self.env['hr.leave'].search([('state','=','validate'),('employee_id','=',employee.id),('id','!=',id_leave),('is_vacation','=',True),('request_date_from', '>=', obj_leave.request_date_from),('request_date_to', '<=', obj_leave.request_date_to)])
@@ -382,7 +379,7 @@ class Hr_payslip(models.Model):
                                  ('leave_type_id.unpaid_absences', '=', True)])])
                             days = ((days_vacations_business+days_vacations_31_business) * 360) / 15
                             final_accrual_date = self.computeFinalAccrualDate360(
-                                initial_accrual_date, int(days) + int(dias_ausencias) - days_31_accrual_adjust)
+                                initial_accrual_date, int(days) + int(dias_ausencias))
                         else:
                             obj_vacation = self.env['hr.vacation'].search([('employee_id', '=', employee.id)])
                             if obj_vacation:
@@ -408,7 +405,7 @@ class Hr_payslip(models.Model):
                                  ('leave_type_id.unpaid_absences', '=', True)])])
                             days = ((days_vacations_business+days_vacations_31_business) * 360) / 15
                             final_accrual_date = self.computeFinalAccrualDate360(
-                                initial_accrual_date, int(days) + int(dias_ausencias) - days_31_accrual_adjust)
+                                initial_accrual_date, int(days) + int(dias_ausencias))
 
                         # create/overwrite the rule in the temporary results
                         if amount != 0:
