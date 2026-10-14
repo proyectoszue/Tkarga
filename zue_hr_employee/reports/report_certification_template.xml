@@ -8,6 +8,8 @@
                     <t t-set="version_full" t-value="o.env['hr.version'].sudo().browse(o.id)"/>
                     <t t-set="employee_gender" t-value="version_full.sex or version_full.employee_id.sex or ''"/>
                     <t t-set="cp" t-value="m.get_hr_labor_certificate_template()"/>
+                    <t t-set="cert_end_date" t-value="version_full.retirement_date or o.contract_date_end"/>
+                    <t t-set="cert_end_date" t-value="False if o.contract_type == 'fijo' and cert_end_date and m.date_generation and cert_end_date &gt; m.date_generation else cert_end_date"/>
                     <t t-if="cp.type_header_footer == 'default'">
                         <t t-set="company" t-value="o.employee_id.company_id"/>
                         <div class="header">
@@ -95,7 +97,7 @@
                                     </b>
                                     <span t-if="employee_gender in ('female', 'femenino')">identificada</span><span t-else="">identificado</span> con cédula de ciudadanía número
                                     <span t-esc="str('{:20,.0f}'.format(int(o.employee_id.identification_id))).replace(',','.')"/>
-                                    <t t-if="version_full.retirement_date or o.contract_date_end">
+                                    <t t-if="cert_end_date">
                                         prestó sus servicios a la empresa en el
                                     </t>
                                     <t t-else="">
@@ -108,9 +110,9 @@
                                     </b>
                                     , entre el
                                         <span t-esc="o.get_date_text(o.contract_date_start)"/>
-                                        <t t-if="version_full.retirement_date or o.contract_date_end">
+                                        <t t-if="cert_end_date">
                                             y el
-                                            <span t-esc="o.get_date_text(version_full.retirement_date or o.contract_date_end)"/>
+                                            <span t-esc="o.get_date_text(cert_end_date)"/>
                                         </t>
                                     <t t-else="">
                                         y hasta la fecha
@@ -163,10 +165,10 @@
                                     </b>
                                     <span t-if="employee_gender in ('female', 'femenino')">identificada</span><span t-else="">identificado</span> con cédula de ciudadanía número
                                     <span t-esc="str('{:20,.0f}'.format(int(o.employee_id.identification_id))).replace(',','.')"/>,
-                                    <t t-if="version_full.retirement_date or o.contract_date_end">
+                                    <t t-if="cert_end_date">
                                         laboró en nuestra compañía desde el
                                         <span t-esc="o.get_date_text(o.contract_date_start)"/>
-                                        hasta el <span t-esc="o.get_date_text(version_full.retirement_date or o.contract_date_end)"/>,
+                                        hasta el <span t-esc="o.get_date_text(cert_end_date)"/>,
                                     </t>
                                     <t t-else="">
                                         labora en nuestra compañía desde el <span t-esc="o.get_date_text(o.contract_date_start)"/>,
@@ -175,7 +177,7 @@
                                     <b>
                                         <span t-esc="o.get_version_type()"/>,
                                     </b>
-                                    <t t-if="not (version_full.retirement_date or o.contract_date_end)">
+                                    <t t-if="not cert_end_date">
                                         hasta la fecha.
                                     </t>
                                     <t>

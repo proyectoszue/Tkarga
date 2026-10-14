@@ -494,6 +494,16 @@ class hr_employee(models.Model):
                     record.partner_encab_id.write({'x_type_thirdparty': ids_type_thirdparty})
         return res
 
+    # El estándar vuelve a escribir en la versión los valores con los que ya la creó; los one2many se duplicarían.
+    @api.model
+    def _create(self, data_list):
+        version_fields = self.env['hr.version']._fields
+        for data in data_list:
+            version_vals = data.get('inherited', {}).get('hr.version', {})
+            for field_name in [name for name in version_vals if version_fields[name].type == 'one2many']:
+                version_vals.pop(field_name)
+        return super()._create(data_list)
+
     def write(self, vals):
         pid = vals.get('partner_encab_id')
         if pid:
