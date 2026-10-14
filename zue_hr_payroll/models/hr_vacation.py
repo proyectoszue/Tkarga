@@ -219,7 +219,10 @@ class Hr_payslip(models.Model):
                     lst_days = [5, 6] if employee.sabado == False else [6]
                     #Obtener fechas
                     initial_date = leave.leave_id.request_date_from if leave.leave_id.request_date_from >= self.date_from else self.date_from
-                    end_date = leave.leave_id.request_date_to if leave.leave_id.request_date_to <= self.date_to else self.date_to
+                    # Si la nómina termina el 30 de un mes de 31 días, el día 31 se cuenta (no se paga, pero causa)
+                    count_day_31 = self.company_id.z_vacation_day_31_in_payroll and (self.date_to + timedelta(days=1)).day == 31
+                    payslip_end_date = self.date_to + timedelta(days=1) if count_day_31 else self.date_to
+                    end_date = leave.leave_id.request_date_to if leave.leave_id.request_date_to <= payslip_end_date else payslip_end_date
                     #Dias
                     vac_days_in_payslip = 0
                     holidays = 0

@@ -23,6 +23,7 @@ class ResCompany(models.Model):
     z_validated_certificate = fields.Many2one('documents.tag', string='Certificado validado')
     # Vacaciones con la base del periodo causado en liquidación de contrato
     z_holidays_based_period_caused = fields.Boolean(string='Vacaciones con la base del periodo causado en liquidación de contrato')
+    z_vacation_day_31_in_payroll = fields.Boolean(string='Contar día 31 en el histórico de vacaciones liquidadas en nómina')
 
 class ResConfigSettings(models.TransientModel):
     _inherit = 'res.config.settings'
@@ -40,6 +41,7 @@ class ResConfigSettings(models.TransientModel):
     z_validated_certificate = fields.Many2one(related='company_id.z_validated_certificate',string='Certificado validado', readonly=False)
     # Vacaciones con la base del periodo causado en liquidación de contrato
     z_holidays_based_period_caused = fields.Boolean(related='company_id.z_holidays_based_period_caused',string='Vacaciones con la base del periodo causado en liquidación de contrato',readonly=False)
+    z_vacation_day_31_in_payroll = fields.Boolean(related='company_id.z_vacation_day_31_in_payroll', string='Contar el día 31 en el histórico de vacaciones liquidadas en nómina', readonly=False)
     #Nómina electronica
     payroll_electronic_operator = fields.Selection(related='company_id.payroll_electronic_operator',string='Operador NE', readonly=False)
     payroll_electronic_username_ws = fields.Char(related='company_id.payroll_electronic_username_ws',string='Usuario WS', readonly=False)
