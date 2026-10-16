@@ -91,9 +91,12 @@
                     </group>
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/notebook[1]/page[3]/field[@name='line_ids']/list[1]/field[@name='code']" position="attributes">
-                    <attribute name="invisible">1</attribute>
+                    <attribute name="optional">hide</attribute>
                 </xpath>
-                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[3]/field[@name='line_ids']/list[1]/field[@name='rate']" position="replace">
+                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[3]/field[@name='line_ids']/list[1]/field[@name='rate']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//form[1]/sheet[1]/notebook[1]/page[3]/field[@name='line_ids']/list[1]/field[@name='quantity']" position="after">
                     <field name="initial_accrual_date" optional="show"/>
                     <field name="final_accrual_date" optional="show"/>
                     <field name="amount_base" optional="show"/>
@@ -284,6 +287,34 @@
                         <field name="deduct_deductions" widget="radio"/>
                         <field name="not_contribution_base"/>
                     </group>
+                </xpath>
+            </field>
+        </record>
+
+        <record id="hr_payroll_edit_payslip_lines_form_wizard_zue" model="ir.ui.view">
+            <field name="name">hr.payroll.edit.payslip.lines.wizard.zue.form</field>
+            <field name="model">hr.payroll.edit.payslip.lines.wizard</field>
+            <field name="inherit_id" ref="hr_payroll.hr_payroll_edit_payslip_lines_form_wizard"/>
+            <field name="arch" type="xml">
+                <xpath expr="//field[@name='line_ids']/list/field[@name='rate']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='line_ids']/list/field[@name='salary_rule_id']" position="attributes">
+                    <attribute name="optional">hide</attribute>
+                </xpath>
+                <xpath expr="//field[@name='line_ids']/list/field[@name='quantity']" position="after">
+                    <field name="initial_accrual_date" string="C. Inicio" optional="show" readonly="1" force_save="1"/>
+                    <field name="final_accrual_date" string="C. Fin" optional="show" readonly="1" force_save="1"/>
+                    <field name="amount_base" optional="show" readonly="1" force_save="1"/>
+                    <field name="entity_id" optional="show" readonly="1" force_save="1"/>
+                    <field name="loan_id" string="Préstamo" optional="show" readonly="1" force_save="1"/>
+                    <field name="vacation_departure_date" optional="hide" readonly="1" force_save="1"/>
+                    <field name="vacation_return_date" optional="hide" readonly="1" force_save="1"/>
+                    <field name="vacation_leave_id" optional="hide" readonly="1" force_save="1"/>
+                    <field name="business_units" optional="hide" readonly="1" force_save="1"/>
+                    <field name="business_31_units" optional="hide" readonly="1" force_save="1"/>
+                    <field name="holiday_units" optional="hide" readonly="1" force_save="1"/>
+                    <field name="holiday_31_units" optional="hide" readonly="1" force_save="1"/>
                 </xpath>
             </field>
         </record>
