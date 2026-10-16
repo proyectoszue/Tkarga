@@ -1766,13 +1766,23 @@ class Hr_payslip(models.Model):
                         payments.payslip.write({'observation': 'El valor se trasladó a la liquidación ' + self.name + ' de ' + self.struct_id.name})
 
     def action_edit_payslip_lines(self):
-        # Se hereda el wizard estándar para conservar entity_id/loan_id al validar la edición manual de las liquidaciones
+        # Copia al wizard los campos ZUE para que al validar no se pierdan.
         action = super().action_edit_payslip_lines()
         wizard = self.env['hr.payroll.edit.payslip.lines.wizard'].browse(action['res_id'])
         for wizard_line, payslip_line in zip(wizard.line_ids, self.line_ids):
             wizard_line.write({
                 'entity_id': payslip_line.entity_id.id,
                 'loan_id': payslip_line.loan_id.id,
+                'amount_base': payslip_line.amount_base,
+                'initial_accrual_date': payslip_line.initial_accrual_date,
+                'final_accrual_date': payslip_line.final_accrual_date,
+                'vacation_departure_date': payslip_line.vacation_departure_date,
+                'vacation_return_date': payslip_line.vacation_return_date,
+                'vacation_leave_id': payslip_line.vacation_leave_id.id,
+                'business_units': payslip_line.business_units,
+                'business_31_units': payslip_line.business_31_units,
+                'holiday_units': payslip_line.holiday_units,
+                'holiday_31_units': payslip_line.holiday_31_units,
             })
         return action
 
@@ -1781,9 +1791,9 @@ class HrPayrollEditPayslipLinesWizard(models.TransientModel):
     _inherit = 'hr.payroll.edit.payslip.lines.wizard'
 
     def recompute_following_lines(self, line_id):
+        # No recalcula las demás líneas; solo recarga el asistente.
         self.ensure_one()
-        wizard_line = self.env['hr.payroll.edit.payslip.line'].browse(line_id)
-        reload_wizard = {
+        return {
             'type': 'ir.actions.act_window',
             'res_model': 'hr.payroll.edit.payslip.lines.wizard',
             'view_mode': 'form',
@@ -1791,50 +1801,39 @@ class HrPayrollEditPayslipLinesWizard(models.TransientModel):
             'views': [(False, 'form')],
             'target': 'new',
         }
-        return reload_wizard
-
-        # SE COMENTA EL ESTÁNDAR DE NÓMINA ZUE EN ODOO
-        # if not wizard_line.salary_rule_id:
-
-        # localdict = self.payslip_id._get_localdict()
-        # result_rules_dict = localdict['result_rules']
-        # remove_lines = False
-        # lines_to_remove = []
-        # blacklisted_rule_ids = []
-        # for line in sorted(self.line_ids, key=lambda x: x.sequence):
-        #     if remove_lines and line.code in self.payslip_id.line_ids.mapped('code'):
-        #         lines_to_remove.append((2, line.id, 0))
-        #     else:
-        #         if line == wizard_line:
-        #             line._compute_total()
-        #             remove_lines = True
-        #         blacklisted_rule_ids.append(line.salary_rule_id.id)
-        #         localdict[line.code] = line.total
-        #         result_rules_dict[line.code] = {'total': line.total, 'amount': line.amount, 'quantity': line.quantity, 'rate': line.rate, 'ytd': line.ytd}
-        #         localdict = line.salary_rule_id.category_id._sum_salary_rule_category(localdict, line.total)
-        #
-        # payslip = self.payslip_id.with_context(force_payslip_localdict=localdict, prevent_payslip_computation_line_ids=blacklisted_rule_ids)
-        #
-        # lines_to_payslip = []
-        # for line in payslip._get_payslip_lines():
-        #     del line['note']
-        #     del line['entity_id']
-        #     del line['loan_id']
-        #     lines_to_payslip.append(line)
-        # self.line_ids = lines_to_remove + [(0, 0, line) for line in lines_to_payslip]
-        # return reload_wizard
 
 
 class HrPayrollEditPayslipLine(models.TransientModel):
     _inherit = 'hr.payroll.edit.payslip.line'
 
     entity_id = fields.Many2one('hr.employee.entities', string='Entidad')
-    loan_id = fields.Many2one('hr.loans', string='Prestamo')
+    loan_id = fields.Many2one('hr.loans', string='Préstamo')
+    amount_base = fields.Float(string='Base')
+    initial_accrual_date = fields.Date(string='C. Inicio')
+    final_accrual_date = fields.Date(string='C. Fin')
+    vacation_departure_date = fields.Date(string='Fecha salida vacaciones')
+    vacation_return_date = fields.Date(string='Fecha regreso vacaciones')
+    vacation_leave_id = fields.Many2one('hr.leave', string='Ausencia')
+    business_units = fields.Integer(string='Unidades hábiles')
+    business_31_units = fields.Integer(string='Unidades hábiles día 31')
+    holiday_units = fields.Integer(string='Unidades festivos')
+    holiday_31_units = fields.Integer(string='Unidades festivos día 31')
 
     def _export_to_payslip_line(self):
-        # Se agregan entity_id/loan_id al recrear las líneas del recibo para conservar entidad y préstamo tras la edición manual
         lines = super()._export_to_payslip_line()
         for wizard_line, vals in zip(self, lines):
-            vals['entity_id'] = wizard_line.entity_id.id
-            vals['loan_id'] = wizard_line.loan_id.id
+            vals.update({
+                'entity_id': wizard_line.entity_id.id,
+                'loan_id': wizard_line.loan_id.id,
+                'amount_base': wizard_line.amount_base,
+                'initial_accrual_date': wizard_line.initial_accrual_date,
+                'final_accrual_date': wizard_line.final_accrual_date,
+                'vacation_departure_date': wizard_line.vacation_departure_date,
+                'vacation_return_date': wizard_line.vacation_return_date,
+                'vacation_leave_id': wizard_line.vacation_leave_id.id,
+                'business_units': wizard_line.business_units,
+                'business_31_units': wizard_line.business_31_units,
+                'holiday_units': wizard_line.holiday_units,
+                'holiday_31_units': wizard_line.holiday_31_units,
+            })
         return lines
