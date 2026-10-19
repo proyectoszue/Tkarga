@@ -281,7 +281,13 @@ class HrPayslipRun(models.Model):
                 if reverse_slip:
                     values['prima_payslip_reverse_id'] = reverse_slip.id
             payslips_vals.append(values)
-        self.slip_ids |= Payslip.with_context(tracking_disable=True).create(payslips_vals)
+        # tracking_disable: evita tracking masivo de campos al crear el lote (rendimiento).
+        payslips = Payslip.with_context(tracking_disable=True).create(payslips_vals)
+        self.slip_ids |= payslips
+        # Traza de creación en chatter (no se genera con tracking_disable).
+        body = _('Recibo creado desde el lote %s') % self.name
+        for slip in payslips:
+            slip.message_post(body=body, message_type='notification', subtype_xmlid='mail.mt_note')
         self.slip_ids._compute_name()
         self.slip_ids.compute_sheet()
         self.state = '01_ready'
