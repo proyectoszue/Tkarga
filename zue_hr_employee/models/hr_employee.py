@@ -328,7 +328,7 @@ class hr_employee(models.Model):
     #Sanciones
     employee_sanctions_ids = fields.One2many('hr.employee.sanctions', 'employee_id', string='Sanciones', copy=True)
     #Edad
-    z_employee_age = fields.Integer(string='Edad', compute='_get_employee_age', store=True)
+    z_employee_age = fields.Integer(string='Edad', compute='_get_employee_age', store=False)
     # Campos Caracterizacion
     z_stratum = fields.Selection([('1', '1'),
                                   ('2', '2'),
@@ -388,6 +388,8 @@ class hr_employee(models.Model):
         for record in self:
             if record.birthday:
                 record.z_employee_age = (date.today() - record.birthday).days // 365
+            else:
+                record.z_employee_age = 0
 
     @api.constrains('distribution_cost_information')
     def _check_porcentage_distribution_cost(self):
