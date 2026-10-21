@@ -323,8 +323,9 @@ class HrPayslipRun(models.Model):
             slips = slips_original.filtered(lambda x: len(x.move_id) == 0 or x.move_id == False)[0:200]
         else:
             slips = slips_original
-        slips.filtered(lambda slip: slip.state == 'draft').compute_sheet()
-        slips.action_payslip_done()
+        # Solo calcular si aún no tiene líneas (alineado a hr.payslip estándar; no recalcula ajustes/manuales)
+        slips.filtered(lambda slip: slip.state == 'draft' and not slip.line_ids).compute_sheet()
+        slips.filtered(lambda slip: slip.line_ids).action_payslip_done()
         if len(slips_original.filtered(lambda x: len(x.move_id) == 0 or x.move_id == False)) == 0:
             self.action_confirm()
 
