@@ -91,9 +91,6 @@
                     <field name="z_military_passbook"/>
                     <field name="licencia_rh"/>
                 </xpath>
-                <xpath expr="//field[@name='birthday']" position="after">
-                    <field name="z_employee_age"/>
-                </xpath>
                 <xpath expr="//field[@name='emergency_phone']" position="after">
                     <field name="emergency_relationship"/>
                 </xpath>
@@ -187,6 +184,9 @@
                             <field name="birthday_public_display"/>
                         </div>
                     </div>
+                </xpath>
+                <xpath expr="/form/sheet/notebook/page[@name='personal_information']/group/group[@name='hr_birth_group']/div" position="after">
+                    <field name="z_employee_age"/>
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">
                     <page string="Información Familiar" name="estado_civil">
