@@ -1798,8 +1798,17 @@ class HrPayrollEditPayslipLinesWizard(models.TransientModel):
     _inherit = 'hr.payroll.edit.payslip.lines.wizard'
 
     def recompute_following_lines(self, line_id):
-        # No recalcula las demás líneas; solo recarga el asistente.
         self.ensure_one()
+        self.env['hr.payroll.edit.payslip.line'].browse(line_id)._compute_total()
+        detail = self.line_ids.filtered(lambda l: l.code not in ('TOTALDEV', 'TOTALDED', 'NET'))
+        total_dev = sum(l.total for l in detail if l.salary_rule_id.dev_or_ded == 'devengo')
+        total_ded = sum(l.total for l in detail if l.salary_rule_id.dev_or_ded == 'deduccion')
+        values = {'TOTALDEV': total_dev, 'TOTALDED': total_ded, 'NET': total_dev + total_ded}
+        for line in self.line_ids.filtered(lambda l: l.code in values):
+            line.amount = values[line.code]
+            line.quantity = 1.0
+            line.rate = 100.0
+            line._compute_total()
         return {
             'type': 'ir.actions.act_window',
             'res_model': 'hr.payroll.edit.payslip.lines.wizard',
