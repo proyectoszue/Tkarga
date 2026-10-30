@@ -48,3 +48,4 @@ access_zue_executing_contracts,zue.executing.contracts,model_zue_executing_contr
 access_zue_employer_replacement,zue.employer.replacement,model_zue_employer_replacement,base.group_user,1,1,1,1
 access_zue_work_income_and_pensions,zue.work.income.and.pensions,model_zue_work_income_and_pensions,base.group_user,1,1,1,1
 access_zue_comparative_payroll_batch_report,zue.comparative.payroll.batch.report,model_zue_comparative_payroll_batch_report,base.group_user,1,1,1,1
+access_zue_hr_payslip_calculation_detail,zue.hr.payslip.calculation.detail,model_zue_hr_payslip_calculation_detail,base.group_user,1,1,1,1

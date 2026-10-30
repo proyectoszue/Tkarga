@@ -24,7 +24,7 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Accounting/Localizations/Reporting',
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.0.1',
     # any module necessary for this one to work correctly
     'depends': ['base', 'contacts', 'account', 'account_accountant', 'account_reports', 'zue_account', 'l10n_co_reports'],
 
@@ -59,6 +59,7 @@
         'area': 'Contabilidad, compras y tesorería',
         'summary': 'ZUE ERP Reportes Contables.',
         'features': [
+            'Conserva las mayúsculas de las claves traducidas en consultas SQL de reportes.',
             'Genera auxiliares contables, libro mayor y libro diario.',
             'Consulta balances y auxiliares en vistas dinámicas y pivote.',
             'Permite el seguimiento de actividades desde los reportes contables.',
