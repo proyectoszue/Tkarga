@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_payslip_view_form_calculation_detail" model="ir.ui.view">
+        <field name="name">hr.payslip.form.calculation.detail</field>
+        <field name="model">hr.payslip</field>
+        <field name="inherit_id" ref="hr_payroll.view_hr_payslip_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='struct_id']" position="after">
+                <field name="z_show_calculation_detail" invisible="1"/>
+                <field name="z_has_calculation_detail" invisible="1"/>
+            </xpath>
+            <xpath expr="//form[1]/sheet[1]/notebook[1]/page[3]/field[@name='line_ids']/list[1]/field[@name='total']" position="after">
+                <field name="z_calculation_detail" string=" " widget="zue_calculation_info" width="40px"
+                         column_invisible="not parent.z_show_calculation_detail"/>
+            </xpath>
+            <xpath expr="//form[1]/sheet[1]/notebook[1]/page[3]" position="after">
+                <page string="Detalle del cálculo" invisible="not z_show_calculation_detail">
+                    <field name="z_calculation_detail_ids" nolabel="1" readonly="1">
+                        <list create="0" delete="0" edit="0">
+                            <field name="sequence" optional="hide"/>
+                            <field name="code" optional="hide"/>
+                            <field name="name"/>
+                            <field name="amount_base" optional="show"/>
+                            <field name="quantity" optional="show"/>
+                            <field name="total" sum="Total"/>
+                            <field name="z_manual_adjustment" optional="show"/>
+                            <field name="z_system_calculated_total" optional="hide"/>
+                            <field name="z_summary" string="Resumen" optional="hide"/>
+                            <field name="detail" string="Desglose técnico"/>
+                        </list>
+                    </field>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="res_config_settings_view_form_calculation_detail" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.calculation.detail</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="hr_payroll.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//setting[@id='ytd_reset_date']" position="after">
+                <setting id="z_show_payslip_calculation_detail_setting"
+                         string="Detalle del cálculo en liquidaciones"
+                         help="Muestra el icono y la pestaña con el detalle de cómo se calculó cada concepto. Tras activarlo, calcule la hoja de la liquidación.">
+                    <field name="z_show_payslip_calculation_detail"/>
+                </setting>
+            </xpath>
+        </field>
+    </record>
+</odoo>

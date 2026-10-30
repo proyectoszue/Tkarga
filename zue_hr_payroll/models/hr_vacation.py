@@ -310,7 +310,11 @@ class Hr_payslip(models.Model):
             localdict.update({
                 'result': None,
                 'result_qty': 1.0,
-                'result_rate': 100})
+                'result_rate': 100,
+                'result_base': None,
+                'result_calculation_components': None,
+                'result_calculation_formula': None,
+            })
             if rule._satisfy_condition(localdict):
                 if rule.code == 'VACDISFRUTADAS' and inherit_contrato == 0 and (self.get_pay_vacations_in_payroll() == False or inherit_nomina!=0):
                     initial_accrual_date = False
@@ -346,7 +350,8 @@ class Hr_payslip(models.Model):
                                         days_vacations += paid_vacation.paid_vacation_days
 
                         localdict.update({'leaves':  BrowsableObject(employee.id, leaves, self.env)})
-                        amount, qty, rate = rule._compute_rule(localdict)
+                        amount, qty, rate = self.compute_salary_rule_amount(rule, localdict)
+                        self.take_rule_calculation_detail(localdict)
                         # Día 31 no se paga: cantidad = hábiles + festivos (sin days_31_*)
                         qty = float(days_vacations_business or 0) + float(days_vacations_holidays or 0)
                         amount = round(amount,0) if round_payroll == False else round(amount, 2)#Se redondean los decimales de todas las reglas
@@ -417,6 +422,24 @@ class Hr_payslip(models.Model):
                                 'initial_accrual_date': initial_accrual_date,
                                 'final_accrual_date': final_accrual_date,
                                 'amount_base': amount*30,
+                                'z_calculation_base_components': [
+                                    {
+                                        'name': _('Valor día'),
+                                        'amount': amount,
+                                        'origin': _('regla'),
+                                        'motive': _('Cálculo realizado por la regla salarial'),
+                                        'period_from': initial_accrual_date.isoformat() if initial_accrual_date else False,
+                                        'period_to': final_accrual_date.isoformat() if final_accrual_date else False,
+                                    },
+                                    {
+                                        'name': _('Equivalente mensual (× 30)'),
+                                        'amount': amount * 30,
+                                        'origin': _('regla'),
+                                        'motive': _('Valor día × 30'),
+                                        'period_from': initial_accrual_date.isoformat() if initial_accrual_date else False,
+                                        'period_to': final_accrual_date.isoformat() if final_accrual_date else False,
+                                    },
+                                ],
                                 'business_units': days_vacations_business,
                                 'business_31_units': days_vacations_31_business,
                                 'holiday_units': days_vacations_holidays,
@@ -446,7 +469,8 @@ class Hr_payslip(models.Model):
                                 days_vacations += leave_equals.number_of_days if leave_equals.business_days + leave_equals.days_31_business == 0 else leave_equals.business_days + leave_equals.days_31_business
 
                         localdict.update({'leaves':  BrowsableObject(employee.id, leaves, self.env)})
-                        amount, qty, rate = rule._compute_rule(localdict)
+                        amount, qty, rate = self.compute_salary_rule_amount(rule, localdict)
+                        self.take_rule_calculation_detail(localdict)
                         amount = round(amount,0) if round_payroll == False else round(amount, 2)#Se redondean los decimales de todas las reglas
                         #check if there is already a rule computed with that code
                         previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
@@ -515,6 +539,24 @@ class Hr_payslip(models.Model):
                                 'initial_accrual_date': initial_accrual_date,
                                 'final_accrual_date': final_accrual_date,
                                 'amount_base': amount*30,
+                                'z_calculation_base_components': [
+                                    {
+                                        'name': _('Valor día'),
+                                        'amount': amount,
+                                        'origin': _('regla'),
+                                        'motive': _('Cálculo realizado por la regla salarial'),
+                                        'period_from': initial_accrual_date.isoformat() if initial_accrual_date else False,
+                                        'period_to': final_accrual_date.isoformat() if final_accrual_date else False,
+                                    },
+                                    {
+                                        'name': _('Equivalente mensual (× 30)'),
+                                        'amount': amount * 30,
+                                        'origin': _('regla'),
+                                        'motive': _('Valor día × 30'),
+                                        'period_from': initial_accrual_date.isoformat() if initial_accrual_date else False,
+                                        'period_to': final_accrual_date.isoformat() if final_accrual_date else False,
+                                    },
+                                ],
                                 'salary_rule_id': rule.id,
                                 'version_id': version.id,
                                 'employee_id': employee.id,                        
@@ -525,10 +567,12 @@ class Hr_payslip(models.Model):
                                 'slip_id': self.id,
                             }
                 else:
-                    amount, qty, rate = rule._compute_rule(localdict)
+                    amount, qty, rate = self.compute_salary_rule_amount(rule, localdict)
+                    rule_detail = self.take_rule_calculation_detail(localdict)
                     dias_ausencias,amount_base = 0,0
                     initial_accrual_date = False
                     final_accrual_date = False
+                    base_components = []
 
                     if rule.code == 'VACCONTRATO' and inherit_contrato != 0:
                         # En liquidación de contrato no generar línea si el histórico tiene fecha de causación
@@ -644,6 +688,39 @@ class Hr_payslip(models.Model):
 
                             amount = round(amount_base / 720, 0) if round_payroll == False else amount_base / 720
                             qty = dias_liquidacion
+                            period_start_s = self.date_vacaciones.isoformat() if self.date_vacaciones else False
+                            period_end_s = self.date_liquidacion.isoformat() if self.date_liquidacion else False
+                            if acumulados_promedio and (self.date_liquidacion - version.contract_date_start).days <= 365:
+                                vars_motive = _(
+                                    'Promedio: (base / días de contrato) × 30 = %(result)s'
+                                ) % {'result': int(round(acumulados_promedio or 0.0))}
+                            elif acumulados_promedio:
+                                vars_motive = _(
+                                    'Promedio anual: base / 12 = %(result)s'
+                                ) % {'result': int(round(acumulados_promedio or 0.0))}
+                            else:
+                                vars_motive = _('Sin acumulado de variables; promedio en $0')
+                            base_components = [
+                                {
+                                    'name': _('Salario vigente'),
+                                    'amount': wage,
+                                    'origin': _('contrato'),
+                                    'motive': (
+                                        _('Salario vigente del contrato a la fecha de liquidación')
+                                        if wage else _('Sin salario (subcontrato obra)')
+                                    ),
+                                    'period_from': period_start_s,
+                                    'period_to': period_end_s,
+                                },
+                                {
+                                    'name': _('Promedio variables'),
+                                    'amount': acumulados_promedio,
+                                    'origin': _('novedades'),
+                                    'motive': vars_motive,
+                                    'period_from': period_start_s,
+                                    'period_to': period_end_s,
+                                },
+                            ]
 
                     amount = round(amount,0) if round_payroll == False else round(amount, 2) #Se redondean los decimales de todas las reglas
                     #check if there is already a rule computed with that code
@@ -674,7 +751,8 @@ class Hr_payslip(models.Model):
                             'employee_id': employee.id, 
                             'initial_accrual_date': initial_accrual_date,
                             'final_accrual_date': final_accrual_date,
-                            'amount_base': amount_base,                       
+                            'amount_base': amount_base,
+                            'z_calculation_base_components': base_components or rule_detail.get('z_calculation_base_components'),
                             'amount': amount,
                             'quantity': qty,
                             'rate': rate,

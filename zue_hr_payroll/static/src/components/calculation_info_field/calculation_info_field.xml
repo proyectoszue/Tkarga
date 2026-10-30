@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="zue_hr_payroll.ZueCalculationInfoField">
+        <span
+            t-att-class="iconClass"
+            t-ref="icon"
+            t-on-mouseenter="onMouseEnter"
+            t-on-mouseleave="onMouseLeave"
+            t-att-aria-label="ariaLabel"
+            t-att-title="ariaLabel"
+        >
+            <i t-att-class="iconFaClass"/>
+        </span>
+    </t>
+
+    <t t-name="zue_hr_payroll.ZueCalculationInfoPopover">
+        <div class="p-2 o_zue_calculation_popover" style="min-width: 320px; max-width: 560px; white-space: normal;">
+            <div t-out="props.html"/>
+        </div>
+    </t>
+</templates>

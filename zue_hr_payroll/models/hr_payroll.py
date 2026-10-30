@@ -6,8 +6,7 @@ from .browsable_object import BrowsableObject, InputLine, WorkedDays, Payslips
 from odoo.tools import float_compare, float_is_zero
 from collections import defaultdict
 from datetime import datetime, timedelta, date, time
-from odoo.tools import float_round, date_utils
-from odoo.tools.misc import format_date
+from odoo.tools import date_utils
 from odoo.fields import Domain
 from odoo.tools.date_utils import get_month
 import math
@@ -1117,6 +1116,19 @@ class Hr_payslip(models.Model):
                         localdict['values_leaves_law'] = localdict['values_leaves_law'] + amount_leave_law
 
                     result_item = concepts.salary_rule_id.code+'-PCD'+str(concepts.id)
+                    # Entidad: tercero de la novedad; si falta y es SSOCIAL, heredar de SS del empleado
+                    novelty_entity_id = concepts.partner_id.id if concepts.partner_id else False
+                    if not novelty_entity_id and concepts.salary_rule_id.category_id.code == 'SSOCIAL':
+                        rule_code = concepts.salary_rule_id.code
+                        for entity in employee.social_security_entities:
+                            if entity.contrib_id.type_entities == 'eps' and rule_code == 'SSOCIAL001':
+                                novelty_entity_id = entity.partner_id.id
+                            if entity.contrib_id.type_entities == 'pension' and rule_code in ('SSOCIAL002', 'SSOCIAL003', 'SSOCIAL004'):
+                                novelty_entity_id = entity.partner_id.id
+                            if entity.contrib_id.type_entities == 'subsistencia' and rule_code == 'SSOCIAL003':
+                                novelty_entity_id = entity.partner_id.id
+                            if entity.contrib_id.type_entities == 'solidaridad' and rule_code == 'SSOCIAL004':
+                                novelty_entity_id = entity.partner_id.id
                     result[result_item] = {
                         'sequence': concepts.salary_rule_id.sequence,
                         'code': concepts.salary_rule_id.code,
@@ -1125,7 +1137,7 @@ class Hr_payslip(models.Model):
                         'salary_rule_id': concepts.salary_rule_id.id,
                         'version_id': version.id,
                         'employee_id': employee.id,
-                        'entity_id': concepts.partner_id.id if concepts.partner_id else False,
+                        'entity_id': novelty_entity_id,
                         # 'loan_id': loan_id,
                         'amount': tot_rule, #Se redondean los decimales de todas las reglas
                         'quantity': 1.0,
@@ -1140,9 +1152,14 @@ class Hr_payslip(models.Model):
                 'id_version_concepts': 0,
                 'result': None,
                 'result_qty': 1.0,
-                'result_rate': 100})
+                'result_rate': 100,
+                'result_base': None,
+                'result_calculation_components': None,
+                'result_calculation_formula': None,
+            })
             if rule._satisfy_condition(localdict):
                 entity_id,loan_id = False,False
+                rule_detail = {}
                 #Obtener entidades de seguridad social
                 if rule.category_id.code == 'SSOCIAL':
                     for entity in employee.social_security_entities:
@@ -1178,7 +1195,8 @@ class Hr_payslip(models.Model):
                             if concept.partner_id:
                                 entity_id = concept.partner_id.id
                             loan_id = concept.loan_id.id
-                            amount, qty, rate = rule._compute_rule(localdict)
+                            amount, qty, rate = self.compute_salary_rule_amount(rule, localdict)
+                            rule_detail = self.take_rule_calculation_detail(localdict)
                             #Validar si no tiene dias trabajados, si no tiene revisar las ausencias y sus caracteristicas para calcular la deducción
                             if rule.dev_or_ded == 'deduccion' and rule.type_concept != 'ley' and (worked_days_entry + leaves_days_all) == 0 and inherit_prima == 0:
                                 amount, qty, rate = 0,1.0,100
@@ -1337,6 +1355,7 @@ class Hr_payslip(models.Model):
                                     'rate': rate,
                                     'total': self._get_payslip_line_total(amount, qty, rate, rule),
                                     'slip_id': self.id,
+                                    **rule_detail,
                                     }
                                 else:
                                     localdict = _sum_salary_rule_category(localdict, rule.category_id, (tot_rule - previous_amount)*-1)
@@ -1356,9 +1375,11 @@ class Hr_payslip(models.Model):
                                     'rate': rate,
                                     'total': self._get_payslip_line_total(amount, qty, rate, rule),
                                     'slip_id': self.id,
+                                    **rule_detail,
                                     }
                 else:
-                    amount, qty, rate = rule._compute_rule(localdict)
+                    amount, qty, rate = self.compute_salary_rule_amount(rule, localdict)
+                    rule_detail = self.take_rule_calculation_detail(localdict)
                     #Validar si no tiene dias trabajados, si no tiene revisar las ausencias y sus caracteristicas para calcular la deducción
                     if rule.dev_or_ded == 'deduccion' and rule.type_concept != 'ley' and (worked_days_entry + leaves_days_all) == 0 and inherit_prima==0:
                         amount, qty, rate = 0,1.0,100
@@ -1436,6 +1457,7 @@ class Hr_payslip(models.Model):
                                 'rate': rate,
                                 'total': self._get_payslip_line_total(amount, qty, rate, rule),
                                 'slip_id': self.id,
+                                **rule_detail,
                             }
                         else:
                             localdict = _sum_salary_rule_category(localdict, rule.category_id, (tot_rule - previous_amount)*-1)
@@ -1455,6 +1477,7 @@ class Hr_payslip(models.Model):
                                 'rate': rate,
                                 'total': self._get_payslip_line_total(amount, qty, rate, rule),
                                 'slip_id': self.id,
+                                **rule_detail,
                             }
 
         #Cargar detalle retención en la fuente si tuvo
