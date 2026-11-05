@@ -2,7 +2,10 @@
 from odoo import api, fields, models, _
 from odoo.tools import float_round
 from odoo.tools.misc import format_date
+from odoo.tools.translate import LazyTranslate
 from markupsafe import Markup, escape
+
+_lt = LazyTranslate(__name__)
 
 _SKIP_KEYS = frozenset({
     'result', 'result_qty', 'result_rate', 'result_base',
@@ -17,32 +20,32 @@ _SKIP_KEYS = frozenset({
 })
 
 _VARIABLE_LABELS = {
-    'dias': _('Días'),
-    'auxtransporte': _('Auxilio de transporte mensual'),
-    'auxtransporte_tope': _('Tope auxilio de transporte'),
-    'aplicar': _('Día de cobro (aplicar)'),
-    'total': _('Devengado salarial para tope'),
-    'liquidated_aux_transport': _('Liquida auxilio (parametrización)'),
-    'day_initial_payrroll': _('Día inicio periodo'),
-    'day_end_payrroll': _('Día fin periodo'),
-    'valor_dia': _('Valor día'),
-    'already_paid': _('Ya liquidado'),
-    'wage': _('Salario'),
-    'obj_salary_rule': _('Regla salarial'),
-    'liquidate_employee_pension': _('Liquida pensión empleado'),
-    'total_salarial': _('Total salarial'),
-    'total_no_salarial': _('Total no salarial'),
-    'gran_total': _('Gran total'),
-    'top_twenty_five_smmlv': _('Tope 25 SMMLV'),
-    'statute_value': _('Valor estatuto'),
-    'total_statute': _('Total estatuto'),
-    'value_difference': _('Diferencia'),
-    'value_difference_day': _('Diferencia diaria'),
-    'value_difference_day_statute': _('Diferencia diaria estatuto'),
-    'dias_work': _('Días trabajados'),
-    'dias_work_act': _('Días trabajados del periodo'),
-    'salario_minimo': _('Salario mínimo'),
-    'pension_primera_quincena': _('Pensión primera quincena'),
+    'dias': _lt('Días'),
+    'auxtransporte': _lt('Auxilio de transporte mensual'),
+    'auxtransporte_tope': _lt('Tope auxilio de transporte'),
+    'aplicar': _lt('Día de cobro (aplicar)'),
+    'total': _lt('Devengado salarial para tope'),
+    'liquidated_aux_transport': _lt('Liquida auxilio (parametrización)'),
+    'day_initial_payrroll': _lt('Día inicio periodo'),
+    'day_end_payrroll': _lt('Día fin periodo'),
+    'valor_dia': _lt('Valor día'),
+    'already_paid': _lt('Ya liquidado'),
+    'wage': _lt('Salario'),
+    'obj_salary_rule': _lt('Regla salarial'),
+    'liquidate_employee_pension': _lt('Liquida pensión empleado'),
+    'total_salarial': _lt('Total salarial'),
+    'total_no_salarial': _lt('Total no salarial'),
+    'gran_total': _lt('Gran total'),
+    'top_twenty_five_smmlv': _lt('Tope 25 SMMLV'),
+    'statute_value': _lt('Valor estatuto'),
+    'total_statute': _lt('Total estatuto'),
+    'value_difference': _lt('Diferencia'),
+    'value_difference_day': _lt('Diferencia diaria'),
+    'value_difference_day_statute': _lt('Diferencia diaria estatuto'),
+    'dias_work': _lt('Días trabajados'),
+    'dias_work_act': _lt('Días trabajados del periodo'),
+    'salario_minimo': _lt('Salario mínimo'),
+    'pension_primera_quincena': _lt('Pensión primera quincena'),
 }
 
 # Variables / flags que no aportan al resumen funcional del popover.
@@ -116,7 +119,7 @@ def build_calculation_components_from_trace(assignments):
     for name, (value, fmt) in assignments:
         if abs(value) < 0.0001 and fmt != 'days':
             continue
-        label = _VARIABLE_LABELS.get(name) or name.replace('_', ' ').strip()
+        label = str(_VARIABLE_LABELS.get(name) or name.replace('_', ' ').strip())
         components.append({
             'name': label,
             'variable': name,

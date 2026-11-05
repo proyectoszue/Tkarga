@@ -30,5 +30,6 @@
             <!-- Reporte saldos de CxC-CxP -->
 <!--            <menuitem name="Saldos de CxC-CxP" id="zue_account.menu_report_cxc_cxp" parent="zue_erp_reports_accounting.menu_account_report_co_zue" action="actions_balance_cxc_cxp_report" sequence="6"/>-->
             <menuitem name="Reporte CXC - Recaudos" id="zue_erp_reports_accounting.menu_zue_pivot_report_cxc" parent="zue_erp_reports_accounting.menu_account_report_co_zue" action="zue_pivot_report_cxc_view" sequence="7"/>
+            <menuitem name="Anexo de impuestos" id="zue_account.menu_annex_thirdparty_account" parent="zue_erp_reports_accounting.menu_account_report_co_zue" action="action_zue_annex_thridparty_account" sequence="10"/>
     </data>
 </odoo>
