@@ -261,12 +261,15 @@ class ResPartner(models.Model):
                     raise UserError(_('El campo número de documento no debe tener mas de 9 dígitos cuando el tipo de documento es NIT.'))   
 
                 company_id = record.company_id.id or self.env.company.id
+                partner_id = record.id if isinstance(record.id, int) else (
+                    record._origin.id if record._origin and isinstance(record._origin.id, int) else False
+                )
                 domain = [
                     ('x_type_thirdparty', 'in', [1, 3]),
                     ('vat', '=', record.vat),
                     '|', ('company_id', '=', False),
                     ('company_id', '=', company_id),
-                    ('id', '!=', record.id),
+                    ('id', '!=', partner_id),
                 ]
 
                 obj = self.search(domain, limit=1)
@@ -287,59 +290,44 @@ class ResPartner(models.Model):
             res.remove('vat')
         return res
 
-    @api.constrains('vat')
+    @api.constrains('vat', 'is_company', 'active', 'parent_id')
     def _check_vatnumber(self):
         for record in self:
-            cant_vat = 0
-            cant_vat_archivado = 0
-            cant_vat_ind = 0
-            cant_vat_archivado_ind = 0
-            name_tercer =  ''
-            user_create = ''
-            if record.vat:
-                company_id = record.company_id.id or self.env.company.id
-                company_domain = ['|', ('company_id', '=', False), ('company_id', '=', company_id)]
-                obj = self.search([('is_company', '=', True), ('vat', '=', record.vat)] + company_domain)
-                if obj:
-                    for tercer in obj:
-                        cant_vat = cant_vat + 1
-                        if tercer.id != record.id:
-                            name_tercer = tercer.name or ''
-                            user_create = tercer.create_uid.name or ''
+            if not record.vat:
+                continue
 
-                objArchivado = self.search([('is_company', '=', True), ('vat', '=', record.vat), ('active', '=', False)] + company_domain)
-                if objArchivado:
-                    for tercer in objArchivado:
-                        cant_vat_archivado = cant_vat_archivado + 1
-                        if tercer.id != record.id:
-                            name_tercer = tercer.name or ''
-                            user_create = tercer.create_uid.name or ''
+            company_id = record.company_id.id or self.env.company.id
+            company_domain = ['|', ('company_id', '=', False), ('company_id', '=', company_id)]
 
-                obj_ind = self.search([('is_company', '=', False), ('vat', '=', record.vat)] + company_domain)
-                if obj_ind:
-                    for tercer in obj_ind:
-                        if tercer.parent_id.vat != record.vat:
-                            cant_vat_ind = cant_vat_ind + 1
-                            if tercer.id != record.id:
-                                name_tercer = tercer.name or ''
-                                user_create = tercer.create_uid.name or ''
-
-                objArchivado_ind = self.search([('is_company', '=', False), ('vat', '=', record.vat), ('active', '=', False)] + company_domain)
-                if objArchivado_ind:
-                    for tercer in objArchivado_ind:
-                        if tercer.parent_id.vat != record.vat:
-                            cant_vat_archivado_ind = cant_vat_archivado_ind + 1
-                            if tercer.id != record.id:
-                                name_tercer = tercer.name or ''
-                                user_create = tercer.create_uid.name or ''
-            if cant_vat > 1:
-                raise ValidationError(_('Ya existe un Cliente ('+name_tercer+') con este número de NIT creado por '+user_create+'.'))
-            if cant_vat_archivado > 1:
-                raise ValidationError(_('Ya existe un Cliente ('+name_tercer+') con este número de NIT pero se encuentra archivado, fue creado por '+user_create+'.'))
-            if cant_vat_ind > 1:
-                raise ValidationError(_('Ya existe un Tercero ('+name_tercer+') con este número de ID creado por '+user_create+'.'))
-            if cant_vat_archivado_ind > 1:
-                raise ValidationError(_('Ya existe un Tercero ('+name_tercer+') con este número de ID pero se encuentra archivado, fue creado por '+user_create+'.'))
+            if record.is_company:
+                domain = [('is_company', '=', True), ('vat', '=', record.vat)] + company_domain
+                duplicate = (self.with_context(active_test=False).search(domain) - record)
+                if duplicate:
+                    other = duplicate[0]
+                    state = _('archivado') if not other.active else _('activo')
+                    raise ValidationError(_(
+                        'Ya existe un Cliente (%(nombre)s, %(estado)s) con este número de NIT, '
+                        'creado por %(usuario)s.'
+                    ) % {
+                        'nombre': other.name,
+                        'estado': state,
+                        'usuario': other.create_uid.name,
+                    })
+            else:
+                domain = [('is_company', '=', False), ('vat', '=', record.vat)] + company_domain
+                partners = self.with_context(active_test=False).search(domain) - record
+                duplicate = partners.filtered(lambda t: t.parent_id.vat != record.vat)
+                if duplicate:
+                    other = duplicate[0]
+                    state = _('archivado') if not other.active else _('activo')
+                    raise ValidationError(_(
+                        'Ya existe un Tercero (%(nombre)s, %(estado)s) con este número de ID, '
+                        'creado por %(usuario)s.'
+                    ) % {
+                        'nombre': other.name,
+                        'estado': state,
+                        'usuario': other.create_uid.name,
+                    })
 
     @api.constrains('bank_ids')
     def _check_bank_ids(self):
@@ -438,8 +426,8 @@ class ResPartner(models.Model):
 
                 name_partner = ''
                 name_partner = name_partner+fn if fn != '' else name_partner
-                name_partner = name_partner+" "+sn if sn != '' and name_partner != '' else name_partner+sn            
-                name_partner = name_partner+" "+fl if fl != '' and name_partner != '' else name_partner+fl            
+                name_partner = name_partner+" "+sn if sn != '' and name_partner != '' else name_partner+sn
+                name_partner = name_partner+" "+fl if fl != '' and name_partner != '' else name_partner+fl
                 name_partner = name_partner+" "+sl if sl != '' and name_partner != '' else name_partner+sl
 
                 record.name = name_partner.upper()
@@ -450,7 +438,7 @@ class ResPartner(models.Model):
 
     @api.onchange('name')
     def _onchange_info_name_upper(self):
-        for record in self:            
+        for record in self:
             record.name = record.name.upper() if record.name else False
 
     def _zue_identification_should_lock(self):
@@ -475,9 +463,8 @@ class ResPartner(models.Model):
             partner_id = partner.id if isinstance(partner.id, int) else (
                 partner._origin.id if partner._origin and isinstance(partner._origin.id, int) else False
             )
-            partner.z_identification_readonly = bool(
-                partner_id and partner._zue_identification_should_lock()
-            )
+            check_partner = partner._origin if (partner._origin and isinstance(partner._origin.id, int)) else partner
+            partner.z_identification_readonly = bool(partner_id and check_partner._zue_identification_should_lock())
 
     def _zue_check_identification_lock(self, vals):
         """Bloquea el cambio de vat una vez el contacto está completo. El tipo de documento sigue editable."""

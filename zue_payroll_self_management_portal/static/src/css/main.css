@@ -27,10 +27,6 @@
     height: 100%;
 }
 
-.position-relative {
-    position: relative !important;
-}
-
 .full_iframe_div{
     height: 100% !important;
     width: 100% !important;

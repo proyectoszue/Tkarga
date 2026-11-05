@@ -739,7 +739,8 @@ class account_move(models.Model):
         result = ''
         send_result = ''
 
-        self.validateFeCustomerPartner()
+        # Comentado: el metodo validateFeCustomerPartner ya no existe en el modelo.
+        # self.validateFeCustomerPartner()
 
         if self.company_id.zue_electronic_invoice_disable_sending:
             return True

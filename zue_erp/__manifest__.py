@@ -16,7 +16,7 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Technical',
-    'version': '19.0.1.0.4',
+    'version': '19.0.1.1.0',
     'application': True,
 
     'depends': ['base', 'base_import', 'base_vat', 'base_address_extended', 'l10n_latam_base', 'contacts', 'zue_xml_generator', 'zue_request_ws'],
@@ -25,9 +25,10 @@
     'data': [
         'security/groups.xml',
         'security/ir.model.access.csv',
-        # 'data/zue_ciiu_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
-        # 'data/zue_zip_code_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
-        # 'data/zue_third_party_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
+        # 'data/zue_ciiu_data.xml', DESCOMENTAR EN INSTALACIONES NUEVAS
+        # 'data/zue_zip_code_data.xml', DESCOMENTAR EN INSTALACIONES NUEVAS
+        # 'data/zue_third_party_data.xml', DESCOMENTAR EN INSTALACIONES NUEVAS
+        # 'data/zue_res_city_dian_data.xml', DESCOMENTAR EN INSTALACIONES NUEVAS
         'views/views_contact_form.xml',
         'views/report_execute_query.xml',
         'views/general_actions.xml',

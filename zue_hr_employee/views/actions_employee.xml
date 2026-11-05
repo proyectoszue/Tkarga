@@ -177,7 +177,7 @@
                     </div>
                 </xpath>
                 <xpath expr="//div[@name='div_km_home_work']" position="replace">
-                    <div>
+                    <div name="div_km_home_work">
                         <field name="birthday" class="w-100"/>
                         <div invisible="not birthday" class="mt-2">
                             <label for="birthday_public_display" class="fw-bold text-900 form-check-label"/>
@@ -185,7 +185,7 @@
                         </div>
                     </div>
                 </xpath>
-                <xpath expr="/form/sheet/notebook/page[@name='personal_information']/group/group[@name='hr_birth_group']/div" position="after">
+                <xpath expr="//div[@name='div_km_home_work']" position="after">
                     <field name="z_employee_age"/>
                 </xpath>
                 <xpath expr="//form[1]/sheet[1]/notebook[1]" position="inside">

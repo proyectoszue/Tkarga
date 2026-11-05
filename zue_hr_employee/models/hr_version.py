@@ -235,7 +235,7 @@ class hr_version(models.Model):
     job_id = fields.Many2one('hr.job', string='Puesto de trabajo', compute='change_wage', store=True, readonly=False, tracking=True)
     company_id = fields.Many2one(tracking=True)
     sequence = fields.Char(string="Secuencia", default="/")
-    retirement_date = fields.Date('Fecha retiro', tracking=True)
+    retirement_date = fields.Date('Fecha retiro', tracking=True, copy=False)
     z_employer_replacement_date = fields.Date('Fecha de sustitución patronal', tracking=True)
     z_previous_start_date = fields.Date('Fecha inicial del beneficio', tracking=True)
     change_wage_ids = fields.One2many('hr.contract.change.wage', 'version_id', 'Cambios salario', copy=True)
