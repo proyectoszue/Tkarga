@@ -328,7 +328,7 @@ class hr_employee(models.Model):
     #Sanciones
     employee_sanctions_ids = fields.One2many('hr.employee.sanctions', 'employee_id', string='Sanciones', copy=True)
     #Edad
-    z_employee_age = fields.Integer(string='Edad', compute='_get_employee_age', store=False)
+    z_employee_age = fields.Integer(string='Edad', compute='_get_employee_age', store=True)
     # Campos Caracterizacion
     z_stratum = fields.Selection([('1', '1'),
                                   ('2', '2'),
@@ -386,10 +386,18 @@ class hr_employee(models.Model):
     @api.depends('birthday')
     def _get_employee_age(self):
         for record in self:
-            if record.birthday:
-                record.z_employee_age = (date.today() - record.birthday).days // 365
-            else:
-                record.z_employee_age = 0
+            record.z_employee_age = record.get_age_for_date(record.birthday)
+
+    @api.model
+    def updateEmployeeAges(self):
+        """Recalcula edades almacenadas (acción planificada diaria)."""
+        employees = self.with_context(active_test=False).search([])
+        if not employees:
+            return True
+        # add_to_compute: fuerza recálculo de campo store aunque birthday no cambió en BD
+        self.env.add_to_compute(self._fields['z_employee_age'], employees)
+        employees._recompute_recordset(['z_employee_age'])
+        return True
 
     @api.constrains('distribution_cost_information')
     def _check_porcentage_distribution_cost(self):
@@ -511,6 +519,15 @@ class hr_employee(models.Model):
         if pid:
             vals['identification_id'] = self.env['res.partner'].browse(pid).vat or False
         return super(hr_employee, self).write(vals)
+
+    def create_version(self, values):
+        # Evita copiar fecha de retiro y refresca la versión actual
+        if 'retirement_date' not in values:
+            values = dict(values, retirement_date=False)
+        version = super().create_version(values)
+        self.invalidate_recordset(['current_version_id', 'version_id'])
+        self._compute_current_version_id()
+        return version
 
     def get_info_version(self):
         for record in self:

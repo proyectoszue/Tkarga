@@ -322,9 +322,10 @@ class HrPayslipRun(models.Model):
             slips = slips_original.filtered(lambda x: len(x.move_id) == 0 or x.move_id == False)[0:200]
         else:
             slips = slips_original
-        # Solo calcular si aún no tiene líneas (alineado a hr.payslip estándar; no recalcula ajustes/manuales)
+        # 1) No recalcular borradores que ya tienen líneas (ajustes/manuales)
+        # 2) Sí validar borradores sin montos (p.ej. solo DAYS_NO_WORK) para registrar el período.
         slips.filtered(lambda slip: slip.state == 'draft' and not slip.line_ids).compute_sheet()
-        slips.filtered(lambda slip: slip.line_ids).action_payslip_done()
+        slips.filtered(lambda slip: slip.state == 'draft').action_payslip_done()
         if len(slips_original.filtered(lambda x: len(x.move_id) == 0 or x.move_id == False)) == 0:
             self.action_confirm()
 
@@ -467,7 +468,7 @@ class Hr_payslip_line(models.Model):
     state_slip = fields.Selection(related='slip_id.state', string='Estado Nómina', store=True)
     z_analytic_account_slip_id = fields.Many2one(related='slip_id.z_analytic_account_id', string='Cuenta Analitica', store=True)
     struct_slip_id = fields.Many2one(related='slip_id.struct_id', string='Estructura', store=True)
-    contract_type = fields.Many2one(related='version_id.contract_type_id', string='Tipo de contrato', store=True)
+    contract_type = fields.Selection(related='version_id.contract_type', string='Tipo de contrato', store=True)
     date_end = fields.Date(related='version_id.date_end', string='Fecha de finalización de contrato', store=True)
     type_of_jurisdiction = fields.Many2one(related='version_id.type_of_jurisdiction', string='Tipo de Fuero', store=True)
 
@@ -520,14 +521,18 @@ class Hr_payslip_not_line(models.Model):
 
     @api.model_create_multi
     def create(self, values_list):
+        valid_fields = set(self._fields)
+        cleaned_values_list = []
         for values in values_list:
+            values = {key: value for key, value in values.items() if key in valid_fields}
             if 'employee_id' not in values or 'version_id' not in values:
                 payslip = self.env['hr.payslip'].browse(values.get('slip_id'))
                 values['employee_id'] = values.get('employee_id') or payslip.employee_id.id
                 values['version_id'] = values.get('version_id') or payslip.version_id and payslip.version_id.id
                 if not values['version_id']:
                     raise UserError(_('You must set a version to create a payslip line.'))
-        return super(Hr_payslip_not_line, self).create(values_list)
+            cleaned_values_list.append(values)
+        return super(Hr_payslip_not_line, self).create(cleaned_values_list)
 
 class Hr_payslip(models.Model):
     _name = 'hr.payslip'

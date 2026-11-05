@@ -1,0 +1,27 @@
+<odoo>
+    <!--
+        Odoo 19 no admite default_res_id en mail.compose.message. Estas acciones
+        estándar pueden conservar ese contexto tras la migración de la base.
+    -->
+    <data>
+        <function model="ir.actions.act_window" name="write">
+            <value eval="[ref('account.account_send_payment_receipt_by_email_action')]"/>
+            <value eval="{'context': {
+                'mail_post_autofollow': True,
+                'default_composition_mode': 'comment',
+                'default_template_id': ref('account.mail_template_data_payment_receipt'),
+                'default_email_layout_xmlid': 'mail.mail_notification_light',
+            }}"/>
+        </function>
+
+        <function model="ir.actions.act_window" name="write">
+            <value eval="[ref('account.account_send_payment_receipt_by_email_action_multi')]"/>
+            <value eval="{'context': {
+                'mail_post_autofollow': True,
+                'default_composition_mode': 'mass_mail',
+                'default_template_id': ref('account.mail_template_data_payment_receipt'),
+                'default_email_layout_xmlid': 'mail.mail_notification_light',
+            }}"/>
+        </function>
+    </data>
+</odoo>

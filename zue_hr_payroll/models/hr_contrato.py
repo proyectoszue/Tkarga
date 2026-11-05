@@ -10,8 +10,6 @@ from dateutil.relativedelta import relativedelta
 class Hr_payslip(models.Model):
     _inherit = 'hr.payslip'
 
-    #reason_retiro = fields.Char(string='Motivo de retiro TMP V13', store=False)
-    # SE REQUIERE VOLVER A AJUSTAR POSTERIOR A MIGRACIÓN - ESTABA TIPO CHAR
     reason_retiro = fields.Many2one('hr.departure.reason', string='Motivo de retiro')
     z_reason_retiro = fields.Many2one('hr.departure.reason', string='Motivo de retiro ZUE')
     have_compensation = fields.Boolean('Indemnización', default=False)
