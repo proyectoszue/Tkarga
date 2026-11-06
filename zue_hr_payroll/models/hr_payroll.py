@@ -393,22 +393,23 @@ class Hr_payslip_line(models.Model):
     date_end = fields.Date(related='version_id.date_end', string='Fecha de finalización de contrato', store=True)
     type_of_jurisdiction = fields.Many2one(related='version_id.type_of_jurisdiction', string='Tipo de Fuero', store=True)
 
+    def roundPayrollTotal(self, total):
+        # round_payroll activo = NO redondear decimales
+        if bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')):
+            return total
+        part_decimal, part_value = math.modf(total or 0.0)
+        if part_decimal >= 0.49:
+            return part_value + 1
+        if part_decimal <= -0.49:
+            return part_value - 1
+        return round(total or 0.0, 0)
+
     @api.depends('quantity', 'amount', 'rate')
     def _compute_total(self):
         #round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
         for line in self:
-            if str(line.salary_rule_id.amount_python_compute).find('get_overtime') != -1:  # Verficiar si la regla utiliza la tabla hr.overtime por ende es un concepto de novedad del menu horas extras
-                amount = round(line.amount, 2)
-                line.amount = amount
-            else:
-                amount = line.amount
-            amount_total_original = float(line.quantity) * amount * line.rate / 100
-            part_decimal, part_value = math.modf(amount_total_original)
-            amount_total = float(line.quantity) * amount * line.rate / 100 #if round_payroll == False else float(line.quantity) * line.amount * line.rate / 100
-            if part_decimal >= 0.49 and math.modf(amount_total)[1] == part_value:
-                line.total = part_value+1
-            else:
-                line.total = round(amount_total,0)
+            amount_total = float(line.quantity) * line.amount * line.rate / 100
+            line.total = line.roundPayrollTotal(amount_total)
 
     def count_category_ids(self):
         count_category_ids = self.env['hr.payslip.line'].search_count([('slip_id', '=', self.slip_id.id), ('category_id', '=', self.category_id.id)])
@@ -500,6 +501,11 @@ class Hr_payslip(models.Model):
     def _compute_is_wrong_duration(self):
         # Desactiva el flag de duración incorrecta (mismo caso quincena CO vs bi-weekly)
         self.is_wrong_duration = False
+
+    def _get_payslip_line_total(self, amount, quantity, rate, rule):
+        # standard Odoo version "19"
+        total = super()._get_payslip_line_total(amount, quantity, rate, rule)
+        return self.env['hr.payslip.line'].roundPayrollTotal(total)
 
     def action_create_vacation_history(self):
         """Crea/reemplaza históricos de vacaciones desde las liquidaciones seleccionadas (Acciones / lote)."""
