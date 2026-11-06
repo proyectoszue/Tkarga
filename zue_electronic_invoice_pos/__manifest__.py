@@ -5,12 +5,9 @@
     'description': "Facturación electrónica ZUE para órdenes de punto de venta.",
     'author': "ZUE S.A.S.",
     'category': 'Accounting/Localizations/EDI',
-    'version': '19.0.1.0.0',
+    'version': '19.0.2.1.0',
     'depends': ['zue_electronic_invoice', 'point_of_sale'],
-    'data': [
-        'data/zue_request_ws_data_pos.xml',
-        'data/zue_xml_generator_data_pos.xml',
-    ],
+    'post_init_hook': 'post_init_hook',
     'license': 'LGPL-3',
     'auto_install': True,
     'assets': {
@@ -23,8 +20,11 @@
         'summary': 'Extiende la facturación electrónica ZUE a las órdenes del punto de venta.',
         'features': [
             'Factura y envía automáticamente las órdenes del POS mediante el flujo de facturación electrónica.',
+            'Envía por el canal POS las notas crédito de facturas originadas en el POS.',
+            'Carga los servicios web y el generador XML POS solo al instalar y reutiliza los existentes sin reemplazar su parametrización.',
         ],
         'reports': [
         ],
     },
 }
+

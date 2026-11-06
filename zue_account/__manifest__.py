@@ -15,7 +15,7 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Accounting/Accounting',
-    'version': '19.0.1.0.3',
+    'version': '19.0.2.0.0',
     # any module necessary for this one to work correctly
     'depends': ['base','account','zue_erp','account_reports','account_followup','documents','l10n_co_reports','accountant','stock_account','account_edi_ubl_cii'],
 
@@ -59,6 +59,7 @@
         'area': 'Contabilidad, compras y tesorería',
         'summary': 'Gestiona pagos bancarios, medios magnéticos, cierres, conciliación y seguimiento de cartera.',
         'features': [
+            'Guarda por compañía la cuenta de devolución de ingresos y la cuenta analítica del producto.',
             'Genera archivos bancarios para pagos a proveedores y anticipos.',
             'Prepara medios magnéticos DIAN e información distrital.',
             'Ejecuta cierres contables, conciliaciones y conversiones de extractos bancarios.',
