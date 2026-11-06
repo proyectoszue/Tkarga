@@ -368,90 +368,11 @@ class HrPayslipRun(models.Model):
         return self.write({'state': '01_ready'})
 
     def action_create_vacation_history(self):
-        """
-        Método para crear históricos de vacaciones de los recibos ya generados en el lote.
-        Solo ejecuta la creación de históricos sin modificar valores de las liquidaciones.
-        """
-        pay_vacations_in_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.pay_vacations_in_payroll')) or False
-
-        history_vacation = []
-        for record in self:
-            # Obtener todos los recibos del lote que ya están generados (no cancelados)
-            payslips = record.slip_ids.filtered(lambda slip: slip.state != 'cancel')
-
-            if not payslips:
-                raise ValidationError(_("No existen recibos de nómina generados en este lote."))
-
-            for payslip in payslips:
-                # Verificar si el recibo aplica para crear histórico de vacaciones
-                if payslip.struct_id.process == 'vacaciones' or (pay_vacations_in_payroll == True and payslip.struct_id.process != 'contrato'):
-                    for line in sorted(payslip.line_ids.filtered(lambda filter: filter.initial_accrual_date), key=lambda x: x.initial_accrual_date):
-                        info_vacation = False
-                        if line.code == 'VACDISFRUTADAS':
-                            info_vacation = {
-                                'employee_id': payslip.employee_id.id,
-                                'version_id': payslip.version_id.id,
-                                'initial_accrual_date': line.initial_accrual_date,
-                                'final_accrual_date': line.final_accrual_date,
-                                'departure_date': payslip.date_from if not line.vacation_departure_date else line.vacation_departure_date,
-                                'return_date': payslip.date_to if not line.vacation_return_date else line.vacation_return_date,
-                                'business_units': line.business_units + line.business_31_units,
-                                'value_business_days': line.business_units * line.amount,
-                                'holiday_units': line.holiday_units + line.holiday_31_units,
-                                'holiday_value': line.holiday_units * line.amount,
-                                'base_value': line.amount_base,
-                                'total': (line.business_units * line.amount)+(line.holiday_units * line.amount),
-                                'payslip': payslip.id,
-                                'leave_id': False if not line.vacation_leave_id else line.vacation_leave_id.id
-                            }
-                        if line.code == 'VACREMUNERADAS':
-                            info_vacation = {
-                                'employee_id': payslip.employee_id.id,
-                                'version_id': payslip.version_id.id,
-                                'initial_accrual_date': line.initial_accrual_date,
-                                'final_accrual_date': line.final_accrual_date,
-                                'departure_date': payslip.date_from,
-                                'return_date': payslip.date_to,
-                                'units_of_money': line.quantity,
-                                'money_value': line.total,
-                                'base_value_money': line.amount_base,
-                                'total': line.total,
-                                'payslip': payslip.id
-                            }
-
-                        if info_vacation:
-                            # Buscar y eliminar históricos existentes que coincidan para evitar duplicados y sobrescribir
-                            domain = [
-                                ('employee_id', '=', payslip.employee_id.id),
-                                ('version_id', '=', payslip.version_id.id),
-                                ('initial_accrual_date', '=', line.initial_accrual_date),
-                                ('final_accrual_date', '=', line.final_accrual_date),
-                            ]
-                            # Para VACDISFRUTADAS, también verificar leave_id
-                            if line.code == 'VACDISFRUTADAS':
-                                domain.append(('leave_id', '=', line.vacation_leave_id.id if line.vacation_leave_id else False))
-
-                            obj_history_vacation_exists = self.env['hr.vacation'].search(domain)
-                            # Eliminar todos los duplicados existentes
-                            if obj_history_vacation_exists:
-                                obj_history_vacation_exists.unlink()
-
-                            # Agregar el histórico a la lista para crearlo
-                            history_vacation.append(info_vacation)
-
-        if history_vacation:
-            self.env['hr.vacation'].create(history_vacation)
-
-        return {
-            'type': 'ir.actions.client',
-            'tag': 'display_notification',
-            'params': {
-                'title': _('Éxito'),
-                'message': _('Los históricos de vacaciones se han generado correctamente.'),
-                'type': 'success',
-                'sticky': False,
-            }
-        }
+        """Genera históricos de vacaciones de los recibos del lote (misma lógica que por liquidación)."""
+        payslips = self.mapped('slip_ids').filtered(lambda slip: slip.state != 'cancel')
+        if not payslips:
+            raise ValidationError(_("No existen recibos de nómina generados en este lote."))
+        return payslips.action_create_vacation_history()
 
 class Hr_payslip_line(models.Model):
     _inherit = 'hr.payslip.line'
@@ -472,22 +393,23 @@ class Hr_payslip_line(models.Model):
     date_end = fields.Date(related='version_id.date_end', string='Fecha de finalización de contrato', store=True)
     type_of_jurisdiction = fields.Many2one(related='version_id.type_of_jurisdiction', string='Tipo de Fuero', store=True)
 
+    def roundPayrollTotal(self, total):
+        # round_payroll activo = NO redondear decimales
+        if bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')):
+            return total
+        part_decimal, part_value = math.modf(total or 0.0)
+        if part_decimal >= 0.49:
+            return part_value + 1
+        if part_decimal <= -0.49:
+            return part_value - 1
+        return round(total or 0.0, 0)
+
     @api.depends('quantity', 'amount', 'rate')
     def _compute_total(self):
         #round_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.round_payroll')) or False
         for line in self:
-            if str(line.salary_rule_id.amount_python_compute).find('get_overtime') != -1:  # Verficiar si la regla utiliza la tabla hr.overtime por ende es un concepto de novedad del menu horas extras
-                amount = round(line.amount, 2)
-                line.amount = amount
-            else:
-                amount = line.amount
-            amount_total_original = float(line.quantity) * amount * line.rate / 100
-            part_decimal, part_value = math.modf(amount_total_original)
-            amount_total = float(line.quantity) * amount * line.rate / 100 #if round_payroll == False else float(line.quantity) * line.amount * line.rate / 100
-            if part_decimal >= 0.49 and math.modf(amount_total)[1] == part_value:
-                line.total = part_value+1
-            else:
-                line.total = round(amount_total,0)
+            amount_total = float(line.quantity) * line.amount * line.rate / 100
+            line.total = line.roundPayrollTotal(amount_total)
 
     def count_category_ids(self):
         count_category_ids = self.env['hr.payslip.line'].search_count([('slip_id', '=', self.slip_id.id), ('category_id', '=', self.category_id.id)])
@@ -579,6 +501,85 @@ class Hr_payslip(models.Model):
     def _compute_is_wrong_duration(self):
         # Desactiva el flag de duración incorrecta (mismo caso quincena CO vs bi-weekly)
         self.is_wrong_duration = False
+
+    def _get_payslip_line_total(self, amount, quantity, rate, rule):
+        # standard Odoo version "19"
+        total = super()._get_payslip_line_total(amount, quantity, rate, rule)
+        return self.env['hr.payslip.line'].roundPayrollTotal(total)
+
+    def action_create_vacation_history(self):
+        """Crea/reemplaza históricos de vacaciones desde las liquidaciones seleccionadas (Acciones / lote)."""
+        pay_vacations_in_payroll = bool(self.env['ir.config_parameter'].sudo().get_param('zue_hr_payroll.pay_vacations_in_payroll')) or False
+        payslips = self.filtered(lambda slip: slip.state != 'cancel')
+        if not payslips:
+            raise ValidationError(_("No hay liquidaciones válidas para generar el histórico de vacaciones."))
+
+        history_vacation = []
+        for payslip in payslips:
+            if payslip.struct_id.process == 'vacaciones' or (pay_vacations_in_payroll and payslip.struct_id.process != 'contrato'):
+                for line in sorted(payslip.line_ids.filtered(lambda filter: filter.initial_accrual_date), key=lambda x: x.initial_accrual_date):
+                    info_vacation = False
+                    if line.code == 'VACDISFRUTADAS':
+                        info_vacation = {
+                            'employee_id': payslip.employee_id.id,
+                            'version_id': payslip.version_id.id,
+                            'initial_accrual_date': line.initial_accrual_date,
+                            'final_accrual_date': line.final_accrual_date,
+                            'departure_date': payslip.date_from if not line.vacation_departure_date else line.vacation_departure_date,
+                            'return_date': payslip.date_to if not line.vacation_return_date else line.vacation_return_date,
+                            'business_units': line.business_units + line.business_31_units,
+                            'value_business_days': line.business_units * line.amount,
+                            'holiday_units': line.holiday_units + line.holiday_31_units,
+                            'holiday_value': line.holiday_units * line.amount,
+                            'base_value': line.amount_base,
+                            'total': (line.business_units * line.amount) + (line.holiday_units * line.amount),
+                            'payslip': payslip.id,
+                            'leave_id': False if not line.vacation_leave_id else line.vacation_leave_id.id
+                        }
+                    if line.code == 'VACREMUNERADAS':
+                        info_vacation = {
+                            'employee_id': payslip.employee_id.id,
+                            'version_id': payslip.version_id.id,
+                            'initial_accrual_date': line.initial_accrual_date,
+                            'final_accrual_date': line.final_accrual_date,
+                            'departure_date': payslip.date_from,
+                            'return_date': payslip.date_to,
+                            'units_of_money': line.quantity,
+                            'money_value': line.total,
+                            'base_value_money': line.amount_base,
+                            'total': line.total,
+                            'payslip': payslip.id
+                        }
+
+                    if info_vacation:
+                        domain = [
+                            ('employee_id', '=', payslip.employee_id.id),
+                            ('version_id', '=', payslip.version_id.id),
+                            ('initial_accrual_date', '=', line.initial_accrual_date),
+                            ('final_accrual_date', '=', line.final_accrual_date),
+                        ]
+                        if line.code == 'VACDISFRUTADAS':
+                            domain.append(('leave_id', '=', line.vacation_leave_id.id if line.vacation_leave_id else False))
+
+                        obj_history_vacation_exists = self.env['hr.vacation'].search(domain)
+                        if obj_history_vacation_exists:
+                            obj_history_vacation_exists.unlink()
+
+                        history_vacation.append(info_vacation)
+
+        if history_vacation:
+            self.env['hr.vacation'].create(history_vacation)
+
+        return {
+            'type': 'ir.actions.client',
+            'tag': 'display_notification',
+            'params': {
+                'title': _('Éxito'),
+                'message': _('Los históricos de vacaciones se han generado correctamente.'),
+                'type': 'success',
+                'sticky': False,
+            }
+        }
 
     rtefte_id = fields.Many2one('hr.employee.rtefte', 'RteFte')
     not_line_ids = fields.One2many('hr.payslip.not.line', 'slip_id', string='Reglas no aplicadas')
