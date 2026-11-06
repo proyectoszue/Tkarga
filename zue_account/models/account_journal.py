@@ -38,11 +38,8 @@ class account_journal(models.Model):
 class ProductTemplate(models.Model):
     _inherit = "product.template"
 
-    z_income_return_account = fields.Many2one('account.account',string='Cuenta devolución de ingresos') # DEJAR ESTE CAMPO SI NO ES MULTICOMPAÑIA ERRORES JSONB
-    # z_income_return_account = fields.Many2one('account.account', string='Cuenta devolución de ingresos', company_dependent=True, copy=False, check_company=True) DEJAR ESTE CAMPO SI ES MULTICOMPAÑIA
-
-    z_account_analytic_id = fields.Many2one('account.analytic.account', string='Cuenta analitica', tracking=True,) # DEJAR ESTE CAMPO SI NO ES MULTICOMPAÑIA ERRORES JSONB
-    # z_account_analytic_id = fields.Many2one('account.analytic.account', string='Cuenta analitica', company_dependent=True, tracking=True,)
+    z_income_return_account = fields.Many2one('account.account', string='Cuenta devolución de ingresos', company_dependent=True, copy=False, check_company=True)
+    z_account_analytic_id = fields.Many2one('account.analytic.account', string='Cuenta analitica', company_dependent=True, tracking=True,)
 
     @api.constrains('z_account_analytic_id', 'company_id')
     def _check_z_account_analytic_company(self):
@@ -136,7 +133,7 @@ class account_move(models.Model):
     _inherit = 'account.move'
 
     def _z_get_income_return_account(self, line):
-        product = line.product_id
+        product = line.product_id.with_company(self.company_id)
         if not product:
             return False
         category_account = product.product_tmpl_id.categ_id.z_income_return_account

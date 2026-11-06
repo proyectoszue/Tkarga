@@ -237,9 +237,14 @@ class hr_payroll_social_security(models.Model):
                                 continue
                             request_date_from = leave.request_date_from if leave.request_date_from >= date_start else date_start
                             request_date_to = leave.request_date_to if leave.request_date_to <= date_end else date_end
+                            # Limitar a la vigencia del contrato/versión (evita SLN duplicada en retiro+reingreso)
+                            if obj_version.contract_date_start and request_date_from < obj_version.contract_date_start:
+                                request_date_from = obj_version.contract_date_start
                             # Si existe retiro dentro del periodo, reportar ausencias hasta el día anterior al retiro
                             if retirement_reference_date and request_date_to >= retirement_reference_date:
                                 request_date_to = retirement_reference_date + relativedelta(days=-1)
+                            elif obj_version.contract_date_end and request_date_to > obj_version.contract_date_end:
+                                request_date_to = obj_version.contract_date_end
                             if request_date_from > request_date_to:
                                 continue
                             if self.month == '2' and request_date_from.month == 2 and request_date_to.month == 2:
