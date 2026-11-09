@@ -90,14 +90,16 @@ class x_reports_account(models.Model):
         return _res
 
     def exception_words(self, query):
+        # Validar sobre minúsculas sin alterar la query: las claves JSON (es_CO, en_US) son case-sensitive.
+        query_lower = (query or '').lower()
         if self.z_only_zue_developer != True:
-            if 'delete'in query:
-                raise ValidationError ('No puede realizar esta consulta')
-            elif 'update'in query:
+            if 'delete' in query_lower:
                 raise ValidationError('No puede realizar esta consulta')
-            elif 'truncate'in query:
+            elif 'update' in query_lower:
                 raise ValidationError('No puede realizar esta consulta')
-            elif 'drop'in query:
+            elif 'truncate' in query_lower:
+                raise ValidationError('No puede realizar esta consulta')
+            elif 'drop' in query_lower:
                 raise ValidationError('No puede realizar esta consulta')
 
         return True
@@ -146,10 +148,3 @@ class x_reports_account(models.Model):
                         'target': 'self',
                     }
             return action
-
-    @api.onchange('query')
-    def lower_case(self):
-        if self.query:
-            self.query = self.query.lower()
-        else:
-            self.query = ""

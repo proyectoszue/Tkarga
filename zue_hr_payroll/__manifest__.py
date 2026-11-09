@@ -15,11 +15,11 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Human Resources/Payroll',
-    'version': '19.0.1.9.0',
+    'version': '19.0.2.1.0',
     'icon': '/zue_hr_payroll/static/description/icon.png',
 
     # any module necessary for this one to work correctly
-    'depends': ['base','hr','resource','hr_payroll','hr_payroll_account','hr_holidays','hr_payroll_holidays','zue_erp','zue_hr_employee','zue_account','account','web','mail'],
+    'depends': ['base','hr','resource','hr_payroll','hr_payroll_account','hr_holidays','hr_payroll_holidays','zue_erp','zue_hr_employee','zue_account','account','web','mail','documents_hr_payroll'],
 
     # always loaded
     'data': [
@@ -28,6 +28,7 @@
         'views/res_config_settings_views.xml',
         'views/actions_loans.xml',        
         'views/actions_payslip.xml',
+        'views/actions_payslip_calculation_detail.xml',
         'views/actions_leave.xml',     
         'views/actions_overtime.xml', 
         'views/actions_concepts_deduction_retention.xml',    

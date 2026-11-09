@@ -25,17 +25,12 @@
                         <group>
                             <field name="z_concept_id"/>
                         </group>
-                        <footer>
-                            <button
-                                name="generate_pdf"
-                                string="GENERAR PDF"
-                                type="object"
-                                class="oe_highlight"/>
-                        </footer>
                     </sheet>
+                    <footer>
+                        <button name="generate_pdf" string="GENERAR PDF" type="object" class="oe_highlight"/>
+                    </footer>
                 </form>
             </field>
         </record>
-
     </data>
 </odoo>

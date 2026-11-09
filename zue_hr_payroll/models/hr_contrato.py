@@ -10,8 +10,6 @@ from dateutil.relativedelta import relativedelta
 class Hr_payslip(models.Model):
     _inherit = 'hr.payslip'
 
-    #reason_retiro = fields.Char(string='Motivo de retiro TMP V13', store=False)
-    # SE REQUIERE VOLVER A AJUSTAR POSTERIOR A MIGRACIÓN - ESTABA TIPO CHAR
     reason_retiro = fields.Many2one('hr.departure.reason', string='Motivo de retiro')
     z_reason_retiro = fields.Many2one('hr.departure.reason', string='Motivo de retiro ZUE')
     have_compensation = fields.Boolean('Indemnización', default=False)
@@ -83,9 +81,14 @@ class Hr_payslip(models.Model):
             localdict.update({                
                 'result': None,
                 'result_qty': 1.0,
-                'result_rate': 100})
+                'result_rate': 100,
+                'result_base': None,
+                'result_calculation_components': None,
+                'result_calculation_formula': None,
+            })
             if rule._satisfy_condition(localdict):                
-                amount, qty, rate = rule._compute_rule(localdict)
+                amount, qty, rate = self.compute_salary_rule_amount(rule, localdict)
+                rule_detail = self.take_rule_calculation_detail(localdict)
                 amount = round(amount,0) #Se redondean los decimales de todas las reglas
                 #check if there is already a rule computed with that code
                 previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
@@ -111,6 +114,7 @@ class Hr_payslip(models.Model):
                         'rate': rate,
                         'total': self._get_payslip_line_total(amount, qty, rate, rule),
                         'slip_id': self.id,
+                        **rule_detail,
                     }
 
         # 3.Deducciones que son base para prestaciones

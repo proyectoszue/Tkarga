@@ -15,7 +15,7 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Accounting/Accounting',
-    'version': '19.0.1.0.0',
+    'version': '19.0.2.0.0',
     # any module necessary for this one to work correctly
     'depends': ['base','account','zue_erp','account_reports','account_followup','documents','l10n_co_reports','accountant','stock_account','account_edi_ubl_cii'],
 
@@ -26,6 +26,7 @@
         # 'data/zue_res_bank_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
         # 'data/account_group_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
         'views/actions_payment_file.xml',
+        'views/actions_account_payment.xml',
         'views/actions_account_tax.xml',
         'views/actions_account_account.xml',
         'views/aged_partner_balance_report_columns.xml',
@@ -58,10 +59,12 @@
         'area': 'Contabilidad, compras y tesorería',
         'summary': 'Gestiona pagos bancarios, medios magnéticos, cierres, conciliación y seguimiento de cartera.',
         'features': [
+            'Guarda por compañía la cuenta de devolución de ingresos y la cuenta analítica del producto.',
             'Genera archivos bancarios para pagos a proveedores y anticipos.',
             'Prepara medios magnéticos DIAN e información distrital.',
             'Ejecuta cierres contables, conciliaciones y conversiones de extractos bancarios.',
             'Amplía los informes de cartera y controla las cuentas que requieren tercero.',
+            'Permite enviar por correo los comprobantes de pagos de clientes y proveedores.',
         ],
         'reports': [
             'Archivo de pago bancario TXT / Excel',
@@ -76,3 +79,4 @@
         ],
     },
 }
+

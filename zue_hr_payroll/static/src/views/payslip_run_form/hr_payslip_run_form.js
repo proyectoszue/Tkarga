@@ -1,10 +1,18 @@
 import { markup } from "@odoo/owl";
 import { serializeDate } from "@web/core/l10n/dates";
-import { PayslipBatchFormController } from "@hr_payroll/views/payslip_run_form/hr_payslip_run_form"
+import { _t } from "@web/core/l10n/translation";
+import { PayslipBatchFormController } from "@hr_payroll/views/payslip_run_form/hr_payslip_run_form";
 import { patch } from "@web/core/utils/patch";
 
 patch(PayslipBatchFormController.prototype, {
     async selectEmployees() {
+        if (!this.model.root.data.structure_id) {
+            this.env.services.notification.add(
+                _t("Debe seleccionar la estructura salarial del lote."),
+                { type: "danger" }
+            );
+            return;
+        }
         const employeeListAction = await this.orm.call("hr.payslip.run", "action_payroll_hr_version_list_view_payrun", [
             [this.model.root.resId],
             serializeDate(this.model.root.data.date_start),

@@ -15,7 +15,7 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Human Resources/Employees',
-    'version': '19.0.1.1.2',
+    'version': '19.0.3.0.0',
     'icon': '/zue_hr_employee/static/description/icon.png',
 
     # any module necessary for this one to work correctly
@@ -25,6 +25,7 @@
     'data': [
         # 'data/hr_tipos_cotizante_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
         # 'data/hr_indicador_especial_pensiones_data.xml', VISTO COMENTADA POR ERROR EN MIGRACIÓN
+        'data/ir_cron_data.xml',
         'security/ir.model.access.csv',        
         'views/actions_entities.xml',
         'views/actions_employee.xml',

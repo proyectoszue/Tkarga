@@ -11,6 +11,16 @@ class AccountReport(models.Model):
             return Domain('reconciled', '=', False)
         return Domain.TRUE
 
+    def export_to_pdf(self, options):
+        self.ensure_one()
+        aged = [
+            self.env.ref(xmlid, raise_if_not_found=False)
+            for xmlid in ('account_reports.aged_receivable_report', 'account_reports.aged_payable_report')
+        ]
+        if self in aged:
+            return super(AccountReport, self.with_context(zue_aged_partner_wide_pdf=True)).export_to_pdf(options)
+        return super().export_to_pdf(options)
+
 
 class AccountReportExpression(models.Model):
     _inherit = 'account.report.expression'

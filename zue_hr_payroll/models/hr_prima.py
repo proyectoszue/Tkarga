@@ -136,9 +136,14 @@ class Hr_payslip(models.Model):
             localdict.update({                
                 'result': None,
                 'result_qty': 1.0,
-                'result_rate': 100})
+                'result_rate': 100,
+                'result_base': None,
+                'result_calculation_components': None,
+                'result_calculation_formula': None,
+            })
             if rule._satisfy_condition(localdict):                
-                amount, qty, rate = rule._compute_rule(localdict)
+                amount, qty, rate = self.compute_salary_rule_amount(rule, localdict)
+                rule_detail = self.take_rule_calculation_detail(localdict)
                 dias_ausencias, amount_base = 0, 0
 
                 if rule.code == 'PRIMA' and employee.type_employee.id in rule.types_employee.ids:
@@ -164,6 +169,7 @@ class Hr_payslip(models.Model):
                         acumulados_promedio = 0
                     wage,auxtransporte,auxtransporte_tope = 0,0,0
                     auxtransporte_prorated = False
+                    has_salary_variation = False
                     if version.subcontract_type not in ('obra_parcial', 'obra_integral'):
                         wage = 0
                         obj_wage = self.env['hr.contract.change.wage'].search([('version_id', '=', version.id), ('date_start', '<', self.date_to)])
@@ -234,6 +240,84 @@ class Hr_payslip(models.Model):
                     qty = dias_liquidacion
 
                 amount = round(amount,0) if round_payroll == False else round(amount, 2)
+                base_components = []
+                if amount_base and rule.code == 'PRIMA':
+                    period_start = self.date_prima if inherit_contrato != 0 else self.date_from
+                    period_end = self.date_liquidacion if inherit_contrato != 0 else self.date_to
+                    period_start_s = period_start.isoformat() if period_start else False
+                    period_end_s = period_end.isoformat() if period_end else False
+                    if has_salary_variation:
+                        wage_origin = _('historial salarial')
+                        wage_motive = _('Promedio salarial del periodo por variación en los últimos 3 meses')
+                    else:
+                        wage_origin = _('contrato')
+                        wage_motive = _('Salario vigente del contrato a la fecha de liquidación')
+                    aux_in_base = auxtransporte_prorated or (wage + value_rules_base_auxtransporte_tope) <= auxtransporte_tope
+                    aux_amount = auxtransporte if aux_in_base else 0.0
+                    compared_sum = wage + value_rules_base_auxtransporte_tope
+                    if version.z_not_pay_auxtransportation:
+                        aux_motive = _('No aplica: el contrato no paga auxilio de transporte')
+                    elif auxtransporte_prorated and aux_amount:
+                        aux_motive = _(
+                            'Aplica prorrateado por días con derecho (salario diario ≤ tope %(tope)s)'
+                        ) % {'tope': int(round(auxtransporte_tope or 0.0))}
+                    elif aux_in_base and aux_amount:
+                        aux_motive = _(
+                            'Aplica: salario %(wage)s + base variables %(vars)s = %(sum)s ≤ tope %(tope)s'
+                        ) % {
+                            'wage': int(round(wage or 0.0)),
+                            'vars': int(round(value_rules_base_auxtransporte_tope or 0.0)),
+                            'sum': int(round(compared_sum or 0.0)),
+                            'tope': int(round(auxtransporte_tope or 0.0)),
+                        }
+                    elif not aux_in_base:
+                        aux_motive = _(
+                            'No aplica: salario %(wage)s + base variables %(vars)s = %(sum)s > tope %(tope)s'
+                        ) % {
+                            'wage': int(round(wage or 0.0)),
+                            'vars': int(round(value_rules_base_auxtransporte_tope or 0.0)),
+                            'sum': int(round(compared_sum or 0.0)),
+                            'tope': int(round(auxtransporte_tope or 0.0)),
+                        }
+                    else:
+                        aux_motive = _('No aplica: auxilio en $0')
+                    if dias_acumulados_promedio:
+                        acc_raw = (acumulados_promedio * dias_acumulados_promedio / 30.0) if acumulados_promedio else 0.0
+                        vars_motive = _(
+                            'Promedio: (%(acc)s / %(days)s días) × 30 = %(result)s'
+                        ) % {
+                            'acc': int(round(acc_raw)),
+                            'days': int(round(dias_acumulados_promedio)),
+                            'result': int(round(acumulados_promedio or 0.0)),
+                        }
+                    else:
+                        vars_motive = _('Sin días para promedio; promedio variables en $0')
+                    base_components = [
+                        {
+                            'name': _('Salario vigente'),
+                            'amount': wage,
+                            'origin': wage_origin,
+                            'motive': wage_motive,
+                            'period_from': period_start_s,
+                            'period_to': period_end_s,
+                        },
+                        {
+                            'name': _('Auxilio de transporte'),
+                            'amount': aux_amount,
+                            'origin': _('parámetros anuales / ley'),
+                            'motive': aux_motive,
+                            'period_from': period_start_s,
+                            'period_to': period_end_s,
+                        },
+                        {
+                            'name': _('Promedio variables'),
+                            'amount': acumulados_promedio,
+                            'origin': _('novedades'),
+                            'motive': vars_motive,
+                            'period_from': period_start_s,
+                            'period_to': period_end_s,
+                        },
+                    ]
                 #check if there is already a rule computed with that code
                 previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
                 #set/overwrite the amount computed for this rule in the localdict
@@ -264,6 +348,7 @@ class Hr_payslip(models.Model):
                         'version_id': version.id,
                         'employee_id': employee.id,
                         'amount_base': amount_base,
+                        'z_calculation_base_components': base_components or rule_detail.get('z_calculation_base_components'),
                         'amount': amount,
                         'quantity': qty,
                         'rate': rate,
