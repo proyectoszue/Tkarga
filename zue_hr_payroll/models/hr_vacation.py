@@ -209,8 +209,8 @@ class Hr_payslip(models.Model):
                 leave_number_of_days = leave.leave_id.number_of_days
 
                 leaves['IDLEAVE'] = leave.leave_id.id
-                # Día 31 no se paga: quantity = hábiles + festivos (sin days_31_*)
-                leaves[leave.work_entry_type_id.code] = leave_business_days + leave_holidays
+                # En liquidación de vacaciones la cantidad incluye el día 31.
+                leaves[leave.work_entry_type_id.code] = ((leave_business_days or 0) + (leave_holidays or 0) + (leave.leave_id.days_31_business or 0) + (leave.leave_id.days_31_holidays or 0))
                 leaves['HOLIDAYS'+leave.work_entry_type_id.code] = leave_holidays
                 leaves['BUSINESS'+leave.work_entry_type_id.code] = leave_business_days
 
@@ -352,8 +352,11 @@ class Hr_payslip(models.Model):
                         localdict.update({'leaves':  BrowsableObject(employee.id, leaves, self.env)})
                         amount, qty, rate = self.compute_salary_rule_amount(rule, localdict)
                         self.take_rule_calculation_detail(localdict)
-                        # Día 31 no se paga: cantidad = hábiles + festivos (sin days_31_*)
-                        qty = float(days_vacations_business or 0) + float(days_vacations_holidays or 0)
+                        # Liquidación de vacaciones: se paga el día 31
+                        if inherit_nomina != 0:
+                            qty = float(days_vacations_business or 0) + float(days_vacations_holidays or 0)
+                        else:
+                            qty = (float(days_vacations_business or 0) + float(days_vacations_holidays or 0) + float(days_vacations_31_business or 0) + float(days_vacations_31_holidays or 0))
                         amount = round(amount,0) if round_payroll == False else round(amount, 2)#Se redondean los decimales de todas las reglas
                         #check if there is already a rule computed with that code
                         previous_amount = rule.code in localdict and localdict[rule.code] or 0.0
@@ -583,8 +586,9 @@ class Hr_payslip(models.Model):
                                  ('final_accrual_date', '!=', False)],
                                 order='final_accrual_date desc', limit=1)
                             if (last_vacation_history.final_accrual_date and last_vacation_history.final_accrual_date > self.date_liquidacion):
-                                self.z_vacation_contract_line_skip = True
-                                continue
+                                if not self.env.context.get('z_vacation_contract_line_zero'):
+                                    self.z_vacation_contract_line_skip = True
+                                    continue
                         holidays_based_period_caused = employee.company_id.z_holidays_based_period_caused
                         if holidays_based_period_caused:
                             self.env['hr.vacation.period.caused'].search([('z_slip_id', '=', self.id)]).unlink()
