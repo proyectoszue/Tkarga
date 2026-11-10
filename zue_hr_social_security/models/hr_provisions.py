@@ -247,7 +247,7 @@ class hr_executing_provisions(models.Model):
                                 localdict,result_prima = obj_provision._get_payslip_lines_prima(inherit_contrato=1)
                             #Vacaciones
                             obj_provision.write({'struct_id': struct_vacaciones.id})
-                            localdict,result_vac = obj_provision._get_payslip_lines_vacation(inherit_contrato=1)
+                            localdict,result_vac = obj_provision.with_context(z_vacation_contract_line_zero=True)._get_payslip_lines_vacation(inherit_contrato=1)
 
 
                         obj_provision.action_payslip_cancel()

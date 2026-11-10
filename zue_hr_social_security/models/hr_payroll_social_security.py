@@ -153,6 +153,7 @@ class hr_payroll_social_security(models.Model):
                             raise ValidationError(_('No hay parametrización de cotizantes para el tipo y subtipo configurados. Por favor verifique.'))
                         #Variables
                         bEsAprendiz = True if obj_version.contract_type == 'aprendizaje' else False
+                        bAprendizProductivo = bEsAprendiz and obj_tipo_coti.code != '12' and (obj_tipo_coti.code == '19' or obj_version.modality_salary == 'sostenimiento') and obj_parameterization_contributors.liquidated_compensation_fund and obj_parameterization_contributors.liquidated_sena and obj_parameterization_contributors.liquidated_icbf
                         nDiasLiquidados = 0
                         nNumeroHorasLaboradas = 0.0
                         nIngreso = False
@@ -484,7 +485,7 @@ class hr_payroll_social_security(models.Model):
                                 'TerceroCajaCom': TerceroCajaCompensacion.id if TerceroCajaCompensacion else False,
                                 'nValorBaseCajaCom':nValorBaseCajaCom,
                                 #SENA & ICBF
-                                'cExonerado1607': employee.company_id.exonerated_law_1607 if bEsAprendiz == False and nSueldo < (annual_parameters.smmlv_monthly*10) else False,
+                                'cExonerado1607': employee.company_id.exonerated_law_1607 if (bEsAprendiz == False or bAprendizProductivo) and nSueldo < (annual_parameters.smmlv_monthly*10) else False,
                                 'TerceroSENA': TerceroSENA.id if TerceroSENA else False,
                                 'nValorBaseSENA':nValorBaseSENA,
                                 'TerceroICBF': TerceroICBF.id if TerceroICBF else False,
@@ -769,7 +770,7 @@ class hr_payroll_social_security(models.Model):
                                             nValorSaludEmpleado = nValorBaseSalud*(nPorcAporteSaludEmpleado/100) if nDiasLicencia==0 else 0
                                         else:
                                             nValorSaludEmpleado = 0
-                                        if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and (nValorBaseSalud >= (annual_parameters.smmlv_monthly*10) or dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL',0) >= (annual_parameters.smmlv_monthly*10))) or bEsAprendiz == True:
+                                        if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and (nValorBaseSalud >= (annual_parameters.smmlv_monthly*10) or dict_social_security['BaseSeguridadSocial'].dict.get('TOTAL',0) >= (annual_parameters.smmlv_monthly*10))) or (bEsAprendiz == True and not bAprendizProductivo):
                                             nPorcAporteSaludEmpresa = annual_parameters.value_porc_health_company if not bEsAprendiz or (bEsAprendiz and obj_parameterization_contributors.liquidates_eps_company) else annual_parameters.value_porc_health_employee+annual_parameters.value_porc_health_company
                                             nValorSaludEmpresa = nValorBaseSalud*(nPorcAporteSaludEmpresa/100)
                                         else:
@@ -974,7 +975,7 @@ class hr_payroll_social_security(models.Model):
                                 'TerceroCajaCom': TerceroCajaCompensacion.id if TerceroCajaCompensacion else False,
                                 'nValorBaseCajaCom': nValorBaseCajaCom,
                                 # SENA & ICBF
-                                'cExonerado1607': employee.company_id.exonerated_law_1607 if bEsAprendiz == False and nSueldo < (
+                                'cExonerado1607': employee.company_id.exonerated_law_1607 if (bEsAprendiz == False or bAprendizProductivo) and nSueldo < (
                                             annual_parameters.smmlv_monthly * 10) else False,
                                 'TerceroSENA': TerceroSENA.id if TerceroSENA else False,
                                 'nValorBaseSENA': nValorBaseSENA,
@@ -1069,7 +1070,7 @@ class hr_payroll_social_security(models.Model):
                                             nValorSaludEmpleado = nValorBaseSalud * (nPorcAporteSaludEmpleado / 100)
                                         else:
                                             nValorSaludEmpleado = 0
-                                        if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and nValorBaseSalud >= (annual_parameters.smmlv_monthly * 10)) or bEsAprendiz == True:
+                                        if not employee.company_id.exonerated_law_1607 or (employee.company_id.exonerated_law_1607 and nValorBaseSalud >= (annual_parameters.smmlv_monthly * 10)) or (bEsAprendiz == True and not bAprendizProductivo):
                                             nPorcAporteSaludEmpresa = annual_parameters.value_porc_health_company if not bEsAprendiz else annual_parameters.value_porc_health_employee + annual_parameters.value_porc_health_company
                                             nValorSaludEmpresa = nValorBaseSalud * (nPorcAporteSaludEmpresa / 100)
                                         else:
