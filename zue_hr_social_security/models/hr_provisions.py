@@ -324,7 +324,8 @@ class hr_executing_provisions(models.Model):
 
                             #Valor provision Mes
                             if value_payments > 0 and current_payable_value < 0 and provision == 'vacaciones':
-                                value_provision = abs(current_payable_value)
+                                # Vacaciones anticipadas
+                                value_provision = abs(current_payable_value) - abs(amount)
                                 current_payable_value = 0
                             elif value_payments > 0 and current_payable_value >=0 and provision == 'vacaciones' and not retirement_date:
                                 value_provision = amount - current_payable_value
