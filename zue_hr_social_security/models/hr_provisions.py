@@ -232,7 +232,10 @@ class hr_executing_provisions(models.Model):
                         if not obj_parameterization_contributors:
                             raise ValidationError(_('No hay parametrización de cotizantes para el tipo y subtipo configurados. Por favor verifique.'))
                         if not obj_parameterization_contributors.liquidated_provisions:
-                            raise ValidationError(_('La parametrización de cotizantes no permite liquidar provisiones. Por favor verifique.'))
+                            # Si el cotizante no liquida provisiones (p. ej. aprendiz SENA lectiva), se omite sin generar error ni advertencia
+                            obj_provision.action_payslip_cancel()
+                            obj_provision.unlink()
+                            continue
 
                         if len(obj_parameterization_contributors) > 0 and obj_parameterization_contributors.liquidated_provisions:
                             if version.modality_salary != 'integral':
