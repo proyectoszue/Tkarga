@@ -376,6 +376,7 @@ class hr_executing_provisions(models.Model):
                                 'analytic_distribution': analytic_distribution,
                                 'value_wage': version.wage,
                                 'value_base': line['amount_base'],
+                                'z_calculation_base_components': line.get('z_calculation_base_components') or False,
                                 'time': line['quantity'],
                                 'value_balance': value_provision,
                                 'value_payments': value_payments,
