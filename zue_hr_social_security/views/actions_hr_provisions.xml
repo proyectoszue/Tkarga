@@ -92,6 +92,11 @@
                                                     <field name="current_payable_value"/>
                                                 </group>
                                             </group>
+                                            <field name="z_show_calculation_detail" invisible="1"/>
+                                            <group string="Cómo se calculó" colspan="2" invisible="not z_show_calculation_detail">
+                                                <field name="z_calculation_detail" nolabel="1" colspan="2" readonly="1"
+                                                         widget="html" options="{'style-inline': true}"/>
+                                            </group>
                                         </sheet>
                                     </form>
                                 </field>
@@ -114,6 +119,22 @@
                     </sheet>
                     <chatter/>
                 </form>
+            </field>
+        </record>
+
+        <record id="res_config_settings_view_form_provisions_calculation_detail" model="ir.ui.view">
+            <field name="name">res.config.settings.view.form.provisions.calculation.detail</field>
+            <field name="model">res.config.settings</field>
+            <field name="inherit_id" ref="hr_payroll.res_config_settings_view_form"/>
+            <field name="priority" eval="15"/>
+            <field name="arch" type="xml">
+                <xpath expr="//setting[@id='ytd_reset_date']" position="after">
+                    <setting id="z_show_provisions_calculation_detail_setting"
+                             string="Detalle del cálculo en provisiones"
+                             help="Muestra en el modal de ejecución cómo se calcularon Base, Unidades, Provisión mes, Valor liquidado, Pagos y Valor a pagar actual.">
+                        <field name="z_show_provisions_calculation_detail"/>
+                    </setting>
+                </xpath>
             </field>
         </record>
     </data>

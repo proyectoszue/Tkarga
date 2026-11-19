@@ -15,7 +15,7 @@
     # Check https://github.com/odoo/odoo/blob/13.0/odoo/addons/base/data/ir_module_category_data.xml
     # for the full list
     'category': 'Human Resources/Payroll',
-    'version': '19.0.1.0.11',
+    'version': '19.0.1.1.1',
     'icon': '/zue_hr_social_security/static/description/icon.png',
 
     # any module necessary for this one to work correctly
@@ -46,6 +46,7 @@
             'Liquida seguridad social y provisiones de nómina.',
             'Configura sucursales, centros de trabajo y contabilización del cierre mensual.',
             'Genera consolidados de provisiones y procesos de nómina electrónica relacionados.',
+            'Muestra el detalle de cómo se calculó cada provisión en el modal de ejecución (activable en Ajustes).',
         ],
         'reports': [
             'Informe seguridad social',
